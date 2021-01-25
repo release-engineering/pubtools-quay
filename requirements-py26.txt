@@ -1,0 +1,7 @@
+setuptools
+python-qpid-proton==0.29.0
+idna==2.7
+paramiko==2.3.1
+
+
+# -e git+https://code.engineering.redhat.com/gerrit/rhmsg#egg=rhmsg-0.9

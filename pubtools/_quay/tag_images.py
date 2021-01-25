@@ -3,7 +3,7 @@ import logging
 from .utils import setup_arg_parser, add_args_env_variables
 from .command_executor import LocalExecutor, RemoteExecutor
 
-LOG = logging.getLogger("pubtools-quay")
+LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
 TAG_IMAGES_ARGS = {

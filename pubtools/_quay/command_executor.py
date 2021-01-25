@@ -4,7 +4,7 @@ import subprocess
 
 import paramiko
 
-LOG = logging.getLogger("pubtools-quay")
+LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
 
