@@ -84,4 +84,9 @@ setup(
     extras_require=extras_require,
     tests_require=["tox"],
     cmdclass={"test": Tox},
+    entry_points={
+        "target": [
+            "push-docker = pubtools._quay.push_docker:mod_entry_point"
+        ]
+    }
 )
