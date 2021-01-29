@@ -205,6 +205,45 @@ class StepSanitizeOperatorPushItems(Step):
         self.results.results = operator_push_items
 
 
+class StepSanitizeRepositories(Step):
+    """Filter out push items which are not operators and store result.
+
+    Expected step args:
+        (<key-for-container-items-indexes>,)
+    Produced details:
+        repository -> (ready, not-exists, depracated, ok)
+    Expected external resources:
+        "log_debug": log debug callback or None
+        "log_info": log info callback or None
+        "log_warning": log warning callback or None
+        "log_error": log error callback or None
+        "push_items": list of push items
+    """
+
+    NAME = "StepSanitizeRepositories"
+
+    def _init_details(self):
+        push_items = self.external_resources["push_items"]
+        self._details = {}
+        repositories = set()
+        container_items_indexes_key = self.step_args[0]
+        indexes = self._shared_results[container_items_indexes_key].results
+        for index in indexes:
+            item = push_items[index]
+            for repo in item.repos:
+                repositories.add(repo)
+        for repo in repositories:
+            self._details[repo] = "ready"
+
+    def _sanitize_repository(self, repo):
+        raise NotImplementedError
+
+    @log_jsonl("SanitizeOperatorPushItems")
+    def _run(self, on_update=None):
+        for repo in self._details.keys():
+            self._sanitize_repository(repo)
+
+
 class StepBuildBackupMapping(Step):
     """Build repo -> [backup tags] mapping repo -> [rollback tags].
 

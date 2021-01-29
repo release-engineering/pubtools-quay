@@ -81,7 +81,11 @@ def test_push_docker_ok(
         MockHub(),
         "mock-task-id",
         "mock-target-name",
-        {"docker_settings": {}},
+        {
+            "docker_settings": {},
+            "iib_server": "mock-iib-server",
+            "docker_reference_registry": "fake-reference-registry",
+        },
     )
     status = json.loads(MOCK_FILES["mock-task-id.report.json"])
     assert status == json.load(open(fixture_test_data_dir + "test_push_docker_ok.json"))
@@ -103,5 +107,5 @@ def test_push_docker_failed(
             MockHub(),
             "mock-task-id",
             "mock-target-name",
-            {"docker_settings": {}},
+            {"docker_settings": {}, "iib_server": "mock-iib-server"},
         )

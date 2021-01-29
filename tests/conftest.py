@@ -56,7 +56,7 @@ def container_push_item_ok():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos=[],
+        repos={"test_repo": []},
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",

@@ -8,6 +8,7 @@ import pytest
 from pubtools._quay.quay_steps import (
     StepSanitizeContainerPushItems,
     StepSanitizeOperatorPushItems,
+    StepSanitizeRepositories,
     StepBuildBackupMapping,
     StepPushContainerImgs,
     StepSignContainers,
@@ -43,7 +44,7 @@ def container_push_item_ok():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos=[],
+        repos={"test_repo": []},
         build="push_item_build",
         metadata={
             "pull_data": {
@@ -359,6 +360,79 @@ def test_StepSanitizeContainerPushItems_empty_file_path(
             },
         },
     }
+
+
+def test_StepSanitizeRepositories_ok(
+    container_push_item_ok, fixture_isodate_now, common_external_resources
+):  # pylint: disable=unused-argument
+    shared_results = {}
+    push_items = [container_push_item_ok]
+    common_external_resources.update({"push_items": push_items})
+    step = StepSanitizeContainerPushItems(
+        "1", (), {}, shared_results, external_resources=common_external_resources
+    )
+    step.run()
+    step2 = StepSanitizeRepositories(
+        "1",
+        ("StepSanitizeContainerPushItems:1",),
+        {},
+        shared_results,
+        external_resources=common_external_resources,
+    )
+    step2.run()
+    assert step2.dump() == {
+        "name": "StepSanitizeRepositories",
+        "step_args": ["StepSanitizeContainerPushItems:1"],
+        "step_kwargs": {},
+        "uid": "1",
+        "details": {"test_repo": "ready"},
+        "stats": {
+            "started": "isodate_now_3",
+            "finished": "isodate_now_4",
+            "skip": False,
+            "skip_reason": "",
+            "skipped": False,
+            "state": "finished",
+        },
+        "results": {"results": {}, "errors": {}},
+    }
+
+
+def test_StepSanitizeRepositories_not_implemented(
+    container_push_item_ok, fixture_isodate_now, common_external_resources
+):  # pylint: disable=unused-argument
+    shared_results = {}
+    push_items = [container_push_item_ok]
+    common_external_resources.update({"push_items": push_items})
+    step = StepSanitizeContainerPushItems(
+        "1", (), {}, shared_results, external_resources=common_external_resources
+    )
+    step.run()
+    step2 = StepSanitizeRepositories(
+        "1",
+        ("StepSanitizeContainerPushItems:1",),
+        {},
+        shared_results,
+        external_resources=common_external_resources,
+    )
+    assert step2.dump() == {
+        "name": "StepSanitizeRepositories",
+        "step_args": ["StepSanitizeContainerPushItems:1"],
+        "step_kwargs": {},
+        "uid": "1",
+        "details": {"test_repo": "ready"},
+        "stats": {
+            "started": None,
+            "finished": None,
+            "skip": False,
+            "skip_reason": "",
+            "skipped": None,
+            "state": "ready",
+        },
+        "results": {"results": {}, "errors": {}},
+    }
+    with pytest.raises(NotImplementedError):
+        step2.run()
 
 
 def test_StepSanitizeContainerPushItems_not_container(
