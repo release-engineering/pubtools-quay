@@ -405,7 +405,8 @@ class StepPushOperators(Step):
         "target_name": target name
     Produced details:
         {
-            "items": { <repo>: { <tag> { "state": ready|error|pushed, "source": <pull_url>}}}
+            "items": { <bundle_ref> { "state": ready|error|pushed}}
+        }
     Results:
         None
     """

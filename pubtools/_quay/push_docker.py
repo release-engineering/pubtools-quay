@@ -46,7 +46,7 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
     """Run push docker sequence.
 
     Arguments:
-        push_items (<lits-of-push-items>)
+        push_items (<list-of-push-items>)
             List of push items containing metadata
         signing_key (str)
             Signing key which should be used to sign pushed manifests
@@ -132,7 +132,7 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
         StepPushOperators(
             "1",
             ("StepSanitizeOperatorPushItems:1", target_settings),
-            {"docker_reference_registry": "test-reference-registry.io"},
+            {"docker_reference_registry": target_settings.get("docker_reference_registry")},
             shared_data,
             external_resources=common_external_res,
         )
@@ -140,8 +140,10 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
     stepper.add_step(
         StepSignContainers(
             "index-image",
-            ("StepSanitizeContainerPushItems:1", target_settings),
-            {},
+            ("StepSanitizeContainerPushItems:1"),
+            {"autoupload_operators": target_settings.get("auto_upload_operators"),
+             "docker_reference_registry": target_settings.get("docker_reference_registry"),
+             "iib_server": target_settings["iib_servert"]},
             shared_data,
             external_resources=common_external_res,
         )

@@ -11,8 +11,6 @@ def isodate_now():
 class StepFailedError(Exception):
     """Exception indidating failure of a step."""
 
-    pass
-
 
 class Secret(object):
     """Class for storing sensitive values used as argument for Step class."""
@@ -114,9 +112,9 @@ class Step(object):
         Args:
             uid: (str)
                 An unique id for indentifying two steps of the same class
-            uid: (step_args)
+            step_args: (list)
                 Arguments used for the step
-            uid: (step_kwargs)
+            step_kwargs: (dict)
                 Dictionary of a name arguments for the step
             shared_results: (dict-like object)
                 Object to store shared data between steps
@@ -146,7 +144,6 @@ class Step(object):
             ]
         )
 
-        self.step_kwargs = step_kwargs
         self._shared_results = shared_results
         self.external_resources = external_resources or {}
         self.uid = uid
@@ -166,7 +163,7 @@ class Step(object):
 
     @property
     def state(self):
-        """Property for retreiving class state."""
+        """Property for retrieving class state."""
         return self._state.get()
 
     def set_state(self, state):
