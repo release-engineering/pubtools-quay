@@ -1,6 +1,6 @@
 import logging
 
-from .utils import setup_arg_parser, add_args_env_variables, send_umb_message
+from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 from .command_executor import LocalExecutor, RemoteExecutor
 
 LOG = logging.getLogger()
