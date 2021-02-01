@@ -55,7 +55,7 @@ class StepSanitizeContainerPushItems(Step):
             log_info("Processing %s", str(item))
             item_error = False
             item_state = "ok"
-            if item.file_type != "docker_v2":
+            if item.file_type != "docker":
                 log_warning(
                     LOG_INDENT + "Item %s is not container, skipping" % str(item)
                 )
@@ -206,7 +206,7 @@ class StepSanitizeOperatorPushItems(Step):
 
 
 class StepSanitizeRepositories(Step):
-    """Filter out push items which are not operators and store result.
+    """Sanitize destination repositories.
 
     Expected step args:
         (<key-for-container-items-indexes>,)

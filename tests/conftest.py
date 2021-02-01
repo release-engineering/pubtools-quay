@@ -52,7 +52,7 @@ def container_push_item_ok():
     return MockContainerPushItem(
         file_path="push_item_filepath",
         file_name="push_item_filename",
-        file_type="docker_v2",
+        file_type="docker",
         file_size=0,
         file_info=None,
         origin="push_item_origin",
@@ -78,7 +78,7 @@ def container_push_item_no_metadata():
     return MockContainerPushItem(
         file_path="push_item_filepath",
         file_name="push_item_filename",
-        file_type="docker_v2",
+        file_type="docker",
         file_size=0,
         file_info=None,
         origin="push_item_origin",
@@ -94,7 +94,7 @@ def container_push_item_empty_file_path():
     return MockContainerPushItem(
         file_path=None,
         file_name="push_item_filename",
-        file_type="docker_v2",
+        file_type="docker",
         file_size=0,
         file_info=None,
         origin="push_item_origin",
@@ -128,7 +128,7 @@ def container_push_item_errors():
     return MockContainerPushItem(
         file_path="push_item_filepath",
         file_name="push_item_filename",
-        file_type="docker_v2",
+        file_type="docker",
         file_size=0,
         file_info=None,
         origin="push_item_origin",
