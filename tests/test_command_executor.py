@@ -257,6 +257,23 @@ def test_skopeo_tag_images(mock_run_cmd):
     )
     assert mock_run_cmd.call_args_list == [
         mock.call(
+            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
+        ),
+        mock.call(
+            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
+        ),
+    ]
+
+
+@mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
+def test_skopeo_tag_images_all_arch(mock_run_cmd):
+    executor = command_executor.LocalExecutor()
+
+    executor.tag_images(
+        "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"], True
+    )
+    assert mock_run_cmd.call_args_list == [
+        mock.call(
             "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
         ),
         mock.call(

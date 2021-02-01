@@ -64,3 +64,35 @@ def add_args_env_variables(parsed_args, args):
                     parsed_args, named_alias, os.environ.get(arg_data["env_variable"])
                 )
     return parsed_args
+
+
+def send_umb_message(
+    urls, message, headers, cert, topic, client_key=None, ca_cert=None
+):
+    """
+    Send a UMB message.
+
+    Args:
+        urls ([str]):
+            URLs to send the message to.
+        message (str):
+            Message to send to UMB.
+        headers (dict):
+            Headers to include with the message.
+        cert (str):
+            Path to certificate for SSL authentication.
+        client_key (str):
+            Path to a private key for accessing the certificate.
+        ca_cert (str):
+            Path to CA certificate.
+    """
+    from rhmsg.activemq.producer import AMQProducer
+
+    producer = AMQProducer(
+        urls=urls,
+        certificate=cert,
+        private_key=client_key,
+        topic=topic,
+        trusted_certificates=ca_cert,
+    )
+    producer.send_msg(headers, message)

@@ -55,7 +55,7 @@ class Executor(object):
                 "STDOUT: '{0}', STDERR: '{1}'".format(out, err)
             )
 
-    def tag_images(self, source_ref, dest_refs):
+    def tag_images(self, source_ref, dest_refs, all_arch=False):
         """
         Copy image from source to destination(s) using skopeo.
 
@@ -64,8 +64,14 @@ class Executor(object):
                 Reference of the source image.
             dest_refs ([str]):
                 List of target references to copy the image to.
+            all_arch (bool):
+                Whether to copy all architectures (if multiarch image)
         """
-        cmd = "skopeo copy --all docker://{0} docker://{1}"
+        if all_arch:
+            cmd = "skopeo copy --all docker://{0} docker://{1}"
+        else:
+            cmd = "skopeo copy docker://{0} docker://{1}"
+
         for dest_ref in dest_refs:
             LOG.info(
                 "Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref)

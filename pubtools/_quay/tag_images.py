@@ -1,6 +1,6 @@
 import logging
 
-from .utils import setup_arg_parser, add_args_env_variables
+from .utils import setup_arg_parser, add_args_env_variables, send_umb_message
 from .command_executor import LocalExecutor, RemoteExecutor
 
 LOG = logging.getLogger()
@@ -17,6 +17,11 @@ TAG_IMAGES_ARGS = {
         "required": True,
         "type": str,
         "action": "append",
+    },
+    ("--all-arch",): {
+        "help": "Flag of whether to copy all architectures of an image (if multiatch image)",
+        "required": False,
+        "type": bool,
     },
     ("--quay-user",): {
         "help": "Username for Quay login.",
@@ -122,18 +127,17 @@ def tag_images(args):
     executor.tag_images(args.source_ref, dest_refs)
 
     if args.send_umb_msg:
-        from rhmsg.activemq.producer import AMQProducer
-
         topic = args.umb_topic or "VirtualTopic.eng.pub.quay_tag_image"
-        producer = AMQProducer(
-            urls=args.umb_url,
-            certificate=args.umb_cert,
-            private_key=args.umb_client_key,
-            topic=topic,
-            trusted_certificates=args.umb_ca_cert,
-        )
         msg = {"source_ref": args.source_ref, "dest_refs": dest_refs}
-        producer.send_msg({}, msg)
+        send_umb_message(
+            args.umb_url,
+            msg,
+            {},
+            args.umb_cert,
+            topic,
+            args.umb_client_key,
+            args.umb_ca_cert,
+        )
 
 
 def verify_tag_images_args(args):
