@@ -122,7 +122,7 @@
                           {"docker_reference_registry": "fake-reference-registry",
 			   "docker_settings": {},
 			   "iib_server":"mock-iib-server"}],
-            "step_kwargs": {"docker_container_signing_enabled": false},
+            "step_kwargs": {"container_signing_enabled": false},
             "uid": "1"},
            {"details": [{"item": "push_item_filepath",
                          "state": "ready"},

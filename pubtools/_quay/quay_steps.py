@@ -370,7 +370,7 @@ class StepSignContainers(Step):
     Expected step args:
         (container_items_indexes_key)
     Expected step kwargs:
-        {"docker_container_signing_enabled": <True|False=default>}
+        {"container_signing_enabled": <True|False=default>}
     Expected shared results:
         <container_items_indexes_key>: [ list of indexes of container push items in push_items]
     Produced details:
@@ -400,7 +400,7 @@ class StepSignContainers(Step):
                     }
 
     def _pre_run(self):
-        if not self.step_kwargs.get("docker_container_signing_enabled"):
+        if not self.step_kwargs.get("container_signing_enabled"):
             self.skip = True
             self.skip_reason = "Container signing for the target is not enabled"
 

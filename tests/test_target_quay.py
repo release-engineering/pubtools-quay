@@ -800,7 +800,7 @@ def test_StepSignContainers_not_implemented(
     step2 = StepSignContainers(
         "1",
         ("StepSanitizeContainerPushItems:1",),
-        {"docker_container_signing_enabled": True},
+        {"container_signing_enabled": True},
         shared_results,
         external_resources={"push_items": push_items},
     )
@@ -809,7 +809,7 @@ def test_StepSignContainers_not_implemented(
     assert step2.dump() == {
         "name": "StepSignContainers",
         "step_args": ["StepSanitizeContainerPushItems:1"],
-        "step_kwargs": {"docker_container_signing_enabled": True},
+        "step_kwargs": {"container_signing_enabled": True},
         "uid": "1",
         "details": {
             "items": {
@@ -860,7 +860,7 @@ def test_StepSignContainers_skip(
     step2 = StepSignContainers(
         "1",
         ("StepSanitizeContainerPushItems:1",),
-        {"docker_container_signing_enabled": False},
+        {"container_signing_enabled": False},
         shared_results,
         external_resources={"push_items": push_items},
     )
@@ -868,7 +868,7 @@ def test_StepSignContainers_skip(
     assert step2.dump() == {
         "name": "StepSignContainers",
         "step_args": ["StepSanitizeContainerPushItems:1"],
-        "step_kwargs": {"docker_container_signing_enabled": False},
+        "step_kwargs": {"container_signing_enabled": False},
         "uid": "1",
         "details": {
             "items": {
