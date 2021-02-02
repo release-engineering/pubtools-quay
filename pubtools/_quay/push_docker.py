@@ -120,9 +120,9 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
             "1",
             ("StepSanitizeContainerPushItems:1", target_settings),
             {
-                "container_signing_enabled": target_settings[
-                    "docker_settings"
-                ].get("container_signing_enabled", False)
+                "container_signing_enabled": target_settings["docker_settings"].get(
+                    "container_signing_enabled", False
+                )
             },
             shared_data,
             external_resources=common_external_res,
