@@ -123,8 +123,9 @@ def tag_images(args):
         executor = LocalExecutor()
 
     dest_refs = args.dest_ref if isinstance(args.dest_ref, list) else [args.dest_ref]
+    all_arch = args.all_arch if args.all_arch is not None else False
     executor.skopeo_login(args.quay_user, args.quay_token)
-    executor.tag_images(args.source_ref, dest_refs)
+    executor.tag_images(args.source_ref, dest_refs, all_arch)
 
     if args.send_umb_msg:
         topic = args.umb_topic or "VirtualTopic.eng.pub.quay_tag_image"
