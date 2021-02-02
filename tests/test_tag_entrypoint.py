@@ -29,7 +29,31 @@ def test_run_tag_entrypoint_local_success(mock_local_executor):
     mock_local_executor.assert_called_once_with()
     mock_skopeo_login.assert_called_once_with(None, None)
     mock_tag_images.assert_called_once_with(
-        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"]
+        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
+    )
+
+
+@mock.patch("pubtools._quay.tag_images.LocalExecutor")
+def test_run_tag_entrypoint_local_success_all_arch(mock_local_executor):
+    args = [
+        "dummy",
+        "--source-ref",
+        "quay.io/repo/souce-image:1",
+        "--dest-ref",
+        "quay.io/repo/target-image:1",
+        "--all-arch",
+    ]
+    mock_skopeo_login = mock.MagicMock()
+    mock_local_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_tag_images = mock.MagicMock()
+    mock_local_executor.return_value.tag_images = mock_tag_images
+
+    tag_images.tag_images_main(args)
+
+    mock_local_executor.assert_called_once_with()
+    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_tag_images.assert_called_once_with(
+        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], True
     )
 
 
@@ -64,7 +88,7 @@ def test_run_tag_entrypoint_remote_success(mock_remote_executor):
     )
     mock_skopeo_login.assert_called_once_with(None, None)
     mock_tag_images.assert_called_once_with(
-        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"]
+        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
 
 
@@ -103,7 +127,7 @@ def test_run_tag_entrypoint_send_umb(mock_amq_producer, mock_local_executor):
     mock_local_executor.assert_called_once_with()
     mock_skopeo_login.assert_called_once_with(None, None)
     mock_tag_images.assert_called_once_with(
-        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"]
+        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
 
     mock_amq_producer.assert_called_once_with(
