@@ -123,6 +123,8 @@ setup(
     entry_points={
         "console_scripts": [
             "pubtools-quay-tag-image = pubtools._quay.tag_images:tag_images_main",
+            "pubtools-quay-merge-manifest-list = "
+            "pubtools._quay.merge_manifest_list:merge_manifest_list_main",
         ],
         "target": [
             "push-docker = pubtools._quay.push_docker:mod_entry_point"

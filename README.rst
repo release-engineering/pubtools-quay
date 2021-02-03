@@ -15,6 +15,10 @@ Requirements
 Features
 ========
 * pubtools-quay-tag-image - Copy a quay image from source to destination(s)
+* pubtools-quay-merge-manifest-list - Merge manifest lists of new and old images. The architectures
+  of new (source) image overwrite destination's archs. Archs missing from the source image will
+  still remain in the merged manifest list. Destination image's manifest list is overwritten by
+  the merged manifest list. 
 
 Setup
 =====
@@ -29,10 +33,10 @@ Setup
 Usage
 =====
 
-Locally copy an image from source to destination. Quay token is injected
+Locally copy an image from source to destination. Quay password is injected
 from the environment variable.
 ::
-  $ export AUTH_TOKEN=token
+  $ export QUAY_PASSWORD=token
   $ pubtools-quay-tag-image \
     --source-ref quay.io/source/image:34 \
     --dest-ref quay.io/target/image:34 \
@@ -40,7 +44,7 @@ from the environment variable.
 
 Connect to a remote host via ssh (using password) and perform the copying to multiple destinations.
 ::
-  $ export AUTH_TOKEN=token
+  $ export QUAY_PASSWORD=token
   $ export SSH_PASSWORD=123456
   $ pubtools-quay-tag-image \
     --source-ref quay.io/source/image:34 \
@@ -54,7 +58,7 @@ Connect to a remote host via ssh (using password) and perform the copying to mul
 
 Connect to a remote host via ssh (using private key), perform the copying, and send a UMB message.
 ::
-  $ export AUTH_TOKEN=token
+  $ export QUAY_PASSWORD=token
   $ export SSH_PASSWORD=123456
   $ pubtools-quay-tag-image \
     --source-ref quay.io/source/image:34 \
@@ -70,3 +74,11 @@ Connect to a remote host via ssh (using private key), perform the copying, and s
     --umb-url amqps://url2:5671 \
     --umb-cert /path/to/file.crt \
     --umb-topic VirtualTopic.eng.pub.some_topic
+
+Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the result.
+::
+  $ export QUAY_PASSWORD=token
+  $ pubtools-quay-merge-manifest-list \
+    --source-ref quay.io/src/image:1 \
+    --dest-ref quay.io/dest/image:1 \
+    --quay-user quay+username

@@ -56,7 +56,7 @@ def test_arg_parser_required_args(mock_tag_images):
     assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
     assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
     assert called_args[0].quay_user is None
-    assert called_args[0].quay_token is None
+    assert called_args[0].quay_password is None
     assert called_args[0].remote_exec is None
     assert called_args[0].ssh_remote_host is None
     assert called_args[0].ssh_reject_unknown_host is None
@@ -81,7 +81,7 @@ def test_arg_parser_full_args(mock_tag_images):
         "quay.io/repo/target-image:1",
         "--quay-user",
         "robot_user",
-        "--quay-token",
+        "--quay-password",
         "robot_token",
         "--remote-exec",
         "--ssh-remote-host",
@@ -111,7 +111,7 @@ def test_arg_parser_full_args(mock_tag_images):
     assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
     assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
     assert called_args[0].quay_user == "robot_user"
-    assert called_args[0].quay_token == "robot_token"
+    assert called_args[0].quay_password == "robot_token"
     assert called_args[0].remote_exec is True
     assert called_args[0].ssh_remote_host == "127.0.0.1"
     assert called_args[0].ssh_reject_unknown_host is True
@@ -198,8 +198,8 @@ def test_arg_parser_missing_hostname(mock_tag_images):
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
-def test_arg_parser_missing_quay_user_or_token(mock_tag_images):
-    missing_token = [
+def test_arg_parser_missing_quay_user_or_password(mock_tag_images):
+    missing_password = [
         "dummy",
         "--source-ref",
         "quay.io/repo/souce-image:1",
@@ -209,8 +209,8 @@ def test_arg_parser_missing_quay_user_or_token(mock_tag_images):
         "robot_user",
     ]
 
-    with pytest.raises(ValueError, match="Both user and token must be present.*"):
-        tag_images.tag_images_main(missing_token)
+    with pytest.raises(ValueError, match="Both user and password must be present.*"):
+        tag_images.tag_images_main(missing_password)
 
     missing_user = [
         "dummy",
@@ -218,11 +218,11 @@ def test_arg_parser_missing_quay_user_or_token(mock_tag_images):
         "quay.io/repo/souce-image:1",
         "--dest-ref",
         "quay.io/repo/target-image:1",
-        "--quay-token",
+        "--quay-password",
         "robot_token",
     ]
 
-    with pytest.raises(ValueError, match="Both user and token must be present.*"):
+    with pytest.raises(ValueError, match="Both user and password must be present.*"):
         tag_images.tag_images_main(missing_user)
 
     mock_tag_images.assert_not_called()
@@ -266,7 +266,9 @@ def test_arg_parser_missing_umb_cert(mock_tag_images):
     mock_tag_images.assert_not_called()
 
 
-@mock.patch.dict("os.environ", {"AUTH_TOKEN": "robot_token", "SSH_PASSWORD": "123456"})
+@mock.patch.dict(
+    "os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"}
+)
 @mock.patch("pubtools._quay.tag_images.tag_images")
 def test_arg_parser_env_variables(mock_tag_images):
     full_args = [
@@ -303,7 +305,7 @@ def test_arg_parser_env_variables(mock_tag_images):
     assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
     assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
     assert called_args[0].quay_user == "robot_user"
-    assert called_args[0].quay_token == "robot_token"
+    assert called_args[0].quay_password == "robot_token"
     assert called_args[0].remote_exec is True
     assert called_args[0].ssh_remote_host == "127.0.0.1"
     assert called_args[0].ssh_reject_unknown_host is True
