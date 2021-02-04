@@ -3,3 +3,5 @@ requests-mock
 pytest
 pytest-pylint
 pytest-cov
+pubtools-pyxis
+pushcollector

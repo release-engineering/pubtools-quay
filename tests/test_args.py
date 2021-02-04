@@ -1,7 +1,8 @@
 import mock
 import pytest
 
-from pubtools._quay import tag_images, utils
+from pubtools._quay import tag_images
+from pubtools._quay.utils import misc
 
 
 def test_argument_groups(capsys):
@@ -32,7 +33,7 @@ def test_argument_groups(capsys):
         },
     }
 
-    parser = utils.setup_arg_parser(args)
+    parser = misc.setup_arg_parser(args)
     parser.print_help()
     out, _ = capsys.readouterr()
 
