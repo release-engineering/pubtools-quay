@@ -1,3 +1,4 @@
+import json
 import sys
 
 import mock
@@ -137,11 +138,10 @@ def test_run_tag_entrypoint_send_umb(mock_amq_producer, mock_local_executor):
         topic="VirtualTopic.eng.pub.tagimage",
         trusted_certificates="/path/to/ca_cert.crt",
     )
-
+    expected = {
+        "source_ref": "quay.io/repo/souce-image:1",
+        "dest_refs": ["quay.io/repo/target-image:1"],
+    }
     mock_send_msg.assert_called_once_with(
-        {},
-        {
-            "source_ref": "quay.io/repo/souce-image:1",
-            "dest_refs": ["quay.io/repo/target-image:1"],
-        },
+        expected, json.dumps(expected).encode("utf-8")
     )
