@@ -4,4 +4,5 @@ pytest
 pytest-pylint
 pytest-cov
 pubtools-pyxis
+pyrsistent==0.15.7;python_version<'3.0'
 pushcollector

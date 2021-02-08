@@ -28,11 +28,11 @@ TAG_IMAGES_ARGS = {
         "required": False,
         "type": str,
     },
-    ("--quay-token",): {
-        "help": "Authentication token for Quay. Can be specified by env variable AUTH_TOKEN.",
+    ("--quay-password",): {
+        "help": "Password for Quay. Can be specified by env variable QUAY_PASSWORD.",
         "required": False,
         "type": str,
-        "env_variable": "AUTH_TOKEN",
+        "env_variable": "QUAY_PASSWORD",
     },
     ("--remote-exec",): {
         "help": "Flag of whether the commands should be executed on a remote server.",
@@ -124,7 +124,7 @@ def tag_images(args):
 
     dest_refs = args.dest_ref if isinstance(args.dest_ref, list) else [args.dest_ref]
     all_arch = args.all_arch if args.all_arch is not None else False
-    executor.skopeo_login(args.quay_user, args.quay_token)
+    executor.skopeo_login(args.quay_user, args.quay_password)
     executor.tag_images(args.source_ref, dest_refs, all_arch)
 
     if args.send_umb_msg:
@@ -149,11 +149,11 @@ def verify_tag_images_args(args):
                 "Remote host is missing when remote execution was specified."
             )
 
-    if (args.quay_user and not args.quay_token) or (
-        args.quay_token and not args.quay_user
+    if (args.quay_user and not args.quay_password) or (
+        args.quay_password and not args.quay_user
     ):
         raise ValueError(
-            "Both user and token must be present when attempting to log in."
+            "Both user and password must be present when attempting to log in."
         )
 
     if args.send_umb_msg:
