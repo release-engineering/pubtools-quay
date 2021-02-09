@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 
 
@@ -67,7 +68,7 @@ def add_args_env_variables(parsed_args, args):
 
 
 def send_umb_message(
-    urls, message, headers, cert, topic, client_key=None, ca_cert=None
+    urls, props, cert, topic, body=None, client_key=None, ca_cert=None
 ):
     """
     Send a UMB message.
@@ -75,12 +76,14 @@ def send_umb_message(
     Args:
         urls ([str]):
             URLs to send the message to.
-        message (str):
-            Message to send to UMB.
-        headers (dict):
-            Headers to include with the message.
+        props (dict):
+            Message properties dictionary.
         cert (str):
             Path to certificate for SSL authentication.
+        topic (str):
+            Topic to send the message to.
+        body (str):
+            Body of the message.
         client_key (str):
             Path to a private key for accessing the certificate.
         ca_cert (str):
@@ -95,4 +98,6 @@ def send_umb_message(
         topic=topic,
         trusted_certificates=ca_cert,
     )
-    producer.send_msg(headers, message)
+    if not body:
+        body = json.dumps(props).encode("utf-8")
+    producer.send_msg(props, body)

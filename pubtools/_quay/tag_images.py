@@ -129,15 +129,14 @@ def tag_images(args):
 
     if args.send_umb_msg:
         topic = args.umb_topic or "VirtualTopic.eng.pub.quay_tag_image"
-        msg = {"source_ref": args.source_ref, "dest_refs": dest_refs}
+        props = {"source_ref": args.source_ref, "dest_refs": dest_refs}
         send_umb_message(
             args.umb_url,
-            msg,
-            {},
+            props,
             args.umb_cert,
             topic,
-            args.umb_client_key,
-            args.umb_ca_cert,
+            client_key=args.umb_client_key,
+            ca_cert=args.umb_ca_cert,
         )
 
 
