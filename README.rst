@@ -36,6 +36,7 @@ Usage
 Locally copy an image from source to destination. Quay password is injected
 from the environment variable.
 ::
+
   $ export QUAY_PASSWORD=token
   $ pubtools-quay-tag-image \
     --source-ref quay.io/source/image:34 \
@@ -44,6 +45,7 @@ from the environment variable.
 
 Connect to a remote host via ssh (using password) and perform the copying to multiple destinations.
 ::
+
   $ export QUAY_PASSWORD=token
   $ export SSH_PASSWORD=123456
   $ pubtools-quay-tag-image \
@@ -58,6 +60,7 @@ Connect to a remote host via ssh (using password) and perform the copying to mul
 
 Connect to a remote host via ssh (using private key), perform the copying, and send a UMB message.
 ::
+
   $ export QUAY_PASSWORD=token
   $ export SSH_PASSWORD=123456
   $ pubtools-quay-tag-image \
@@ -77,8 +80,10 @@ Connect to a remote host via ssh (using private key), perform the copying, and s
 
 Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the result.
 ::
+
   $ export QUAY_PASSWORD=token
   $ pubtools-quay-merge-manifest-list \
     --source-ref quay.io/src/image:1 \
     --dest-ref quay.io/dest/image:1 \
     --quay-user quay+username
+
