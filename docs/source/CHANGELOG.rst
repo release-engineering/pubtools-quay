@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.2.0 (2021-2-9)
+------------------
+
+* Fix the definition of requirements.txt, allowing installation on Python 2.6
+
 0.1.0 (2021-2-9)
 ------------------
 
