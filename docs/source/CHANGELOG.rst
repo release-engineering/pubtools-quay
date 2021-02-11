@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.3.0 (2021-2-11)
+------------------
+
+* Fix the versioning constraint of pyrsistent dependency
+
 0.2.0 (2021-2-9)
 ------------------
 
