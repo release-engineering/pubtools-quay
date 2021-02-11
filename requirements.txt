@@ -1,5 +1,5 @@
 setuptools
-pyrsistent==0.13.0
+pyrsistent
 pushcollector
 paramiko
 requests
