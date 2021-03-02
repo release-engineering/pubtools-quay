@@ -128,6 +128,9 @@ setup(
         ],
         "target": [
             "push-docker = pubtools._quay.push_docker:mod_entry_point"
+        ],
+        "mock": [
+            "push-docker = pubtools._quay.push_docker:mocked_mod_entry_point"
         ]
     },
     include_package_data=True,

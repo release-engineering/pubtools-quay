@@ -470,7 +470,7 @@ class StepPushOperators(Step):
         items = {}
         self._details = {"items": items}
         for item in push_items:
-            bundle_repo = list(item.metadata["destination"]["tags"].keys())[0]
+            bundle_repo = list(item.metadata["tags"].keys())[0]
             bundle_ref = "{0}/{1}:{2}".format(
                 self.step_kwargs["docker_reference_registry"],
                 bundle_repo,

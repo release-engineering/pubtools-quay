@@ -961,7 +961,7 @@ def test_StepPushOperators_not_implemented(
         "details": {
             "items": {
                 "test-reference-registry/repo:1.0": "ready",
-                "test-reference-registry/repo:5.0.0": "ready",
+                "test-reference-registry/repo2:5.0.0": "ready",
             }
         },
         "stats": {
