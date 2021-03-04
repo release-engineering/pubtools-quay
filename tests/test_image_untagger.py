@@ -5,7 +5,7 @@ import requests_mock
 
 from pubtools._quay import quay_client
 from pubtools._quay import image_untagger
-from .utils import sort_dictionary_sortable_values, compare_logs
+from .utils.misc import sort_dictionary_sortable_values, compare_logs
 
 # flake8: noqa: E501
 

@@ -4,7 +4,7 @@ import pytest
 import requests_mock
 
 from pubtools._quay import untag_images
-from .utils import compare_logs
+from .utils.misc import compare_logs
 
 # flake8: noqa: E501
 
