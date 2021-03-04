@@ -30,7 +30,7 @@ class QuayClient:
         """
         self.username = username
         self.password = password
-        self.session = QuaySession(hostname=host)
+        self.session = QuaySession(hostname=host, api="docker")
 
     def get_manifest_list(self, image, raw=False):
         """

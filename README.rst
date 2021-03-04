@@ -19,6 +19,10 @@ Features
   of new (source) image overwrite destination's archs. Archs missing from the source image will
   still remain in the merged manifest list. Destination image's manifest list is overwritten by
   the merged manifest list. 
+* pubtools-quay-untag - Remove tags from quay repositories. Tags to remove are specified by
+  image references. In addition to Docker credentials, Quay API OAuth token has to be specified. 
+  Script will not perform the untagging operation if some image in a repo will lose its last
+  tag. In this scenario, untagging can be forced by using the --remove-last argument.
 
 Setup
 =====
@@ -86,4 +90,34 @@ Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the 
     --source-ref quay.io/src/image:1 \
     --dest-ref quay.io/dest/image:1 \
     --quay-user quay+username
+
+Untag multiple images and send a UMB message.
+::
+
+  $ export QUAY_PASSWORD=token
+  $ export QUAY_API_TOKEN=oauth_token
+  $ pubtools-quay-tag-image \
+    --reference quay.io/src/image:1 \
+    --reference quay.io/src/image:2 \
+    --quay-user quay+username \
+    --remote-exec \
+    --ssh-remote-host 127.0.0.1 \
+    --ssh-remote-host-port 2222 \
+    --ssh-username user \
+    --ssh-key-filename /path/to/file.key \
+    --send-umb-msg \
+    --umb-url amqps://url:5671 \
+    --umb-url amqps://url2:5671 \
+    --umb-cert /path/to/file.crt \
+    --umb-topic VirtualTopic.eng.pub.some_topic
+
+Untag an image and force the operation in case the tag is a last reference of some digest.
+::
+
+  $ export QUAY_PASSWORD=token
+  $ export QUAY_API_TOKEN=oauth_token
+  $ pubtools-quay-tag-image \
+    --reference quay.io/src/image:1 \
+    --remove-last \
+    --quay-user quay+username \
 

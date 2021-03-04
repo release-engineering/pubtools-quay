@@ -14,7 +14,7 @@ def test_init(mock_session):
 
     assert client.username == "user"
     assert client.password == "pass"
-    mock_session.assert_called_once_with(hostname="stage.quay.io")
+    mock_session.assert_called_once_with(api="docker", hostname="stage.quay.io")
 
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
