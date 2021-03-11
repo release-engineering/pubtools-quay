@@ -58,7 +58,6 @@ def test_init_no_docker_client(mock_quay_api_client, mock_quay_client):
     )
 
     assert untagger.references == references
-    assert untagger.host == host[:-1]
     assert not untagger.remove_last
     mock_quay_client.assert_not_called()
     mock_quay_api_client.assert_called_once_with(token, host[:-1])
