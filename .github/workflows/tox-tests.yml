@@ -16,7 +16,7 @@ jobs:
       - name: Install Python 2.6
         run: sudo apt-get install -y python2.6 python2.6-dev
       - name: Install pip
-        run: curl https://bootstrap.pypa.io/2.6/get-pip.py -o get-pip.py && sudo python2.6 get-pip.py
+        run: curl https://bootstrap.pypa.io/pip/2.6/get-pip.py -o get-pip.py && sudo python2.6 get-pip.py
       - name: Install Python dependencies
         run: sudo pip install -r requirements-test-py26.txt -r requirements-py26.txt && sudo pip install .
       - name: Run tests

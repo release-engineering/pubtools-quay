@@ -44,7 +44,9 @@ class Executor(object):
             )
         LOG.info("Logging in to Quay with provided credentials")
 
-        cmd_login = "skopeo login -u {0} --password-stdin quay.io".format(username)
+        cmd_login = (
+            "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin quay.io"
+        ).format(username)
         out, err = self._run_cmd(cmd_login, stdin=password)
 
         if "Login Succeeded" in out:
