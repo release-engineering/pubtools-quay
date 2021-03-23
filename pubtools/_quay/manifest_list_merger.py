@@ -3,7 +3,7 @@ import logging
 
 from .quay_client import QuayClient
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
@@ -54,17 +54,18 @@ class ManifestListMerger:
                 self.src_image, self.dest_image
             )
         )
-        src_manifest_list = self._quay_client.get_manifest_list(self.src_image)
-        dest_manifest_list = self._quay_client.get_manifest_list(self.dest_image)
+        src_manifest_list = self._quay_client.get_manifest(self.src_image, manifest_list=True)
+        dest_manifest_list = self._quay_client.get_manifest(self.dest_image, manifest_list=True)
 
-        missing_archs = self._get_missing_architectures(src_manifest_list, dest_manifest_list)
+        missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)
         new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)
 
         LOG.info("Uploading the new manifest list to '{0}'".format(self.dest_image))
-        self._quay_client.upload_manifest_list(new_manifest_list, self.dest_image)
+        self._quay_client.upload_manifest(new_manifest_list, self.dest_image)
         LOG.info("Merging manifests lists: complete.")
 
-    def _get_missing_architectures(self, src_manifest_list, dest_manifest_list):
+    @staticmethod
+    def get_missing_architectures(src_manifest_list, dest_manifest_list):
         """
         Get architectures which are missing from the new source image.
 
@@ -89,7 +90,7 @@ class ManifestListMerger:
                 missing_archs_log.append(dest_arch_dict["platform"]["architecture"])
 
         LOG.info(
-            "Architectures missing from the source image: {0}".format(", ".join(missing_archs_log))
+            "Architectures missing from the new image: {0}".format(", ".join(missing_archs_log))
         )
         return missing_archs
 

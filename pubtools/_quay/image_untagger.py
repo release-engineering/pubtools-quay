@@ -113,7 +113,7 @@ class ImageUntagger:
             # Option 2: We need to get digests of all architectures
             else:
                 image = image_schema.format(self.host, repository, attributes["manifest_digest"])
-                manifest_list = self._quay_client.get_manifest_list(image)
+                manifest_list = self._quay_client.get_manifest(image, manifest_list=True)
                 tag_digest_mapping[tag] = [attributes["manifest_digest"]]
                 digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(tag)
 

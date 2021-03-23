@@ -217,8 +217,6 @@ def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog)
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "No images will be lost by this untagging operation",
             "Removing tag '1' from repository 'name/repo1'",
         ]
@@ -277,8 +275,6 @@ def test_untag_images_lost_digests_remove_anyway(repo_api_data, manifest_list_da
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "Following images won't be referencable by tag: "
             ".*stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
             ".*stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"

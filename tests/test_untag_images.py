@@ -279,8 +279,6 @@ def test_full_run_remove_last(mock_send_umb_message, repo_api_data, manifest_lis
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "Following images won't be referencable by tag: "
             ".*quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
             ".*quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
@@ -350,8 +348,6 @@ def test_full_run_no_lost_digests(mock_send_umb_message, repo_api_data, manifest
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "No images will be lost by this untagging operation",
             "Removing tag '1' from repository 'name/repo1'",
             "Untagging operation succeeded",
@@ -427,8 +423,6 @@ def test_full_run_last_error(mock_send_umb_message, repo_api_data, manifest_list
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         ]
         compare_logs(caplog, expected_logs)
 

@@ -209,7 +209,7 @@ def test_get_manifest_list_success():
         )
 
         client = quay_client.QuayClient("user", "pass")
-        ret_ml = client.get_manifest_list("quay.io/namespace/image:1")
+        ret_ml = client.get_manifest("quay.io/namespace/image:1", manifest_list=True)
         assert m.call_count == 1
 
     assert ml == ret_ml
@@ -237,7 +237,7 @@ def test_get_manifest_list_raw_success():
         )
 
         client = quay_client.QuayClient("user", "pass")
-        ret_ml = client.get_manifest_list("quay.io/namespace/image:1", raw=True)
+        ret_ml = client.get_manifest("quay.io/namespace/image:1", raw=True, manifest_list=True)
         assert m.call_count == 1
 
     assert json.dumps(ml) == ret_ml
@@ -260,8 +260,30 @@ def test_get_manifest_list_wrong_type():
 
         client = quay_client.QuayClient("user", "pass")
         with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a manifest list"):
-            client.get_manifest_list("quay.io/namespace/image:1")
+            client.get_manifest("quay.io/namespace/image:1", manifest_list=True)
         assert m.call_count == 1
+
+
+def test_get_manifest_success():
+    manifest = {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 429,
+        "digest": "sha256:6d5f4d65fg4d6f54g",
+        "platform": {"architecture": "arm64", "os": "linux"},
+    }
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            json=manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        ret_manifest = client.get_manifest("quay.io/namespace/image:1")
+        assert m.call_count == 1
+
+    assert manifest == ret_manifest
 
 
 def test_upload_manifest_list_success():
@@ -282,7 +304,7 @@ def test_upload_manifest_list_success():
         m.put("https://quay.io/v2/namespace/image/manifests/1", status_code=200)
 
         client = quay_client.QuayClient("user", "pass")
-        client.upload_manifest_list(ml, "quay.io/namespace/image:1")
+        client.upload_manifest(ml, "quay.io/namespace/image:1")
         assert m.call_count == 1
 
 
@@ -305,5 +327,5 @@ def test_upload_manifest_list_failure():
 
         client = quay_client.QuayClient("user", "pass")
         with pytest.raises(requests.HTTPError, match="400 Client Error.*"):
-            client.upload_manifest_list(ml, "quay.io/namespace/image:1")
+            client.upload_manifest(ml, "quay.io/namespace/image:1")
         assert m.call_count == 1

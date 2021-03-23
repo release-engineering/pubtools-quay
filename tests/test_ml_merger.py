@@ -148,7 +148,7 @@ def test_set_client():
 
 def test_get_missing_architectures():
     merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
-    missing = merger._get_missing_architectures(new_ml, old_ml)
+    missing = merger.get_missing_architectures(new_ml, old_ml)
 
     assert missing == expected_missing_archs
 
