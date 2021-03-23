@@ -53,7 +53,5 @@ def merge_manifest_list_main(sysargs=None):
     args = add_args_env_variables(args, MERGE_MANIFEST_LIST_ARGS)
 
     verify_merge_manifest_list_args(args)
-    merger = ManifestListMerger(
-        args.source_ref, args.dest_ref, args.quay_user, args.quay_password
-    )
+    merger = ManifestListMerger(args.source_ref, args.dest_ref, args.quay_user, args.quay_password)
     merger.merge_manifest_lists()

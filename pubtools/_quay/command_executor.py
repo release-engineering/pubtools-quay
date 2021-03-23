@@ -40,8 +40,7 @@ class Executor(object):
 
         if not username or not password:
             raise ValueError(
-                "Skopeo login credentials are not present. "
-                "Quay user and token must be provided."
+                "Skopeo login credentials are not present. " "Quay user and token must be provided."
             )
         LOG.info("Logging in to Quay with provided credentials")
 
@@ -76,9 +75,7 @@ class Executor(object):
             cmd = "skopeo copy docker://{0} docker://{1}"
 
         for dest_ref in dest_refs:
-            LOG.info(
-                "Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref)
-            )
+            LOG.info("Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref))
             self._run_cmd(cmd.format(shlex_quote(source_ref), shlex_quote(dest_ref)))
             LOG.info("Destination image {0} has been tagged.".format(dest_ref))
 

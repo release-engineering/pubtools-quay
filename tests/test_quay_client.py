@@ -26,15 +26,11 @@ def test_parse_image(mock_session):
     assert repo == "name/image"
     assert ref == "1"
 
-    repo, ref = client._parse_and_validate_image_url(
-        "quay.io/name2/image2@sha256:dfgdfg8df5g"
-    )
+    repo, ref = client._parse_and_validate_image_url("quay.io/name2/image2@sha256:dfgdfg8df5g")
     assert repo == "name2/image2"
     assert ref == "sha256:dfgdfg8df5g"
 
-    with pytest.raises(
-        ValueError, match="Neither tag nor digest were found in the image"
-    ):
+    with pytest.raises(ValueError, match="Neither tag nor digest were found in the image"):
         client._parse_and_validate_image_url("quay.io/name/image")
 
 
@@ -50,9 +46,7 @@ def test_authenticate_quay_header_error(mock_session):
         "Connection": "close",
         "Docker-Distribution-API-Version": "registry/2.0",
     }
-    with pytest.raises(
-        exceptions.RegistryAuthError, match="'WWW-Authenticate' is not in the.*"
-    ):
+    with pytest.raises(exceptions.RegistryAuthError, match="'WWW-Authenticate' is not in the.*"):
         client._authenticate_quay(header1)
 
     header2 = {
@@ -65,9 +59,7 @@ def test_authenticate_quay_header_error(mock_session):
         "WWW-Authenticate": 'Basic realm="https://quay.io/v2/auth",service="quay.io",'
         'scope="repository:namespace/some-repo:pull"',
     }
-    with pytest.raises(
-        exceptions.RegistryAuthError, match="Different than the Bearer.*"
-    ):
+    with pytest.raises(exceptions.RegistryAuthError, match="Different than the Bearer.*"):
         client._authenticate_quay(header2)
 
 
@@ -132,9 +124,7 @@ def test_authenticate_quay_missing_token(mock_session, mock_quay_session):
         'scope="repository:namespace/some-repo:pull"',
     }
 
-    with pytest.raises(
-        exceptions.RegistryAuthError, match="Authentication server response.*"
-    ):
+    with pytest.raises(exceptions.RegistryAuthError, match="Authentication server response.*"):
         client._authenticate_quay(header)
 
 
@@ -215,9 +205,7 @@ def test_get_manifest_list_success():
         m.get(
             "https://quay.io/v2/namespace/image/manifests/1",
             json=ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
 
         client = quay_client.QuayClient("user", "pass")
@@ -245,9 +233,7 @@ def test_get_manifest_list_raw_success():
         m.get(
             "https://quay.io/v2/namespace/image/manifests/1",
             json=ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
 
         client = quay_client.QuayClient("user", "pass")
@@ -269,15 +255,11 @@ def test_get_manifest_list_wrong_type():
         m.get(
             "https://quay.io/v2/namespace/image/manifests/1",
             json=manifest,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
 
         client = quay_client.QuayClient("user", "pass")
-        with pytest.raises(
-            exceptions.ManifestTypeError, match=".*doesn't have a manifest list"
-        ):
+        with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a manifest list"):
             client.get_manifest_list("quay.io/namespace/image:1")
         assert m.call_count == 1
 

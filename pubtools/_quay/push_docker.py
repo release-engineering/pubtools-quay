@@ -141,11 +141,7 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
         StepPushOperators(
             "1",
             ("StepSanitizeOperatorPushItems:1", target_settings),
-            {
-                "docker_reference_registry": target_settings.get(
-                    "docker_reference_registry"
-                )
-            },
+            {"docker_reference_registry": target_settings.get("docker_reference_registry")},
             shared_data,
             external_resources=common_external_res,
         )
@@ -156,9 +152,7 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
             ("StepSanitizeContainerPushItems:1",),
             {
                 "autoupload_operators": target_settings.get("auto_upload_operators"),
-                "docker_reference_registry": target_settings.get(
-                    "docker_reference_registry"
-                ),
+                "docker_reference_registry": target_settings.get("docker_reference_registry"),
                 "iib_server": target_settings["iib_server"],
             },
             shared_data,
@@ -189,6 +183,4 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
     """Entry point for use in another python code."""
-    return push_docker(
-        push_items, "signing-key", hub, task_id, target_name, target_settings
-    )
+    return push_docker(push_items, "signing-key", hub, task_id, target_name, target_settings)

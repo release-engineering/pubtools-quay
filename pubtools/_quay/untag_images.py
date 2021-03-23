@@ -82,9 +82,7 @@ def construct_kwargs(args):
     Returns (dict):
         Keyword arguments for the 'untag_images' function.
     """
-    references = (
-        args.reference if isinstance(args.reference, list) else [args.reference]
-    )
+    references = args.reference if isinstance(args.reference, list) else [args.reference]
     kwargs = {"references": references, "quay_api_token": args.quay_api_token}
     if args.remove_last:
         kwargs["remove_last"] = args.remove_last
@@ -134,19 +132,14 @@ def verify_untag_images_args(
             raise ValueError("All references must be specified via tag, not digest")
 
     if (quay_user and not quay_password) or (quay_password and not quay_user):
-        raise ValueError(
-            "Both user and password must be present when attempting to log in."
-        )
+        raise ValueError("Both user and password must be present when attempting to log in.")
 
     if send_umb_msg:
         if not umb_urls:
-            raise ValueError(
-                "UMB URL must be specified if sending a UMB message was requested."
-            )
+            raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
         if not umb_cert:
             raise ValueError(
-                "A path to a client certificate must be provided "
-                "when sending a UMB message."
+                "A path to a client certificate must be provided " "when sending a UMB message."
             )
 
 
@@ -190,18 +183,10 @@ def untag_images(
         umb_topic (str):
             Topic to send the UMB messages to.
     """
-    verify_untag_images_args(
-        references, quay_user, quay_password, send_umb_msg, umb_urls, umb_cert
-    )
+    verify_untag_images_args(references, quay_user, quay_password, send_umb_msg, umb_urls, umb_cert)
 
-    LOG.info(
-        "Started untagging operation with the following references: {0}".format(
-            references
-        )
-    )
-    untagger = ImageUntagger(
-        references, quay_api_token, remove_last, quay_user, quay_password
-    )
+    LOG.info("Started untagging operation with the following references: {0}".format(references))
+    untagger = ImageUntagger(references, quay_api_token, remove_last, quay_user, quay_password)
     lost_images = untagger.untag_images()
 
     LOG.info("Untagging operation succeeded")

@@ -108,9 +108,7 @@ TAG_IMAGES_ARGS = {
 def tag_images(args):
     """Tag images main function."""
     if args.remote_exec:
-        accept_host = (
-            not args.ssh_reject_unknown_host if args.ssh_reject_unknown_host else True
-        )
+        accept_host = not args.ssh_reject_unknown_host if args.ssh_reject_unknown_host else True
         executor = RemoteExecutor(
             args.ssh_remote_host,
             args.ssh_username,
@@ -144,26 +142,17 @@ def verify_tag_images_args(args):
     """Verify the presence of input parameters."""
     if args.remote_exec:
         if not args.ssh_remote_host:
-            raise ValueError(
-                "Remote host is missing when remote execution was specified."
-            )
+            raise ValueError("Remote host is missing when remote execution was specified.")
 
-    if (args.quay_user and not args.quay_password) or (
-        args.quay_password and not args.quay_user
-    ):
-        raise ValueError(
-            "Both user and password must be present when attempting to log in."
-        )
+    if (args.quay_user and not args.quay_password) or (args.quay_password and not args.quay_user):
+        raise ValueError("Both user and password must be present when attempting to log in.")
 
     if args.send_umb_msg:
         if not args.umb_url:
-            raise ValueError(
-                "UMB URL must be specified if sending a UMB message was requested."
-            )
+            raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
         if not args.umb_cert:
             raise ValueError(
-                "A path to a client certificate must be provided "
-                "when sending a UMB message."
+                "A path to a client certificate must be provided " "when sending a UMB message."
             )
 
 

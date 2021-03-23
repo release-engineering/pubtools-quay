@@ -118,13 +118,9 @@ def test_remote_executor_run(mock_sshclient):
     )
 
     mock_load_host_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = (
-        mock_load_host_keys
-    )
+    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = mock_load_host_keys
     mock_set_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = (
-        mock_set_keys
-    )
+    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = mock_set_keys
     mock_connect = mock.MagicMock()
     mock_sshclient.return_value.__enter__.return_value.connect = mock_connect
 
@@ -175,13 +171,9 @@ def test_remote_executor_run_error(mock_sshclient):
     )
 
     mock_load_host_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = (
-        mock_load_host_keys
-    )
+    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = mock_load_host_keys
     mock_set_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = (
-        mock_set_keys
-    )
+    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = mock_set_keys
     mock_connect = mock.MagicMock()
     mock_sshclient.return_value.__enter__.return_value.connect = mock_connect
 
@@ -211,9 +203,7 @@ def test_skopeo_login_already_logged(mock_run_cmd):
 
     mock_run_cmd.return_value = ("Already logged in!", "")
     executor.skopeo_login("quay_user", "quay_token")
-    mock_run_cmd.assert_called_once_with(
-        "skopeo login --get-login quay.io", tolerate_err=True
-    )
+    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
@@ -254,16 +244,10 @@ def test_skopeo_login_failed(mock_run_cmd):
 def test_skopeo_tag_images(mock_run_cmd):
     executor = command_executor.LocalExecutor()
 
-    executor.tag_images(
-        "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"]
-    )
+    executor.tag_images("quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"])
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
-        ),
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
-        ),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]
 
 
@@ -275,10 +259,6 @@ def test_skopeo_tag_images_all_arch(mock_run_cmd):
         "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"], True
     )
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
-        ),
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
-        ),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]

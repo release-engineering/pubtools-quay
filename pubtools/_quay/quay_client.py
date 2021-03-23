@@ -55,9 +55,7 @@ class QuayClient:
 
         response = self._request_quay("GET", endpoint, kwargs)
         if response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE:
-            raise ManifestTypeError(
-                "Image {0} doesn't have a manifest list".format(image)
-            )
+            raise ManifestTypeError("Image {0} doesn't have a manifest list".format(image))
 
         if raw:
             return response.text
@@ -161,9 +159,7 @@ class QuayClient:
         r.raise_for_status()
 
         if "token" not in r.json():
-            raise RegistryAuthError(
-                "Authentication server response doesn't contain a token."
-            )
+            raise RegistryAuthError("Authentication server response doesn't contain a token.")
         self.session.set_auth_token(r.json()["token"])
 
     def _parse_and_validate_image_url(self, image):

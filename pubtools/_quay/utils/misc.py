@@ -18,9 +18,7 @@ def setup_arg_parser(args):
     for aliases, arg_data in args.items():
         holder = parser
         if "group" in arg_data:
-            arg_groups.setdefault(
-                arg_data["group"], parser.add_argument_group(arg_data["group"])
-            )
+            arg_groups.setdefault(arg_data["group"], parser.add_argument_group(arg_data["group"]))
             holder = arg_groups[arg_data["group"]]
         action = arg_data.get("action")
         if not action and arg_data["type"] == bool:
@@ -54,22 +52,14 @@ def add_args_env_variables(parsed_args, args):
         Modified parsed arguments object.
     """
     for aliases, arg_data in args.items():
-        named_alias = [
-            x.lstrip("-").replace("-", "_") for x in aliases if x.startswith("--")
-        ][0]
+        named_alias = [x.lstrip("-").replace("-", "_") for x in aliases if x.startswith("--")][0]
         if arg_data.get("env_variable"):
-            if not getattr(parsed_args, named_alias) and os.environ.get(
-                arg_data["env_variable"]
-            ):
-                setattr(
-                    parsed_args, named_alias, os.environ.get(arg_data["env_variable"])
-                )
+            if not getattr(parsed_args, named_alias) and os.environ.get(arg_data["env_variable"]):
+                setattr(parsed_args, named_alias, os.environ.get(arg_data["env_variable"]))
     return parsed_args
 
 
-def send_umb_message(
-    urls, props, cert, topic, body=None, client_key=None, ca_cert=None
-):
+def send_umb_message(urls, props, cert, topic, body=None, client_key=None, ca_cert=None):
     """
     Send a UMB message.
 

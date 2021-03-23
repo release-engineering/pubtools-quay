@@ -266,9 +266,7 @@ def test_arg_parser_missing_umb_cert(mock_tag_images):
     mock_tag_images.assert_not_called()
 
 
-@mock.patch.dict(
-    "os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"}
-)
+@mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"})
 @mock.patch("pubtools._quay.tag_images.tag_images")
 def test_arg_parser_env_variables(mock_tag_images):
     full_args = [

@@ -11,9 +11,7 @@ LOG.setLevel(logging.INFO)
 class ManifestListMerger:
     """Class containing logic for merging manifest lists of two images."""
 
-    def __init__(
-        self, src_image, dest_image, quay_username=None, quay_password=None, host=None
-    ):
+    def __init__(self, src_image, dest_image, quay_username=None, quay_password=None, host=None):
         """
         Initialize.
 
@@ -59,12 +57,8 @@ class ManifestListMerger:
         src_manifest_list = self._quay_client.get_manifest_list(self.src_image)
         dest_manifest_list = self._quay_client.get_manifest_list(self.dest_image)
 
-        missing_archs = self._get_missing_architectures(
-            src_manifest_list, dest_manifest_list
-        )
-        new_manifest_list = self._add_missing_architectures(
-            src_manifest_list, missing_archs
-        )
+        missing_archs = self._get_missing_architectures(src_manifest_list, dest_manifest_list)
+        new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)
 
         LOG.info("Uploading the new manifest list to '{0}'".format(self.dest_image))
         self._quay_client.upload_manifest_list(new_manifest_list, self.dest_image)
@@ -87,9 +81,7 @@ class ManifestListMerger:
         """
         missing_archs = []
         missing_archs_log = []
-        src_archs = [
-            arch["platform"]["architecture"] for arch in src_manifest_list["manifests"]
-        ]
+        src_archs = [arch["platform"]["architecture"] for arch in src_manifest_list["manifests"]]
 
         for dest_arch_dict in dest_manifest_list["manifests"]:
             if dest_arch_dict["platform"]["architecture"] not in src_archs:
@@ -97,9 +89,7 @@ class ManifestListMerger:
                 missing_archs_log.append(dest_arch_dict["platform"]["architecture"])
 
         LOG.info(
-            "Architectures missing from the source image: {0}".format(
-                ", ".join(missing_archs_log)
-            )
+            "Architectures missing from the source image: {0}".format(", ".join(missing_archs_log))
         )
         return missing_archs
 

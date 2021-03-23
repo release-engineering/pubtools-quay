@@ -43,9 +43,7 @@ class StepSanitizeContainerPushItems(Step):
     def _run(self, on_update=None):
         push_items = self.external_resources["push_items"]
         log_info = self.external_resources.get("log_info", lambda *args, **kwargs: ())
-        log_warning = self.external_resources.get(
-            "log_warning", lambda *args, **kwargs: ()
-        )
+        log_warning = self.external_resources.get("log_warning", lambda *args, **kwargs: ())
         log_error = self.external_resources.get("log_error", lambda *args, **kwargs: ())
 
         container_push_items = []
@@ -56,9 +54,7 @@ class StepSanitizeContainerPushItems(Step):
             item_error = False
             item_state = "ok"
             if item.file_type != "docker":
-                log_warning(
-                    LOG_INDENT + "Item %s is not container, skipping" % str(item)
-                )
+                log_warning(LOG_INDENT + "Item %s is not container, skipping" % str(item))
                 self.update_details((i, "not-container"))
                 _on_update()
                 continue
@@ -74,14 +70,9 @@ class StepSanitizeContainerPushItems(Step):
                     item.state = "NOTPUSHED"
             if item.errors:
                 item_state = "error"
-                self.results.errors.setdefault("item_errors", []).append(
-                    (str(item), item.errors)
-                )
+                self.results.errors.setdefault("item_errors", []).append((str(item), item.errors))
                 for message in item.errors.values():
-                    log_error(
-                        LOG_INDENT
-                        + "Bad push item '%s': %s" % (item.file_name, message)
-                    )
+                    log_error(LOG_INDENT + "Bad push item '%s': %s" % (item.file_name, message))
                 item.state = "INVALIDFILE"
                 item_error = True
                 failed = True
@@ -166,8 +157,7 @@ class StepSanitizeOperatorPushItems(Step):
             if op_type == "appregistry":
                 item_state = "unsupported-legacy"
                 log_info(
-                    LOG_INDENT
-                    + "Item %s is unsupported legacy (appregistry), skipping",
+                    LOG_INDENT + "Item %s is unsupported legacy (appregistry), skipping",
                     str(item),
                 )
             elif op_type != "bundle":
@@ -190,8 +180,7 @@ class StepSanitizeOperatorPushItems(Step):
                     )
                 )
                 log_error(
-                    LOG_INDENT
-                    + "Item %s is missing 'com.redhat.openshift.versions' label",
+                    LOG_INDENT + "Item %s is missing 'com.redhat.openshift.versions' label",
                     str(item),
                 )
                 errors = True
@@ -657,9 +646,7 @@ class StepRollback(Step):
     @log_jsonl("Rollback")
     def _run(self, on_update=None):
         backup_results_key = self.step_args[0]
-        rollback = self._shared_results[backup_results_key].results.get(
-            "rollback_tags", {}
-        )
+        rollback = self._shared_results[backup_results_key].results.get("rollback_tags", {})
         backup = self._shared_results[backup_results_key].results.get("backup_tags", {})
         for repo, tags in rollback.items():
             for to_rollback in tags:

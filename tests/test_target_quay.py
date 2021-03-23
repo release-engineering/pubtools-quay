@@ -319,9 +319,7 @@ def test_StepSanitizeContainerPushItems_no_pull_data(
         },
         "results": {
             "results": {},
-            "errors": {
-                "item_errors": [("push_item_filepath", "Cannot calculate pull data")]
-            },
+            "errors": {"item_errors": [("push_item_filepath", "Cannot calculate pull data")]},
         },
     }
 
@@ -605,9 +603,7 @@ def test_StepSanitizeOperatorPushItems_unsupported_legacy(
         "results": {
             "results": {},
             "errors": {
-                "item_errors": [
-                    ("push_item_filepath-1", "unknown operator type: operators_next")
-                ]
+                "item_errors": [("push_item_filepath-1", "unknown operator type: operators_next")]
             },
         },
     }
@@ -1136,9 +1132,7 @@ def test_StepRollback_ok(
             step3.run()
     assert step3.dump() == {
         "details": {
-            "items": {
-                "repo": {"source": "removed", "tag1": "restored", "tag2": "removed"}
-            }
+            "items": {"repo": {"source": "removed", "tag1": "restored", "tag2": "removed"}}
         },
         "name": "StepRollback",
         "results": {"errors": {}, "results": {}},
