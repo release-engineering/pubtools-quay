@@ -3,7 +3,7 @@ import logging
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 from .command_executor import LocalExecutor, RemoteExecutor
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 LOG.setLevel(logging.INFO)
 
 TAG_IMAGES_ARGS = {
@@ -101,56 +101,162 @@ TAG_IMAGES_ARGS = {
         "help": "UMB topic to send the message to.",
         "required": False,
         "type": str,
+        "default": "VirtualTopic.eng.pub.quay_tag_image",
     },
 }
 
 
-def tag_images(args):
-    """Tag images main function."""
+def construct_kwargs(args):
+    """
+    Construct a kwargs dictionary based on the entered command line arguments.
+    Args:
+        args (argparse.Namespace):
+            Parsed command line arguments.
+    Returns (dict):
+        Keyword arguments for the 'untag_images' function.
+    """
+    dest_refs = args.dest_ref if isinstance(args.dest_ref, list) else [args.dest_ref]
+    kwargs = {"source_ref": args.source_ref, "dest_refs": dest_refs}
+    if args.all_arch:
+        kwargs["all_arch"] = args.all_arch
+    if args.quay_user:
+        kwargs["quay_user"] = args.quay_user
+    if args.quay_password:
+        kwargs["quay_password"] = args.quay_password
     if args.remote_exec:
-        accept_host = not args.ssh_reject_unknown_host if args.ssh_reject_unknown_host else True
+        kwargs["remote_exec"] = args.remote_exec
+    if args.ssh_remote_host:
+        kwargs["ssh_remote_host"] = args.ssh_remote_host
+    if args.ssh_remote_host_port:
+        kwargs["ssh_remote_host_port"] = args.ssh_remote_host_port
+    if args.ssh_reject_unknown_host:
+        kwargs["ssh_reject_unknown_host"] = args.ssh_reject_unknown_host
+    if args.ssh_username:
+        kwargs["ssh_username"] = args.ssh_username
+    if args.ssh_password:
+        kwargs["ssh_password"] = args.ssh_password
+    if args.ssh_key_filename:
+        kwargs["ssh_key_filename"] = args.ssh_key_filename
+    if args.send_umb_msg:
+        kwargs["send_umb_msg"] = args.send_umb_msg
+    if args.umb_url:
+        umb_urls = args.umb_url if isinstance(args.umb_url, list) else [args.umb_url]
+        kwargs["umb_urls"] = umb_urls
+    if args.umb_cert:
+        kwargs["umb_cert"] = args.umb_cert
+    if args.umb_client_key:
+        kwargs["umb_client_key"] = args.umb_client_key
+    if args.umb_ca_cert:
+        kwargs["umb_cacert"] = args.umb_ca_cert
+    if args.umb_topic:
+        kwargs["umb_topic"] = args.umb_topic
+
+    return kwargs
+
+
+def tag_images(
+    source_ref,
+    dest_refs,
+    all_arch=False,
+    quay_user=None,
+    quay_password=None,
+    remote_exec=False,
+    ssh_remote_host=None,
+    ssh_remote_host_port=None,
+    ssh_reject_unknown_host=False,
+    ssh_username=None,
+    ssh_password=None,
+    ssh_key_filename=None,
+    send_umb_msg=False,
+    umb_urls=[],
+    umb_cert=None,
+    umb_client_key=None,
+    umb_cacert=None,
+    umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+):
+    """
+    Tag images in Quay.
+
+    Args:
+        source_ref (str):
+            Source image reference.
+        dest_refs ([str]):
+            List of destination image references.
+        all_arch (bool):
+            Whether to copy all architectures.
+        quay_user (str):
+            Quay username for Docker HTTP API.
+        quay_password (str):
+            Quay password for Docker HTTP API.
+        remote_exec (bool):
+            Whether to execute the command remotely.
+        ssh_remote_host (str):
+            Hostname for remote execution.
+        ssh_remote_host_port (str):
+            Port of the remote host.
+        ssh_reject_unknown_host (bool):
+            whether to reject an SSH host when it's not found among known hosts.
+        ssh_username (str):
+            Username for SSH connection. Defaults to local username.
+        ssh_password (str):
+            Password for SSH. Will only be used if key-based validation is not available.
+        ssh_key_filename (str):
+            Path to the private key file for SSH authentication.
+        send_umb_msg (bool):
+            Whether to send UMB messages about the untagged images.
+        umb_urls ([str]):
+            AMQP broker URLs to connect to.
+        umb_cert (str):
+            Path to a certificate used for UMB authentication.
+        umb_client_key (str):
+            Path to a client key to decrypt the certificate (if necessary).
+        umb_cacert (str):
+            Path to a CA certificate (for mutual authentication).
+        umb_topic (str):
+            Topic to send the UMB messages to.
+    """
+    verify_tag_images_args(
+        quay_user, quay_password, remote_exec, ssh_remote_host, send_umb_msg, umb_urls, umb_cert,
+    )
+
+    if remote_exec:
+        accept_host = not ssh_reject_unknown_host if ssh_reject_unknown_host else True
         executor = RemoteExecutor(
-            args.ssh_remote_host,
-            args.ssh_username,
-            args.ssh_key_filename,
-            args.ssh_password,
-            args.ssh_remote_host_port,
+            ssh_remote_host,
+            ssh_username,
+            ssh_key_filename,
+            ssh_password,
+            ssh_remote_host_port,
             accept_host,
         )
     else:
         executor = LocalExecutor()
 
-    dest_refs = args.dest_ref if isinstance(args.dest_ref, list) else [args.dest_ref]
-    all_arch = args.all_arch if args.all_arch is not None else False
-    executor.skopeo_login(args.quay_user, args.quay_password)
-    executor.tag_images(args.source_ref, dest_refs, all_arch)
+    executor.skopeo_login(quay_user, quay_password)
+    executor.tag_images(source_ref, dest_refs, all_arch)
 
-    if args.send_umb_msg:
-        topic = args.umb_topic or "VirtualTopic.eng.pub.quay_tag_image"
-        props = {"source_ref": args.source_ref, "dest_refs": dest_refs}
+    if send_umb_msg:
+        props = {"source_ref": source_ref, "dest_refs": dest_refs}
         send_umb_message(
-            args.umb_url,
-            props,
-            args.umb_cert,
-            topic,
-            client_key=args.umb_client_key,
-            ca_cert=args.umb_ca_cert,
+            umb_urls, props, umb_cert, umb_topic, client_key=umb_client_key, ca_cert=umb_cacert,
         )
 
 
-def verify_tag_images_args(args):
+def verify_tag_images_args(
+    quay_user, quay_password, remote_exec, ssh_remote_host, send_umb_msg, umb_urls, umb_cert,
+):
     """Verify the presence of input parameters."""
-    if args.remote_exec:
-        if not args.ssh_remote_host:
+    if remote_exec:
+        if not ssh_remote_host:
             raise ValueError("Remote host is missing when remote execution was specified.")
 
-    if (args.quay_user and not args.quay_password) or (args.quay_password and not args.quay_user):
+    if (quay_user and not quay_password) or (quay_password and not quay_user):
         raise ValueError("Both user and password must be present when attempting to log in.")
 
-    if args.send_umb_msg:
-        if not args.umb_url:
+    if send_umb_msg:
+        if not umb_urls:
             raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
-        if not args.umb_cert:
+        if not umb_cert:
             raise ValueError(
                 "A path to a client certificate must be provided " "when sending a UMB message."
             )
@@ -165,5 +271,5 @@ def tag_images_main(sysargs=None):
         args = parser.parse_args()  # pragma: no cover"
     args = add_args_env_variables(args, TAG_IMAGES_ARGS)
 
-    verify_tag_images_args(args)
-    tag_images(args)
+    kwargs = construct_kwargs(args)
+    tag_images(**kwargs)
