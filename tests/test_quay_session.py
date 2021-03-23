@@ -1,19 +1,42 @@
 import mock
+import pytest
 
 from pubtools._quay import quay_session
 
 
 @mock.patch("pubtools._quay.quay_session.requests.Session")
-def test_init(mock_session):
+def test_init_docker_api(mock_session):
     mocked_session = mock.MagicMock()
     mocked_session.headers = {}
     mock_session.return_value = mocked_session
 
-    session = quay_session.QuaySession()
+    session = quay_session.QuaySession(api="docker")
 
     assert session.hostname == "quay.io"
     assert session.session.verify is False
     assert session.session.headers["Host"] == "quay.io"
+    assert session.api == "docker"
+    assert session._api_url("some-endpoint") == "https://quay.io/v2/some-endpoint"
+
+
+@mock.patch("pubtools._quay.quay_session.requests.Session")
+def test_init_quay_api(mock_session):
+    mocked_session = mock.MagicMock()
+    mocked_session.headers = {}
+    mock_session.return_value = mocked_session
+
+    session = quay_session.QuaySession(api="quay")
+
+    assert session.hostname == "quay.io"
+    assert session.session.verify is False
+    assert session.session.headers["Host"] == "quay.io"
+    assert session.api == "quay"
+    assert session._api_url("some-endpoint") == "https://quay.io/api/v1/some-endpoint"
+
+
+def test_init_unsupported_api():
+    with pytest.raises(ValueError, match="Unknown API type.*"):
+        quay_session.QuaySession(api="unsupported")
 
 
 @mock.patch("pubtools._quay.quay_session.requests.Session")

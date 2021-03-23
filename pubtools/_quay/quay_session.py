@@ -7,7 +7,9 @@ from requests.packages.urllib3.util.retry import Retry
 class QuaySession(object):
     """Helper class to support Quay requests and authentication."""
 
-    def __init__(self, hostname=None, retries=3, backoff_factor=2, verify=False):
+    def __init__(
+        self, hostname=None, retries=3, backoff_factor=2, verify=False, api="docker"
+    ):
         """
         Initialize.
 
@@ -20,7 +22,13 @@ class QuaySession(object):
                 backoff factor to apply between attempts after the second try.
             verify (bool)
                 enable/disable SSL CA verification.
+            api (str):
+                Which API queries to construct. Supported values: 'docker', 'quay'
         """
+        if api not in ("docker", "quay"):
+            raise ValueError("Unknown API type: '{0}'".format(api))
+        self.api = api
+
         self.session = requests.Session()
         self.hostname = hostname or "quay.io"
         self.session.verify = verify
@@ -119,14 +127,19 @@ class QuaySession(object):
         Returns:
             str: Full URL of the endpoint.
         """
+        if self.api == "docker":
+            schema = "{0}{1}/v2/{2}"
+        elif self.api == "quay":
+            schema = "{0}{1}/api/v1/{2}"
+
         if "http://" not in self.hostname and "https://" not in self.hostname:
-            return "https://%s/v2/%s" % (self.hostname.rstrip("/"), endpoint)
+            return schema.format("https://", self.hostname.rstrip("/"), endpoint)
         else:
-            return "%s/v2/%s" % (self.hostname.rstrip("/"), endpoint)
+            return schema.format("", self.hostname.rstrip("/"), endpoint)
 
     def set_auth_token(self, token):
         """
-        Set a Bearer auth token received from the auth server.
+        Set a Bearer auth token for the authentication.
 
         Args:
             token (str):
