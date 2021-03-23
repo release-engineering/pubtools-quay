@@ -6,7 +6,7 @@ except ImportError:
 import json
 import pytest
 
-from pubtools._quay.push_docker import mod_entry_point
+from pubtools._quay.push_docker2 import mod_entry_point
 
 MOCK_FILES = {}
 
