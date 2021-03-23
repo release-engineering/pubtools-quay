@@ -9,6 +9,53 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs
 
 # flake8: noqa: E501
 
+try:
+    UNUSED = type("Unused", ("object",), {})
+except TypeError:
+    UNUSED = type("Unused", (), {})
+
+
+def setup_untagger(
+    references,
+    token=UNUSED,
+    quay_user=UNUSED,
+    quay_password=UNUSED,
+    host=UNUSED,
+    remove_last=UNUSED,
+):
+    _token = "some-token"
+    _quay_user = "some-user"
+    _quay_password = "some-password"
+    _host = "stage.quay.io/"
+    untagger = image_untagger.ImageUntagger(
+        references,
+        token if token is not UNUSED else _token,
+        remove_last if remove_last is not UNUSED else False,
+        quay_user if _quay_user is not UNUSED else _quay_user,
+        quay_password if quay_password is not UNUSED else _quay_password,
+        host if host is not UNUSED else _host,
+    )
+    return untagger
+
+
+def register_manifest_url(mocker, repo, manifest, data, mlist=False):
+    mocker.get(
+        "https://stage.quay.io/v2/name/%s/manifests/%s" % (repo, manifest),
+        json=data,
+        headers={
+            "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
+        }
+        if mlist
+        else {},
+    )
+
+
+def register_repo_api(mocker, repo, data):
+    mocker.get(
+        "https://stage.quay.io/api/v1/repository/name/%s" % repo,
+        json=data,
+    )
+
 
 @mock.patch("pubtools._quay.image_untagger.QuayClient")
 @mock.patch("pubtools._quay.image_untagger.QuayApiClient")
@@ -36,29 +83,18 @@ def test_init_bad_reference(mock_quay_api_client, mock_quay_client):
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo2@sha256:dgdgdg",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
     with pytest.raises(ValueError, match=".*must be specified via tag, not digest.*"):
-        image_untagger.ImageUntagger(
-            references, token, False, quay_user, quay_password, host
-        )
+        untagger = setup_untagger(references)
 
 
 @mock.patch("pubtools._quay.image_untagger.QuayClient")
 @mock.patch("pubtools._quay.image_untagger.QuayApiClient")
 def test_init_no_docker_client(mock_quay_api_client, mock_quay_client):
     references = ["stage.quay.io/name/repo1:1", "stage.quay.io/name/repo2:2"]
-    token = "some-token"
-    quay_user = "some-user"
     host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, host=host
-    )
+    token = "some-token"
+    untagger = setup_untagger(references, quay_password=None, token=token, host=host)
 
-    assert untagger.references == references
-    assert not untagger.remove_last
     mock_quay_client.assert_not_called()
     mock_quay_api_client.assert_called_once_with(token, host[:-1])
     assert untagger._quay_client is None
@@ -78,13 +114,7 @@ def test_repo_tag_mapping(mock_quay_api_client, mock_quay_client):
         "stage.quay.io/name2/repo1:1",
         "stage.quay.io/name2/repo1:3",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
 
     repo_tag_mapping = untagger.get_repository_tags_mapping()
     assert repo_tag_mapping == {
@@ -106,25 +136,13 @@ def test_tag_digest_mappings(
         "stage.quay.io/name/repo1:3",
         "stage.quay.io/name/repo1:4",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        m.get(
-            "https://stage.quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+        register_repo_api(m, "repo1", repo_api_data)
+        DIGEST = (
+            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         )
-        m.get(
-            "https://stage.quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
-        )
+        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         tag_digest_mapping, digest_tag_mapping = untagger.construct_tag_digest_mappings(
             "name/repo1"
         )
@@ -152,13 +170,7 @@ def test_get_lost_digests_none(
     references = [
         "stage.quay.io/name/repo1:1",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
 
     lost_digests = untagger.get_lost_digests(
         ["1"], common_tag_digest_mapping, common_digest_tag_mapping
@@ -178,13 +190,7 @@ def test_get_lost_digests_some(
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
 
     lost_digests = untagger.get_lost_digests(
         ["1", "2"], common_tag_digest_mapping, common_digest_tag_mapping
@@ -202,25 +208,13 @@ def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog)
     references = [
         "stage.quay.io/name/repo1:1",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        m.get(
-            "https://stage.quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+        register_repo_api(m, "repo1", repo_api_data)
+        DIGEST = (
+            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         )
-        m.get(
-            "https://stage.quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
-        )
+        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         lost_images = untagger.untag_images()
 
@@ -243,25 +237,13 @@ def test_untag_images_lost_digests_error(repo_api_data, manifest_list_data, capl
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, False, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        m.get(
-            "https://stage.quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+        register_repo_api(m, "repo1", repo_api_data)
+        DIGEST = (
+            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         )
-        m.get(
-            "https://stage.quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
-        )
+        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
 
         expected_err_msg = (
@@ -284,25 +266,13 @@ def test_untag_images_lost_digests_remove_anyway(
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
-    token = "some-token"
-    quay_user = "some-user"
-    quay_password = "some-password"
-    host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, True, quay_user, quay_password, host
-    )
+    untagger = setup_untagger(references, remove_last=True)
     with requests_mock.Mocker() as m:
-        m.get(
-            "https://stage.quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+        register_repo_api(m, "repo1", repo_api_data)
+        DIGEST = (
+            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         )
-        m.get(
-            "https://stage.quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
-        )
+        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/2")
         lost_images = untagger.untag_images()
