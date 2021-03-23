@@ -1,6 +1,7 @@
 import logging
 import shlex
 import subprocess
+from six.moves import shlex_quote
 
 import paramiko
 
@@ -46,7 +47,7 @@ class Executor(object):
 
         cmd_login = (
             "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin quay.io"
-        ).format(username)
+        ).format(shlex_quote(username))
         out, err = self._run_cmd(cmd_login, stdin=password)
 
         if "Login Succeeded" in out:
@@ -78,7 +79,7 @@ class Executor(object):
             LOG.info(
                 "Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref)
             )
-            self._run_cmd(cmd.format(source_ref, dest_ref))
+            self._run_cmd(cmd.format(shlex_quote(source_ref), shlex_quote(dest_ref)))
             LOG.info("Destination image {0} has been tagged.".format(dest_ref))
 
         LOG.info("Tagging complete.")
