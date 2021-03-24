@@ -1,6 +1,10 @@
 setuptools
 requests
 PyNaCl==1.0.1
+gssapi==1.5.1
+python-qpid-proton==0.18.0
+ndg-httpsclient==0.4.4
+edgegrid-python==1.0.10
 cryptography==2.1.4
 idna==2.7
 paramiko==2.3.1

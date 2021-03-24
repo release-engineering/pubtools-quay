@@ -206,10 +206,10 @@ def test_get_signatures_from_radas(
 
     sig_handler.get_signatures_from_radas(claim_messages)
 
-    assert mock_claim_handler.call_args.kwargs["umb_urls"] == ["some-url1", "some-url2"]
+    assert mock_claim_handler.call_args[1]["umb_urls"] == ["some-url1", "some-url2"]
     radas_addr = "queue://Consumer.msg-producer-pub.1.VirtualTopic.eng.robosignatory.container.sign"
-    assert mock_claim_handler.call_args.kwargs["radas_address"] == radas_addr
-    assert mock_claim_handler.call_args.kwargs["claim_messages"] == [
+    assert mock_claim_handler.call_args[1]["radas_address"] == radas_addr
+    assert mock_claim_handler.call_args[1]["claim_messages"] == [
         {
             "sig_key_id": "key1",
             "claim_file": "some-encode",
@@ -244,11 +244,11 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
-    assert mock_claim_handler.call_args.kwargs["pub_cert"] == "/etc/pub/umb-pub-cert-key.pem"
-    assert mock_claim_handler.call_args.kwargs["ca_cert"] == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert mock_claim_handler.call_args.kwargs["timeout"] == 600
-    assert mock_claim_handler.call_args.kwargs["throttle"] == 100
-    assert mock_claim_handler.call_args.kwargs["retry"] == 3
+    assert mock_claim_handler.call_args[1]["pub_cert"] == "/etc/pub/umb-pub-cert-key.pem"
+    assert mock_claim_handler.call_args[1]["ca_cert"] == "/etc/pki/tls/certs/ca-bundle.crt"
+    assert mock_claim_handler.call_args[1]["timeout"] == 600
+    assert mock_claim_handler.call_args[1]["throttle"] == 100
+    assert mock_claim_handler.call_args[1]["retry"] == 3
 
     assert len(mock_proton.mock_calls) == 2
 

@@ -51,24 +51,12 @@ def test_arg_parser_required_args(mock_tag_images):
         "quay.io/repo/target-image:1",
     ]
     tag_images.tag_images_main(required_args)
-    called_args = mock_tag_images.call_args.kwargs
 
-    assert called_args["source_ref"] == "quay.io/repo/souce-image:1"
-    assert called_args["dest_refs"] == ["quay.io/repo/target-image:1"]
-    assert "quay_user" not in called_args
-    assert "quay_password" not in called_args
-    assert "remote_exec" not in called_args
-    assert "ssh_remote_host" not in called_args
-    assert "ssh_reject_unknown_host" not in called_args
-    assert "ssh_username" not in called_args
-    assert "ssh_password" not in called_args
-    assert "ssh_key_filename" not in called_args
-    assert "send_umb_msg" not in called_args
-    assert "umb_url" not in called_args
-    assert "umb_cert" not in called_args
-    assert "umb_client_key" not in called_args
-    assert "umb_ca_cert" not in called_args
-    assert called_args["umb_topic"] == "VirtualTopic.eng.pub.quay_tag_image"
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -108,25 +96,26 @@ def test_arg_parser_full_args(mock_tag_images):
         "VirtualTopic.eng.pub.tagimage",
     ]
     tag_images.tag_images_main(full_args)
-    called_args = mock_tag_images.call_args.kwargs
 
-    assert called_args["source_ref"] == "quay.io/repo/souce-image:1"
-    assert called_args["dest_refs"] == ["quay.io/repo/target-image:1"]
-    assert called_args["quay_user"] == "robot_user"
-    assert called_args["quay_password"] == "robot_token"
-    assert called_args["remote_exec"] is True
-    assert called_args["ssh_remote_host"] == "127.0.0.1"
-    assert called_args["ssh_remote_host_port"] == 5000
-    assert called_args["ssh_reject_unknown_host"] is True
-    assert called_args["ssh_username"] == "dummy"
-    assert called_args["ssh_password"] == "123456"
-    assert called_args["ssh_key_filename"] == "/path/to/file.key"
-    assert called_args["send_umb_msg"] is True
-    assert called_args["umb_urls"] == ["amqps://url:5671"]
-    assert called_args["umb_cert"] == "/path/to/file.crt"
-    assert called_args["umb_client_key"] == "/path/to/umb.key"
-    assert called_args["umb_cacert"] == "/path/to/ca_cert.crt"
-    assert called_args["umb_topic"] == "VirtualTopic.eng.pub.tagimage"
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        dest_refs=["quay.io/repo/target-image:1"],
+        quay_user="robot_user",
+        quay_password="robot_token",
+        remote_exec=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_remote_host_port=5000,
+        ssh_reject_unknown_host=True,
+        ssh_username="dummy",
+        ssh_password="123456",
+        ssh_key_filename="/path/to/file.key",
+        send_umb_msg=True,
+        umb_urls=["amqps://url:5671"],
+        umb_cert="/path/to/file.crt",
+        umb_client_key="/path/to/umb.key",
+        umb_cacert="/path/to/ca_cert.crt",
+        umb_topic="VirtualTopic.eng.pub.tagimage",
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -148,15 +137,15 @@ def test_arg_parser_multiple_args(mock_tag_images):
         "/path/to/file.crt",
     ]
     tag_images.tag_images_main(multi_args)
-    called_args = mock_tag_images.call_args.kwargs
 
-    assert called_args["source_ref"] == "quay.io/repo/souce-image:1"
-    assert called_args["dest_refs"] == [
-        "quay.io/repo/target-image:1",
-        "quay.io/repo/target-image:2",
-    ]
-    assert called_args["send_umb_msg"] is True
-    assert called_args["umb_urls"] == ["amqps://url1:5671", "amqps://url2:5671"]
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        dest_refs=["quay.io/repo/target-image:1", "quay.io/repo/target-image:2"],
+        send_umb_msg=True,
+        umb_urls=["amqps://url1:5671", "amqps://url2:5671"],
+        umb_cert="/path/to/file.crt",
+        umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -289,21 +278,22 @@ def test_arg_parser_env_variables(mock_tag_images):
         "VirtualTopic.eng.pub.tagimage",
     ]
     tag_images.tag_images_main(full_args)
-    called_args = mock_tag_images.call_args.kwargs
 
-    assert called_args["source_ref"] == "quay.io/repo/souce-image:1"
-    assert called_args["dest_refs"] == ["quay.io/repo/target-image:1"]
-    assert called_args["quay_user"] == "robot_user"
-    assert called_args["quay_password"] == "robot_token"
-    assert called_args["remote_exec"] is True
-    assert called_args["ssh_remote_host"] == "127.0.0.1"
-    assert called_args["ssh_reject_unknown_host"] is True
-    assert called_args["ssh_username"] == "dummy"
-    assert called_args["ssh_password"] == "123456"
-    assert called_args["ssh_key_filename"] == "/path/to/file.key"
-    assert called_args["send_umb_msg"] is True
-    assert called_args["umb_urls"] == ["amqps://url:5671"]
-    assert called_args["umb_cert"] == "/path/to/file.crt"
-    assert called_args["umb_client_key"] == "/path/to/umb.key"
-    assert called_args["umb_cacert"] == "/path/to/ca_cert.crt"
-    assert called_args["umb_topic"] == "VirtualTopic.eng.pub.tagimage"
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        dest_refs=["quay.io/repo/target-image:1"],
+        quay_user="robot_user",
+        quay_password="robot_token",
+        remote_exec=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_reject_unknown_host=True,
+        ssh_username="dummy",
+        ssh_password="123456",
+        ssh_key_filename="/path/to/file.key",
+        send_umb_msg=True,
+        umb_urls=["amqps://url:5671"],
+        umb_cert="/path/to/file.crt",
+        umb_client_key="/path/to/umb.key",
+        umb_cacert="/path/to/ca_cert.crt",
+        umb_topic="VirtualTopic.eng.pub.tagimage",
+    )

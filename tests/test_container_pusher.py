@@ -120,11 +120,11 @@ def test_merge_workflow(
     )
     mock_get_manifest.assert_called_once_with("registry/src/image:1", manifest_list=True)
     # test that src digests are copied to all dest repos
-    assert mock_tag_images.call_args_list[0].args[1] == [
+    assert mock_tag_images.call_args_list[0][0][1] == [
         "registry/dest1/image@digest1",
         "registry/dest2/image@digest1",
     ]
-    assert mock_tag_images.call_args_list[1].args[1] == [
+    assert mock_tag_images.call_args_list[1][0][1] == [
         "registry/dest1/image@digest2",
         "registry/dest2/image@digest2",
     ]
@@ -170,7 +170,7 @@ def test_copy_multiarch_item_no_extra_archs(
     )
 
     assert mock_tag_images.call_count == 1
-    assert mock_tag_images.call_args_list[0].args == (
+    assert mock_tag_images.call_args_list[0][0] == (
         "some-registry/src/repo:1",
         ["quay.io/some-namespace/target----repo:latest-test-tag"],
     )
@@ -215,7 +215,7 @@ def test_copy_multiarch_item_no_dest_ml(
     )
 
     assert mock_tag_images.call_count == 1
-    assert mock_tag_images.call_args_list[0].args == (
+    assert mock_tag_images.call_args_list[0][0] == (
         "some-registry/src/repo:1",
         ["quay.io/some-namespace/target----repo:latest-test-tag"],
     )
@@ -292,7 +292,7 @@ def test_copy_multiarch_item_missing_archs(
     )
 
     assert mock_merge_workflow.call_count == 1
-    assert mock_merge_workflow.call_args_list[0].args == (
+    assert mock_merge_workflow.call_args_list[0][0] == (
         "some-registry/src/repo:1",
         ["quay.io/some-namespace/target----repo:latest-test-tag"],
     )
