@@ -1,6 +1,5 @@
 setuptools
 pyrsistent
-pushcollector
 paramiko
 requests
 

@@ -6,7 +6,7 @@ except ImportError:
 import json
 import pytest
 
-from pubtools._quay.push_docker import mod_entry_point
+from pubtools._quay.push_docker import mod_entry_point, mocked_mod_entry_point
 
 MOCK_FILES = {}
 
@@ -77,6 +77,29 @@ def test_push_docker_ok(
     fixture_isodate_now,
 ):
     mod_entry_point(
+        [container_push_item_ok, operator_push_item_ok],
+        MockHub(),
+        "mock-task-id",
+        "mock-target-name",
+        {
+            "docker_settings": {},
+            "iib_server": "mock-iib-server",
+            "docker_reference_registry": "fake-reference-registry",
+        },
+    )
+    status = json.loads(MOCK_FILES["mock-task-id.report.json"])
+    assert status == json.load(open(fixture_test_data_dir + "test_push_docker_ok.json"))
+
+
+def test_push_docker_ok_mock_entrypoint(
+    container_push_item_ok,
+    operator_push_item_ok,
+    fixture_update_tag_backups,
+    fixture_push_container_item,
+    fixture_merge_manifest_list,
+    fixture_test_data_dir,
+):
+    mocked_mod_entry_point(
         [container_push_item_ok, operator_push_item_ok],
         MockHub(),
         "mock-task-id",

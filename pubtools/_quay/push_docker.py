@@ -1,6 +1,11 @@
 from io import BytesIO
 import json
 
+try:
+    import mock
+except ImportError:  # pragma: no cover
+    from unittest import mock  # pragma: no cover
+
 from .quay_steps import (
     StepSanitizeContainerPushItems,
     StepPushContainerImgs,
@@ -13,33 +18,11 @@ from .quay_steps import (
     StepRollback,
 )
 
-from .utils.stepper import Stepper
+from .utils.stepper import Stepper, isodate_now
 from .utils.logger import Logger
 
-import pushcollector
 
 CLI_DESCRIPTION = ""
-
-
-def log_push_items(signing_key, items=None):
-    """Update push items according to their state."""
-    collector = pushcollector.Collector.get()
-    push_items_to_log = []
-    for item in items:
-        for repo in item.repos or [""]:
-            push_items_to_log.append(
-                {
-                    "filename": item.file_name,
-                    "src": item.file_path,
-                    "dest": repo,
-                    "build": item.build,
-                    "state": item.state,
-                    "origin": item.origin,
-                    "signing_key": signing_key.upper(),
-                    "checksums": item.checksums,
-                }
-            )
-    collector.update_push_items(push_items_to_log)
 
 
 def push_docker(push_items, signing_key, hub, task_id, target_name, target_settings):
@@ -59,7 +42,6 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
         target_settings (dict)
             Target settings
     """
-    log_push_items(signing_key, items=push_items)
     shared_data = {}
     logger = Logger()
     common_external_res = {
@@ -180,7 +162,6 @@ def push_docker(push_items, signing_key, hub, task_id, target_name, target_setti
         stepper.run(start_from=-1)
         raise
     finally:
-        log_push_items(signing_key, items=push_items)
         results = stepper.dump()
         json_io = BytesIO(str(json.dumps(results) + "\n").encode("utf-8"))
         hub.upload_task_log(json_io, task_id, "report.json")
@@ -192,3 +173,16 @@ def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
     return push_docker(
         push_items, "signing-key", hub, task_id, target_name, target_settings
     )
+
+
+def mocked_mod_entry_point(push_items, hub, task_id, target_name, target_settings):
+    """Mock entry point for use in testing in another code."""
+    _isodate_now = [0]
+    with mock.patch(isodate_now.__module__ + ".isodate_now") as patched_isodate_now:
+        patched_isodate_now.side_effect = (
+            lambda: "isodate_now_%d"
+            % [_isodate_now.__setitem__(0, _isodate_now[0] + 1), _isodate_now][1][0]
+        )
+        return push_docker(
+            push_items, "signing-key", hub, task_id, target_name, target_settings
+        )
