@@ -1,6 +1,7 @@
 setuptools
 requests
-python-qpid-proton==0.29.0
+PyNaCl==1.0.1
+cryptography==2.1.4
 idna==2.7
 paramiko==2.3.1
 PyYAML < 5.1

@@ -109,6 +109,7 @@ TAG_IMAGES_ARGS = {
 def construct_kwargs(args):
     """
     Construct a kwargs dictionary based on the entered command line arguments.
+
     Args:
         args (argparse.Namespace):
             Parsed command line arguments.
@@ -216,7 +217,13 @@ def tag_images(
             Topic to send the UMB messages to.
     """
     verify_tag_images_args(
-        quay_user, quay_password, remote_exec, ssh_remote_host, send_umb_msg, umb_urls, umb_cert,
+        quay_user,
+        quay_password,
+        remote_exec,
+        ssh_remote_host,
+        send_umb_msg,
+        umb_urls,
+        umb_cert,
     )
 
     if remote_exec:
@@ -238,12 +245,23 @@ def tag_images(
     if send_umb_msg:
         props = {"source_ref": source_ref, "dest_refs": dest_refs}
         send_umb_message(
-            umb_urls, props, umb_cert, umb_topic, client_key=umb_client_key, ca_cert=umb_cacert,
+            umb_urls,
+            props,
+            umb_cert,
+            umb_topic,
+            client_key=umb_client_key,
+            ca_cert=umb_cacert,
         )
 
 
 def verify_tag_images_args(
-    quay_user, quay_password, remote_exec, ssh_remote_host, send_umb_msg, umb_urls, umb_cert,
+    quay_user,
+    quay_password,
+    remote_exec,
+    ssh_remote_host,
+    send_umb_msg,
+    umb_urls,
+    umb_cert,
 ):
     """Verify the presence of input parameters."""
     if remote_exec:

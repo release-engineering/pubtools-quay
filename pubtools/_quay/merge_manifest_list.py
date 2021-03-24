@@ -3,7 +3,7 @@ import logging
 from .utils.misc import setup_arg_parser, add_args_env_variables
 from .manifest_list_merger import ManifestListMerger
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 

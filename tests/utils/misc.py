@@ -1,4 +1,9 @@
+import contextlib
+import mock
+import pkg_resources
 import re
+
+# flake8: noqa: D200, D107, D102, D105
 
 
 def sort_dictionary_sortable_values(dictionary):
@@ -37,3 +42,63 @@ def compare_logs(caplog, expected_logs):
                     log_line, expected_logs[i]
                 )
             )
+
+
+class FixedEntryPoint(object):
+    """An EntryPoint which always points at the specified object rather than going
+    through normal resolution."""
+
+    def __init__(self, delegate, resolved_object):
+        # These all work identically as in the real entry point
+        self.name = delegate.name
+        self.module_name = delegate.module_name
+        self.attrs = delegate.attrs
+        self.extras = delegate.extras
+        self.dist = delegate.dist
+        self.require = delegate.require
+        self.__str__ = delegate.__str__
+
+        # But any attempt to load or resolve will just return this rather than
+        # the true underlying object
+        self.load = lambda: resolved_object
+        self.resolve = lambda: resolved_object
+
+
+class EntryPointOverride(object):
+    """Point a named entry point at a provided object temporarily."""
+
+    def __init__(self, replacement, dist, group, name):
+        self._name = name
+
+        # Keep a reference to the original entry point
+        dist = pkg_resources.get_distribution(dist)
+        self._ep_map = dist.get_entry_map(group)
+        self._old_ep = self._ep_map[self._name]
+
+        # Prepare the replacement
+        self._replace_ep = FixedEntryPoint(self._old_ep, replacement)
+
+    def start(self):
+        self._ep_map[self._name] = self._replace_ep
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def stop(self):
+        self._ep_map[self._name] = self._old_ep
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+
+
+@contextlib.contextmanager
+def mock_entry_point(dist, group, name):
+    """Point a given entry point at a new mock object for the duration of the current test."""
+    new_mock = mock.Mock()
+    override = EntryPointOverride(new_mock, dist, group, name)
+    try:
+        override.start()
+        yield new_mock
+    finally:
+        override.stop()

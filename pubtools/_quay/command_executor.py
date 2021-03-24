@@ -8,10 +8,12 @@ import paramiko
 LOG = logging.getLogger("PubLogger")
 LOG.setLevel(logging.INFO)
 
+
 # Python 2.6 version of paramiko doesn't support the usage
 # of SSHClient as a context manager. This wrapper adds the functionality
 @contextlib.contextmanager
 def open_ssh_client():
+    """Use SSHClient as a context manager."""
     client = paramiko.client.SSHClient()
     try:
         yield client

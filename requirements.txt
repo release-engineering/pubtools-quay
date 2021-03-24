@@ -3,5 +3,11 @@ pyrsistent
 pushcollector
 paramiko
 requests
+pubtools-pyxis
+six
+python-qpid-proton
+monotonic
+iiblib
+pubtools-iib
 
 # -e git+https://code.engineering.redhat.com/gerrit/rhmsg#egg=rhmsg-0.9

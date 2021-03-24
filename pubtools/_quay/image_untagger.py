@@ -3,7 +3,7 @@ import logging
 from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
@@ -104,7 +104,7 @@ class ImageUntagger:
         digest_tag_mapping = {}
         image_schema = "{0}/{1}@{2}"
 
-        for tag, attributes in repo_data["tags"].items():
+        for tag, attributes in sorted(repo_data["tags"].items()):
             # image_id is undefined if tag references a manifest list
             # Option 1: No manifest list, only manifest
             if attributes["image_id"]:

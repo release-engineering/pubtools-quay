@@ -6,7 +6,7 @@ from requests.packages.urllib3.util.retry import Retry
 # Unfortunately, version of 'six' available on RHEL 6 doesn't cover this redirect
 try:
     import urllib2 as request
-except ImportError:
+except ImportError:  # pragma: no cover
     from urllib import request
 
 from .exceptions import ManifestTypeError, RegistryAuthError
@@ -152,7 +152,11 @@ class QuayClient:
         host = params.pop("realm")
         session = requests.Session()
         retry = Retry(
-            total=3, read=3, connect=3, backoff_factor=2, status_forcelist=set(range(500, 512)),
+            total=3,
+            read=3,
+            connect=3,
+            backoff_factor=2,
+            status_forcelist=set(range(500, 512)),
         )
         adapter = requests.adapters.HTTPAdapter(max_retries=retry)
         session.mount("http://", adapter)
