@@ -225,7 +225,11 @@ def test_skopeo_login_success(mock_run_cmd):
     executor.skopeo_login("quay_user", "quay_token")
     assert mock_run_cmd.call_args_list == [
         mock.call("skopeo login --get-login quay.io", tolerate_err=True),
-        mock.call("skopeo login -u quay_user --password-stdin quay.io", stdin="quay_token"),
+        mock.call(
+            "skopeo login --authfile $HOME/.docker/config.json -u quay_user "
+            "--password-stdin quay.io",
+            stdin="quay_token",
+        ),
     ]
 
 
