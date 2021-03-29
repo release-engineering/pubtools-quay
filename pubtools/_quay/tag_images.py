@@ -114,43 +114,20 @@ def construct_kwargs(args):
         args (argparse.Namespace):
             Parsed command line arguments.
     Returns (dict):
-        Keyword arguments for the 'untag_images' function.
+        Keyword arguments for the 'tag_images' function.
     """
-    dest_refs = args.dest_ref if isinstance(args.dest_ref, list) else [args.dest_ref]
-    kwargs = {"source_ref": args.source_ref, "dest_refs": dest_refs}
-    if args.all_arch:
-        kwargs["all_arch"] = args.all_arch
-    if args.quay_user:
-        kwargs["quay_user"] = args.quay_user
-    if args.quay_password:
-        kwargs["quay_password"] = args.quay_password
-    if args.remote_exec:
-        kwargs["remote_exec"] = args.remote_exec
-    if args.ssh_remote_host:
-        kwargs["ssh_remote_host"] = args.ssh_remote_host
-    if args.ssh_remote_host_port:
-        kwargs["ssh_remote_host_port"] = args.ssh_remote_host_port
-    if args.ssh_reject_unknown_host:
-        kwargs["ssh_reject_unknown_host"] = args.ssh_reject_unknown_host
-    if args.ssh_username:
-        kwargs["ssh_username"] = args.ssh_username
-    if args.ssh_password:
-        kwargs["ssh_password"] = args.ssh_password
-    if args.ssh_key_filename:
-        kwargs["ssh_key_filename"] = args.ssh_key_filename
-    if args.send_umb_msg:
-        kwargs["send_umb_msg"] = args.send_umb_msg
-    if args.umb_url:
-        umb_urls = args.umb_url if isinstance(args.umb_url, list) else [args.umb_url]
-        kwargs["umb_urls"] = umb_urls
-    if args.umb_cert:
-        kwargs["umb_cert"] = args.umb_cert
-    if args.umb_client_key:
-        kwargs["umb_client_key"] = args.umb_client_key
-    if args.umb_ca_cert:
-        kwargs["umb_cacert"] = args.umb_ca_cert
-    if args.umb_topic:
-        kwargs["umb_topic"] = args.umb_topic
+    kwargs = args.__dict__
+
+    # in args.__dict__ unspecified bool values have 'None' instead of 'False'
+    for name, attributes in TAG_IMAGES_ARGS.items():
+        if attributes["type"] is bool:
+            bool_var = name[0].lstrip("-").replace("-", "_")
+            if kwargs[bool_var] is None:
+                kwargs[bool_var] = False
+
+    # some exceptions have to be remapped
+    kwargs["dest_refs"] = kwargs.pop("dest_ref")
+    kwargs["umb_urls"] = kwargs.pop("umb_url")
 
     return kwargs
 
@@ -172,7 +149,7 @@ def tag_images(
     umb_urls=[],
     umb_cert=None,
     umb_client_key=None,
-    umb_cacert=None,
+    umb_ca_cert=None,
     umb_topic="VirtualTopic.eng.pub.quay_tag_image",
 ):
     """
@@ -211,7 +188,7 @@ def tag_images(
             Path to a certificate used for UMB authentication.
         umb_client_key (str):
             Path to a client key to decrypt the certificate (if necessary).
-        umb_cacert (str):
+        umb_ca_cert (str):
             Path to a CA certificate (for mutual authentication).
         umb_topic (str):
             Topic to send the UMB messages to.
@@ -250,7 +227,7 @@ def tag_images(
             umb_cert,
             umb_topic,
             client_key=umb_client_key,
-            ca_cert=umb_cacert,
+            ca_cert=umb_ca_cert,
         )
 
 

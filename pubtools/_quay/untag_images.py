@@ -82,27 +82,18 @@ def construct_kwargs(args):
     Returns (dict):
         Keyword arguments for the 'untag_images' function.
     """
-    references = args.reference if isinstance(args.reference, list) else [args.reference]
-    kwargs = {"references": references, "quay_api_token": args.quay_api_token}
-    if args.remove_last:
-        kwargs["remove_last"] = args.remove_last
-    if args.quay_user:
-        kwargs["quay_user"] = args.quay_user
-    if args.quay_password:
-        kwargs["quay_password"] = args.quay_password
-    if args.send_umb_msg:
-        kwargs["send_umb_msg"] = args.send_umb_msg
-    if args.umb_url:
-        umb_urls = args.umb_url if isinstance(args.umb_url, list) else [args.umb_url]
-        kwargs["umb_urls"] = umb_urls
-    if args.umb_cert:
-        kwargs["umb_cert"] = args.umb_cert
-    if args.umb_client_key:
-        kwargs["umb_client_key"] = args.umb_client_key
-    if args.umb_ca_cert:
-        kwargs["umb_cacert"] = args.umb_ca_cert
-    if args.umb_topic:
-        kwargs["umb_topic"] = args.umb_topic
+    kwargs = args.__dict__
+
+    # in args.__dict__ unspecified bool values have 'None' instead of 'False'
+    for name, attributes in UNTAG_IMAGES_ARGS.items():
+        if attributes["type"] is bool:
+            bool_var = name[0].lstrip("-").replace("-", "_")
+            if kwargs[bool_var] is None:
+                kwargs[bool_var] = False
+
+    # some exceptions have to be remapped
+    kwargs["references"] = kwargs.pop("reference")
+    kwargs["umb_urls"] = kwargs.pop("umb_url")
 
     return kwargs
 
@@ -153,7 +144,7 @@ def untag_images(
     umb_urls=[],
     umb_cert=None,
     umb_client_key=None,
-    umb_cacert=None,
+    umb_ca_cert=None,
     umb_topic="VirtualTopic.eng.pub.quay_untag_image",
 ):
     """
@@ -178,7 +169,7 @@ def untag_images(
             Path to a certificate used for UMB authentication.
         umb_client_key (str):
             Path to a client key to decrypt the certificate (if necessary).
-        umb_cacert (str):
+        umb_ca_cert (str):
             Path to a CA certificate (for mutual authentication).
         umb_topic (str):
             Topic to send the UMB messages to.
@@ -199,7 +190,7 @@ def untag_images(
             umb_cert,
             umb_topic,
             client_key=umb_client_key,
-            ca_cert=umb_cacert,
+            ca_cert=umb_ca_cert,
         )
 
 

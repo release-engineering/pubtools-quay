@@ -57,7 +57,7 @@ def test_tag_images(
         umb_urls=["some-url1", "some-url2"],
         umb_cert="/etc/pub/umb-pub-cert-key.pem",
         umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_cacert="/etc/pki/tls/certs/ca-bundle.crt",
+        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
     )
 
 
@@ -92,7 +92,7 @@ def test_copy_src_item(
         umb_urls=["some-url1", "some-url2"],
         umb_cert="/etc/pub/umb-pub-cert-key.pem",
         umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_cacert="/etc/pki/tls/certs/ca-bundle.crt",
+        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
     )
 
 

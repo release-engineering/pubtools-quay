@@ -88,7 +88,7 @@ class ContainerImagePusher:
             umb_client_key=self.target_settings.get(
                 "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
             ),
-            umb_cacert=self.target_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
+            umb_ca_cert=self.target_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
         )
 
     def copy_source_push_item(self, push_item):

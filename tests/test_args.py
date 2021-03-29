@@ -54,8 +54,23 @@ def test_arg_parser_required_args(mock_tag_images):
 
     assert mock_tag_images.call_args == mock.call(
         source_ref="quay.io/repo/souce-image:1",
-        dest_refs=["quay.io/repo/target-image:1"],
+        all_arch=False,
+        quay_user=None,
+        quay_password=None,
+        remote_exec=False,
+        ssh_remote_host=None,
+        ssh_remote_host_port=None,
+        ssh_reject_unknown_host=False,
+        ssh_username=None,
+        ssh_password=None,
+        ssh_key_filename=None,
+        send_umb_msg=False,
+        umb_cert=None,
+        umb_client_key=None,
+        umb_ca_cert=None,
         umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=None,
     )
 
 
@@ -99,7 +114,7 @@ def test_arg_parser_full_args(mock_tag_images):
 
     assert mock_tag_images.call_args == mock.call(
         source_ref="quay.io/repo/souce-image:1",
-        dest_refs=["quay.io/repo/target-image:1"],
+        all_arch=False,
         quay_user="robot_user",
         quay_password="robot_token",
         remote_exec=True,
@@ -110,11 +125,12 @@ def test_arg_parser_full_args(mock_tag_images):
         ssh_password="123456",
         ssh_key_filename="/path/to/file.key",
         send_umb_msg=True,
-        umb_urls=["amqps://url:5671"],
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",
-        umb_cacert="/path/to/ca_cert.crt",
+        umb_ca_cert="/path/to/ca_cert.crt",
         umb_topic="VirtualTopic.eng.pub.tagimage",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=["amqps://url:5671"],
     )
 
 
@@ -140,11 +156,23 @@ def test_arg_parser_multiple_args(mock_tag_images):
 
     assert mock_tag_images.call_args == mock.call(
         source_ref="quay.io/repo/souce-image:1",
-        dest_refs=["quay.io/repo/target-image:1", "quay.io/repo/target-image:2"],
+        all_arch=False,
+        quay_user=None,
+        quay_password=None,
+        remote_exec=False,
+        ssh_remote_host=None,
+        ssh_remote_host_port=None,
+        ssh_reject_unknown_host=False,
+        ssh_username=None,
+        ssh_password=None,
+        ssh_key_filename=None,
         send_umb_msg=True,
-        umb_urls=["amqps://url1:5671", "amqps://url2:5671"],
         umb_cert="/path/to/file.crt",
+        umb_client_key=None,
+        umb_ca_cert=None,
         umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+        dest_refs=["quay.io/repo/target-image:1", "quay.io/repo/target-image:2"],
+        umb_urls=["amqps://url1:5671", "amqps://url2:5671"],
     )
 
 
@@ -281,19 +309,21 @@ def test_arg_parser_env_variables(mock_tag_images):
 
     assert mock_tag_images.call_args == mock.call(
         source_ref="quay.io/repo/souce-image:1",
-        dest_refs=["quay.io/repo/target-image:1"],
+        all_arch=False,
         quay_user="robot_user",
         quay_password="robot_token",
         remote_exec=True,
         ssh_remote_host="127.0.0.1",
+        ssh_remote_host_port=None,
         ssh_reject_unknown_host=True,
         ssh_username="dummy",
         ssh_password="123456",
         ssh_key_filename="/path/to/file.key",
         send_umb_msg=True,
-        umb_urls=["amqps://url:5671"],
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",
-        umb_cacert="/path/to/ca_cert.crt",
+        umb_ca_cert="/path/to/ca_cert.crt",
         umb_topic="VirtualTopic.eng.pub.tagimage",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=["amqps://url:5671"],
     )

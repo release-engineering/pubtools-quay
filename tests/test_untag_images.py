@@ -61,7 +61,7 @@ def test_arg_constructor_all_args(mock_untag_images):
     assert called_args["umb_urls"] == ["amqps://url:5671", "amqps://url:5672"]
     assert called_args["umb_cert"] == "/path/to/file.crt"
     assert called_args["umb_client_key"] == "/path/to/umb.key"
-    assert called_args["umb_cacert"] == "/path/to/ca_cert.crt"
+    assert called_args["umb_ca_cert"] == "/path/to/ca_cert.crt"
     assert called_args["quay_api_token"] == "api_token"
     assert called_args["umb_topic"] == "VirtualTopic.eng.pub.untag_image_new"
 
