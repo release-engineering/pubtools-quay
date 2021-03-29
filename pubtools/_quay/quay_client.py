@@ -74,11 +74,13 @@ class QuayClient:
         """
         Upload manifest to a specified image.
 
+        All manifest types are supported (manifest, manifest list).
+
         Args:
             manifest (dict):
                 Manifest to be uploaded.
             image (str):
-                Image address to upload the manifest list to.
+                Image address to upload the manifest to.
         """
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)

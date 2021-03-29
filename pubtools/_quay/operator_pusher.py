@@ -36,9 +36,7 @@ class OperatorPusher:
         self.push_items = push_items
         self.target_settings = target_settings
 
-        self.quay_host = self.target_settings.get("quay_host") or "quay.io"
-        if self.quay_host[-1] == "/":
-            self.quay_host = self.quay_host[:-1]
+        self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         self._quay_client = QuayClient(
             self.target_settings["quay_user"],

@@ -42,9 +42,7 @@ class ContainerImagePusher:
         self.push_items = push_items
         self.target_settings = target_settings
 
-        self.quay_host = self.target_settings.get("quay_host") or "quay.io"
-        if self.quay_host[-1] == "/":
-            self.quay_host = self.quay_host[:-1]
+        self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         # TODO: will our robot credentials be able to read from brew's build repos?
         self._quay_client = QuayClient(

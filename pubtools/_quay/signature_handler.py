@@ -52,9 +52,7 @@ class SignatureHandler:
             else [self.dest_registries]
         )
 
-        self.quay_host = self.target_settings.get("quay_host") or "quay.io"
-        if self.quay_host[-1] == "/":
-            self.quay_host = self.quay_host[:-1]
+        self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         self._quay_client = QuayClient(
             self.target_settings["quay_user"],
