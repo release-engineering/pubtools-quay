@@ -130,7 +130,7 @@ def verify_untag_images_args(
             raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
         if not umb_cert:
             raise ValueError(
-                "A path to a client certificate must be provided " "when sending a UMB message."
+                "A path to a client certificate must be provided when sending a UMB message."
             )
 
 

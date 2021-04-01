@@ -76,6 +76,8 @@ def test_pyxis_get_ocp_versions(
         ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-operator-indices"),
         "pubtools-pyxis-get-operator-indices",
         [
+            "--pyxis-server",
+            "pyxis-url.com",
             "--pyxis-krb-principal",
             "some-principal@REDHAT.COM",
             "--organization",

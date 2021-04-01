@@ -107,7 +107,7 @@ class OperatorPusher:
         LOG.info("Getting OCP versions of '{0}' from Pyxis.".format(ocp_versions))
 
         args = ["--pyxis-server", self.target_settings["pyxis_server"]]
-        args = ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
+        args += ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
         args += ["--organization", self.target_settings["iib_organization"]]
         args += ["--ocp-versions-range", ocp_versions]
         if "iib_krb_ktfile" in self.target_settings:
@@ -126,8 +126,8 @@ class OperatorPusher:
                 ocp_versions, push_item.metadata["build"]["build_id"]
             )
             raise ValueError(msg)
-        # Versions returned by Pyxis don't contain 'v' at the front (4.5 -> v4.5)
 
+        # Versions returned by Pyxis don't contain 'v' at the front (4.5 -> v4.5)
         return ["v{0}".format(item["ocp_version"]) for item in data]
 
     def generate_version_items_mapping(self):

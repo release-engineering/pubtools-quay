@@ -13,6 +13,8 @@ LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
+INTERNAL_DELIMITER = "----"
+
 
 def setup_arg_parser(args):
     """
@@ -207,7 +209,7 @@ def get_internal_container_repo_name(external_name):
     if external_name.count("/") != 1 or external_name[0] == "/" or external_name[-1] == "/":
         raise ValueError("Input repository should have the format '<namespace>/<product>'")
 
-    return external_name.replace("/", "----")
+    return external_name.replace("/", INTERNAL_DELIMITER)
 
 
 def get_external_container_repo_name(internal_name):
@@ -224,13 +226,13 @@ def get_external_container_repo_name(internal_name):
         External repository name.
     """
     if (
-        internal_name.count("----") != 1
-        or internal_name.find("----") == 0
-        or internal_name.find("----") == len(internal_name) - 4
+        internal_name.count(INTERNAL_DELIMITER) != 1
+        or internal_name.find(INTERNAL_DELIMITER) == 0
+        or internal_name.find(INTERNAL_DELIMITER) == len(internal_name) - 4
     ):
         raise ValueError("Input repository should have the format '<namespace>----<product>'")
 
-    return internal_name.replace("----", "/")
+    return internal_name.replace(INTERNAL_DELIMITER, "/")
 
 
 def task_status(event):

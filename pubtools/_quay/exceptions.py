@@ -1,21 +1,21 @@
 class ManifestTypeError(Exception):
-    """Occurres when an incorrect manifest type is encountered."""
+    """Occurs when an incorrect manifest type is encountered."""
 
 
 class RegistryAuthError(Exception):
-    """Occurres when registry authentication encounters an issue."""
+    """Occurs when registry authentication encounters an issue."""
 
 
 class BadPushItem(Exception):
-    """Occurres when a bad push item is being proccessed."""
+    """Occurs when a bad push item is being processed."""
 
 
 class InvalidTargetSettings(Exception):
-    """Occurres when required target setting is missing or has an incorrect value."""
+    """Occurs when required target setting is missing or has an incorrect value."""
 
 
 class InvalidRepository(Exception):
-    """Occurres when a repository hasn't passed its validation checks."""
+    """Occurs when a repository hasn't passed its validation checks."""
 
 
 class SigningError(Exception):
