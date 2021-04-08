@@ -44,8 +44,7 @@ class SignatureHandler:
         self.target_settings = target_settings
 
         # Which URL hostnames will the destination images be accessible by to customers
-        # NOTE: This setting moves from docker_settings directly to target_settings
-        self.dest_registries = target_settings["docker_reference_registry"]
+        self.dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
         self.dest_registries = (
             self.dest_registries
             if isinstance(self.dest_registries, list)
@@ -53,15 +52,28 @@ class SignatureHandler:
         )
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
+        self._quay_client = None
+        self._quay_api_client = None
 
-        self._quay_client = QuayClient(
-            self.target_settings["quay_user"],
-            self.target_settings["quay_password"],
-            self.quay_host,
-        )
-        self._quay_api_client = QuayApiClient(
-            self.target_settings["quay_api_token"], self.quay_host
-        )
+    @property
+    def quay_client(self):
+        """Create and access QuayClient."""
+        if self._quay_client is None:
+            self._quay_client = QuayClient(
+                self.target_settings["quay_user"],
+                self.target_settings["quay_password"],
+                self.quay_host,
+            )
+        return self._quay_client
+
+    @property
+    def quay_api_client(self):
+        """Create and access QuayApiClient."""
+        if self._quay_api_client is None:
+            self._quay_api_client = QuayApiClient(
+                self.target_settings["quay_api_token"], self.quay_host
+            )
+        return self._quay_api_client
 
     def create_manifest_claim_message(
         self,
@@ -135,14 +147,14 @@ class SignatureHandler:
         repo_path, tag = image_ref.split(":")
         repo = "/".join(repo_path.split("/")[-2:])
 
-        repo_data = self._quay_api_client.get_repository_data(repo)
+        repo_data = self.quay_api_client.get_repository_data(repo)
 
         # if 'image_id' is specified, the tag doesn't reference a ML and digest should be included
         if repo_data["tags"][tag]["image_id"]:
             digests.append(repo_data["tags"][tag]["manifest_digest"])
         # if manifest list, we want to sign only arch digests, not ML digest
         else:
-            manifest_list = self._quay_client.get_manifest(image_ref, manifest_list=True)
+            manifest_list = self.quay_client.get_manifest(image_ref, manifest_list=True)
             for manifest in manifest_list["manifests"]:
                 digests.append(manifest["digest"])
 
@@ -166,11 +178,12 @@ class SignatureHandler:
             Returns ([dict]):
                 Existing signatures as returned by Pyxis based on specified criteria.
         """
-        args = []
-        if "pyxis_server" in self.target_settings:
-            args += ["--pyxis-server", self.target_settings["pyxis_server"]]
-        if "iib_krb_principal" in self.target_settings:
-            args += ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
+        args = [
+            "--pyxis-server",
+            self.target_settings["pyxis_server"],
+            "--pyxis-krb-principal",
+            self.target_settings["iib_krb_principal"],
+        ]
         if "iib_krb_ktfile" in self.target_settings:
             args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
         if references:
@@ -189,7 +202,7 @@ class SignatureHandler:
             env_vars,
         )
 
-        return json.loads(signatures)
+        return signatures
 
     def filter_claim_messages(self, claim_messages):
         """
@@ -258,16 +271,16 @@ class SignatureHandler:
             ".{task_id}.VirtualTopic.eng.robosignatory.container.sign".format(task_id=self.task_id)
         )
 
-        # NOTE: UMB settings have moved from docker settings directly to target settings
+        docker_settings = self.target_settings["docker_settings"]
         claims_handler = ManifestClaimsHandler(
-            umb_urls=self.target_settings["umb_urls"],
-            radas_address=self.target_settings.get("umb_radas_address", address),
+            umb_urls=docker_settings["umb_urls"],
+            radas_address=docker_settings.get("umb_radas_address", address),
             claim_messages=claim_messages,
-            pub_cert=self.target_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
-            ca_cert=self.target_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
-            timeout=self.target_settings.get("umb_signing_timeout", 600),
-            throttle=self.target_settings.get("umb_signing_throttle", 100),
-            retry=self.target_settings.get("umb_signing_retry", 3),
+            pub_cert=docker_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
+            ca_cert=docker_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
+            timeout=docker_settings.get("umb_signing_timeout", 600),
+            throttle=docker_settings.get("umb_signing_throttle", 100),
+            retry=docker_settings.get("umb_signing_retry", 3),
             message_sender_callback=message_sender_callback,
         )
         container = proton.reactor.Container(claims_handler)
@@ -367,7 +380,7 @@ class ContainerSignatureHandler(SignatureHandler):
         """
         Construct all the signature claim messages for RADAS for one push item.
 
-        push_item (_PushItem):
+        push_item (ContainerPushItem):
             Container push item whose claim messages will be created.
         Returns ([dict]):
             Claim messages for a given push item.
@@ -434,11 +447,12 @@ class ContainerSignatureHandler(SignatureHandler):
         - Upload new signatures to Pyxis
 
         Args:
-            push_items (([_PushItem])):
+            push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
         """
-        # NOTE: This setting moves from docker_settings directly to target_settings
-        if not self.target_settings.get("docker_container_signing_enabled", False):
+        if not self.target_settings["docker_settings"].get(
+            "docker_container_signing_enabled", False
+        ):
             LOG.info("Container signing not allowed in target settings, skipping.")
             return
 
@@ -446,8 +460,11 @@ class ContainerSignatureHandler(SignatureHandler):
         for item in push_items:
             claim_messages += self.construct_item_claim_messages(item)
         claim_messages = self.filter_claim_messages(claim_messages)
-        LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
+        if len(claim_messages) == 0:
+            LOG.info("No new claim messages will be uploaded")
+            return
 
+        LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
         self.upload_signatures_to_pyxis(claim_messages, signature_messages)
@@ -473,7 +490,7 @@ class OperatorSignatureHandler(SignatureHandler):
         internal_repo_schema = self.target_settings["quay_namespace"] + "/{internal_repo}"
 
         # Get digests of all archs this index image was build for
-        manifest_list = self._quay_client.get_manifest(index_image, manifest_list=True)
+        manifest_list = self.quay_client.get_manifest(index_image, manifest_list=True)
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
             for signing_key in self.signing_keys:
@@ -505,8 +522,9 @@ class OperatorSignatureHandler(SignatureHandler):
             iib_results ({str:dict}):
                 IIB results for each version the push was performed for.
         """
-        # NOTE: This setting moves from docker_settings directly to target_settings
-        if not self.target_settings.get("docker_container_signing_enabled", False):
+        if not self.target_settings["docker_settings"].get(
+            "docker_container_signing_enabled", False
+        ):
             LOG.info("Container signing not allowed in target settings, skipping.")
             return
         claim_messages = []

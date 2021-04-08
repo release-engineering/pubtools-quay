@@ -38,6 +38,11 @@ def test_init_verify_target_settings_ok(
     assert push_docker_instance.target_name == "some-target"
     assert push_docker_instance.target_settings == target_settings
     assert push_docker_instance.quay_host == "quay.io"
+    mock_quay_client.assert_not_called()
+    mock_quay_api_client.assert_not_called()
+
+    assert push_docker_instance.quay_client == mock_quay_client.return_value
+    assert push_docker_instance.quay_api_client == mock_quay_api_client.return_value
     mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
     mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
 
@@ -54,6 +59,28 @@ def test_init_verify_target_settings_missing_item(
     hub = mock.MagicMock()
     target_settings.pop("quay_user", None)
     with pytest.raises(exceptions.InvalidTargetSettings, match="'quay_user' must be present.*"):
+        push_docker_instance = push_docker.PushDocker(
+            [container_multiarch_push_item, operator_push_item_ok],
+            "some-key",
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_init_verify_target_settings_missing_docker_item(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_multiarch_push_item,
+    operator_push_item_ok,
+):
+    hub = mock.MagicMock()
+    target_settings["docker_settings"].pop("umb_urls", None)
+    with pytest.raises(exceptions.InvalidTargetSettings, match="'umb_urls' must be present.*"):
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
             "some-key",
@@ -315,7 +342,7 @@ def test_get_repo_metadata(
     operator_push_item_ok,
 ):
     hub = mock.MagicMock()
-    mock_run_entrypoint.return_value = '{"key": "value"}'
+    mock_run_entrypoint.return_value = {"key": "value"}
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
         "some-key",

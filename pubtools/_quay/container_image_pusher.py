@@ -10,7 +10,6 @@ from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
 )
-from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .tag_images import tag_images
 from .manifest_list_merger import ManifestListMerger
@@ -32,7 +31,7 @@ class ContainerImagePusher:
         Initialize.
 
         Args:
-            push_items ([_PushItem]):
+            push_items ([ContainerPushItem]):
                 List of push items.
             target_name (str):
                 target name
@@ -43,16 +42,18 @@ class ContainerImagePusher:
         self.target_settings = target_settings
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
+        self._quay_client = None
 
-        # TODO: will our robot credentials be able to read from brew's build repos?
-        self._quay_client = QuayClient(
-            self.target_settings["quay_user"],
-            self.target_settings["quay_password"],
-            self.quay_host,
-        )
-        self._quay_api_client = QuayApiClient(
-            self.target_settings["quay_api_token"], self.quay_host
-        )
+    @property
+    def quay_client(self):
+        """Create and access QuayClient."""
+        if self._quay_client is None:
+            self._quay_client = QuayClient(
+                self.target_settings["quay_user"],
+                self.target_settings["quay_password"],
+                self.quay_host,
+            )
+        return self._quay_client
 
     def run_tag_images(self, source_ref, dest_refs, all_arch):
         """
@@ -80,13 +81,17 @@ class ContainerImagePusher:
             ssh_remote_host=self.target_settings["ssh_remote_host"],
             ssh_username=self.target_settings["ssh_user"],
             ssh_password=self.target_settings["ssh_password"],
-            umb_urls=self.target_settings["umb_urls"],
-            umb_cert=self.target_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
-            # assumption that we'll continue using .pem format
-            umb_client_key=self.target_settings.get(
+            umb_urls=self.target_settings["docker_settings"]["umb_urls"],
+            umb_cert=self.target_settings["docker_settings"].get(
                 "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
             ),
-            umb_ca_cert=self.target_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
+            # assumption that we'll continue using .pem format
+            umb_client_key=self.target_settings["docker_settings"].get(
+                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
+            ),
+            umb_ca_cert=self.target_settings["docker_settings"].get(
+                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
+            ),
         )
 
     def copy_source_push_item(self, push_item):
@@ -94,7 +99,7 @@ class ContainerImagePusher:
         Perform the tagging operation for a push item containing a source image.
 
         Args:
-            push_item (_PushItem):
+            push_item (ContainerPushItem):
                 Source container push item.
         """
         LOG.info("Copying push item '{0}' as a source image".format(push_item))
@@ -134,7 +139,7 @@ class ContainerImagePusher:
 
         # get unique destination repositories
         dest_repos = sorted(list(set([ref.split(":")[0] for ref in dest_refs])))
-        source_ml = self._quay_client.get_manifest(source_ref, manifest_list=True)
+        source_ml = self.quay_client.get_manifest(source_ref, manifest_list=True)
 
         # copy each arch source image to all destination repos
         for manifest in source_ml["manifests"]:
@@ -152,10 +157,10 @@ class ContainerImagePusher:
                 )
             )
             merger = ManifestListMerger(source_ref, dest_ref, host=self.quay_host)
-            merger.set_quay_client(self._quay_client)
+            merger.set_quay_client(self.quay_client)
             merger.merge_manifest_lists()
 
-    def copy_multiarch_push_item(self, push_item):
+    def copy_multiarch_push_item(self, push_item, source_ml):
         """
         Evaluate the correct tagging and manifest list merging strategy of multiarch push item.
 
@@ -163,12 +168,13 @@ class ContainerImagePusher:
         Destination tags are sorted, and correct workflow is performed on them.
 
         Args:
-            push_items (_PushItem):
+            push_items (ContainerPushItem):
                 Multiarch container push item.
+            source_ml (dict):
+                Manifest list of the source image.
         """
         LOG.info("Copying push item '{0}' as a multiarch image.".format(push_item))
         source_ref = push_item.metadata["pull_url"]
-        source_ml = self._quay_client.get_manifest(source_ref, manifest_list=True)
         simple_dest_refs = []
         merge_mls_dest_refs = []
 
@@ -185,7 +191,7 @@ class ContainerImagePusher:
                     tag=tag,
                 )
                 try:
-                    dest_ml = self._quay_client.get_manifest(dest_ref, manifest_list=True)
+                    dest_ml = self.quay_client.get_manifest(dest_ref, manifest_list=True)
                     LOG.info(
                         "Getting missing archs between images '{0}' and '{1}'".format(
                             source_ref, dest_ref
@@ -225,13 +231,13 @@ class ContainerImagePusher:
         """
         Push container images to Quay.
 
-        Two image types exist: source images and multiarch images. Non-source, single arch images
-        are not supported. In case of multiarch images, manifest list merging is performed if
+        Two image types are supported: source images and multiarch images. Non-source, single arch
+        images are not supported. In case of multiarch images, manifest list merging is performed if
         destination image contains more architectures than source.
         """
         for item in self.push_items:
             try:
-                source_ml = self._quay_client.get_manifest(
+                source_ml = self.quay_client.get_manifest(
                     item.metadata["pull_url"], manifest_list=True
                 )
             except ManifestTypeError:
@@ -254,4 +260,4 @@ class ContainerImagePusher:
                 self.copy_source_push_item(item)
             # Multiarch images
             else:
-                self.copy_multiarch_push_item(item)
+                self.copy_multiarch_push_item(item, source_ml)

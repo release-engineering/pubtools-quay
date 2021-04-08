@@ -12,45 +12,29 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs
 # flake8: noqa: E501
 
 
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
-def test_init(mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_ok):
+def test_init(target_settings, operator_push_item_ok):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
     assert pusher.push_items == [operator_push_item_ok]
     assert pusher.target_settings == target_settings
     assert pusher.quay_host == "quay.io"
-    mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
-    mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
 
 
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
-def test_get_immutable_tag_vr(
-    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_vr
-):
+def test_get_immutable_tag_vr(target_settings, operator_push_item_vr):
     pusher = operator_pusher.OperatorPusher([operator_push_item_vr], target_settings)
 
     tag = pusher._get_immutable_tag(operator_push_item_vr)
     assert tag == "1.0"
 
 
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
-def test_get_immutable_tag_no_vr(
-    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_no_vr
-):
+def test_get_immutable_tag_no_vr(target_settings, operator_push_item_no_vr):
     pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], target_settings)
 
     tag = pusher._get_immutable_tag(operator_push_item_no_vr)
     assert tag == "1.0000000"
 
 
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
-def test_public_bundle_ref(
-    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_no_vr
-):
+def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
     pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], target_settings)
 
     ref = pusher.public_bundle_ref(operator_push_item_no_vr)
@@ -58,11 +42,7 @@ def test_public_bundle_ref(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
 def test_pyxis_get_ocp_versions(
-    mock_quay_api_client,
-    mock_quay_client,
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -93,11 +73,7 @@ def test_pyxis_get_ocp_versions(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
 def test_pyxis_get_ocp_versions_no_data(
-    mock_quay_api_client,
-    mock_quay_client,
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -110,11 +86,7 @@ def test_pyxis_get_ocp_versions_no_data(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
 def test_pyxis_generate_mapping(
-    mock_quay_api_client,
-    mock_quay_client,
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -137,11 +109,7 @@ def test_pyxis_generate_mapping(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
 def test_iib_add_bundles(
-    mock_quay_api_client,
-    mock_quay_client,
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -193,11 +161,7 @@ def test_iib_add_bundles(
 
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.operator_pusher.QuayClient")
-@mock.patch("pubtools._quay.operator_pusher.QuayApiClient")
 def test_push_operators(
-    mock_quay_api_client,
-    mock_quay_client,
     mock_run_entrypoint,
     mock_add_bundles,
     target_settings,

@@ -6,8 +6,6 @@ from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
 )
-from .quay_api_client import QuayApiClient
-from .quay_client import QuayClient
 
 LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
@@ -26,7 +24,7 @@ class OperatorPusher:
         Initialize.
 
         Args:
-            push_items ([_PushItem]):
+            push_items ([ContainerPushItem]):
                 List of push items.
             target_name (str):
                 target name
@@ -38,22 +36,13 @@ class OperatorPusher:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._quay_client = QuayClient(
-            self.target_settings["quay_user"],
-            self.target_settings["quay_password"],
-            self.quay_host,
-        )
-        self._quay_api_client = QuayApiClient(
-            self.target_settings["quay_api_token"], self.quay_host
-        )
-
     @staticmethod
     def _get_immutable_tag(push_item):
         """
         Return immutable tag from operator push item production tags.
 
         Args:
-            push_item (_PushItem):
+            push_item (ContainerPushItem):
                 Operator push item.
 
         Returns (str):
@@ -78,7 +67,7 @@ class OperatorPusher:
         It will be used by IIB to access the bundle image.
 
         Args:
-            push_item (_PushItem):
+            push_item (ContainerPushItem):
                 Operator push item.
 
         Returns (str):
@@ -87,7 +76,7 @@ class OperatorPusher:
         repository = list(push_item.metadata["tags"].keys())[0]
         # tags are the same for each destination repo, so any combination should work
         return "{0}/{1}:{2}".format(
-            self.target_settings["docker_reference_registry"][0],
+            self.target_settings["docker_settings"]["docker_reference_registry"][0],
             repository,
             self._get_immutable_tag(push_item),
         )
@@ -97,7 +86,7 @@ class OperatorPusher:
         Get a list of supported ocp versions from Pyxis.
 
         Args:
-            push_item: (_PushItem)
+            push_item: (ContainerPushItem)
                 Push item for which the OCP version range will be found out.
 
         Returns ([str]):
@@ -136,7 +125,7 @@ class OperatorPusher:
 
         The mapping describes which operator bundles should be added to which index images.
 
-        Returns ({str: [_PushItem]})
+        Returns ({str: [ContainerPushItem]})
             Mapping of OCP version -> Push items
         """
         version_items_mapping = {}
@@ -184,19 +173,25 @@ class OperatorPusher:
         args += ["--iib-krb-principal", self.target_settings["iib_krb_principal"]]
         args += ["--quay-user", self.target_settings["quay_user"]]
         args += ["--quay-send-umb-msg"]
-        for umb_url in self.target_settings["umb_urls"]:
+        for umb_url in self.target_settings["docker_settings"]["umb_urls"]:
             args += ["--quay-umb-url", umb_url]
         args += [
             "--quay-umb-cert",
-            self.target_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
+            self.target_settings["docker_settings"].get(
+                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
+            ),
         ]
         args += [
             "--quay-umb-client-key",
-            self.target_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
+            self.target_settings["docker_settings"].get(
+                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
+            ),
         ]
         args += [
             "--quay-umb-ca-cert",
-            self.target_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
+            self.target_settings["docker_settings"].get(
+                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
+            ),
         ]
         if "iib_overwrite_from_index" in self.target_settings:
             args += ["--overwrite-from-index"]

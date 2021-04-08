@@ -26,6 +26,11 @@ def test_init(mock_quay_api_client, mock_quay_client, target_settings):
     assert sig_handler.dest_registries == ["some-registry1.com", "some-registry2.com"]
     assert sig_handler.target_settings == target_settings
     assert sig_handler.quay_host == "quay.io"
+    mock_quay_client.assert_not_called()
+    mock_quay_api_client.assert_not_called()
+
+    assert sig_handler.quay_client == mock_quay_client.return_value
+    assert sig_handler.quay_api_client == mock_quay_api_client.return_value
     mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
     mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
 
@@ -123,7 +128,7 @@ def test_get_pyxis_signature(
     mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
 ):
     hub = mock.MagicMock()
-    mock_run_entrypoint.return_value = '{"some": "data"}'
+    mock_run_entrypoint.return_value = {"some": "data"}
 
     sig_handler = signature_handler.SignatureHandler(["key1", "key2"], hub, "1", target_settings)
     sig_data = sig_handler.get_signatures_from_pyxis(
@@ -406,6 +411,42 @@ def test_sign_container_images(
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 @mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_container_images_no_signatures(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_construct_claim_msgs,
+    mock_filter_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+    container_signing_push_item,
+    container_multiarch_push_item,
+):
+    hub = mock.MagicMock()
+    mock_construct_claim_msgs.side_effect = [["msg1", "msg2"], ["msg3", "msg4"]]
+    mock_filter_claim_msgs.return_value = []
+
+    sig_handler = signature_handler.ContainerSignatureHandler(
+        ["key1", "key2"], hub, "1", target_settings
+    )
+    sig_handler.sign_container_images([container_signing_push_item, container_multiarch_push_item])
+    assert mock_construct_claim_msgs.call_count == 2
+    mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
+    mock_get_radas_signatures.assert_not_called()
+    mock_validate_radas_msgs.assert_not_called()
+    mock_upload_signatures_to_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
+@mock.patch(
+    "pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_claim_messages"
+)
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_container_images_not_allowed(
     mock_quay_api_client,
     mock_quay_client,
@@ -418,7 +459,7 @@ def test_sign_container_images_not_allowed(
     container_signing_push_item,
 ):
     hub = mock.MagicMock()
-    target_settings["docker_container_signing_enabled"] = False
+    target_settings["docker_settings"]["docker_container_signing_enabled"] = False
     sig_handler = signature_handler.ContainerSignatureHandler(
         ["key1", "key2"], hub, "1", target_settings
     )
@@ -530,7 +571,7 @@ def test_sign_operator_images_not_allowed(
 ):
 
     hub = mock.MagicMock()
-    target_settings["docker_container_signing_enabled"] = False
+    target_settings["docker_settings"]["docker_container_signing_enabled"] = False
 
     sig_handler = signature_handler.OperatorSignatureHandler(
         ["key1", "key2"], hub, "1", target_settings

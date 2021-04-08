@@ -470,12 +470,16 @@ def common_digest_tag_mapping():
 @pytest.fixture
 def target_settings():
     return {
-        "docker_container_signing_enabled": True,
-        "docker_reference_registry": [
-            "some-registry1.com",
-            "some-registry2.com",
-        ],
-        "docker_reference_registry_connection_attrs": {"verify": False},
+        "docker_settings": {
+            "docker_container_signing_enabled": True,
+            "docker_reference_registry": [
+                "some-registry1.com",
+                "some-registry2.com",
+            ],
+            "docker_reference_registry_connection_attrs": {"verify": False},
+            "umb_url": "some-url",
+            "umb_urls": ["some-url1", "some-url2"],
+        },
         "iib_index_image": "registry.com/rh-osbs/iib-pub-pending",
         "iib_krb_ktfile": "/etc/pub/some.keytab",
         "iib_krb_principal": "some-principal@REDHAT.COM",
@@ -491,8 +495,6 @@ def target_settings():
         "semaphore_components": [[76, "quay"]],
         "semaphore_url": "semaphore-url.com",
         "ssl_validation": False,
-        "umb_url": "some-url",
-        "umb_urls": ["some-url1", "some-url2"],
         "quay_host": "quay.io/",
         "ssh_remote_host": "127.0.0.1",
         "ssh_user": "ssh-user",

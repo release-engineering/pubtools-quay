@@ -1,5 +1,4 @@
 from collections import namedtuple
-import json
 import logging
 
 import requests
@@ -66,14 +65,28 @@ class PushDocker:
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         # TODO: will our robot credentials be able to read from brew's build repos?
-        self._quay_client = QuayClient(
-            self.target_settings["quay_user"],
-            self.target_settings["quay_password"],
-            self.quay_host,
-        )
-        self._quay_api_client = QuayApiClient(
-            self.target_settings["quay_api_token"], self.quay_host
-        )
+        self._quay_client = None
+        self._quay_api_client = None
+
+    @property
+    def quay_client(self):
+        """Create and access QuayClient."""
+        if self._quay_client is None:
+            self._quay_client = QuayClient(
+                self.target_settings["quay_user"],
+                self.target_settings["quay_password"],
+                self.quay_host,
+            )
+        return self._quay_client
+
+    @property
+    def quay_api_client(self):
+        """Create and access QuayApiClient."""
+        if self._quay_api_client is None:
+            self._quay_api_client = QuayApiClient(
+                self.target_settings["quay_api_token"], self.quay_host
+            )
+        return self._quay_api_client
 
     def verify_target_settings(self):
         """Verify that target settings contains all the necessary data."""
@@ -86,14 +99,21 @@ class PushDocker:
             "quay_namespace",
             "iib_krb_principal",
             "iib_organization",
-            "umb_urls",
             "iib_index_image",
             "quay_operator_repository",
+            "docker_settings",
         ]
         for setting in required_settings:
             if setting not in self.target_settings:
                 raise InvalidTargetSettings(
                     "'{0}' must be present in the target settings.".format(setting)
+                )
+
+        required_docker_settings = ["umb_urls", "docker_reference_registry"]
+        for setting in required_docker_settings:
+            if setting not in self.target_settings["docker_settings"]:
+                raise InvalidTargetSettings(
+                    "'{0}' must be present in the docker settings.".format(setting)
                 )
         if (
             "iib_overwrite_from_index_token" in self.target_settings
@@ -116,7 +136,7 @@ class PushDocker:
 
         Also, Check the validity of these items and raise an exception in case of incorrect data.
 
-        Returns ([_PushItem]):
+        Returns ([ContainerPushItem]):
             Docker push items.
         """
         docker_push_items = []
@@ -140,7 +160,7 @@ class PushDocker:
 
         Also, Check the validity of these items and raise an exception in case of incorrect data.
 
-        Returns ([_PushItem]):
+        Returns ([ContainerPushItem]):
             Operator push items.
         """
         operator_push_items = []
@@ -194,7 +214,7 @@ class PushDocker:
             args,
             env_vars,
         )
-        return json.loads(metadata)
+        return metadata
 
     @log_step("Check destination repos validity")
     def check_repos_validity(self, push_items):
@@ -205,7 +225,7 @@ class PushDocker:
         If pushing to prod, also check if the repo already exists in stage.
 
         Args:
-            push_items ([_PushItem]):
+            push_items ([ContainerPushItem]):
                 Container push items containing the repositories.
         """
         repos = []
@@ -242,7 +262,7 @@ class PushDocker:
                 internal_repo = get_internal_container_repo_name(repo)
                 full_repo = repo_schema.format(namespace=stage_namespace, repo=internal_repo)
                 try:
-                    self._quay_api_client.get_repository_data(full_repo)
+                    self.quay_api_client.get_repository_data(full_repo)
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
                         raise InvalidRepository(
@@ -265,7 +285,7 @@ class PushDocker:
         ImageData is a namedtuple used to assign and access parts of an image in a formatted way.
 
         Args:
-            push_items ([_PushItem]):
+            push_items ([ContainerPushItem]):
                 Container push items.
 
         Returns (({ImageData: str}, [ImageData])):
@@ -284,7 +304,7 @@ class PushDocker:
                 LOG.info("Generating backup mapping for repository '{0}'".format(repo))
                 # try to get repo data
                 try:
-                    repo_data = self._quay_api_client.get_repository_data(full_repo)
+                    repo_data = self.quay_api_client.get_repository_data(full_repo)
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
                         repo_data = None
@@ -304,7 +324,7 @@ class PushDocker:
                             repo=full_repo,
                             digest=repo_data["tags"][tag]["manifest_digest"],
                         )
-                        manifest = self._quay_client.get_manifest(image)
+                        manifest = self.quay_client.get_manifest(image)
                         backup_tags[image_data] = manifest
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
@@ -329,14 +349,14 @@ class PushDocker:
         for image_data, manifest in sorted(backup_tags.items()):
             image_ref = schema.format(host=self.quay_host, repo=image_data.repo, tag=image_data.tag)
             LOG.info("Restoring tag '{0}'".format(image_ref))
-            self._quay_client.upload_manifest(manifest, image_ref)
+            self.quay_client.upload_manifest(manifest, image_ref)
 
         # delete tags that didn't previously exist
         LOG.info("Removing newly introduced tags")
         for image_data in rollback_tags:
             image_ref = schema.format(host=self.quay_host, repo=image_data.repo, tag=image_data.tag)
             LOG.info("Removing tag '{0}'".format(image_ref))
-            self._quay_api_client.delete_tag(image_data.repo, image_data.tag)
+            self.quay_api_client.delete_tag(image_data.repo, image_data.tag)
 
     def run(self):
         """
