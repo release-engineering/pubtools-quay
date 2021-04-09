@@ -114,9 +114,11 @@ def test_iib_add_bundles(
     target_settings,
     operator_push_item_ok,
 ):
+    mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
-    pusher.iib_add_bundles(["bundle1", "bundle2"], ["arch1", "arch2"], "v4.5")
+    result = pusher.iib_add_bundles(["bundle1", "bundle2"], ["arch1", "arch2"], "v4.5")
 
+    assert result == "some-data"
     mock_run_entrypoint.assert_called_once_with(
         ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
         "pubtools-iib-add-bundles",
@@ -185,9 +187,9 @@ def test_push_operators(
     results = pusher.push_operators()
 
     assert results == {
-        "v4.5": {"results": "results1"},
-        "v4.6": {"results": "results2"},
-        "v4.7": {"results": "results3"},
+        "v4.5": {"iib_result": {"results": "results1"}, "signing_keys": ["some-key"]},
+        "v4.6": {"iib_result": {"results": "results2"}, "signing_keys": ["some-key"]},
+        "v4.7": {"iib_result": {"results": "results3"}, "signing_keys": ["some-key"]},
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(

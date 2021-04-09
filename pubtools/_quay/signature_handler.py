@@ -24,13 +24,14 @@ LOG.setLevel(logging.INFO)
 class SignatureHandler:
     """Base class implementing operations common for container and operator signing."""
 
-    def __init__(self, signing_keys, hub, task_id, target_settings):
+    MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
+    DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH = 100
+
+    def __init__(self, hub, task_id, target_settings):
         """
         Initialize.
 
         Args:
-            signing_keys ([str]):
-                List of keys for image signing.
             hub (HubProxy):
                 Instance of XMLRPC pub-hub proxy.
             task_id (str):
@@ -38,7 +39,6 @@ class SignatureHandler:
             target_settings (dict):
                 Target settings.
         """
-        self.signing_keys = signing_keys
         self.hub = hub
         self.task_id = task_id
         self.target_settings = target_settings
@@ -160,49 +160,47 @@ class SignatureHandler:
 
         return digests
 
-    def get_signatures_from_pyxis(self, references=None, digests=None, sig_key_ids=None):
+    def get_signatures_from_pyxis(self, manifest_digests=None):
         """
-        Get existing signatures from Pyxis based on the specified criteria.
+        Get existing signatures from Pyxis based on the specified criteria (currently only digests).
 
-        The criteria function with an OR operator, so signatures matching any of the specified
-        values will be returned.
+        NOTE: In the current implementation, only manifest digests are being used to search for
+        existing signatures. Also, the search is performed in chunks, their size being limited by
+        MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST.
 
         Args:
-            references ([str]|None):
-                References for which to return signatures.
-            digests ([str]|None):
+            manifest_digests ([str]|None):
                 Digests for which to return signatures.
-            sig_key_ids ([str]|None):
-                Signature keys for which to return signatures.
 
-            Returns ([dict]):
-                Existing signatures as returned by Pyxis based on specified criteria.
+            Yields (dict):
+                Existing signatures as returned by Pyxis based on specified criteria. The returned
+                sturcture is an iterator to reduce memory requirements.
         """
-        args = [
-            "--pyxis-server",
-            self.target_settings["pyxis_server"],
-            "--pyxis-krb-principal",
-            self.target_settings["iib_krb_principal"],
-        ]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-        if references:
-            # TODO: Should this be changed?
-            args += ["--reference", ",".join(references)]
-        if digests:
-            args += ["--manifest-digest", ",".join(digests)]
-        if sig_key_ids:
-            args += ["--sig-key-id", ",".join(sig_key_ids)]
+        chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
 
-        env_vars = {}
-        signatures = run_entrypoint(
-            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
-            "pubtools-pyxis-get-signatures",
-            args,
-            env_vars,
-        )
+        for chunk_start in range(0, len(manifest_digests), chunk_size):
+            chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
 
-        return signatures
+            args = [
+                "--pyxis-server",
+                self.target_settings["pyxis_server"],
+                "--pyxis-krb-principal",
+                self.target_settings["iib_krb_principal"],
+            ]
+            if "iib_krb_ktfile" in self.target_settings:
+                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+            if manifest_digests:
+                args += ["--manifest-digest", ",".join(chunk)]
+
+            env_vars = {}
+            chunk_results = run_entrypoint(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
+                args,
+                env_vars,
+            )
+            for result in chunk_results:
+                yield result
 
     def filter_claim_messages(self, claim_messages):
         """
@@ -216,13 +214,10 @@ class SignatureHandler:
             Messages which don't yet exist in Pyxis.
         """
         LOG.info("Removing claim messages which already exist in Pyxis")
-        references = [message["docker_reference"] for message in claim_messages]
-        references = sorted(list(set(references)))
         digests = [message["manifest_digest"] for message in claim_messages]
         digests = sorted(list(set(digests)))
 
-        # Signature keys are purposely omitted as too many irrelevant results might be returned
-        existing_signatures = self.get_signatures_from_pyxis(references=references, digests=digests)
+        existing_signatures = self.get_signatures_from_pyxis(manifest_digests=digests)
 
         signatures_by_key = {}
         for signature in existing_signatures:
@@ -288,7 +283,7 @@ class SignatureHandler:
 
         return claims_handler.received_messages
 
-    def upload_signatures_to_pyxis(self, claim_mesages, signature_messages):
+    def upload_signatures_to_pyxis(self, claim_mesages, signature_messages, max_items_per_batch):
         """
         Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
 
@@ -299,21 +294,29 @@ class SignatureHandler:
         - sig_key_id
         - signature_data
 
+        Signatures are uploaded in batches.
+
         Args:
             claim_messages ([dict]):
                 Signature claim messages constructed for the RADAS service.
             signature_messages ([dict]):
                 Messages from RADAS containing image signatures.
+            max_items_per_batch (int):
+                Maximum number of items Pyxis allows to upload at once.
         """
         LOG.info("Sending new signatures to Pyxis")
-        signatures = []
+        signature_batches = [[]]
         claim_messages_by_id = dict((m["request_id"], m) for m in claim_mesages)
         sorted_signature_messages = sorted(signature_messages, key=lambda msg: msg["request_id"])
 
         for signature_message in sorted_signature_messages:
             claim_message = claim_messages_by_id[signature_message["request_id"]]
 
-            signatures.append(
+            if len(signature_batches[-1]) >= max_items_per_batch:
+                signature_batches.append([])
+            batch = signature_batches[-1]
+
+            batch.append(
                 {
                     "manifest_digest": signature_message["manifest_digest"],
                     "reference": claim_message["docker_reference"],
@@ -322,23 +325,26 @@ class SignatureHandler:
                     "signature_data": signature_message["signed_claim"],
                 }
             )
+        for i, batch in enumerate(signature_batches):
+            args = [
+                "--pyxis-server",
+                self.target_settings["pyxis_server"],
+                "--pyxis-krb-principal",
+                self.target_settings["iib_krb_principal"],
+            ]
+            if "iib_krb_ktfile" in self.target_settings:
+                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+            args += ["--signatures", json.dumps(batch)]
 
-        args = []
-        if "pyxis_server" in self.target_settings:
-            args += ["--pyxis-server", self.target_settings["pyxis_server"]]
-        if "iib_krb_principal" in self.target_settings:
-            args += ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-        args += ["--signatures", json.dumps(signatures)]
+            LOG.info("Uploading signature batch #{0}/{1}".format(i + 1, len(signature_batches)))
 
-        env_vars = {}
-        run_entrypoint(
-            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-            "pubtools-pyxis-upload-signature",
-            args,
-            env_vars,
-        )
+            env_vars = {}
+            run_entrypoint(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                "pubtools-pyxis-upload-signature",
+                args,
+                env_vars,
+            )
 
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
@@ -393,11 +399,13 @@ class ContainerSignatureHandler(SignatureHandler):
             # each destination image reference needs its own signature
             for repo, tags in sorted(push_item.metadata["tags"].items()):
                 for tag in tags:
-                    claim_messages += self.construct_variant_claim_messages(repo, tag, digest)
+                    claim_messages += self.construct_variant_claim_messages(
+                        repo, tag, digest, [push_item.claims_signing_key]
+                    )
 
         return claim_messages
 
-    def construct_variant_claim_messages(self, repo, tag, digest):
+    def construct_variant_claim_messages(self, repo, tag, digest, signing_keys):
         """
         Construct claim messages for all specified variations of a given image.
 
@@ -410,6 +418,8 @@ class ContainerSignatureHandler(SignatureHandler):
                 Destination tag of a pushed image
             digest (str):
                 Digest of the pushed image.
+            signing_keys ([str]):
+                Signing keys to construct the signatures with.
 
         Returns ([dict]):
             Signature claim messages to send to RADAS.
@@ -423,7 +433,7 @@ class ContainerSignatureHandler(SignatureHandler):
         for registry in self.dest_registries:
             reference = image_schema.format(host=registry, repository=repo, tag=tag)
 
-            for signing_key in self.signing_keys:
+            for signing_key in signing_keys:
                 claim_message = self.create_manifest_claim_message(
                     destination_repo=dest_repo,
                     signature_key=signing_key,
@@ -467,13 +477,19 @@ class ContainerSignatureHandler(SignatureHandler):
         LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
-        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
+        self.upload_signatures_to_pyxis(
+            claim_messages,
+            signature_messages,
+            self.target_settings.get(
+                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
+            ),
+        )
 
 
 class OperatorSignatureHandler(SignatureHandler):
     """Class for handling the signing of index images."""
 
-    def construct_index_image_claim_messages(self, index_image, version):
+    def construct_index_image_claim_messages(self, index_image, version, signing_keys):
         """
         Construct signature claim messages for RADAS for the specified index image.
 
@@ -481,6 +497,9 @@ class OperatorSignatureHandler(SignatureHandler):
             Reference to a new index image constructed by IIB.
         version (str):
             Openshift version the index image was build for. Functions as an image tag.
+        signing_keys (str):
+            Signing keys to be used for signing.
+
         Returns ([dict]):
             Structured messages to be sent to UMB.
         """
@@ -493,7 +512,7 @@ class OperatorSignatureHandler(SignatureHandler):
         manifest_list = self.quay_client.get_manifest(index_image, manifest_list=True)
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
-            for signing_key in self.signing_keys:
+            for signing_key in signing_keys:
                 for digest in digests:
                     repo = self.target_settings["quay_operator_repository"]
                     internal_repo = get_internal_container_repo_name(repo)
@@ -529,12 +548,20 @@ class OperatorSignatureHandler(SignatureHandler):
             return
         claim_messages = []
 
-        for version, iib_result in sorted(iib_results.items()):
+        for version, iib_details in sorted(iib_results.items()):
+            iib_result = iib_details["iib_result"]
+            signing_keys = iib_details["signing_keys"]
             claim_messages += self.construct_index_image_claim_messages(
-                iib_result.index_image_resolved, version
+                iib_result.index_image_resolved, version, signing_keys
             )
         LOG.info("claim messages: {0}".format(json.dumps(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
-        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
+        self.upload_signatures_to_pyxis(
+            claim_messages,
+            signature_messages,
+            self.target_settings.get(
+                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
+            ),
+        )

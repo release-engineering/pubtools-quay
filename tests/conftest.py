@@ -79,6 +79,7 @@ def container_push_item_ok():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -104,6 +105,7 @@ def container_push_item_no_metadata():
         repos=[],
         build="push_item_build",
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={},
     )
 
@@ -121,6 +123,7 @@ def container_push_item_empty_file_path():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={},
     )
 
@@ -138,6 +141,7 @@ def container_push_item_not_container():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={},
     )
 
@@ -155,6 +159,7 @@ def container_push_item_errors():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -179,6 +184,7 @@ def operator_push_item_ok():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -209,6 +215,7 @@ def operator_push_item_ok2():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -238,6 +245,7 @@ def operator_push_item_appregistry():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -263,6 +271,7 @@ def operator_push_item_unknown_op_type():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -294,6 +303,7 @@ def operator_push_item_no_ocp():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -517,6 +527,7 @@ def container_source_push_item():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -545,6 +556,7 @@ def container_multiarch_push_item():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -573,6 +585,7 @@ def operator_push_item_vr():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -602,6 +615,7 @@ def operator_push_item_no_vr():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -631,6 +645,7 @@ def operator_push_item_different_version():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -841,6 +856,7 @@ def container_signing_push_item():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -869,6 +885,7 @@ def operator_signing_push_item():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -921,6 +938,7 @@ def operator_push_item_errors():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -952,6 +970,7 @@ def operator_push_item_no_op_type():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",
@@ -981,6 +1000,7 @@ def container_push_item_correct_repos():
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
+        claims_signing_key="some-key",
         metadata={
             "pull_data": {
                 "registry": "test-regitry",

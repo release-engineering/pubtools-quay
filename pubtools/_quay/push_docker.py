@@ -34,15 +34,13 @@ class PushDocker:
 
     ImageData = namedtuple("ImageData", ["repo", "tag"])
 
-    def __init__(self, push_items, signing_key, hub, task_id, target_name, target_settings):
+    def __init__(self, push_items, hub, task_id, target_name, target_settings):
         """
         Initialize.
 
         Args:
             push_items ([_PushItem]):
                 List of push items.
-            signing_key (str):
-                Key for image signing.
             hub (HubProxy):
                 Instance of XMLRPC pub-hub proxy.
             task_id (str):
@@ -53,8 +51,6 @@ class PushDocker:
                 Target settings.
         """
         self.push_items = push_items
-        # TODO: how do we get these keys? from target settings or push items?
-        self.signing_key = signing_key
         self.hub = hub
         self.task_id = task_id
         self.target_name = target_name
@@ -393,7 +389,7 @@ class PushDocker:
             # Sign container images
             # TODO: where should we get signing keys from?
             container_signature_handler = ContainerSignatureHandler(
-                [self.signing_key], self.hub, self.task_id, self.target_settings
+                self.hub, self.task_id, self.target_settings
             )
             container_signature_handler.sign_container_images(docker_push_items)
             if operator_push_items:
@@ -402,7 +398,7 @@ class PushDocker:
                 iib_results = operator_pusher.push_operators()
                 # Sign operator images
                 operator_signature_handler = OperatorSignatureHandler(
-                    [self.signing_key], self.hub, self.task_id, self.target_settings
+                    self.hub, self.task_id, self.target_settings
                 )
                 operator_signature_handler.sign_operator_images(iib_results)
         except Exception as e:
@@ -419,5 +415,5 @@ class PushDocker:
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
     """Entry point for use in another python code."""
-    push = PushDocker(push_items, "signing-key", hub, task_id, target_name, target_settings)
+    push = PushDocker(push_items, hub, task_id, target_name, target_settings)
     return push.run()

@@ -25,14 +25,12 @@ def test_init_verify_target_settings_ok(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
         target_settings,
     )
     assert push_docker_instance.push_items == [container_multiarch_push_item, operator_push_item_ok]
-    assert push_docker_instance.signing_key == "some-key"
     assert push_docker_instance.hub == hub
     assert push_docker_instance.task_id == "1"
     assert push_docker_instance.target_name == "some-target"
@@ -61,7 +59,6 @@ def test_init_verify_target_settings_missing_item(
     with pytest.raises(exceptions.InvalidTargetSettings, match="'quay_user' must be present.*"):
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
-            "some-key",
             hub,
             "1",
             "some-target",
@@ -83,7 +80,6 @@ def test_init_verify_target_settings_missing_docker_item(
     with pytest.raises(exceptions.InvalidTargetSettings, match="'umb_urls' must be present.*"):
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
-            "some-key",
             hub,
             "1",
             "some-target",
@@ -105,7 +101,6 @@ def test_init_verify_target_settings_missing_overwrite_index(
     with pytest.raises(exceptions.InvalidTargetSettings, match="Either both or neither of.*"):
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
-            "some-key",
             hub,
             "1",
             "some-target",
@@ -126,7 +121,6 @@ def test_get_container_push_items_ok(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok, container_source_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -147,7 +141,6 @@ def test_get_container_push_items_errors(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_errors],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -168,7 +161,6 @@ def test_get_container_push_items_no_pull_data(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_no_metadata],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -191,7 +183,6 @@ def test_get_operator_push_items_ok(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_ok, operator_push_item_ok2, container_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -214,7 +205,6 @@ def test_get_operator_push_items_ok(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_ok, operator_push_item_ok2, container_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -235,7 +225,6 @@ def test_get_operator_push_item_errors(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_errors],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -256,7 +245,6 @@ def test_get_operator_push_item_no_op_type(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_no_op_type],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -278,7 +266,6 @@ def test_get_operator_push_item_op_appregistry(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_ok2, operator_push_item_appregistry],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -299,7 +286,6 @@ def test_get_operator_push_item_unknown_op_type(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_unknown_op_type],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -320,7 +306,6 @@ def test_get_operator_push_item_no_ocp_versions(
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [operator_push_item_no_ocp],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -345,7 +330,6 @@ def test_get_repo_metadata(
     mock_run_entrypoint.return_value = {"key": "value"}
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -400,7 +384,6 @@ def test_check_repos_validity_success(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_correct_repos, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -446,7 +429,6 @@ def test_check_repos_validity_missing_repo(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_ok, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -490,7 +472,6 @@ def test_check_repos_validity_get_repo_server_error(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_ok, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -532,7 +513,6 @@ def test_check_repos_validity_deprecated_repo(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_ok, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -583,7 +563,6 @@ def test_check_repos_validity_missing_stage_repo(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_ok, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -637,7 +616,6 @@ def test_check_repos_validity_get_stage_repo_server_error(
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
         [container_push_item_ok, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -684,7 +662,6 @@ def test_generate_backup_mapping(
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -737,7 +714,6 @@ def test_generate_backup_mapping_server_error(
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -780,7 +756,6 @@ def test_rollback(
     ]
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, container_signing_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -844,7 +819,6 @@ def test_push_docker_full_success(
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -860,13 +834,11 @@ def test_push_docker_full_success(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(
-        ["some-key"], hub, "1", target_settings
-    )
+    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_push_operators.assert_called_once_with()
-    mock_operator_signature_handler.assert_called_once_with(["some-key"], hub, "1", target_settings)
+    mock_operator_signature_handler.assert_called_once_with(hub, "1", target_settings)
     mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]
@@ -914,7 +886,6 @@ def test_push_docker_no_operator_push_items(
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -930,9 +901,7 @@ def test_push_docker_no_operator_push_items(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(
-        ["some-key"], hub, "1", target_settings
-    )
+    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_not_called()
     mock_push_operators.assert_not_called()
@@ -985,7 +954,6 @@ def test_push_docker_failure_rollback(
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
-        "some-key",
         hub,
         "1",
         "some-target",
@@ -1002,9 +970,7 @@ def test_push_docker_failure_rollback(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(
-        ["some-key"], hub, "1", target_settings
-    )
+    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
     mock_sign_container_images.assert_not_called()
     mock_operator_pusher.assert_not_called()
     mock_push_operators.assert_not_called()
@@ -1031,7 +997,6 @@ def test_mod_entrypoint(
     )
     mock_push_docker.assert_called_once_with(
         [container_multiarch_push_item, operator_push_item_ok],
-        "signing-key",
         hub,
         "1",
         "some-target",

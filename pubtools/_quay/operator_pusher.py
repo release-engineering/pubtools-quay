@@ -153,6 +153,9 @@ class OperatorPusher:
                 Architectures to build for.
             ocp_version (str):
                 OCP version to add the bundles to. It acts as a tag of the index image.
+
+        Returns (dict):
+            Build details provided by IIB.
         """
         LOG.info(
             "Requesting IIB to add bundles '{0}' to index image version '{1}'".format(
@@ -214,7 +217,7 @@ class OperatorPusher:
                 "iib_overwrite_from_index_token"
             ]
 
-        run_entrypoint(
+        return run_entrypoint(
             ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
             "pubtools-iib-add-bundles",
             args,
@@ -234,8 +237,15 @@ class OperatorPusher:
         (last two steps performed by pubtools-iib)
 
         Returns ({str:dict}):
-            Dictionary containing IIB results for all OPM versions. Data will be used in operator
-            signing.
+            Dictionary containing IIB results and signing keys for all OPM versions. Data will be
+            used in operator signing. Dictionary structure:
+            {
+                "version": {
+                    "iib_result": (...) (object returned by iiblib)
+                    "signing_keys": [...] (list of signing keys to be used for signing)
+                }
+            }
+
         """
         version_items_mapping = self.generate_version_items_mapping()
         iib_results = {}
@@ -246,6 +256,8 @@ class OperatorPusher:
                 i.metadata["arch"] if i.metadata["arch"] != "x86_64" else "amd64" for i in items
             ]
             archs = sorted(list(set(all_archs)))
-            iib_results[version] = self.iib_add_bundles(bundles, archs, version)
+            signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
+            result = self.iib_add_bundles(bundles, archs, version)
+            iib_results[version] = {"iib_result": result, "signing_keys": signing_keys}
 
         return iib_results
