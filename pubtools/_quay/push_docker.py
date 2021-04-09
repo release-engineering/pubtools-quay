@@ -326,6 +326,8 @@ class PushDocker:
                     else:
                         rollback_tags.append(PushDocker.ImageData(full_repo, tag))
 
+        # it's possible that rollback tags will contain duplicate entries
+        rollback_tags = sorted(list(set(rollback_tags)))
         return (backup_tags, rollback_tags)
 
     @log_step("Perform rollback")

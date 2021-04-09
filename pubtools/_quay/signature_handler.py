@@ -202,6 +202,34 @@ class SignatureHandler:
             for result in chunk_results:
                 yield result
 
+    def remove_duplicate_claim_messages(self, claim_messages):
+        """
+        Remove claim messages which could be considered 'duplicates', containing the same data.
+
+        Args:
+            claim_messages ([dict]):
+                All created claim messages.
+
+        Returns ([dict]):
+            De-duplicated claim messages.
+        """
+        # dictionary key is a tuple of all parameters whose combination makes the message unique
+        unique_message_mapping = {}
+        for message in claim_messages:
+            key = (
+                message["sig_key_id"],
+                message["claim_file"],
+                message["pub_task_id"],
+                message["manifest_digest"],
+                message["repo"],
+                message["image_name"],
+                message["docker_reference"],
+            )
+            if key not in unique_message_mapping:
+                unique_message_mapping[key] = message
+
+        return list(unique_message_mapping.values())
+
     def filter_claim_messages(self, claim_messages):
         """
         Filter out the manifest claim messages which are already in the sigstore.
@@ -469,6 +497,7 @@ class ContainerSignatureHandler(SignatureHandler):
         claim_messages = []
         for item in push_items:
             claim_messages += self.construct_item_claim_messages(item)
+        claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         claim_messages = self.filter_claim_messages(claim_messages)
         if len(claim_messages) == 0:
             LOG.info("No new claim messages will be uploaded")
