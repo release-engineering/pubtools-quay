@@ -175,6 +175,9 @@ class OperatorPusher:
         args += ["--iib-server", self.target_settings["iib_server"]]
         args += ["--iib-krb-principal", self.target_settings["iib_krb_principal"]]
         args += ["--quay-user", self.target_settings["quay_user"]]
+        args += ["--quay-remote-exec"]
+        args += ["--quay-ssh-remote-host", self.target_settings["ssh_remote_host"]]
+        args += ["--quay-ssh-username", self.target_settings["ssh_user"]]
         args += ["--quay-send-umb-msg"]
         for umb_url in self.target_settings["docker_settings"]["umb_urls"]:
             args += ["--quay-umb-url", umb_url]
@@ -212,6 +215,7 @@ class OperatorPusher:
 
         env_vars = {}
         env_vars["QUAY_PASSWORD"] = self.target_settings["quay_password"]
+        env_vars["SSH_PASSWORD"] = self.target_settings["ssh_password"]
         if "iib_overwrite_from_index_token" in self.target_settings:
             env_vars["OVERWRITE_FROM_INDEX_TOKEN"] = self.target_settings[
                 "iib_overwrite_from_index_token"

@@ -132,6 +132,11 @@ def test_iib_add_bundles(
             "some-principal@REDHAT.COM",
             "--quay-user",
             "quay-user",
+            "--quay-remote-exec",
+            "--quay-ssh-remote-host",
+            "127.0.0.1",
+            "--quay-ssh-username",
+            "ssh-user",
             "--quay-send-umb-msg",
             "--quay-umb-url",
             "some-url1",
@@ -157,7 +162,11 @@ def test_iib_add_bundles(
             "--arch",
             "arch2",
         ],
-        {"QUAY_PASSWORD": "quay-pass", "OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+        {
+            "OVERWRITE_FROM_INDEX_TOKEN": "some-token",
+            "QUAY_PASSWORD": "quay-pass",
+            "SSH_PASSWORD": "ssh-password",
+        },
     )
 
 
