@@ -1,6 +1,7 @@
 import logging
 import re
 
+from .tag_images import tag_images
 from .utils.misc import (
     run_entrypoint,
     get_internal_container_repo_name,
@@ -144,7 +145,7 @@ class OperatorPusher:
 
     def iib_add_bundles(self, bundles, archs, ocp_version):
         """
-        Construct and execute pubtools-iib command to add bundles to index image and push to Quay.
+        Construct and execute pubtools-iib command to add bundles to index image.
 
         Args:
             bundles ([str]):
@@ -164,41 +165,9 @@ class OperatorPusher:
         )
         args = ["--skip-pulp"]
 
-        image_schema = "{host}/{namespace}/{repo}"
-        index_image_repo = image_schema.format(
-            host=self.quay_host,
-            namespace=self.target_settings["quay_namespace"],
-            repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
-        )
-        args += ["--quay-dest-repo", index_image_repo]
-
         args += ["--iib-server", self.target_settings["iib_server"]]
         args += ["--iib-krb-principal", self.target_settings["iib_krb_principal"]]
-        args += ["--quay-user", self.target_settings["quay_user"]]
-        args += ["--quay-remote-exec"]
-        args += ["--quay-ssh-remote-host", self.target_settings["ssh_remote_host"]]
-        args += ["--quay-ssh-username", self.target_settings["ssh_user"]]
-        args += ["--quay-send-umb-msg"]
-        for umb_url in self.target_settings["docker_settings"]["umb_urls"]:
-            args += ["--quay-umb-url", umb_url]
-        args += [
-            "--quay-umb-cert",
-            self.target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-        ]
-        args += [
-            "--quay-umb-client-key",
-            self.target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-        ]
-        args += [
-            "--quay-umb-ca-cert",
-            self.target_settings["docker_settings"].get(
-                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
-            ),
-        ]
+
         if "iib_overwrite_from_index" in self.target_settings:
             args += ["--overwrite-from-index"]
         if "iib_krb_ktfile" in self.target_settings:
@@ -214,8 +183,6 @@ class OperatorPusher:
             args += ["--arch", arch]
 
         env_vars = {}
-        env_vars["QUAY_PASSWORD"] = self.target_settings["quay_password"]
-        env_vars["SSH_PASSWORD"] = self.target_settings["ssh_password"]
         if "iib_overwrite_from_index_token" in self.target_settings:
             env_vars["OVERWRITE_FROM_INDEX_TOKEN"] = self.target_settings[
                 "iib_overwrite_from_index_token"
@@ -226,6 +193,42 @@ class OperatorPusher:
             "pubtools-iib-add-bundles",
             args,
             env_vars,
+        )
+
+    def run_tag_images(self, source_ref, dest_refs, all_arch):
+        """
+        Prepare the "tag images" entrypoint with all the necessary arguments and run it.
+
+        Args:
+            source_ref (str):
+                Source image reference.
+            dest_refs ([str]):
+                List of destination references.
+            all_arch (bool):
+                Whether all architectures should be copied.
+        """
+        tag_images(
+            source_ref,
+            dest_refs,
+            all_arch=all_arch,
+            quay_user=self.target_settings["quay_user"],
+            quay_password=self.target_settings["quay_password"],
+            remote_exec=True,
+            send_umb_msg=True,
+            ssh_remote_host=self.target_settings["ssh_remote_host"],
+            ssh_username=self.target_settings["ssh_user"],
+            ssh_password=self.target_settings["ssh_password"],
+            umb_urls=self.target_settings["docker_settings"]["umb_urls"],
+            umb_cert=self.target_settings["docker_settings"].get(
+                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
+            ),
+            # assumption that we'll continue using .pem format
+            umb_client_key=self.target_settings["docker_settings"].get(
+                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
+            ),
+            umb_ca_cert=self.target_settings["docker_settings"].get(
+                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
+            ),
         )
 
     @log_step("Push operators to Quay")
@@ -251,6 +254,7 @@ class OperatorPusher:
             }
 
         """
+        image_schema = "{host}/{namespace}/{repo}"
         version_items_mapping = self.generate_version_items_mapping()
         iib_results = {}
 
@@ -261,7 +265,22 @@ class OperatorPusher:
             ]
             archs = sorted(list(set(all_archs)))
             signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
-            result = self.iib_add_bundles(bundles, archs, version)
-            iib_results[version] = {"iib_result": result, "signing_keys": signing_keys}
+
+            # build index image in IIB
+            build_details = self.iib_add_bundles(bundles, archs, version)
+
+            # use IIB build details to push to Quay
+            index_image_repo = image_schema.format(
+                host=self.quay_host,
+                namespace=self.target_settings["quay_namespace"],
+                repo=get_internal_container_repo_name(
+                    self.target_settings["quay_operator_repository"]
+                ),
+            )
+            _, tag = build_details.index_image.split(":", 1)
+            dest_image = "{0}:{1}".format(index_image_repo, tag)
+            self.run_tag_images(build_details.index_image, [dest_image], True)
+
+            iib_results[version] = {"iib_result": build_details, "signing_keys": signing_keys}
 
         return iib_results

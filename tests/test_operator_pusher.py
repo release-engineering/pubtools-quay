@@ -124,30 +124,10 @@ def test_iib_add_bundles(
         "pubtools-iib-add-bundles",
         [
             "--skip-pulp",
-            "--quay-dest-repo",
-            "quay.io/some-namespace/operators----index-image",
             "--iib-server",
             "iib-server.com",
             "--iib-krb-principal",
             "some-principal@REDHAT.COM",
-            "--quay-user",
-            "quay-user",
-            "--quay-remote-exec",
-            "--quay-ssh-remote-host",
-            "127.0.0.1",
-            "--quay-ssh-username",
-            "ssh-user",
-            "--quay-send-umb-msg",
-            "--quay-umb-url",
-            "some-url1",
-            "--quay-umb-url",
-            "some-url2",
-            "--quay-umb-cert",
-            "/etc/pub/umb-pub-cert-key.pem",
-            "--quay-umb-client-key",
-            "/etc/pub/umb-pub-cert-key.pem",
-            "--quay-umb-ca-cert",
-            "/etc/pki/tls/certs/ca-bundle.crt",
             "--overwrite-from-index",
             "--iib-krb-ktfile",
             "/etc/pub/some.keytab",
@@ -162,33 +142,35 @@ def test_iib_add_bundles(
             "--arch",
             "arch2",
         ],
-        {
-            "OVERWRITE_FROM_INDEX_TOKEN": "some-token",
-            "QUAY_PASSWORD": "quay-pass",
-            "SSH_PASSWORD": "ssh-password",
-        },
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
     )
 
 
+@mock.patch("pubtools._quay.operator_pusher.tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_push_operators(
     mock_run_entrypoint,
     mock_add_bundles,
+    mock_tag_images,
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
 ):
+    class IIBRes:
+        def __init__(self, index_image):
+            self.index_image = index_image
 
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
         [{"ocp_version": "4.7"}],
     ]
-    mock_add_bundles.side_effect = [
-        {"results": "results1"},
-        {"results": "results2"},
-        {"results": "results3"},
+    iib_results = [
+        IIBRes("some-registry.com/index-image:5"),
+        IIBRes("some-registry.com/index-image:6"),
+        IIBRes("some-registry.com/index-image:7"),
     ]
+    mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(
         [operator_push_item_ok, operator_push_item_different_version], target_settings
     )
@@ -196,9 +178,9 @@ def test_push_operators(
     results = pusher.push_operators()
 
     assert results == {
-        "v4.5": {"iib_result": {"results": "results1"}, "signing_keys": ["some-key"]},
-        "v4.6": {"iib_result": {"results": "results2"}, "signing_keys": ["some-key"]},
-        "v4.7": {"iib_result": {"results": "results3"}, "signing_keys": ["some-key"]},
+        "v4.5": {"iib_result": iib_results[0], "signing_keys": ["some-key"]},
+        "v4.6": {"iib_result": iib_results[1], "signing_keys": ["some-key"]},
+        "v4.7": {"iib_result": iib_results[2], "signing_keys": ["some-key"]},
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
@@ -211,4 +193,54 @@ def test_push_operators(
         ["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
         ["amd64", "some-arch"],
         "v4.7",
+    )
+
+    assert mock_tag_images.call_count == 3
+    assert mock_tag_images.call_args_list[0] == mock.call(
+        "some-registry.com/index-image:5",
+        ["quay.io/some-namespace/operators----index-image:5"],
+        all_arch=True,
+        quay_user="quay-user",
+        quay_password="quay-pass",
+        remote_exec=True,
+        send_umb_msg=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_username="ssh-user",
+        ssh_password="ssh-password",
+        umb_urls=["some-url1", "some-url2"],
+        umb_cert="/etc/pub/umb-pub-cert-key.pem",
+        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
+        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+    )
+    assert mock_tag_images.call_args_list[1] == mock.call(
+        "some-registry.com/index-image:6",
+        ["quay.io/some-namespace/operators----index-image:6"],
+        all_arch=True,
+        quay_user="quay-user",
+        quay_password="quay-pass",
+        remote_exec=True,
+        send_umb_msg=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_username="ssh-user",
+        ssh_password="ssh-password",
+        umb_urls=["some-url1", "some-url2"],
+        umb_cert="/etc/pub/umb-pub-cert-key.pem",
+        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
+        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+    )
+    assert mock_tag_images.call_args_list[2] == mock.call(
+        "some-registry.com/index-image:7",
+        ["quay.io/some-namespace/operators----index-image:7"],
+        all_arch=True,
+        quay_user="quay-user",
+        quay_password="quay-pass",
+        remote_exec=True,
+        send_umb_msg=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_username="ssh-user",
+        ssh_password="ssh-password",
+        umb_urls=["some-url1", "some-url2"],
+        umb_cert="/etc/pub/umb-pub-cert-key.pem",
+        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
+        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
     )
