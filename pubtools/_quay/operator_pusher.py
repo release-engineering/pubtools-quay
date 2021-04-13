@@ -1,5 +1,10 @@
 import logging
 import re
+import yaml
+
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 from .tag_images import tag_images
 from .utils.misc import (
@@ -143,7 +148,65 @@ class OperatorPusher:
 
         return version_items_mapping
 
-    def iib_add_bundles(self, bundles, archs, ocp_version):
+    def get_deprecation_list(self, version):
+        """
+        Get bundles to be deprecated in the index image.
+
+        Args:
+            version: (str)
+                version for which deprecation list will be fetched.
+
+        Returns:
+            list(str): list of bundles to be deprecated in the index image.
+        """
+
+        def _get_requests_session():
+            session = requests.Session()
+            retry = Retry(
+                total=6,
+                read=6,
+                connect=6,
+                backoff_factor=0.8,
+                status_forcelist=(500, 502, 503, 504),
+            )
+            adapter = HTTPAdapter(max_retries=retry)
+            session.mount("http://", adapter)
+            session.mount("https://", adapter)
+
+            return session
+
+        deprecation_list = []
+        deprecation_list_url = "{0}/{1}.yml/raw?ref=master".format(
+            self.target_settings["iib_deprecation_list_url"].rstrip("/"), version.replace(".", "_")
+        )
+        registry_url = self.target_settings["docker_settings"]["docker_reference_registry"][0]
+
+        LOG.info("Getting the deprecation list for OCP version {0}".format(version))
+        session = _get_requests_session()
+        response = session.get(url=deprecation_list_url)
+        if not response.ok:
+            LOG.error(
+                "Could not retrieve deprecation list after multiple attempts."
+                " Status Code {0}".format(response.status_code)
+            )
+            response.raise_for_status()
+
+        try:
+            yaml_response = yaml.safe_load(response.text)
+            if yaml_response:
+                deprecation_list = [
+                    "{0}/{1}".format(registry_url, bundle_path)
+                    for pkg_deprecation_list in yaml_response.values()
+                    for bundle_path in pkg_deprecation_list
+                ]
+        except Exception:
+            LOG.error("Data in {0} is invalid".format(deprecation_list_url))
+            raise
+
+        LOG.info("Deprecation list retrieved successfully")
+        return sorted(deprecation_list)
+
+    def iib_add_bundles(self, bundles, archs, ocp_version, deprecation_list=None):
         """
         Construct and execute pubtools-iib command to add bundles to index image.
 
@@ -154,6 +217,8 @@ class OperatorPusher:
                 Architectures to build for.
             ocp_version (str):
                 OCP version to add the bundles to. It acts as a tag of the index image.
+            deprecation_list ([str]):
+                List of bundles to be deprecated.
 
         Returns (dict):
             Build details provided by IIB.
@@ -181,6 +246,9 @@ class OperatorPusher:
             args += ["--bundle", bundle]
         for arch in archs:
             args += ["--arch", arch]
+        # inconsistent way of presenting multiple arguments...
+        if deprecation_list:
+            args += ["--deprecation-list", ",".join(deprecation_list)]
 
         env_vars = {}
         if "iib_overwrite_from_index_token" in self.target_settings:
@@ -266,8 +334,11 @@ class OperatorPusher:
             archs = sorted(list(set(all_archs)))
             signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
 
+            # Get deprecation list
+            deprecation_list = self.get_deprecation_list(version)
+
             # build index image in IIB
-            build_details = self.iib_add_bundles(bundles, archs, version)
+            build_details = self.iib_add_bundles(bundles, archs, version, deprecation_list)
 
             # use IIB build details to push to Quay
             index_image_repo = image_schema.format(

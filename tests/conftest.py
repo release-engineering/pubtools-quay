@@ -495,6 +495,7 @@ def target_settings():
         "iib_krb_principal": "some-principal@REDHAT.COM",
         "iib_organization": "redhat-operators",
         "iib_server": "iib-server.com",
+        "iib_deprecation_list_url": "https://git-server.com",
         "max_concurrent": 2,
         "pyxis_server": "pyxis-url.com",
         "quay_api_token": "quay-token",

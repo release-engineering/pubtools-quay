@@ -108,6 +108,39 @@ def test_pyxis_generate_mapping(
     assert len(mapping["v4.7"]) == 2
 
 
+def test_get_deprecation_list(target_settings, operator_push_item_ok):
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    with open("tests/test_data/deprecation_list_data.yaml", "r") as f:
+        deprecate_data = f.read()
+
+    with requests_mock.Mocker() as m:
+        m.get("https://git-server.com/4_7.yml/raw?ref=master", text=deprecate_data)
+        deprecation_list = pusher.get_deprecation_list("4.7")
+
+    assert deprecation_list == [
+        "some-registry1.com/bundle/path@sha256:a1a1a1",
+        "some-registry1.com/bundle/path@sha256:b2b2b2",
+    ]
+
+
+def test_get_deprecation_list_server_error(target_settings, operator_push_item_ok, caplog):
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+
+    with requests_mock.Mocker() as m:
+        m.get("https://git-server.com/4_7.yml/raw?ref=master", status_code=500)
+        with pytest.raises(requests.exceptions.HTTPError, match=".*500.*"):
+            deprecation_list = pusher.get_deprecation_list("4.7")
+
+
+def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_ok):
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+
+    with requests_mock.Mocker() as m:
+        m.get("https://git-server.com/4_7.yml/raw?ref=master", text="{some-invalid-data}")
+        with pytest.raises(TypeError, match=".*not iterable.*"):
+            deprecation_list = pusher.get_deprecation_list("4.7")
+
+
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles(
     mock_run_entrypoint,
@@ -116,7 +149,9 @@ def test_iib_add_bundles(
 ):
     mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
-    result = pusher.iib_add_bundles(["bundle1", "bundle2"], ["arch1", "arch2"], "v4.5")
+    result = pusher.iib_add_bundles(
+        ["bundle1", "bundle2"], ["arch1", "arch2"], "v4.5", ["bundle3", "bundle4"]
+    )
 
     assert result == "some-data"
     mock_run_entrypoint.assert_called_once_with(
@@ -141,6 +176,8 @@ def test_iib_add_bundles(
             "arch1",
             "--arch",
             "arch2",
+            "--deprecation-list",
+            "bundle3,bundle4",
         ],
         {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
     )
@@ -149,7 +186,9 @@ def test_iib_add_bundles(
 @mock.patch("pubtools._quay.operator_pusher.tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 def test_push_operators(
+    mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
     mock_tag_images,
@@ -160,6 +199,8 @@ def test_push_operators(
     class IIBRes:
         def __init__(self, index_image):
             self.index_image = index_image
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
@@ -177,6 +218,11 @@ def test_push_operators(
 
     results = pusher.push_operators()
 
+    assert mock_get_deprecation_list.call_count == 3
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.5")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
+    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+
     assert results == {
         "v4.5": {"iib_result": iib_results[0], "signing_keys": ["some-key"]},
         "v4.6": {"iib_result": iib_results[1], "signing_keys": ["some-key"]},
@@ -184,15 +230,16 @@ def test_push_operators(
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
-        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.5"
+        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.5", ["bundle1", "bundle2"]
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
-        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.6"
+        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.6", ["bundle3"]
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         ["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
         ["amd64", "some-arch"],
         "v4.7",
+        [],
     )
 
     assert mock_tag_images.call_count == 3
