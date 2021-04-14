@@ -39,7 +39,9 @@ def test_tag_images(
         [container_multiarch_push_item], target_settings
     )
 
-    pusher.run_tag_images("source-ref:1", ["dest-ref:1", "dest-ref:2"], True)
+    pusher.run_tag_images(
+        "source-ref:1", ["dest-ref:1", "dest-ref:2"], True, pusher.target_settings
+    )
     mock_tag_images.assert_called_once_with(
         "source-ref:1",
         ["dest-ref:1", "dest-ref:2"],

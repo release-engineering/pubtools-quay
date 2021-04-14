@@ -35,7 +35,7 @@ class SignatureHandler:
             hub (HubProxy):
                 Instance of XMLRPC pub-hub proxy.
             task_id (str):
-                task id
+                ID of the pub task
             target_settings (dict):
                 Target settings.
         """
@@ -518,14 +518,14 @@ class ContainerSignatureHandler(SignatureHandler):
 class OperatorSignatureHandler(SignatureHandler):
     """Class for handling the signing of index images."""
 
-    def construct_index_image_claim_messages(self, index_image, version, signing_keys):
+    def construct_index_image_claim_messages(self, index_image, tag, signing_keys):
         """
         Construct signature claim messages for RADAS for the specified index image.
 
         index_image (str):
             Reference to a new index image constructed by IIB.
-        version (str):
-            Openshift version the index image was build for. Functions as an image tag.
+        tag (str):
+            Tag of the newly built index image.
         signing_keys (str):
             Signing keys to be used for signing.
 
@@ -546,7 +546,7 @@ class OperatorSignatureHandler(SignatureHandler):
                     repo = self.target_settings["quay_operator_repository"]
                     internal_repo = get_internal_container_repo_name(repo)
                     dest_repo = internal_repo_schema.format(internal_repo=internal_repo)
-                    reference = image_schema.format(host=registry, repository=repo, tag=version)
+                    reference = image_schema.format(host=registry, repository=repo, tag=tag)
                     claim_message = self.create_manifest_claim_message(
                         destination_repo=dest_repo,
                         signature_key=signing_key,
@@ -589,10 +589,40 @@ class OperatorSignatureHandler(SignatureHandler):
                 repo="iib",
                 tag=tag,
             )
+            # Version acts as a tag of the index image
             claim_messages += self.construct_index_image_claim_messages(
                 intermediate_index_image, version, signing_keys
             )
-        LOG.info("claim messages: {0}".format(json.dumps(claim_messages)))
+
+        signature_messages = self.get_signatures_from_radas(claim_messages)
+        self.validate_radas_messages(claim_messages, signature_messages)
+
+        self.upload_signatures_to_pyxis(
+            claim_messages,
+            signature_messages,
+            self.target_settings.get(
+                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
+            ),
+        )
+
+    def sign_task_index_image(self, build_details, signing_key, index_image):
+        """
+        Perform an alternatve signing workflow used by IIB methods in pub.
+
+        This workflow is used by methods 'PushAddIIBBundles', 'PushRemoveIIBOperators',
+        'PushIIBBuildFromScratch'.
+
+        Args:
+            build_details (dict):
+                Build details produced by IIB.
+            signing_key (str):
+                Signing key to be used.
+            index_image (str):
+                Index image to be signed. Must be specified via tag.
+        """
+        tag = index_image.split(":")[-1]
+
+        claim_messages = self.construct_index_image_claim_messages(index_image, tag, [signing_key])
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 

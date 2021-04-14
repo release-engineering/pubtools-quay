@@ -97,6 +97,9 @@ class PushDocker:
             "iib_organization",
             "iib_index_image",
             "quay_operator_repository",
+            "ssh_remote_host",
+            "ssh_user",
+            "ssh_password",
             "docker_settings",
         ]
         for setting in required_settings:

@@ -647,3 +647,39 @@ def test_sign_operator_images_not_allowed(
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
     mock_upload_signatures_to_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch(
+    "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
+)
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_task_index_image(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_construct_index_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+):
+    class IIBRes:
+        def __init__(self, index_image_resolved):
+            self.index_image_resolved = index_image_resolved
+
+    hub = mock.MagicMock()
+    mock_construct_index_claim_msgs.return_value = ["msg1", "msg2"]
+    mock_get_radas_signatures.return_value = ["sig1", "sig2"]
+    build_details = IIBRes("registry1/namespace/image:1")
+
+    sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
+    sig_handler.sign_task_index_image(build_details, "some-key", "registry1/namespace/image:1")
+    mock_construct_index_claim_msgs.assert_called_once_with(
+        "registry1/namespace/image:1", "1", ["some-key"]
+    )
+    mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
+    mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"], 100)

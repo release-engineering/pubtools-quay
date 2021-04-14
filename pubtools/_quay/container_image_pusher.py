@@ -55,7 +55,8 @@ class ContainerImagePusher:
             )
         return self._quay_client
 
-    def run_tag_images(self, source_ref, dest_refs, all_arch):
+    @classmethod
+    def run_tag_images(cls, source_ref, dest_refs, all_arch, target_settings):
         """
         Prepare the "tag images" entrypoint with all the necessary arguments and run it.
 
@@ -66,6 +67,8 @@ class ContainerImagePusher:
                 List of destination references.
             all_arch (bool):
                 Whether all architectures should be copied.
+            target_settings (dict):
+                Settings used for setting the value of pubtools-iib parameters.
         """
         # TODO: do we want to do some registry-proxy -> quay transformation?
         # TODO: tag-images only supports quay.io hostname, should we extend the functionality?
@@ -74,22 +77,22 @@ class ContainerImagePusher:
             source_ref,
             dest_refs,
             all_arch=all_arch,
-            quay_user=self.target_settings["quay_user"],
-            quay_password=self.target_settings["quay_password"],
+            quay_user=target_settings["quay_user"],
+            quay_password=target_settings["quay_password"],
             remote_exec=True,
             send_umb_msg=True,
-            ssh_remote_host=self.target_settings["ssh_remote_host"],
-            ssh_username=self.target_settings["ssh_user"],
-            ssh_password=self.target_settings["ssh_password"],
-            umb_urls=self.target_settings["docker_settings"]["umb_urls"],
-            umb_cert=self.target_settings["docker_settings"].get(
+            ssh_remote_host=target_settings["ssh_remote_host"],
+            ssh_username=target_settings["ssh_user"],
+            ssh_password=target_settings["ssh_password"],
+            umb_urls=target_settings["docker_settings"]["umb_urls"],
+            umb_cert=target_settings["docker_settings"].get(
                 "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
             ),
             # assumption that we'll continue using .pem format
-            umb_client_key=self.target_settings["docker_settings"].get(
+            umb_client_key=target_settings["docker_settings"].get(
                 "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
             ),
-            umb_ca_cert=self.target_settings["docker_settings"].get(
+            umb_ca_cert=target_settings["docker_settings"].get(
                 "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
             ),
         )
@@ -119,7 +122,7 @@ class ContainerImagePusher:
                 )
                 dest_refs.append(dest_ref)
 
-        self.run_tag_images(source_ref, dest_refs, True)
+        self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
     def run_merge_workflow(self, source_ref, dest_refs):
         """
@@ -148,7 +151,7 @@ class ContainerImagePusher:
                 image_schema.format(repo=dest_repo, digest=manifest["digest"])
                 for dest_repo in dest_repos
             ]
-            self.run_tag_images(source_image, dest_images, False)
+            self.run_tag_images(source_image, dest_images, False, self.target_settings)
 
         for dest_ref in dest_refs:
             LOG.info(
@@ -217,7 +220,7 @@ class ContainerImagePusher:
                     source_ref, len(simple_dest_refs)
                 )
             )
-            self.run_tag_images(source_ref, simple_dest_refs, True)
+            self.run_tag_images(source_ref, simple_dest_refs, True, self.target_settings)
         if merge_mls_dest_refs:
             LOG.info(
                 "Copying image {0} to {1} destinations and merging manifest lists".format(
