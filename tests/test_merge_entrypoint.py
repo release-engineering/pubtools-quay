@@ -8,12 +8,8 @@ from .test_ml_merger import old_ml, new_ml, merged_ml
 
 @mock.patch("pubtools._quay.merge_manifest_list.add_args_env_variables")
 @mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger")
-@mock.patch(
-    "pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists"
-)
-def test_arg_parser_required_args(
-    mock_merge_manifest_lists, mock_list_merger, mock_set_env_vars
-):
+@mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists")
+def test_arg_parser_required_args(mock_merge_manifest_lists, mock_list_merger, mock_set_env_vars):
     required_args = [
         "dummy",
         "--source-ref",
@@ -36,9 +32,7 @@ def test_arg_parser_required_args(
 
 @mock.patch("pubtools._quay.merge_manifest_list.add_args_env_variables")
 @mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger")
-@mock.patch(
-    "pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists"
-)
+@mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists")
 def test_arg_parser_missing_required(
     mock_merge_manifest_lists, mock_list_merger, mock_set_env_vars
 ):
@@ -61,9 +55,7 @@ def test_arg_parser_missing_required(
 
 
 @mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger")
-@mock.patch(
-    "pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists"
-)
+@mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists")
 def test_arg_parser_dest_digest(mock_merge_manifest_lists, mock_list_merger):
     args = [
         "dummy",
@@ -77,18 +69,14 @@ def test_arg_parser_dest_digest(mock_merge_manifest_lists, mock_list_merger):
         "token",
     ]
 
-    with pytest.raises(
-        ValueError, match="Destination must be specified via tag, not digest"
-    ):
+    with pytest.raises(ValueError, match="Destination must be specified via tag, not digest"):
         merge_manifest_list.merge_manifest_list_main(args)
 
     mock_merge_manifest_lists.assert_not_called()
 
 
 @mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger")
-@mock.patch(
-    "pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists"
-)
+@mock.patch("pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists")
 def test_arg_parser_missing_password(mock_merge_manifest_lists, mock_list_merger):
     args = [
         "dummy",
@@ -122,16 +110,12 @@ def test_merge_manifest_list_full():
         m.get(
             "https://quay.io/v2/src/image/manifests/1",
             json=new_ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.get(
             "https://quay.io/v2/dest/image/manifests/1",
             json=old_ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.put("https://quay.io/v2/dest/image/manifests/1", status_code=200)
 

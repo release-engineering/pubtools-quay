@@ -42,9 +42,7 @@ def register_manifest_url(mocker, repo, manifest, data, mlist=False):
     mocker.get(
         "https://stage.quay.io/v2/name/%s/manifests/%s" % (repo, manifest),
         json=data,
-        headers={
-            "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-        }
+        headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"}
         if mlist
         else {},
     )
@@ -139,9 +137,7 @@ def test_tag_digest_mappings(
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
         register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = (
-            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        )
+        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         tag_digest_mapping, digest_tag_mapping = untagger.construct_tag_digest_mappings(
             "name/repo1"
@@ -211,9 +207,7 @@ def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog)
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
         register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = (
-            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        )
+        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         lost_images = untagger.untag_images()
@@ -223,8 +217,6 @@ def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog)
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "No images will be lost by this untagging operation",
             "Removing tag '1' from repository 'name/repo1'",
         ]
@@ -240,9 +232,7 @@ def test_untag_images_lost_digests_error(repo_api_data, manifest_list_data, capl
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
         register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = (
-            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        )
+        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
 
@@ -258,9 +248,7 @@ def test_untag_images_lost_digests_error(repo_api_data, manifest_list_data, capl
             untagger.untag_images()
 
 
-def test_untag_images_lost_digests_remove_anyway(
-    repo_api_data, manifest_list_data, caplog
-):
+def test_untag_images_lost_digests_remove_anyway(repo_api_data, manifest_list_data, caplog):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
@@ -269,9 +257,7 @@ def test_untag_images_lost_digests_remove_anyway(
     untagger = setup_untagger(references, remove_last=True)
     with requests_mock.Mocker() as m:
         register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = (
-            "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        )
+        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
         register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/2")
@@ -289,8 +275,6 @@ def test_untag_images_lost_digests_remove_anyway(
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "Following images won't be referencable by tag: "
             ".*stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
             ".*stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
@@ -311,8 +295,6 @@ def test_untag_images_missing_client(repo_api_data, manifest_list_data, caplog):
     token = "some-token"
     quay_user = "some-user"
     host = "stage.quay.io/"
-    untagger = image_untagger.ImageUntagger(
-        references, token, True, quay_user, host=host
-    )
+    untagger = image_untagger.ImageUntagger(references, token, True, quay_user, host=host)
     with pytest.raises(RuntimeError, match="QuayClient instance must be set"):
         untagger.untag_images()

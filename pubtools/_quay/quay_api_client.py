@@ -66,8 +66,6 @@ class QuayApiClient:
         if "Invalid repository tag" not in response.text:
             response.raise_for_status()
         else:
-            LOG.warning(
-                "Tag '{0}' already doesn't exist in repo '{1}'".format(tag, repository)
-            )
+            LOG.warning("Tag '{0}' already doesn't exist in repo '{1}'".format(tag, repository))
 
         return response

@@ -107,9 +107,7 @@ def test_delete(mock_session):
 
     kwargs = {"data": "old data"}
     session.delete("delete/data/4", **kwargs)
-    mocked_session.delete.assert_called_with(
-        "https://quay.io/v2/delete/data/4", **kwargs
-    )
+    mocked_session.delete.assert_called_with("https://quay.io/v2/delete/data/4", **kwargs)
 
 
 @mock.patch("pubtools._quay.quay_session.requests.Session")
@@ -121,6 +119,4 @@ def test_request(mock_session):
 
     kwargs = {"headers": {"Accept": "application/json"}, "data": "some data"}
     session.request("POST", "post/data/2", **kwargs)
-    mocked_session.request.assert_called_with(
-        "POST", "https://quay.io/v2/post/data/2", **kwargs
-    )
+    mocked_session.request.assert_called_with("POST", "https://quay.io/v2/post/data/2", **kwargs)

@@ -51,24 +51,27 @@ def test_arg_parser_required_args(mock_tag_images):
         "quay.io/repo/target-image:1",
     ]
     tag_images.tag_images_main(required_args)
-    called_args, _ = mock_tag_images.call_args
 
-    assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
-    assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
-    assert called_args[0].quay_user is None
-    assert called_args[0].quay_password is None
-    assert called_args[0].remote_exec is None
-    assert called_args[0].ssh_remote_host is None
-    assert called_args[0].ssh_reject_unknown_host is None
-    assert called_args[0].ssh_username is None
-    assert called_args[0].ssh_password is None
-    assert called_args[0].ssh_key_filename is None
-    assert called_args[0].send_umb_msg is None
-    assert called_args[0].umb_url is None
-    assert called_args[0].umb_cert is None
-    assert called_args[0].umb_client_key is None
-    assert called_args[0].umb_ca_cert is None
-    assert called_args[0].umb_topic is None
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        all_arch=False,
+        quay_user=None,
+        quay_password=None,
+        remote_exec=False,
+        ssh_remote_host=None,
+        ssh_remote_host_port=None,
+        ssh_reject_unknown_host=False,
+        ssh_username=None,
+        ssh_password=None,
+        ssh_key_filename=None,
+        send_umb_msg=False,
+        umb_cert=None,
+        umb_client_key=None,
+        umb_ca_cert=None,
+        umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=None,
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -86,6 +89,8 @@ def test_arg_parser_full_args(mock_tag_images):
         "--remote-exec",
         "--ssh-remote-host",
         "127.0.0.1",
+        "--ssh-remote-host-port",
+        "5000",
         "--ssh-reject-unknown-host",
         "--ssh-username",
         "dummy",
@@ -106,24 +111,27 @@ def test_arg_parser_full_args(mock_tag_images):
         "VirtualTopic.eng.pub.tagimage",
     ]
     tag_images.tag_images_main(full_args)
-    called_args, _ = mock_tag_images.call_args
 
-    assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
-    assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
-    assert called_args[0].quay_user == "robot_user"
-    assert called_args[0].quay_password == "robot_token"
-    assert called_args[0].remote_exec is True
-    assert called_args[0].ssh_remote_host == "127.0.0.1"
-    assert called_args[0].ssh_reject_unknown_host is True
-    assert called_args[0].ssh_username == "dummy"
-    assert called_args[0].ssh_password == "123456"
-    assert called_args[0].ssh_key_filename == "/path/to/file.key"
-    assert called_args[0].send_umb_msg is True
-    assert called_args[0].umb_url == ["amqps://url:5671"]
-    assert called_args[0].umb_cert == "/path/to/file.crt"
-    assert called_args[0].umb_client_key == "/path/to/umb.key"
-    assert called_args[0].umb_ca_cert == "/path/to/ca_cert.crt"
-    assert called_args[0].umb_topic == "VirtualTopic.eng.pub.tagimage"
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        all_arch=False,
+        quay_user="robot_user",
+        quay_password="robot_token",
+        remote_exec=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_remote_host_port=5000,
+        ssh_reject_unknown_host=True,
+        ssh_username="dummy",
+        ssh_password="123456",
+        ssh_key_filename="/path/to/file.key",
+        send_umb_msg=True,
+        umb_cert="/path/to/file.crt",
+        umb_client_key="/path/to/umb.key",
+        umb_ca_cert="/path/to/ca_cert.crt",
+        umb_topic="VirtualTopic.eng.pub.tagimage",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=["amqps://url:5671"],
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -145,15 +153,27 @@ def test_arg_parser_multiple_args(mock_tag_images):
         "/path/to/file.crt",
     ]
     tag_images.tag_images_main(multi_args)
-    called_args, _ = mock_tag_images.call_args
 
-    assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
-    assert called_args[0].dest_ref == [
-        "quay.io/repo/target-image:1",
-        "quay.io/repo/target-image:2",
-    ]
-    assert called_args[0].send_umb_msg is True
-    assert called_args[0].umb_url == ["amqps://url1:5671", "amqps://url2:5671"]
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        all_arch=False,
+        quay_user=None,
+        quay_password=None,
+        remote_exec=False,
+        ssh_remote_host=None,
+        ssh_remote_host_port=None,
+        ssh_reject_unknown_host=False,
+        ssh_username=None,
+        ssh_password=None,
+        ssh_key_filename=None,
+        send_umb_msg=True,
+        umb_cert="/path/to/file.crt",
+        umb_client_key=None,
+        umb_ca_cert=None,
+        umb_topic="VirtualTopic.eng.pub.quay_tag_image",
+        dest_refs=["quay.io/repo/target-image:1", "quay.io/repo/target-image:2"],
+        umb_urls=["amqps://url1:5671", "amqps://url2:5671"],
+    )
 
 
 @mock.patch("pubtools._quay.tag_images.tag_images")
@@ -180,8 +200,7 @@ def test_arg_parser_required_missing_dest(mock_tag_images):
     mock_tag_images.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_images.tag_images")
-def test_arg_parser_missing_hostname(mock_tag_images):
+def test_arg_parser_missing_hostname():
     missing_hostname = [
         "dummy",
         "--source-ref",
@@ -194,11 +213,8 @@ def test_arg_parser_missing_hostname(mock_tag_images):
     with pytest.raises(ValueError, match="Remote host is missing.*"):
         tag_images.tag_images_main(missing_hostname)
 
-    mock_tag_images.assert_not_called()
 
-
-@mock.patch("pubtools._quay.tag_images.tag_images")
-def test_arg_parser_missing_quay_user_or_password(mock_tag_images):
+def test_arg_parser_missing_quay_user_or_password():
     missing_password = [
         "dummy",
         "--source-ref",
@@ -225,11 +241,8 @@ def test_arg_parser_missing_quay_user_or_password(mock_tag_images):
     with pytest.raises(ValueError, match="Both user and password must be present.*"):
         tag_images.tag_images_main(missing_user)
 
-    mock_tag_images.assert_not_called()
 
-
-@mock.patch("pubtools._quay.tag_images.tag_images")
-def test_arg_parser_missing_umb_url(mock_tag_images):
+def test_arg_parser_missing_umb_url():
     missing_umb_url = [
         "dummy",
         "--source-ref",
@@ -244,11 +257,8 @@ def test_arg_parser_missing_umb_url(mock_tag_images):
     with pytest.raises(ValueError, match="UMB URL must be specified.*"):
         tag_images.tag_images_main(missing_umb_url)
 
-    mock_tag_images.assert_not_called()
 
-
-@mock.patch("pubtools._quay.tag_images.tag_images")
-def test_arg_parser_missing_umb_cert(mock_tag_images):
+def test_arg_parser_missing_umb_cert():
     missing_umb_url = [
         "dummy",
         "--source-ref",
@@ -263,12 +273,8 @@ def test_arg_parser_missing_umb_cert(mock_tag_images):
     with pytest.raises(ValueError, match="A path to a client certificate.*"):
         tag_images.tag_images_main(missing_umb_url)
 
-    mock_tag_images.assert_not_called()
 
-
-@mock.patch.dict(
-    "os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"}
-)
+@mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"})
 @mock.patch("pubtools._quay.tag_images.tag_images")
 def test_arg_parser_env_variables(mock_tag_images):
     full_args = [
@@ -300,21 +306,24 @@ def test_arg_parser_env_variables(mock_tag_images):
         "VirtualTopic.eng.pub.tagimage",
     ]
     tag_images.tag_images_main(full_args)
-    called_args, _ = mock_tag_images.call_args
 
-    assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
-    assert called_args[0].dest_ref == ["quay.io/repo/target-image:1"]
-    assert called_args[0].quay_user == "robot_user"
-    assert called_args[0].quay_password == "robot_token"
-    assert called_args[0].remote_exec is True
-    assert called_args[0].ssh_remote_host == "127.0.0.1"
-    assert called_args[0].ssh_reject_unknown_host is True
-    assert called_args[0].ssh_username == "dummy"
-    assert called_args[0].ssh_password == "123456"
-    assert called_args[0].ssh_key_filename == "/path/to/file.key"
-    assert called_args[0].send_umb_msg is True
-    assert called_args[0].umb_url == ["amqps://url:5671"]
-    assert called_args[0].umb_cert == "/path/to/file.crt"
-    assert called_args[0].umb_client_key == "/path/to/umb.key"
-    assert called_args[0].umb_ca_cert == "/path/to/ca_cert.crt"
-    assert called_args[0].umb_topic == "VirtualTopic.eng.pub.tagimage"
+    assert mock_tag_images.call_args == mock.call(
+        source_ref="quay.io/repo/souce-image:1",
+        all_arch=False,
+        quay_user="robot_user",
+        quay_password="robot_token",
+        remote_exec=True,
+        ssh_remote_host="127.0.0.1",
+        ssh_remote_host_port=None,
+        ssh_reject_unknown_host=True,
+        ssh_username="dummy",
+        ssh_password="123456",
+        ssh_key_filename="/path/to/file.key",
+        send_umb_msg=True,
+        umb_cert="/path/to/file.crt",
+        umb_client_key="/path/to/umb.key",
+        umb_ca_cert="/path/to/ca_cert.crt",
+        umb_topic="VirtualTopic.eng.pub.tagimage",
+        dest_refs=["quay.io/repo/target-image:1"],
+        umb_urls=["amqps://url:5671"],
+    )

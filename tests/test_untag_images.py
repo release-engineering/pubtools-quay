@@ -26,9 +26,7 @@ def test_arg_constructor_required_args(mock_untag_images):
     assert called_args["umb_topic"] == "VirtualTopic.eng.pub.quay_untag_image"
 
 
-@mock.patch.dict(
-    "os.environ", {"QUAY_PASSWORD": "robot_token", "QUAY_API_TOKEN": "api_token"}
-)
+@mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "QUAY_API_TOKEN": "api_token"})
 @mock.patch("pubtools._quay.untag_images.untag_images")
 def test_arg_constructor_all_args(mock_untag_images):
     all_args = [
@@ -63,7 +61,7 @@ def test_arg_constructor_all_args(mock_untag_images):
     assert called_args["umb_urls"] == ["amqps://url:5671", "amqps://url:5672"]
     assert called_args["umb_cert"] == "/path/to/file.crt"
     assert called_args["umb_client_key"] == "/path/to/umb.key"
-    assert called_args["umb_cacert"] == "/path/to/ca_cert.crt"
+    assert called_args["umb_ca_cert"] == "/path/to/ca_cert.crt"
     assert called_args["quay_api_token"] == "api_token"
     assert called_args["umb_topic"] == "VirtualTopic.eng.pub.untag_image_new"
 
@@ -108,9 +106,7 @@ def test_args_incorrect_digest_reference(mock_image_untagger):
         "some-token",
     ]
 
-    with pytest.raises(
-        ValueError, match="All references must be specified via tag, not digest"
-    ):
+    with pytest.raises(ValueError, match="All references must be specified via tag, not digest"):
         untag_images.untag_images_main(wrong_args)
 
     mock_image_untagger.assert_not_called()
@@ -212,9 +208,7 @@ def test_send_umb_message(mock_send_umb_message, mock_image_untagger):
         "--umb-topic",
         "VirtualTopic.eng.pub.untag_image_new",
     ]
-    mock_image_untagger.return_value.untag_images.return_value = [
-        "quay.io/repo/some-image:1"
-    ]
+    mock_image_untagger.return_value.untag_images.return_value = ["quay.io/repo/some-image:1"]
     untag_images.untag_images_main(args)
 
     mock_send_umb_message.assert_called_once_with(
@@ -231,9 +225,7 @@ def test_send_umb_message(mock_send_umb_message, mock_image_untagger):
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_remove_last(
-    mock_send_umb_message, repo_api_data, manifest_list_data, caplog
-):
+def test_full_run_remove_last(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -269,9 +261,7 @@ def test_full_run_remove_last(
         m.get(
             "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/2")
@@ -289,8 +279,6 @@ def test_full_run_remove_last(
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "Following images won't be referencable by tag: "
             ".*quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
             ".*quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
@@ -317,9 +305,7 @@ def test_full_run_remove_last(
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_no_lost_digests(
-    mock_send_umb_message, repo_api_data, manifest_list_data, caplog
-):
+def test_full_run_no_lost_digests(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -352,9 +338,7 @@ def test_full_run_no_lost_digests(
         m.get(
             "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         untag_images.untag_images_main(args)
@@ -364,8 +348,6 @@ def test_full_run_no_lost_digests(
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             "No images will be lost by this untagging operation",
             "Removing tag '1' from repository 'name/repo1'",
             "Untagging operation succeeded",
@@ -387,9 +369,7 @@ def test_full_run_no_lost_digests(
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_last_error(
-    mock_send_umb_message, repo_api_data, manifest_list_data, caplog
-):
+def test_full_run_last_error(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -424,9 +404,7 @@ def test_full_run_last_error(
         m.get(
             "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
             json=manifest_list_data,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
 
         expected_err_msg = (
@@ -445,8 +423,6 @@ def test_full_run_last_error(
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            "Getting manifest list of image quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         ]
         compare_logs(caplog, expected_logs)
 

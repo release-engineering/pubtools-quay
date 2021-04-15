@@ -7,9 +7,7 @@ from requests.packages.urllib3.util.retry import Retry
 class QuaySession(object):
     """Helper class to support Quay requests and authentication."""
 
-    def __init__(
-        self, hostname=None, retries=3, backoff_factor=2, verify=False, api="docker"
-    ):
+    def __init__(self, hostname=None, retries=3, backoff_factor=2, verify=False, api="docker"):
         """
         Initialize.
 

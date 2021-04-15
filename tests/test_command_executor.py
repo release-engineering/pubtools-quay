@@ -100,11 +100,11 @@ def test_remote_executor_init():
     assert executor.username == "dummy"
     assert executor.key_filename == "path/to/file.key"
     assert executor.password == "123456"
-    assert executor.missing_host_policy == paramiko.client.RejectPolicy
+    assert isinstance(executor.missing_host_policy, paramiko.client.RejectPolicy)
 
     executor2 = command_executor.RemoteExecutor("127.0.0.1")
 
-    assert executor2.missing_host_policy == paramiko.client.WarningPolicy
+    assert isinstance(executor2.missing_host_policy, paramiko.client.WarningPolicy)
 
 
 @mock.patch("pubtools._quay.command_executor.paramiko.client.SSHClient")
@@ -118,15 +118,11 @@ def test_remote_executor_run(mock_sshclient):
     )
 
     mock_load_host_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = (
-        mock_load_host_keys
-    )
+    mock_sshclient.return_value.load_system_host_keys = mock_load_host_keys
     mock_set_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = (
-        mock_set_keys
-    )
+    mock_sshclient.return_value.set_missing_host_key_policy = mock_set_keys
     mock_connect = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.connect = mock_connect
+    mock_sshclient.return_value.connect = mock_connect
 
     mock_in = mock.MagicMock()
     mock_out = mock.MagicMock()
@@ -142,12 +138,14 @@ def test_remote_executor_run(mock_sshclient):
     mock_in.channel.shutdown_write = mock_shutdown_write
     mock_exec_command = mock.MagicMock()
     mock_exec_command.return_value = (mock_in, mock_out, mock_err)
-    mock_sshclient.return_value.__enter__.return_value.exec_command = mock_exec_command
+    mock_sshclient.return_value.exec_command = mock_exec_command
 
     out, err = executor._run_cmd("pwd", stdin="input")
 
     mock_load_host_keys.assert_called_once()
-    mock_set_keys.assert_called_once_with(paramiko.client.WarningPolicy)
+    assert mock_set_keys.call_count == 1
+    assert isinstance(mock_set_keys.call_args[0][0], paramiko.client.WarningPolicy)
+    # mock_set_keys.assert_called_once_with(paramiko.client.WarningPolicy)
     mock_connect.assert_called_once_with(
         "127.0.0.1",
         username="dummy",
@@ -175,15 +173,11 @@ def test_remote_executor_run_error(mock_sshclient):
     )
 
     mock_load_host_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.load_system_host_keys = (
-        mock_load_host_keys
-    )
+    mock_sshclient.return_value.load_system_host_keys = mock_load_host_keys
     mock_set_keys = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.set_missing_host_key_policy = (
-        mock_set_keys
-    )
+    mock_sshclient.return_value.set_missing_host_key_policy = mock_set_keys
     mock_connect = mock.MagicMock()
-    mock_sshclient.return_value.__enter__.return_value.connect = mock_connect
+    mock_sshclient.return_value.connect = mock_connect
 
     mock_in = mock.MagicMock()
     mock_out = mock.MagicMock()
@@ -199,7 +193,7 @@ def test_remote_executor_run_error(mock_sshclient):
     mock_in.channel.shutdown_write = mock_shutdown_write
     mock_exec_command = mock.MagicMock()
     mock_exec_command.return_value = (mock_in, mock_out, mock_err)
-    mock_sshclient.return_value.__enter__.return_value.exec_command = mock_exec_command
+    mock_sshclient.return_value.exec_command = mock_exec_command
 
     with pytest.raises(RuntimeError, match="An error has occured when executing.*"):
         executor._run_cmd("pwd", stdin="input")
@@ -211,9 +205,7 @@ def test_skopeo_login_already_logged(mock_run_cmd):
 
     mock_run_cmd.return_value = ("Already logged in!", "")
     executor.skopeo_login("quay_user", "quay_token")
-    mock_run_cmd.assert_called_once_with(
-        "skopeo login --get-login quay.io", tolerate_err=True
-    )
+    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
@@ -254,16 +246,10 @@ def test_skopeo_login_failed(mock_run_cmd):
 def test_skopeo_tag_images(mock_run_cmd):
     executor = command_executor.LocalExecutor()
 
-    executor.tag_images(
-        "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"]
-    )
+    executor.tag_images("quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"])
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
-        ),
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
-        ),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]
 
 
@@ -275,10 +261,6 @@ def test_skopeo_tag_images_all_arch(mock_run_cmd):
         "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"], True
     )
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
-        ),
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
-        ),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]

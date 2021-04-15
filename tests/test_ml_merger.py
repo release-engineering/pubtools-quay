@@ -113,9 +113,7 @@ expected_missing_archs = [
 
 
 def test_init():
-    merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1"
-    )
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
     assert merger.src_image == "quay.io/src/image:1"
     assert merger.dest_image == "quay.io/dest/image:1"
     assert merger._quay_client is None
@@ -138,9 +136,7 @@ def test_init_create_client():
 
 
 def test_set_client():
-    merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1"
-    )
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
     assert merger.src_image == "quay.io/src/image:1"
     assert merger.dest_image == "quay.io/dest/image:1"
     assert merger._quay_client is None
@@ -151,21 +147,15 @@ def test_set_client():
 
 
 def test_get_missing_architectures():
-    merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1"
-    )
-    missing = merger._get_missing_architectures(new_ml, old_ml)
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
+    missing = merger.get_missing_architectures(new_ml, old_ml)
 
     assert missing == expected_missing_archs
 
 
 def test_add_missing_architectures():
-    merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1"
-    )
-    merged_manifest_list = merger._add_missing_architectures(
-        new_ml, expected_missing_archs
-    )
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
+    merged_manifest_list = merger._add_missing_architectures(new_ml, expected_missing_archs)
 
     merged_manifest_list["manifests"].sort(key=lambda manifest: manifest["digest"])
     merged_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
@@ -181,16 +171,12 @@ def test_merge_manifest_lists_success():
         m.get(
             "https://quay.io/v2/src/image/manifests/1",
             json=new_ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.get(
             "https://quay.io/v2/dest/image/manifests/1",
             json=old_ml,
-            headers={
-                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-            },
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.put("https://quay.io/v2/dest/image/manifests/1", status_code=200)
 
@@ -204,9 +190,7 @@ def test_merge_manifest_lists_success():
 
 
 def test_merge_manifest_lists_missing_client():
-    merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1"
-    )
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
 
     with pytest.raises(RuntimeError, match="QuayClient instance must be set"):
         merger.merge_manifest_lists()

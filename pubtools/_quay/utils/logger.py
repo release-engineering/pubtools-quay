@@ -46,18 +46,12 @@ def log_jsonl(step_name):
     def decorate(fn):
         def fn_wrapper(*args, **kwargs):
             try:
-                logger.info(
-                    "%s: Started", step_name, extra=task_status("%s-start" % event_name)
-                )
+                logger.info("%s: Started", step_name, extra=task_status("%s-start" % event_name))
                 ret = fn(*args, **kwargs)
-                logger.info(
-                    "%s: Finished", step_name, extra=task_status("%s-end" % event_name)
-                )
+                logger.info("%s: Finished", step_name, extra=task_status("%s-end" % event_name))
                 return ret
             except Exception:
-                logger.error(
-                    "%s: Failed", step_name, extra=task_status("%s-error" % event_name)
-                )
+                logger.error("%s: Failed", step_name, extra=task_status("%s-error" % event_name))
                 raise
 
         return fn_wrapper

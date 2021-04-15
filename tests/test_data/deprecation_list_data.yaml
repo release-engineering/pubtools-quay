@@ -1,0 +1,5 @@
+---
+bundle1:  
+    - bundle/path@sha256:a1a1a1
+bundle2:
+    - bundle/path@sha256:b2b2b2

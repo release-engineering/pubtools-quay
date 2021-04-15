@@ -104,9 +104,7 @@ class Step(object):
     NAME = "AbstractSequenceStep"
     __metaclass__ = abc.ABCMeta
 
-    def __init__(
-        self, uid, step_args, step_kwargs, shared_results, external_resources=None
-    ):
+    def __init__(self, uid, step_args, step_kwargs, shared_results, external_resources=None):
         """Initilize the step.
 
         Args:
@@ -124,9 +122,7 @@ class Step(object):
         """
         self.step_args = step_args
 
-        self.masked_args = [
-            str(arg) if isinstance(arg, Secret) else arg for arg in step_args
-        ]
+        self.masked_args = [str(arg) if isinstance(arg, Secret) else arg for arg in step_args]
         self.masked_kwargs = dict(
             [
                 (k, str(arg)) if isinstance(arg, Secret) else (k, arg)
@@ -134,9 +130,7 @@ class Step(object):
             ]
         )
 
-        self.step_args = [
-            arg.value if isinstance(arg, Secret) else arg for arg in step_args
-        ]
+        self.step_args = [arg.value if isinstance(arg, Secret) else arg for arg in step_args]
         self.step_kwargs = dict(
             [
                 (k, arg.value) if isinstance(arg, Secret) else (k, arg)

@@ -3,7 +3,7 @@ import logging
 from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
@@ -40,9 +40,7 @@ class ImageUntagger:
         for reference in references:
             if "@" in reference:
                 raise ValueError(
-                    "Reference '{0}' must be specified via tag, not digest".format(
-                        reference
-                    )
+                    "Reference '{0}' must be specified via tag, not digest".format(reference)
                 )
 
         if isinstance(host, str) and host[-1] == "/":
@@ -106,24 +104,18 @@ class ImageUntagger:
         digest_tag_mapping = {}
         image_schema = "{0}/{1}@{2}"
 
-        for tag, attributes in repo_data["tags"].items():
+        for tag, attributes in sorted(repo_data["tags"].items()):
             # image_id is undefined if tag references a manifest list
             # Option 1: No manifest list, only manifest
             if attributes["image_id"]:
                 tag_digest_mapping[tag] = [attributes["manifest_digest"]]
-                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(
-                    tag
-                )
+                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(tag)
             # Option 2: We need to get digests of all architectures
             else:
-                image = image_schema.format(
-                    self.host, repository, attributes["manifest_digest"]
-                )
-                manifest_list = self._quay_client.get_manifest_list(image)
+                image = image_schema.format(self.host, repository, attributes["manifest_digest"])
+                manifest_list = self._quay_client.get_manifest(image, manifest_list=True)
                 tag_digest_mapping[tag] = [attributes["manifest_digest"]]
-                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(
-                    tag
-                )
+                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(tag)
 
                 for manifest in manifest_list["manifests"]:
                     tag_digest_mapping[tag].append(manifest["digest"])
@@ -176,17 +168,13 @@ class ImageUntagger:
         lost_imgs = []
 
         for repo in repo_tag_mapping:
-            tag_digest_mapping, digest_tag_mapping = self.construct_tag_digest_mappings(
-                repo
-            )
+            tag_digest_mapping, digest_tag_mapping = self.construct_tag_digest_mappings(repo)
 
             lost_digests = self.get_lost_digests(
                 repo_tag_mapping[repo], tag_digest_mapping, digest_tag_mapping
             )
             if len(lost_digests) > 0:
-                lost_imgs += [
-                    schema.format(self.host, repo, digest) for digest in lost_digests
-                ]
+                lost_imgs += [schema.format(self.host, repo, digest) for digest in lost_digests]
 
         if not self.remove_last and lost_imgs:
             raise ValueError(
@@ -196,9 +184,7 @@ class ImageUntagger:
             )
 
         if lost_imgs and self.remove_last:
-            LOG.warning(
-                "Following images won't be referencable by tag: {0}".format(lost_imgs)
-            )
+            LOG.warning("Following images won't be referencable by tag: {0}".format(lost_imgs))
         if not lost_imgs:
             LOG.info("No images will be lost by this untagging operation")
 

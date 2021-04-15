@@ -10,7 +10,7 @@ jobs:
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
-        run: sudo apt-get install -y libkrb5-dev libssl1.0-dev
+        run: sudo apt-get install -y libkrb5-dev libssl1.0-dev libldap2-dev libsasl2-dev
       - name: Add Python 2.6 repository
         run: sudo add-apt-repository ppa:deadsnakes/ppa
       - name: Install Python 2.6

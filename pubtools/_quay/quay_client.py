@@ -2,12 +2,17 @@ import json
 import logging
 import requests
 from requests.packages.urllib3.util.retry import Retry
-from six.moves.urllib.request import parse_http_list, parse_keqv_list
+
+# Unfortunately, version of 'six' available on RHEL 6 doesn't cover this redirect
+try:
+    import urllib2 as request
+except ImportError:  # pragma: no cover
+    from urllib import request
 
 from .exceptions import ManifestTypeError, RegistryAuthError
 from .quay_session import QuaySession
 
-LOG = logging.getLogger()
+LOG = logging.getLogger("PubLogger")
 LOG.setLevel(logging.INFO)
 
 
@@ -32,54 +37,57 @@ class QuayClient:
         self.password = password
         self.session = QuaySession(hostname=host, api="docker")
 
-    def get_manifest_list(self, image, raw=False):
+    def get_manifest(self, image, raw=False, manifest_list=False):
         """
-        Get manifest list of a given image. Throw an error if it couldn't be retrieved.
+        Get manifest of a given image along with its type.
+
+        If reference contains multiple manifests, manifest list will be returned.
 
         Args:
             image (str):
                 Image for which to get the manifest list.
             raw (bool):
                 Whether to return the manifest as raw JSON.
+            manifest_list (bool):
+                Whether to only return a manifest list and raise an exception otherwise.
         Returns (dict|str):
-            The returned manifest list.
-        Raises:
+            Image manifest
+                Raises:
             ManifestTypeError:
                 When the image doesn't have a manifest list.
         """
-        LOG.info("Getting manifest list of image {0}".format(image))
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
+
         # request 'Content-Type' to be manifest list
         kwargs = {"headers": {"Accept": QuayClient.MANIFEST_LIST_TYPE}}
-
         response = self._request_quay("GET", endpoint, kwargs)
-        if response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE:
-            raise ManifestTypeError(
-                "Image {0} doesn't have a manifest list".format(image)
-            )
+        if manifest_list and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE:
+            raise ManifestTypeError("Image {0} doesn't have a manifest list".format(image))
 
         if raw:
             return response.text
         else:
             return response.json()
 
-    def upload_manifest_list(self, manifest_list, image):
+    def upload_manifest(self, manifest, image):
         """
-        Upload a manifest list to a specified image.
+        Upload manifest to a specified image.
+
+        All manifest types are supported (manifest, manifest list).
 
         Args:
-            manifest_list (dict):
-                Manifest list to be uploaded.
+            manifest (dict):
+                Manifest to be uploaded.
             image (str):
-                Image address to upload the manifest list to.
+                Image address to upload the manifest to.
         """
-        LOG.info("Uploading manifest list to image {0}".format(image))
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
+        manifest_type = manifest["mediaType"]
         kwargs = {
-            "headers": {"Content-Type": QuayClient.MANIFEST_LIST_TYPE},
-            "data": json.dumps(manifest_list, sort_keys=True, indent=4),
+            "headers": {"Content-Type": manifest_type},
+            "data": json.dumps(manifest, sort_keys=True, indent=4),
         }
         self._request_quay("PUT", endpoint, kwargs)
 
@@ -140,8 +148,8 @@ class QuayClient:
             )
 
         # parse header to get a dictionary
-        params = parse_keqv_list(
-            parse_http_list(headers["WWW-Authenticate"][len("Bearer ") :])  # noqa: E203
+        params = request.parse_keqv_list(
+            request.parse_http_list(headers["WWW-Authenticate"][len("Bearer ") :])  # noqa: E203
         )
         host = params.pop("realm")
         session = requests.Session()
@@ -161,9 +169,7 @@ class QuayClient:
         r.raise_for_status()
 
         if "token" not in r.json():
-            raise RegistryAuthError(
-                "Authentication server response doesn't contain a token."
-            )
+            raise RegistryAuthError("Authentication server response doesn't contain a token.")
         self.session.set_auth_token(r.json()["token"])
 
     def _parse_and_validate_image_url(self, image):
