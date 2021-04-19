@@ -51,6 +51,8 @@ jobs:
           python-version: 3.7
       - name: Install Tox
         run: pip install tox
+      - name: run env command
+        run: env
       - name: Run Tox
         run: tox -e py37 -vv
   black:
