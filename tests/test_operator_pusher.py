@@ -142,7 +142,7 @@ def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_o
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_iib_add_bundles(
+def test_iib_add_bundles_str_deprecation_list(
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -154,6 +154,52 @@ def test_iib_add_bundles(
         ["arch1", "arch2"],
         "registry.com/rh-osbs/iib-pub-pending:v4.5",
         "bundle3,bundle4",
+        pusher.target_settings,
+    )
+
+    assert result == "some-data"
+    mock_run_entrypoint.assert_called_once_with(
+        ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
+        "pubtools-iib-add-bundles",
+        [
+            "--skip-pulp",
+            "--iib-server",
+            "iib-server.com",
+            "--iib-krb-principal",
+            "some-principal@REDHAT.COM",
+            "--overwrite-from-index",
+            "--iib-krb-ktfile",
+            "/etc/pub/some.keytab",
+            "--index-image",
+            "registry.com/rh-osbs/iib-pub-pending:v4.5",
+            "--bundle",
+            "bundle1",
+            "--bundle",
+            "bundle2",
+            "--arch",
+            "arch1",
+            "--arch",
+            "arch2",
+            "--deprecation-list",
+            "bundle3,bundle4",
+        ],
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+    )
+
+
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_iib_add_bundles_list_deprecation_list(
+    mock_run_entrypoint,
+    target_settings,
+    operator_push_item_ok,
+):
+    mock_run_entrypoint.return_value = "some-data"
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    result = pusher.iib_add_bundles(
+        ["bundle1", "bundle2"],
+        ["arch1", "arch2"],
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        ["bundle3", "bundle4"],
         pusher.target_settings,
     )
 

@@ -251,8 +251,8 @@ class OperatorPusher:
                 Architectures to build for.
             index_image (str):
                 Index image to add the bundles to.
-            deprecation_list ([str]):
-                List of bundles to be deprecated.
+            deprecation_list ([str]|str):
+                List of bundles to be deprecated. Accepts both str (csv) and a list.
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
 
@@ -273,8 +273,10 @@ class OperatorPusher:
             for arch in archs:
                 args += ["--arch", arch]
         # inconsistent way of presenting multiple arguments...
-        if deprecation_list:
+        if deprecation_list and isinstance(deprecation_list, str):
             args += ["--deprecation-list", deprecation_list]
+        elif deprecation_list and isinstance(deprecation_list, list):
+            args += ["--deprecation-list", ",".join(deprecation_list)]
 
         return run_entrypoint(
             ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
