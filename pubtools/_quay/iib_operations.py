@@ -98,23 +98,22 @@ def task_iib_add_bundles(
         target_settings=target_settings,
     )
 
-    # Push image to Quay
     index_image_repo = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
     )
-    # TODO: how is tag set? Do we derive it from source or destination index image?
     _, tag = build_details.index_image.split(":", 1)
     dest_image = "{0}:{1}".format(index_image_repo, tag)
-
-    ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
-    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
     sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+
+    # Push image to Quay
+    ContainerImagePusher.run_tag_images(
+        build_details.index_image, [dest_image], True, target_settings
+    )
 
 
 def task_iib_remove_operators(
@@ -150,23 +149,22 @@ def task_iib_remove_operators(
         target_settings=target_settings,
     )
 
-    # Push image to Quay
     index_image_repo = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
     )
-    # TODO: how is tag set? Do we derive it from source or destination index image?
     _, tag = build_details.index_image.split(":", 1)
     dest_image = "{0}:{1}".format(index_image_repo, tag)
-
-    ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
-    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
     sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+
+    # Push image to Quay
+    ContainerImagePusher.run_tag_images(
+        build_details.index_image, [dest_image], True, target_settings
+    )
 
 
 def task_iib_build_from_scratch(
@@ -201,7 +199,6 @@ def task_iib_build_from_scratch(
         target_settings=target_settings,
     )
 
-    # Push image to Quay
     index_image_repo = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
@@ -209,13 +206,14 @@ def task_iib_build_from_scratch(
     )
     dest_image = "{0}:{1}".format(index_image_repo, index_image_tag)
 
-    ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
-    )
-
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
     sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+
+    # Push image to Quay
+    ContainerImagePusher.run_tag_images(
+        build_details.index_image, [dest_image], True, target_settings
+    )
 
 
 def iib_add_entrypoint(
