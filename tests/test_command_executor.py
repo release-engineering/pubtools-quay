@@ -264,3 +264,16 @@ def test_skopeo_tag_images_all_arch(mock_run_cmd):
         mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
         mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]
+
+
+@mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
+def test_skopeo_inspect(mock_run_cmd):
+    mock_run_cmd.return_value = ('{"aaa":"bbb"}', "")
+    executor = command_executor.LocalExecutor()
+
+    ret = executor.skopeo_inspect("quay.io/repo/image:1")
+    mock_run_cmd.assert_called_once_with("skopeo inspect docker://quay.io/repo/image:1")
+    assert ret == {"aaa": "bbb"}
+
+    ret = executor.skopeo_inspect("quay.io/repo/image:1", raw=True)
+    assert ret == '{"aaa":"bbb"}'

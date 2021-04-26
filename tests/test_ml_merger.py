@@ -1,4 +1,7 @@
+from copy import deepcopy
+
 import pytest
+import requests
 import requests_mock
 
 from pubtools._quay import manifest_list_merger, quay_client
@@ -96,6 +99,62 @@ merged_ml = {
     ],
 }
 
+merged_ml2 = {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+    "manifests": [
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:6666666666",
+            "platform": {"architecture": "arm64", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:2222222222",
+            "platform": {"architecture": "armhfp", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:3333333333",
+            "platform": {"architecture": "ppc64le", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:5555555555",
+            "platform": {"architecture": "amd64", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:8888888888",
+            "platform": {"architecture": "s390x", "os": "linux"},
+        },
+    ],
+}
+
+merged_ml3 = {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+    "manifests": [
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:6666666666",
+            "platform": {"architecture": "arm64", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "size": 429,
+            "digest": "sha256:8888888888",
+            "platform": {"architecture": "s390x", "os": "linux"},
+        },
+    ],
+}
+
 expected_missing_archs = [
     {
         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -184,9 +243,10 @@ def test_merge_manifest_lists_success():
         assert m.call_count == 3
         sent_ml = m.request_history[-1].json()
         sent_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
-        merged_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
+        expected_ml = deepcopy(merged_ml)
+        expected_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
 
-        assert sent_ml == merged_ml
+        assert sent_ml == expected_ml
 
 
 def test_merge_manifest_lists_missing_client():
@@ -194,3 +254,82 @@ def test_merge_manifest_lists_missing_client():
 
     with pytest.raises(RuntimeError, match="QuayClient instance must be set"):
         merger.merge_manifest_lists()
+
+
+def test_merge_selected_architectures():
+    merger = manifest_list_merger.ManifestListMerger(
+        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+    )
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/src/image/manifests/1",
+            json=new_ml,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/dest/image/manifests/1",
+            json=old_ml,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+
+        created_ml = merger.merge_manifest_lists_selected_architectures(["arm64", "s390x"])
+        assert m.call_count == 2
+        created_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
+        expected_ml = deepcopy(merged_ml2)
+        expected_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
+
+        assert created_ml == expected_ml
+
+
+def test_merge_selected_architectures_no_dest_manifest():
+    merger = manifest_list_merger.ManifestListMerger(
+        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+    )
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/src/image/manifests/1",
+            json=new_ml,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/dest/image/manifests/1",
+            status_code=404,
+        )
+
+        created_ml = merger.merge_manifest_lists_selected_architectures(["arm64", "s390x"])
+        assert m.call_count == 2
+        created_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
+        expected_ml = deepcopy(merged_ml3)
+        expected_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
+
+        assert created_ml == expected_ml
+
+
+def test_merge_selected_architectures_raises_unrelated_error():
+    merger = manifest_list_merger.ManifestListMerger(
+        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+    )
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/src/image/manifests/1",
+            json=new_ml,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/dest/image/manifests/1",
+            status_code=500,
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError, match=".*500 Server Error.*"):
+            merger.merge_manifest_lists_selected_architectures(["arm64", "s390x"])
+        assert m.call_count == 2
+
+
+def test_merge_manifest_lists_selected_architectures_missing_client():
+    merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
+
+    with pytest.raises(RuntimeError, match="QuayClient instance must be set"):
+        merger.merge_manifest_lists_selected_architectures(["arm64", "s390x"])

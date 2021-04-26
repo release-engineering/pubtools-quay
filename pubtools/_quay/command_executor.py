@@ -1,4 +1,5 @@
 import contextlib
+import json
 import logging
 import shlex
 import subprocess
@@ -93,6 +94,30 @@ class Executor(object):
             LOG.info("Destination image {0} has been tagged.".format(dest_ref))
 
         LOG.info("Tagging complete.")
+
+    def skopeo_inspect(self, image_ref, raw=False):
+        """
+        Run skopeo inspect and return the result.
+
+        NOTE: inspect command will not be run with the --raw argument. This option only returns an
+        image manifest, which can be gathered by QuayClient. 'raw' argument in this function
+        denotes if the result should be parsed or returned raw.
+
+        Args:
+            image_ref (str):
+                Image reference to inspect.
+            raw (bool):
+                Whether to parse the returned JSON, or return raw.
+        Returns (dict|str):
+            Result of skopeo inspect.
+        """
+        cmd = "skopeo inspect docker://{0}".format(image_ref)
+        out, _ = self._run_cmd(cmd)
+
+        if raw:
+            return out
+        else:
+            return json.loads(out)
 
 
 class LocalExecutor(Executor):

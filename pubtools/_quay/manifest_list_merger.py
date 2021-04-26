@@ -1,6 +1,8 @@
 from copy import deepcopy
 import logging
 
+import requests
+
 from .quay_client import QuayClient
 
 LOG = logging.getLogger("PubLogger")
@@ -108,5 +110,49 @@ class ManifestListMerger:
         """
         new_manifest_list = deepcopy(src_manifest_list)
         new_manifest_list["manifests"] = new_manifest_list["manifests"] + missing_archs
+
+        return new_manifest_list
+
+    def merge_manifest_lists_selected_architectures(self, eligible_archs):
+        """
+        Merge manifests lists. Only specified archs are eligible for merging.
+
+        This is an alternate workflow used in 'tag-docker'.
+
+        Args:
+            eligible_archs ([str]):
+                Archs eligible for merging with the old manifest list.
+        Returns (dict):
+            New manifest list.
+        """
+        if not self._quay_client:
+            raise RuntimeError("QuayClient instance must be set")
+
+        src_manifest_list = self._quay_client.get_manifest(self.src_image, manifest_list=True)
+        # It's possible that destination doesn't exist in this workflow. ML merging logic is still
+        # necessary due to only some archs being eligible
+        try:
+            dest_manifest_list = self._quay_client.get_manifest(self.dest_image, manifest_list=True)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                dest_manifest_list = None
+            else:
+                raise e
+
+        archs_to_add = []
+        manifests_to_add = []
+        for src_arch_dict in src_manifest_list["manifests"]:
+            if src_arch_dict["platform"]["architecture"] in eligible_archs:
+                manifests_to_add.append(deepcopy(src_arch_dict))
+                archs_to_add.append(src_arch_dict["platform"]["architecture"])
+
+        manifests_to_keep = []
+        if dest_manifest_list:
+            for dest_arch_dict in dest_manifest_list["manifests"]:
+                if dest_arch_dict["platform"]["architecture"] not in archs_to_add:
+                    manifests_to_keep.append(deepcopy(dest_arch_dict))
+
+        new_manifest_list = deepcopy(src_manifest_list)
+        new_manifest_list["manifests"] = manifests_to_add + manifests_to_keep
 
         return new_manifest_list
