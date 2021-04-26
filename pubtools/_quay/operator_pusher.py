@@ -299,17 +299,15 @@ class OperatorPusher:
             ),
         )
 
-    @log_step("Push operators to Quay")
-    def push_operators(self):
+    @log_step("Build index images")
+    def build_index_images(self):
         """
-        Perform the full workflow of pushing operators.
+        Perform the 'build' part of the operator workflow.
 
         The workflow can be summarized as:
         - Use Pyxis to parse 'com.redhat.openshift.versions'
         - Create mapping of which bundles should be pushed to which index image versions
         - Contact IIB to add the bundles to the index images
-        - Push the newly constructed index image to Quay
-        (last two steps performed by pubtools-iib)
 
         Returns ({str:dict}):
             Dictionary containing IIB results and signing keys for all OPM versions. Data will be
@@ -322,7 +320,6 @@ class OperatorPusher:
             }
 
         """
-        image_schema = "{host}/{namespace}/{repo}"
         version_items_mapping = self.generate_version_items_mapping()
         iib_results = {}
 
@@ -340,18 +337,29 @@ class OperatorPusher:
             # build index image in IIB
             build_details = self.iib_add_bundles(bundles, archs, version, deprecation_list)
 
-            # use IIB build details to push to Quay
-            index_image_repo = image_schema.format(
-                host=self.quay_host,
-                namespace=self.target_settings["quay_namespace"],
-                repo=get_internal_container_repo_name(
-                    self.target_settings["quay_operator_repository"]
-                ),
-            )
-            _, tag = build_details.index_image.split(":", 1)
-            dest_image = "{0}:{1}".format(index_image_repo, tag)
-            self.run_tag_images(build_details.index_image, [dest_image], True)
-
             iib_results[version] = {"iib_result": build_details, "signing_keys": signing_keys}
 
         return iib_results
+
+    @log_step("Push index images to Quay")
+    def push_index_images(self, iib_results):
+        """
+        Push index images which were built in the previous stage to Quay.
+
+        Args:
+            iib_results (dict):
+                IIB results returned by the build stage
+        """
+        image_schema = "{host}/{namespace}/{repo}"
+        index_image_repo = image_schema.format(
+            host=self.quay_host,
+            namespace=self.target_settings["quay_namespace"],
+            repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
+        )
+
+        for version in sorted(iib_results.keys()):
+            build_details = iib_results[version]["iib_result"]
+
+            _, tag = build_details.index_image.split(":", 1)
+            dest_image = "{0}:{1}".format(index_image_repo, tag)
+            self.run_tag_images(build_details.index_image, [dest_image], True)

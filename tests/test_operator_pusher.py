@@ -216,7 +216,7 @@ def test_push_operators(
         [operator_push_item_ok, operator_push_item_different_version], target_settings
     )
 
-    results = pusher.push_operators()
+    results = pusher.build_index_images()
 
     assert mock_get_deprecation_list.call_count == 3
     assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.5")
@@ -241,6 +241,8 @@ def test_push_operators(
         "v4.7",
         [],
     )
+
+    pusher.push_index_images(results)
 
     assert mock_tag_images.call_count == 3
     assert mock_tag_images.call_args_list[0] == mock.call(

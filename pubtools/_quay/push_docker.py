@@ -364,11 +364,12 @@ class PushDocker:
         - Filter out push items to only include container image items
         - Check if the destination repos may be pushed to (using Pyxis)
         - Generate backup mapping that will be used for rollback if something goes wrong.
+        - Sign container images using RADAS and upload signatures to Pyxis
         - Push container images to their destinations
-        - Sign pushed container images using RADAS and upload signatures to Pyxis
-        - Filter out push items to only include container image items
-        - Add operator bundles to index images by using IIB and push the index images to Quay
-        - Sign pushed index images using RADAS and upload signatures to Pyxis
+        - Filter out push items to only include operator image items
+        - Add operator bundles to index images by using IIB
+        - Sign index images using RADAS and upload signatures to Pyxis
+        - Push the index images to Quay
         - (in case of failure) Rollback destination repos to the pre-push state
 
         Returns ([str]):
@@ -385,24 +386,26 @@ class PushDocker:
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
 
         try:
-            # Push all container images
-            container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
-            container_pusher.push_container_images()
             # Sign container images
-            # TODO: where should we get signing keys from?
             container_signature_handler = ContainerSignatureHandler(
                 self.hub, self.task_id, self.target_settings
             )
             container_signature_handler.sign_container_images(docker_push_items)
+            # Push container images
+            container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
+            container_pusher.push_container_images()
+
             if operator_push_items:
-                # Create and push operator images
+                # Build index images
                 operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
-                iib_results = operator_pusher.push_operators()
+                iib_results = operator_pusher.build_index_images()
                 # Sign operator images
                 operator_signature_handler = OperatorSignatureHandler(
                     self.hub, self.task_id, self.target_settings
                 )
                 operator_signature_handler.sign_operator_images(iib_results)
+                # Push index images to Quay
+                operator_pusher.push_index_images(iib_results)
         except Exception as e:
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
