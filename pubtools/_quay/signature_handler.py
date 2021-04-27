@@ -605,7 +605,7 @@ class OperatorSignatureHandler(SignatureHandler):
             ),
         )
 
-    def sign_task_index_image(self, build_details, signing_key, index_image):
+    def sign_task_index_image(self, build_details, signing_key, index_image, tag=None):
         """
         Perform an alternatve signing workflow used by IIB methods in pub.
 
@@ -618,9 +618,13 @@ class OperatorSignatureHandler(SignatureHandler):
             signing_key (str):
                 Signing key to be used.
             index_image (str):
-                Index image to be signed. Must be specified via tag.
+                Index image to be signed.
+            tag (str|None):
+                Tag of the result index image. If not specified, it's derived from the provided
+                index image.
         """
-        tag = index_image.split(":")[-1]
+        if tag is None:
+            tag = index_image.split(":")[-1]
 
         claim_messages = self.construct_index_image_claim_messages(index_image, tag, [signing_key])
         signature_messages = self.get_signatures_from_radas(claim_messages)

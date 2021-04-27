@@ -108,7 +108,7 @@ def task_iib_add_bundles(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+    sig_handler.sign_task_index_image(build_details, signing_key, build_details.index_image)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
@@ -159,7 +159,7 @@ def task_iib_remove_operators(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+    sig_handler.sign_task_index_image(build_details, signing_key, build_details.index_image)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
@@ -208,7 +208,9 @@ def task_iib_build_from_scratch(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(build_details, signing_key, dest_image)
+    sig_handler.sign_task_index_image(
+        build_details, signing_key, build_details.index_image, tag=index_image_tag
+    )
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
