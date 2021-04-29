@@ -86,7 +86,7 @@ def task_iib_add_bundles(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}"
+    image_schema = "{host}/{namespace}/{repo}:{tag}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -98,19 +98,29 @@ def task_iib_add_bundles(
         target_settings=target_settings,
     )
 
-    index_image_repo = image_schema.format(
+    _, tag = build_details.index_image.split(":", 1)
+    dest_image = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag=tag,
     )
-    _, tag = build_details.index_image.split(":", 1)
-    dest_image = "{0}:{1}".format(index_image_repo, tag)
+    # TODO: does target_settings["quay_namespace"] point to rh-osbs?
+    # Index image used to fetch manifest list. This image will never be overwritten
+    intermediate_index_image = image_schema.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo="iib",
+        tag=tag,
+    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(build_details, signing_key, build_details.index_image)
+    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, tag)
 
     # Push image to Quay
+    # NOTE: tagging doesn't use intermediate index image, because we want the most up-to-date
+    #       image to be copied to the destination
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
     )
@@ -138,7 +148,7 @@ def task_iib_remove_operators(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}"
+    image_schema = "{host}/{namespace}/{repo}:{tag}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -149,17 +159,25 @@ def task_iib_remove_operators(
         target_settings=target_settings,
     )
 
-    index_image_repo = image_schema.format(
+    _, tag = build_details.index_image.split(":", 1)
+    dest_image = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag=tag,
     )
-    _, tag = build_details.index_image.split(":", 1)
-    dest_image = "{0}:{1}".format(index_image_repo, tag)
+
+    # Index image used to fetch manifest list. This image will never be overwritten
+    intermediate_index_image = image_schema.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo="iib",
+        tag=tag,
+    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(build_details, signing_key, build_details.index_image)
+    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, tag)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
@@ -189,7 +207,7 @@ def task_iib_build_from_scratch(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}"
+    image_schema = "{host}/{namespace}/{repo}:{tag}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -199,18 +217,25 @@ def task_iib_build_from_scratch(
         target_settings=target_settings,
     )
 
-    index_image_repo = image_schema.format(
+    dest_image = image_schema.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag=index_image_tag,
     )
-    dest_image = "{0}:{1}".format(index_image_repo, index_image_tag)
+
+    _, tag = build_details.index_image.split(":", 1)
+    # Index image used to fetch manifest list. This image will never be overwritten
+    intermediate_index_image = image_schema.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo="iib",
+        tag=tag,
+    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(
-        build_details, signing_key, build_details.index_image, tag=index_image_tag
-    )
+    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, index_image_tag)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(

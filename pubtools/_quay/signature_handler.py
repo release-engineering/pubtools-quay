@@ -605,7 +605,7 @@ class OperatorSignatureHandler(SignatureHandler):
             ),
         )
 
-    def sign_task_index_image(self, build_details, signing_key, index_image, tag=None):
+    def sign_task_index_image(self, signing_key, index_image, tag):
         """
         Perform an alternatve signing workflow used by IIB methods in pub.
 
@@ -613,19 +613,13 @@ class OperatorSignatureHandler(SignatureHandler):
         'PushIIBBuildFromScratch'.
 
         Args:
-            build_details (dict):
-                Build details produced by IIB.
             signing_key (str):
                 Signing key to be used.
             index_image (str):
-                Index image to be signed.
-            tag (str|None):
-                Tag of the result index image. If not specified, it's derived from the provided
-                index image.
+                Index image pointing to the new manifest list.
+            tag (str):
+                Tag of the result index image.
         """
-        if tag is None:
-            tag = index_image.split(":")[-1]
-
         claim_messages = self.construct_index_image_claim_messages(index_image, tag, [signing_key])
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)

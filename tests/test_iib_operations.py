@@ -79,7 +79,7 @@ def test_task_iib_add_bundles(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        build_details, "some-key", "some-registry.com/new-index-image:8"
+        "some-key", "quay.io/some-namespace/iib:8", "8"
     )
 
 
@@ -130,7 +130,7 @@ def test_task_iib_remove_operators(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        build_details, "some-key", "some-registry.com/new-index-image:8"
+        "some-key", "quay.io/some-namespace/iib:8", "8"
     )
 
 
@@ -180,7 +180,7 @@ def test_task_iib_build_from_scratch(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        build_details, "some-key", "some-registry.com/new-index-image:8", tag="12"
+        "some-key", "quay.io/some-namespace/iib:8", "12"
     )
 
 
