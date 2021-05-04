@@ -1,5 +1,5 @@
 mock
-requests-mock
+requests-mock==1.8.0
 pytest
 pytest-pylint
 pytest-cov
