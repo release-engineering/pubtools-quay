@@ -108,6 +108,28 @@ def test_init_missing_docker_setting(
 @mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_init_wrong_input_data_non_docker_item_type(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_add,
+):
+    hub = mock.MagicMock()
+    tag_docker_push_item_add.file_type = "non-docker"
+    with pytest.raises(exceptions.BadPushItem, match="Push items must be of 'docker' type"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_add],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
 def test_init_wrong_input_data_number_of_repos(
     mock_quay_api_client,
     mock_quay_client,

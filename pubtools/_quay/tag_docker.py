@@ -139,6 +139,8 @@ class TagDocker:
         """Verify that the data specified for the TagDocker operation are correct."""
         LOG.info("Verifying the input data")
         for item in self.push_items:
+            if item.file_type != "docker":
+                raise BadPushItem("Push items must be of 'docker' type")
             if len(item.repos) != 1:
                 raise BadPushItem("In tag-docker, push items must have precisely one repository.")
             if item.metadata["add_tags"] and not item.metadata["tag_source"]:
@@ -528,8 +530,6 @@ class TagDocker:
         signature_handler.sign_claim_messages(claim_messages, True, True)
 
         raw_src_manifest = self.quay_client.get_manifest(source_image, manifest_list=True, raw=True)
-        print(json.loads(raw_src_manifest))
-        print(new_manifest_list)
 
         # Special case: if the source manifest and the merged manifest are the same, upload the
         # raw source manifest. The reason is that otherwise the digests of the copied manifests
