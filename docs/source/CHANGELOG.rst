@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.4.0 (2021-5-4)
+------------------
+
+* Implement push-docker prototype
+* Change signing order to happen before pushing
+* Use intermediate index image for signing
+
 0.3.0 (2021-2-11)
 ------------------
 
