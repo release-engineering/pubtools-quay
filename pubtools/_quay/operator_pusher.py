@@ -400,4 +400,6 @@ class OperatorPusher:
 
             _, tag = build_details.index_image.split(":", 1)
             dest_image = "{0}:{1}".format(index_image_repo, tag)
-            self.run_tag_images(build_details.index_image, [dest_image], True)
+            ContainerImagePusher.run_tag_images(
+                build_details.index_image, [dest_image], True, self.target_settings
+            )
