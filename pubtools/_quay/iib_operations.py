@@ -63,7 +63,7 @@ def verify_target_settings(target_settings):
 
 
 def task_iib_add_bundles(
-    bundles, archs, index_image, deprecation_list, signing_key, hub, task_id, target_settings
+    bundles, archs, index_image, deprecation_list, signing_keys, hub, task_id, target_settings
 ):
     """
     Perform all the necessary actions for the 'PushAddIIBBundles' entrypoint.
@@ -77,8 +77,8 @@ def task_iib_add_bundles(
             Index image to add the bundles to.
         deprecation_list ([str]):
             Bundles to deprecate in the index image.
-        signing_key (str):
-            Signing key to be used.
+        signing_keys ([str]):
+            Signing keys to be used.
         hub (HubProxy):
             Instance of XMLRPC pub-hub proxy.
         task_id (str):
@@ -116,7 +116,7 @@ def task_iib_add_bundles(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, tag)
+    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
 
     # Push image to Quay
     # NOTE: tagging doesn't use intermediate index image, because we want the most up-to-date
@@ -127,7 +127,7 @@ def task_iib_add_bundles(
 
 
 def task_iib_remove_operators(
-    operators, archs, index_image, signing_key, hub, task_id, target_settings
+    operators, archs, index_image, signing_keys, hub, task_id, target_settings
 ):
     """
     Perform all the necessary actions for the 'PushRemoveIIBOperators' entrypoint.
@@ -139,8 +139,8 @@ def task_iib_remove_operators(
             Architectures to build the index image for.
         index_image (str):
             Index image to remove the operators from.
-        signing_key (str):
-            Signing key to be used.
+        signing_keys (str):
+            Signing keys to be used.
         hub (HubProxy):
             Instance of XMLRPC pub-hub proxy.
         task_id (str):
@@ -177,7 +177,7 @@ def task_iib_remove_operators(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, tag)
+    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
@@ -186,7 +186,7 @@ def task_iib_remove_operators(
 
 
 def task_iib_build_from_scratch(
-    bundles, archs, index_image_tag, signing_key, hub, task_id, target_settings
+    bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings
 ):
     """
     Perform all the necessary actions for the 'PushIIBBuildFromScratch' entrypoint.
@@ -198,8 +198,8 @@ def task_iib_build_from_scratch(
             Architectures to build the index image for.
         index_image_tag (str):
             Tag to be applied to the new index image.
-        signing_key (str):
-            Signing key to be used.
+        signing_keys (str):
+            Signing keys to be used.
         hub (HubProxy):
             Instance of XMLRPC pub-hub proxy.
         task_id (str):
@@ -235,7 +235,7 @@ def task_iib_build_from_scratch(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings)
-    sig_handler.sign_task_index_image(signing_key, intermediate_index_image, index_image_tag)
+    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, index_image_tag)
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
@@ -244,27 +244,27 @@ def task_iib_build_from_scratch(
 
 
 def iib_add_entrypoint(
-    bundles, archs, index_image, deprecation_list, signing_key, hub, task_id, target_settings
+    bundles, archs, index_image, deprecation_list, signing_keys, hub, task_id, target_settings
 ):
     """Entry point for use in another python code."""
     task_iib_add_bundles(
-        bundles, archs, index_image, deprecation_list, signing_key, hub, task_id, target_settings
+        bundles, archs, index_image, deprecation_list, signing_keys, hub, task_id, target_settings
     )
 
 
 def iib_remove_entrypoint(
-    operators, archs, index_image, signing_key, hub, task_id, target_settings
+    operators, archs, index_image, signing_keys, hub, task_id, target_settings
 ):
     """Entry point for use in another python code."""
     task_iib_remove_operators(
-        operators, archs, index_image, signing_key, hub, task_id, target_settings
+        operators, archs, index_image, signing_keys, hub, task_id, target_settings
     )
 
 
 def iib_from_scratch_entrypoint(
-    bundles, archs, index_image_tag, signing_key, hub, task_id, target_settings
+    bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings
 ):
     """Entry point for use in another python code."""
     task_iib_build_from_scratch(
-        bundles, archs, index_image_tag, signing_key, hub, task_id, target_settings
+        bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings
     )

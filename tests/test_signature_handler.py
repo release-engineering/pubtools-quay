@@ -676,7 +676,7 @@ def test_sign_task_index_image(
     build_details = IIBRes("registry1/namespace/image:1")
 
     sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
-    sig_handler.sign_task_index_image("some-key", "registry1/namespace/image:1", "3")
+    sig_handler.sign_task_index_image(["some-key"], "registry1/namespace/image:1", "3")
     mock_construct_index_claim_msgs.assert_called_once_with(
         "registry1/namespace/image:1", "3", ["some-key"]
     )

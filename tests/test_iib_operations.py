@@ -57,7 +57,7 @@ def test_task_iib_add_bundles(
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["bundle3", "bundle4"],
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -79,7 +79,7 @@ def test_task_iib_add_bundles(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        "some-key", "quay.io/some-namespace/iib:8", "8"
+        ["some-key"], "quay.io/some-namespace/iib:8", "8"
     )
 
 
@@ -109,7 +109,7 @@ def test_task_iib_remove_operators(
         ["operator1", "operator2"],
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -130,7 +130,7 @@ def test_task_iib_remove_operators(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        "some-key", "quay.io/some-namespace/iib:8", "8"
+        ["some-key"], "quay.io/some-namespace/iib:8", "8"
     )
 
 
@@ -160,7 +160,7 @@ def test_task_iib_build_from_scratch(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "12",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -180,7 +180,7 @@ def test_task_iib_build_from_scratch(
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        "some-key", "quay.io/some-namespace/iib:8", "12"
+        ["some-key"], "quay.io/some-namespace/iib:8", "12"
     )
 
 
@@ -192,7 +192,7 @@ def test_iib_add_entrypoint(mock_add_bundles, target_settings):
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["bundle3", "bundle4"],
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -203,7 +203,7 @@ def test_iib_add_entrypoint(mock_add_bundles, target_settings):
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["bundle3", "bundle4"],
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -217,7 +217,7 @@ def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
         ["operator1", "operator2"],
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -227,7 +227,7 @@ def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
         ["operator1", "operator2"],
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -241,7 +241,7 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "12",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
@@ -251,7 +251,7 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "12",
-        "some-key",
+        ["some-key"],
         mock_hub,
         "1",
         target_settings,
