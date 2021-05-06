@@ -42,10 +42,14 @@ def test_task_iib_add_bundles(
     target_settings,
 ):
     class IIBRes:
-        def __init__(self, index_image):
+        def __init__(self, index_image, index_image_resolved):
             self.index_image = index_image
+            self.index_image_resolved = index_image_resolved
 
-    build_details = IIBRes("some-registry.com/new-index-image:8")
+    build_details = IIBRes(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+    )
     mock_iib_add_bundles.return_value = build_details
 
     mock_sign_task_index_image = mock.MagicMock()
@@ -55,7 +59,7 @@ def test_task_iib_add_bundles(
     iib_operations.task_iib_add_bundles(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
-        "some-registry.com/index-image:5",
+        "some-registry.com/redhat-namespace/new-index-image:5",
         ["bundle3", "bundle4"],
         ["some-key"],
         mock_hub,
@@ -67,19 +71,19 @@ def test_task_iib_add_bundles(
     mock_iib_add_bundles.assert_called_once_with(
         bundles=["bundle1", "bundle2"],
         archs=["arch1", "arch2"],
-        index_image="some-registry.com/index-image:5",
+        index_image="some-registry.com/redhat-namespace/new-index-image:5",
         deprecation_list=["bundle3", "bundle4"],
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
-        "some-registry.com/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image:8",
         ["quay.io/some-namespace/operators----index-image:8"],
         True,
         target_settings,
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/some-namespace/iib:8", "8"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
     )
 
 
@@ -95,10 +99,14 @@ def test_task_iib_remove_operators(
     target_settings,
 ):
     class IIBRes:
-        def __init__(self, index_image):
+        def __init__(self, index_image, index_image_resolved):
             self.index_image = index_image
+            self.index_image_resolved = index_image_resolved
 
-    build_details = IIBRes("some-registry.com/new-index-image:8")
+    build_details = IIBRes(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+    )
     mock_iib_remove_operators.return_value = build_details
 
     mock_sign_task_index_image = mock.MagicMock()
@@ -108,7 +116,7 @@ def test_task_iib_remove_operators(
     iib_operations.task_iib_remove_operators(
         ["operator1", "operator2"],
         ["arch1", "arch2"],
-        "some-registry.com/index-image:5",
+        "some-registry.com/redhat-namespace/new-index-image:5",
         ["some-key"],
         mock_hub,
         "1",
@@ -119,18 +127,18 @@ def test_task_iib_remove_operators(
     mock_iib_remove_operators.assert_called_once_with(
         operators=["operator1", "operator2"],
         archs=["arch1", "arch2"],
-        index_image="some-registry.com/index-image:5",
+        index_image="some-registry.com/redhat-namespace/new-index-image:5",
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
-        "some-registry.com/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image:8",
         ["quay.io/some-namespace/operators----index-image:8"],
         True,
         target_settings,
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/some-namespace/iib:8", "8"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
     )
 
 
@@ -146,10 +154,14 @@ def test_task_iib_build_from_scratch(
     target_settings,
 ):
     class IIBRes:
-        def __init__(self, index_image):
+        def __init__(self, index_image, index_image_resolved):
             self.index_image = index_image
+            self.index_image_resolved = index_image_resolved
 
-    build_details = IIBRes("some-registry.com/new-index-image:8")
+    build_details = IIBRes(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+    )
     mock_iib_add_bundles.return_value = build_details
 
     mock_sign_task_index_image = mock.MagicMock()
@@ -173,14 +185,14 @@ def test_task_iib_build_from_scratch(
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
-        "some-registry.com/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image:8",
         ["quay.io/some-namespace/operators----index-image:12"],
         True,
         target_settings,
     )
     mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/some-namespace/iib:8", "12"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "12"
     )
 
 

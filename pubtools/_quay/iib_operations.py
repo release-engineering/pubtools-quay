@@ -86,7 +86,8 @@ def task_iib_add_bundles(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -99,19 +100,20 @@ def task_iib_add_bundles(
     )
 
     _, tag = build_details.index_image.split(":", 1)
-    dest_image = image_schema.format(
+    dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag=tag,
     )
-    # TODO: does target_settings["quay_namespace"] point to rh-osbs?
     # Index image used to fetch manifest list. This image will never be overwritten
-    intermediate_index_image = image_schema.format(
+    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    image_digest = build_details.index_image_resolved.split("@")[1]
+    intermediate_index_image = image_schema_digest.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings["quay_namespace"],
+        namespace=iib_namespace,
         repo="iib",
-        tag=tag,
+        digest=image_digest,
     )
 
     # Sign image
@@ -148,7 +150,8 @@ def task_iib_remove_operators(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -160,7 +163,7 @@ def task_iib_remove_operators(
     )
 
     _, tag = build_details.index_image.split(":", 1)
-    dest_image = image_schema.format(
+    dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
@@ -168,11 +171,13 @@ def task_iib_remove_operators(
     )
 
     # Index image used to fetch manifest list. This image will never be overwritten
-    intermediate_index_image = image_schema.format(
+    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    image_digest = build_details.index_image_resolved.split("@")[1]
+    intermediate_index_image = image_schema_digest.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings["quay_namespace"],
+        namespace=iib_namespace,
         repo="iib",
-        tag=tag,
+        digest=image_digest,
     )
 
     # Sign image
@@ -207,7 +212,8 @@ def task_iib_build_from_scratch(
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
     """
-    image_schema = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
+    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -217,7 +223,7 @@ def task_iib_build_from_scratch(
         target_settings=target_settings,
     )
 
-    dest_image = image_schema.format(
+    dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings["quay_namespace"],
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
@@ -226,11 +232,13 @@ def task_iib_build_from_scratch(
 
     _, tag = build_details.index_image.split(":", 1)
     # Index image used to fetch manifest list. This image will never be overwritten
-    intermediate_index_image = image_schema.format(
+    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    image_digest = build_details.index_image_resolved.split("@")[1]
+    intermediate_index_image = image_schema_digest.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings["quay_namespace"],
+        namespace=iib_namespace,
         repo="iib",
-        tag=tag,
+        digest=image_digest,
     )
 
     # Sign image
