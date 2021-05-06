@@ -591,25 +591,31 @@ def test_sign_operator_images(
     target_settings,
 ):
     class IIBRes:
-        def __init__(self, index_image):
-            self.index_image = index_image
+        def __init__(self, index_image_resolved):
+            self.index_image_resolved = index_image_resolved
 
     hub = mock.MagicMock()
     mock_construct_index_claim_msgs.side_effect = [["msg1", "msg2"], ["msg3", "msg4"]]
     mock_get_radas_signatures.return_value = ["sig1", "sig2", "sig3", "sig4"]
     iib_results = {
-        "v4.5": {"iib_result": IIBRes("registry1/namespace/image:1"), "signing_keys": ["key1"]},
-        "v4.6": {"iib_result": IIBRes("registry1/namespace/image:2"), "signing_keys": ["key2"]},
+        "v4.5": {
+            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:a1a1a1"),
+            "signing_keys": ["key1"],
+        },
+        "v4.6": {
+            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:b2b2b2"),
+            "signing_keys": ["key2"],
+        },
     }
 
     sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
     sig_handler.sign_operator_images(iib_results)
     assert mock_construct_index_claim_msgs.call_count == 2
     mock_construct_index_claim_msgs.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/iib:1", "v4.5", ["key1"]
+        "quay.io/iib-namespace/iib@sha256:a1a1a1", "v4.5", ["key1"]
     )
     mock_construct_index_claim_msgs.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/iib:2", "v4.6", ["key2"]
+        "quay.io/iib-namespace/iib@sha256:b2b2b2", "v4.6", ["key2"]
     )
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_validate_radas_msgs.assert_called_once_with(
