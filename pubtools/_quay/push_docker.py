@@ -189,21 +189,24 @@ class PushDocker:
 
         return operator_push_items
 
-    def get_repo_metadata(self, repo):
+    @classmethod
+    def get_repo_metadata(cls, repo, target_settings):
         """
         Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.
 
         Args:
             repo (str):
                 Repository to get the metadata of.
+            target_settings (dict):
+                Settings used for setting the values of the entrypoint parameters.
 
         Returns (dict):
             Parsed response from Pyxis.
         """
-        args = ["--pyxis-server", self.target_settings["pyxis_server"]]
-        args += ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+        args = ["--pyxis-server", target_settings["pyxis_server"]]
+        args += ["--pyxis-krb-principal", target_settings["iib_krb_principal"]]
+        if "iib_krb_ktfile" in target_settings:
+            args += ["--pyxis-krb-ktfile", target_settings["iib_krb_ktfile"]]
         args += ["--repo-name", repo]
 
         env_vars = {}
@@ -215,8 +218,8 @@ class PushDocker:
         )
         return metadata
 
-    @log_step("Check destination repos validity")
-    def check_repos_validity(self, push_items):
+    @classmethod
+    def check_repos_validity(cls, push_items, hub, target_settings, quay_api_client):
         """
         Check if specified repos are valid and pushing to them is allowed.
 
@@ -226,6 +229,12 @@ class PushDocker:
         Args:
             push_items ([ContainerPushItem]):
                 Container push items containing the repositories.
+            hub (HubProxy):
+                Instance of XMLRPC pub-hub proxy.
+            target_settings (dict):
+                Target settings.
+            quay_api_client (QuayApiClient):
+                Instance of QuayApiClient.
         """
         repos = []
         for item in push_items:
@@ -234,17 +243,15 @@ class PushDocker:
         repo_schema = "{namespace}/{repo}"
 
         # we'll need to get stage namespace from stage target settings
-        if "propagated_from" in self.target_settings:
-            stage_target_info = self.hub.worker.get_target_info(
-                self.target_settings["propagated_from"]
-            )
+        if "propagated_from" in target_settings:
+            stage_target_info = hub.worker.get_target_info(target_settings["propagated_from"])
             stage_namespace = stage_target_info["settings"]["quay_namespace"]
 
         for repo in repos:
             LOG.info("Checking validity of Comet repository '{0}'".format(repo))
             # Check if repo exists in Comet
             try:
-                metadata = self.get_repo_metadata(repo)
+                metadata = cls.get_repo_metadata(repo, target_settings)
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 404:
                     raise InvalidRepository("Repository {0} doesn't exist in Comet".format(repo))
@@ -257,11 +264,11 @@ class PushDocker:
                 raise InvalidRepository("Repository {0} is deprecated".format(repo))
 
             # if we're pushing to prod target, check if repo exists on stage as well
-            if "propagated_from" in self.target_settings:
+            if "propagated_from" in target_settings:
                 internal_repo = get_internal_container_repo_name(repo)
                 full_repo = repo_schema.format(namespace=stage_namespace, repo=internal_repo)
                 try:
-                    self.quay_api_client.get_repository_data(full_repo)
+                    quay_api_client.get_repository_data(full_repo)
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
                         raise InvalidRepository(
@@ -384,7 +391,9 @@ class PushDocker:
         # Get operator push items (done early so that possible issues are detected)
         operator_push_items = self.get_operator_push_items()
         # Check if we may push to destination repos
-        self.check_repos_validity(docker_push_items)
+        self.check_repos_validity(
+            docker_push_items, self.hub, self.target_settings, self.quay_api_client
+        )
         # Generate resources for rollback in case there are errors during the push
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
 

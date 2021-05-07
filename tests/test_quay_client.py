@@ -286,6 +286,74 @@ def test_get_manifest_success():
     assert manifest == ret_manifest
 
 
+def test_get_manifest_v2s2_second_attempt():
+    v2s1_manifest = {
+        "name": "hello-world",
+        "tag": "latest",
+        "architecture": "amd64",
+        "fsLayers": [],
+        "history": [],
+        "schemaVersion": 1,
+        "signatures": [],
+    }
+    v2s2_manifest = {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 429,
+        "digest": "sha256:6d5f4d65fg4d6f54g",
+        "platform": {"architecture": "arm64", "os": "linux"},
+    }
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            [
+                {
+                    "headers": {
+                        "Content-Type": "application/vnd.docker.distribution.manifest.v1+json"
+                    },
+                    "json": v2s1_manifest,
+                },
+                {
+                    "headers": {
+                        "Content-Type": "application/vnd.docker.distribution.manifest.v2+json"
+                    },
+                    "json": v2s2_manifest,
+                },
+            ],
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        ret_manifest = client.get_manifest("quay.io/namespace/image:1")
+        assert m.call_count == 2
+
+    assert v2s2_manifest == ret_manifest
+
+
+def test_get_manifest_accept_any():
+    v2s1_manifest = {
+        "name": "hello-world",
+        "tag": "latest",
+        "architecture": "amd64",
+        "fsLayers": [],
+        "history": [],
+        "schemaVersion": 1,
+        "signatures": [],
+    }
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            json=v2s1_manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        ret_manifest = client.get_manifest("quay.io/namespace/image:1")
+        assert m.call_count == 2
+
+    assert v2s1_manifest == ret_manifest
+
+
 def test_upload_manifest_list_success():
     ml = {
         "schemaVersion": 2,
@@ -306,6 +374,30 @@ def test_upload_manifest_list_success():
         client = quay_client.QuayClient("user", "pass")
         client.upload_manifest(ml, "quay.io/namespace/image:1")
         assert m.call_count == 1
+        assert m.request_history[0].json() == ml
+
+
+def test_upload_raw_manifest_success():
+    ml = {
+        "schemaVersion": 2,
+        "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+        "manifests": [
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:6d5f4d65fg4d6f54g",
+                "platform": {"architecture": "arm64", "os": "linux"},
+            }
+        ],
+    }
+
+    with requests_mock.Mocker() as m:
+        m.put("https://quay.io/v2/namespace/image/manifests/1", status_code=200)
+
+        client = quay_client.QuayClient("user", "pass")
+        client.upload_manifest(json.dumps(ml), "quay.io/namespace/image:1", raw=True)
+        assert m.call_count == 1
+        assert m.request_history[0].json() == ml
 
 
 def test_upload_manifest_list_failure():
