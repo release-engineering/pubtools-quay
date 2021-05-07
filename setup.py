@@ -128,7 +128,10 @@ setup(
             "pubtools-quay-untag = pubtools._quay.untag_images:untag_images_main",
         ],
         "target": [
-            "push-docker = pubtools._quay.push_docker:mod_entry_point"
+            "push-docker = pubtools._quay.push_docker:mod_entry_point",
+            "iib-add-bundles = pubtools._quay.iib_operations:iib_add_entrypoint",
+            "iib-remove-operators = pubtools._quay.iib_operations:iib_remove_entrypoint",
+            "iib-build-from-scratch = pubtools._quay.iib_operations:iib_from_scratch_entrypoint",
         ]
     },
     include_package_data=True,

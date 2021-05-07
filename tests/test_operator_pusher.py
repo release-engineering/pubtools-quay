@@ -142,7 +142,7 @@ def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_o
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_iib_add_bundles(
+def test_iib_add_bundles_str_deprecation_list(
     mock_run_entrypoint,
     target_settings,
     operator_push_item_ok,
@@ -150,7 +150,11 @@ def test_iib_add_bundles(
     mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
     result = pusher.iib_add_bundles(
-        ["bundle1", "bundle2"], ["arch1", "arch2"], "v4.5", ["bundle3", "bundle4"]
+        ["bundle1", "bundle2"],
+        ["arch1", "arch2"],
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        "bundle3,bundle4",
+        pusher.target_settings,
     )
 
     assert result == "some-data"
@@ -183,7 +187,96 @@ def test_iib_add_bundles(
     )
 
 
-@mock.patch("pubtools._quay.operator_pusher.tag_images")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_iib_add_bundles_list_deprecation_list(
+    mock_run_entrypoint,
+    target_settings,
+    operator_push_item_ok,
+):
+    mock_run_entrypoint.return_value = "some-data"
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    result = pusher.iib_add_bundles(
+        ["bundle1", "bundle2"],
+        ["arch1", "arch2"],
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        ["bundle3", "bundle4"],
+        pusher.target_settings,
+    )
+
+    assert result == "some-data"
+    mock_run_entrypoint.assert_called_once_with(
+        ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
+        "pubtools-iib-add-bundles",
+        [
+            "--skip-pulp",
+            "--iib-server",
+            "iib-server.com",
+            "--iib-krb-principal",
+            "some-principal@REDHAT.COM",
+            "--overwrite-from-index",
+            "--iib-krb-ktfile",
+            "/etc/pub/some.keytab",
+            "--index-image",
+            "registry.com/rh-osbs/iib-pub-pending:v4.5",
+            "--bundle",
+            "bundle1",
+            "--bundle",
+            "bundle2",
+            "--arch",
+            "arch1",
+            "--arch",
+            "arch2",
+            "--deprecation-list",
+            "bundle3,bundle4",
+        ],
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+    )
+
+
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_iib_remove_operators(
+    mock_run_entrypoint,
+    target_settings,
+    operator_push_item_ok,
+):
+    mock_run_entrypoint.return_value = "some-data"
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    result = pusher.iib_remove_operators(
+        ["operator1", "operator2"],
+        ["arch1", "arch2"],
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        pusher.target_settings,
+    )
+
+    assert result == "some-data"
+    mock_run_entrypoint.assert_called_once_with(
+        ("pubtools-iib", "console_scripts", "pubtools-iib-remove-operators"),
+        "pubtools-iib-remove-operators",
+        [
+            "--skip-pulp",
+            "--iib-server",
+            "iib-server.com",
+            "--iib-krb-principal",
+            "some-principal@REDHAT.COM",
+            "--overwrite-from-index",
+            "--iib-krb-ktfile",
+            "/etc/pub/some.keytab",
+            "--index-image",
+            "registry.com/rh-osbs/iib-pub-pending:v4.5",
+            "--operator",
+            "operator1",
+            "--operator",
+            "operator2",
+            "--arch",
+            "arch1",
+            "--arch",
+            "arch2",
+        ],
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+    )
+
+
+@mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
@@ -191,7 +284,7 @@ def test_push_operators(
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
-    mock_tag_images,
+    mock_run_tag_images,
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
@@ -230,66 +323,45 @@ def test_push_operators(
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
-        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.5", ["bundle1", "bundle2"]
+        bundles=["some-registry1.com/repo:1.0"],
+        archs=["some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
+        deprecation_list=["bundle1", "bundle2"],
+        target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
-        ["some-registry1.com/repo:1.0"], ["some-arch"], "v4.6", ["bundle3"]
+        bundles=["some-registry1.com/repo:1.0"],
+        archs=["some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+        deprecation_list=["bundle3"],
+        target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
-        ["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
-        ["amd64", "some-arch"],
-        "v4.7",
-        [],
+        bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
+        archs=["amd64", "some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
+        deprecation_list=[],
+        target_settings=target_settings,
     )
 
     pusher.push_index_images(results)
 
-    assert mock_tag_images.call_count == 3
-    assert mock_tag_images.call_args_list[0] == mock.call(
+    assert mock_run_tag_images.call_count == 3
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
         "some-registry.com/index-image:5",
         ["quay.io/some-namespace/operators----index-image:5"],
-        all_arch=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
-        remote_exec=True,
-        send_umb_msg=True,
-        ssh_remote_host="127.0.0.1",
-        ssh_username="ssh-user",
-        ssh_password="ssh-password",
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        True,
+        target_settings,
     )
-    assert mock_tag_images.call_args_list[1] == mock.call(
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
         "some-registry.com/index-image:6",
         ["quay.io/some-namespace/operators----index-image:6"],
-        all_arch=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
-        remote_exec=True,
-        send_umb_msg=True,
-        ssh_remote_host="127.0.0.1",
-        ssh_username="ssh-user",
-        ssh_password="ssh-password",
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        True,
+        target_settings,
     )
-    assert mock_tag_images.call_args_list[2] == mock.call(
+    assert mock_run_tag_images.call_args_list[2] == mock.call(
         "some-registry.com/index-image:7",
         ["quay.io/some-namespace/operators----index-image:7"],
-        all_arch=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
-        remote_exec=True,
-        send_umb_msg=True,
-        ssh_remote_host="127.0.0.1",
-        ssh_username="ssh-user",
-        ssh_password="ssh-password",
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        True,
+        target_settings,
     )

@@ -6,7 +6,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-from .tag_images import tag_images
+from .container_image_pusher import ContainerImagePusher
 from .utils.misc import (
     run_entrypoint,
     get_internal_container_repo_name,
@@ -206,7 +206,41 @@ class OperatorPusher:
         LOG.info("Deprecation list retrieved successfully")
         return sorted(deprecation_list)
 
-    def iib_add_bundles(self, bundles, archs, ocp_version, deprecation_list=None):
+    @classmethod
+    def pubtools_iib_get_common_args(cls, target_settings):
+        """
+        Create an argument list common for all pubtools-iib operations.
+
+        Target settings are used to set the values of the arguments
+
+        Args:
+            target_settings (dict):
+                Settings used for setting the value of pubtools-iib parameters.
+        Returns (([str]), {str:str}):
+            Tuple of arguments and environment variables to be used when calling pubtools-iib.
+        """
+        args = ["--skip-pulp"]
+
+        args += ["--iib-server", target_settings["iib_server"]]
+        args += ["--iib-krb-principal", target_settings["iib_krb_principal"]]
+
+        if "iib_overwrite_from_index" in target_settings:
+            args += ["--overwrite-from-index"]
+        if "iib_krb_ktfile" in target_settings:
+            args += ["--iib-krb-ktfile", target_settings["iib_krb_ktfile"]]
+
+        env_vars = {}
+        if "iib_overwrite_from_index_token" in target_settings:
+            env_vars["OVERWRITE_FROM_INDEX_TOKEN"] = target_settings[
+                "iib_overwrite_from_index_token"
+            ]
+
+        return (args, env_vars)
+
+    @classmethod
+    def iib_add_bundles(
+        cls, bundles=None, archs=None, index_image=None, deprecation_list=None, target_settings={}
+    ):
         """
         Construct and execute pubtools-iib command to add bundles to index image.
 
@@ -215,46 +249,34 @@ class OperatorPusher:
                 External URLs to bundle images to be added to the index image.
             archs ([str]):
                 Architectures to build for.
-            ocp_version (str):
-                OCP version to add the bundles to. It acts as a tag of the index image.
-            deprecation_list ([str]):
-                List of bundles to be deprecated.
+            index_image (str):
+                Index image to add the bundles to.
+            deprecation_list ([str]|str):
+                List of bundles to be deprecated. Accepts both str (csv) and a list.
+            target_settings (dict):
+                Settings used for setting the value of pubtools-iib parameters.
 
         Returns (dict):
             Build details provided by IIB.
         """
         LOG.info(
-            "Requesting IIB to add bundles '{0}' to index image version '{1}'".format(
-                bundles, ocp_version
-            )
+            "Requesting IIB to add bundles '{0}' to index image '{1}'".format(bundles, index_image)
         )
-        args = ["--skip-pulp"]
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
 
-        args += ["--iib-server", self.target_settings["iib_server"]]
-        args += ["--iib-krb-principal", self.target_settings["iib_krb_principal"]]
-
-        if "iib_overwrite_from_index" in self.target_settings:
-            args += ["--overwrite-from-index"]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--iib-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-
-        index_image = "{image_repo}:{tag}".format(
-            image_repo=self.target_settings["iib_index_image"], tag=ocp_version
-        )
-        args += ["--index-image", index_image]
-        for bundle in bundles:
-            args += ["--bundle", bundle]
-        for arch in archs:
-            args += ["--arch", arch]
+        if index_image:
+            args += ["--index-image", index_image]
+        if bundles:
+            for bundle in bundles:
+                args += ["--bundle", bundle]
+        if archs:
+            for arch in archs:
+                args += ["--arch", arch]
         # inconsistent way of presenting multiple arguments...
-        if deprecation_list:
+        if deprecation_list and isinstance(deprecation_list, str):
+            args += ["--deprecation-list", deprecation_list]
+        elif deprecation_list and isinstance(deprecation_list, list):
             args += ["--deprecation-list", ",".join(deprecation_list)]
-
-        env_vars = {}
-        if "iib_overwrite_from_index_token" in self.target_settings:
-            env_vars["OVERWRITE_FROM_INDEX_TOKEN"] = self.target_settings[
-                "iib_overwrite_from_index_token"
-            ]
 
         return run_entrypoint(
             ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
@@ -263,40 +285,45 @@ class OperatorPusher:
             env_vars,
         )
 
-    def run_tag_images(self, source_ref, dest_refs, all_arch):
+    @classmethod
+    def iib_remove_operators(cls, operators=None, archs=None, index_image=None, target_settings={}):
         """
-        Prepare the "tag images" entrypoint with all the necessary arguments and run it.
+        Construct and execute pubtools-iib command to remove operators from index image.
 
         Args:
-            source_ref (str):
-                Source image reference.
-            dest_refs ([str]):
-                List of destination references.
-            all_arch (bool):
-                Whether all architectures should be copied.
+            operators ([str]):
+                Operator names to be removed from the index image.
+            archs ([str]):
+                Architectures to build for.
+            ocp_version (str):
+                Index image to remove the operators from.
+            target_settings (dict):
+                Settings used for setting the value of pubtools-iib parameters.
+
+        Returns (dict):
+            Build details provided by IIB.
         """
-        tag_images(
-            source_ref,
-            dest_refs,
-            all_arch=all_arch,
-            quay_user=self.target_settings["quay_user"],
-            quay_password=self.target_settings["quay_password"],
-            remote_exec=True,
-            send_umb_msg=True,
-            ssh_remote_host=self.target_settings["ssh_remote_host"],
-            ssh_username=self.target_settings["ssh_user"],
-            ssh_password=self.target_settings["ssh_password"],
-            umb_urls=self.target_settings["docker_settings"]["umb_urls"],
-            umb_cert=self.target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            # assumption that we'll continue using .pem format
-            umb_client_key=self.target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            umb_ca_cert=self.target_settings["docker_settings"].get(
-                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
-            ),
+        LOG.info(
+            "Requesting IIB to remove operators '{0}' from index image '{1}'".format(
+                operators, index_image
+            )
+        )
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
+
+        if index_image:
+            args += ["--index-image", index_image]
+        if operators:
+            for operator in operators:
+                args += ["--operator", operator]
+        if archs:
+            for arch in archs:
+                args += ["--arch", arch]
+
+        return run_entrypoint(
+            ("pubtools-iib", "console_scripts", "pubtools-iib-remove-operators"),
+            "pubtools-iib-remove-operators",
+            args,
+            env_vars,
         )
 
     @log_step("Build index images")
@@ -304,8 +331,10 @@ class OperatorPusher:
         """
         Perform the 'build' part of the operator workflow.
 
+        This workflow is a part of push-docker operation.
         The workflow can be summarized as:
         - Use Pyxis to parse 'com.redhat.openshift.versions'
+        - Get deprecation list for a given version (list of bundles to be deprecated)
         - Create mapping of which bundles should be pushed to which index image versions
         - Contact IIB to add the bundles to the index images
 
@@ -335,7 +364,16 @@ class OperatorPusher:
             deprecation_list = self.get_deprecation_list(version)
 
             # build index image in IIB
-            build_details = self.iib_add_bundles(bundles, archs, version, deprecation_list)
+            index_image = "{image_repo}:{tag}".format(
+                image_repo=self.target_settings["iib_index_image"], tag=version
+            )
+            build_details = self.iib_add_bundles(
+                bundles=bundles,
+                archs=archs,
+                index_image=index_image,
+                deprecation_list=deprecation_list,
+                target_settings=self.target_settings,
+            )
 
             iib_results[version] = {"iib_result": build_details, "signing_keys": signing_keys}
 
@@ -362,4 +400,6 @@ class OperatorPusher:
 
             _, tag = build_details.index_image.split(":", 1)
             dest_image = "{0}:{1}".format(index_image_repo, tag)
-            self.run_tag_images(build_details.index_image, [dest_image], True)
+            ContainerImagePusher.run_tag_images(
+                build_details.index_image, [dest_image], True, self.target_settings
+            )
