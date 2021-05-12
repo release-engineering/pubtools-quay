@@ -36,6 +36,7 @@ class MockContainerPushItem(object):
         """Init ContainerPushItem with all args passed here."""
         self.errors = {}
         self.repos = {}
+        self.external_repos = {}
         self.state = None
         for key, val in kwargs.items():
             setattr(self, key, val)
@@ -88,6 +89,37 @@ def container_push_item_ok():
             },
             "destination": {"tags": {"repo": ["tag1"]}},
             "tags": {"test-repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+        },
+    )
+
+
+@pytest.fixture
+def container_push_item_external_repos():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"test_repo": []},
+        external_repos={"external/repo": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {
+                "test_repo": ["latest-test-tag", "1.0"],
+                "external/repo": ["latest-test-tag", "1.0"],
+            },
             "v_r": "1.0",
         },
     )
