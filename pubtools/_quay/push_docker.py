@@ -231,7 +231,6 @@ class PushDocker:
         """
         repos = []
         for item in push_items:
-            LOG.info("ITEM %s", item)
             if item.external_repos:
                 repos += item.external_repos.keys()
             else:
