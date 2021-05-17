@@ -75,13 +75,15 @@ class SignatureHandler:
             )
         return self._quay_api_client
 
+    @classmethod
     def create_manifest_claim_message(
-        self,
+        cls,
         destination_repo,
         signature_key,
         manifest_digest,
         docker_reference,
         image_name,
+        task_id,
     ):
         """
         Construct a manifest claim (image signature) as well as a message to send to RADAS.
@@ -101,6 +103,8 @@ class SignatureHandler:
                 the image signature.
             image_name (str):
                 Name of the image to send to RADAS.
+            task_id (str):
+                ID of the pub task.
         """
         # container image signature
         manifest_claim = {
@@ -119,7 +123,7 @@ class SignatureHandler:
             "claim_file": base64.b64encode(json.dumps(manifest_claim).encode("latin1")).decode(
                 "latin1"
             ),
-            "pub_task_id": self.task_id,
+            "pub_task_id": task_id,
             "request_id": str(uuid.uuid4()),
             "manifest_digest": manifest_digest,
             "repo": destination_repo,
@@ -468,6 +472,7 @@ class ContainerSignatureHandler(SignatureHandler):
                     manifest_digest=digest,
                     docker_reference=reference,
                     image_name=repo,
+                    task_id=self.task_id,
                 )
                 claim_messages.append(claim_message)
 
@@ -553,6 +558,7 @@ class OperatorSignatureHandler(SignatureHandler):
                         manifest_digest=digest,
                         docker_reference=reference,
                         image_name=self.target_settings["quay_operator_repository"],
+                        task_id=self.task_id,
                     )
                     claim_messages.append(claim_message)
 
@@ -625,6 +631,62 @@ class OperatorSignatureHandler(SignatureHandler):
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
+        self.upload_signatures_to_pyxis(
+            claim_messages,
+            signature_messages,
+            self.target_settings.get(
+                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
+            ),
+        )
+
+
+class BasicSignatureHandler(SignatureHandler):
+    """Class that handles signing claims which were constructed by user."""
+
+    def __init__(self, hub, target_settings):
+        """
+        Initialize.
+
+        NOTE: "task_id" is not needed for this workflow
+
+        Args:
+            hub (HubProxy):
+                Instance of XMLRPC pub-hub proxy.
+            target_settings (dict):
+                Target settings.
+        """
+        SignatureHandler.__init__(self, hub, "1", target_settings)
+
+    def sign_claim_messages(self, claim_messages, remove_duplicates=True, filter_existing=True):
+        """
+        Sign claim messages that were provided by the user and upload them to Pyxis.
+
+        Args:
+            claim_messages ([dict]):
+                Claim messages to be signed and uploaded.
+            remove_duplicates (bool):
+                Whether to check if there are any duplicates among the messages and remove them.
+            filter_existing (bool):
+                Whether to check if the signatures already exist in Pyxis, and only upload
+                those that aren't.
+        """
+        if not self.target_settings["docker_settings"].get(
+            "docker_container_signing_enabled", False
+        ):
+            LOG.info("Container signing not allowed in target settings, skipping.")
+            return
+
+        if remove_duplicates:
+            claim_messages = self.remove_duplicate_claim_messages(claim_messages)
+        if filter_existing:
+            claim_messages = self.filter_claim_messages(claim_messages)
+        if len(claim_messages) == 0:
+            LOG.info("No new claim messages will be uploaded")
+            return
+
+        LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
+        signature_messages = self.get_signatures_from_radas(claim_messages)
+        self.validate_radas_messages(claim_messages, signature_messages)
         self.upload_signatures_to_pyxis(
             claim_messages,
             signature_messages,

@@ -68,7 +68,7 @@ class ContainerImagePusher:
             all_arch (bool):
                 Whether all architectures should be copied.
             target_settings (dict):
-                Settings used for setting the value of pubtools-iib parameters.
+                Settings used for setting the values of the function parameters.
         """
         # TODO: do we want to do some registry-proxy -> quay transformation?
         # TODO: tag-images only supports quay.io hostname, should we extend the functionality?
