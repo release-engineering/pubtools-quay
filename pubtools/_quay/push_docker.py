@@ -146,7 +146,12 @@ class PushDocker:
 
     @log_step("Translate docker push items")
     def filter_unrelated_repos(self, push_items):
-        """Remove item repos from tag mapping if external_repos is set for push item."""
+        """Remove item repos from tag mapping if external_repos is set for push item.
+
+        Args:
+            push_items ([ContainerPushItem]):
+                Container push items containing the repositories.
+        """
         for push_item in push_items:
             if push_item.external_repos:
                 #  if external repos is defined, push items was populated by ET
