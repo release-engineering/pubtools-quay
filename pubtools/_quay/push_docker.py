@@ -150,7 +150,7 @@ class PushDocker:
         for push_item in push_items:
             if push_item.external_repos:
                 #  if external repos is defined, push items was populated by ET
-                #  item.repos have to be remove from tags mapping
+                #  item.repos have to be removed from tags mapping
                 for repo in list(push_item.repos):
                     push_item.metadata["tags"].pop(repo)
 
