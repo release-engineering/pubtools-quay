@@ -218,6 +218,177 @@ def test_init_wrong_input_data_hash_tag_source(
 @mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_init_new_tag_not_in_stage(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_add,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 404
+    mock_get_manifest.side_effect = [
+        {"some": "manifest"},
+        requests.exceptions.HTTPError("not found", response=response),
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(exceptions.BadPushItem, match="To-be-added tag v1.7 must.*"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_add],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+    mock_get_target_info.assert_called_once_with("quay-stage-target")
+    assert mock_get_manifest.call_count == 2
+    assert mock_get_manifest.call_args_list[0] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo:v1.6"
+    )
+    assert mock_get_manifest.call_args_list[1] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo:v1.7"
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_init_new_tag_server_error(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_add,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 500
+    mock_get_manifest.side_effect = [
+        {"some": "manifest"},
+        requests.exceptions.HTTPError("server error", response=response),
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(requests.exceptions.HTTPError, match="server error"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_add],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_init_remove_tag_still_in_stage(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_remove_no_src,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 404
+    mock_get_manifest.side_effect = [
+        requests.exceptions.HTTPError("not found", response=response),
+        {"some": "manifest"},
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(exceptions.BadPushItem, match="To-be-removed tag v1.9 must already.*"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_remove_no_src],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+    mock_get_target_info.assert_called_once_with("quay-stage-target")
+    assert mock_get_manifest.call_count == 2
+    assert mock_get_manifest.call_args_list[0] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo2:v1.8"
+    )
+    assert mock_get_manifest.call_args_list[1] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo2:v1.9"
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_init_remove_tag_server_error(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_remove_no_src,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 500
+    mock_get_manifest.side_effect = requests.exceptions.HTTPError("server error", response=response)
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(requests.exceptions.HTTPError, match="server error"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_remove_no_src],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
 def test_get_image_details_multiarch(
     mock_quay_api_client,
     mock_quay_client,

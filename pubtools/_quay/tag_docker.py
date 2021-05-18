@@ -59,15 +59,15 @@ class TagDocker:
         self.target_name = target_name
         self.target_settings = target_settings
 
-        self.verify_target_settings()
-        self.verify_input_data()
-
-        self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-
         # TODO: will our robot credentials be able to read from brew's build repos?
         self._quay_client = None
         self._quay_api_client = None
         self._executor = None
+
+        self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
+
+        self.verify_target_settings()
+        self.verify_input_data()
 
     @property
     def quay_client(self):
@@ -149,6 +149,50 @@ class TagDocker:
                 raise BadPushItem("Only new method is supported for tag-docker in Quay.")
             if item.metadata["tag_source"] and ":" in item.metadata["tag_source"]:
                 raise BadPushItem("Specifying source via digest is not allowed.")
+
+            # if prod target is selected, additional checks are made
+            if "propagated_from" in self.target_settings:
+                full_repo_schema = "{host}/{namespace}/{repo}"
+
+                internal_repo = get_internal_container_repo_name(list(item.repos.keys())[0])
+                stage_target_info = self.hub.worker.get_target_info(
+                    self.target_settings["propagated_from"]
+                )
+                stage_namespace = stage_target_info["settings"]["quay_namespace"]
+                stage_repo = full_repo_schema.format(
+                    host=self.quay_host, namespace=stage_namespace, repo=internal_repo
+                )
+
+                # all to-be-added tags must already exist in stage repo
+                for tag in item.metadata["add_tags"]:
+                    stage_image = "{0}:{1}".format(stage_repo, tag)
+                    try:
+                        self.quay_client.get_manifest(stage_image)
+                    except requests.exceptions.HTTPError as e:
+                        if e.response.status_code == 404:
+                            raise BadPushItem(
+                                "To-be-added tag {0} must already exist in stage repo".format(tag)
+                            )
+                        else:
+                            raise e
+
+                # all to-be-removed tags must already be removed from stage
+                for tag in item.metadata["remove_tags"]:
+                    stage_image = "{0}:{1}".format(stage_repo, tag)
+                    try:
+                        self.quay_client.get_manifest(stage_image)
+                    except requests.exceptions.HTTPError as e:
+                        if e.response.status_code == 404:
+                            # 404 -> all good
+                            pass
+                        else:
+                            raise e
+                    else:
+                        raise BadPushItem(
+                            "To-be-removed tag {0} must already be removed from stage repo".format(
+                                tag
+                            )
+                        )
 
     def get_image_details(self, reference):
         """
