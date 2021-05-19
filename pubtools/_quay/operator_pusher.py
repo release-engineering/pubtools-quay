@@ -32,8 +32,6 @@ class OperatorPusher:
         Args:
             push_items ([ContainerPushItem]):
                 List of push items.
-            target_name (str):
-                target name
             target_settings (dict):
                 Target settings.
         """

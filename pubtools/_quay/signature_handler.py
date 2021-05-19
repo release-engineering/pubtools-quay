@@ -27,7 +27,7 @@ class SignatureHandler:
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
     DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH = 100
 
-    def __init__(self, hub, task_id, target_settings):
+    def __init__(self, hub, task_id, target_settings, target_name):
         """
         Initialize.
 
@@ -38,10 +38,13 @@ class SignatureHandler:
                 ID of the pub task
             target_settings (dict):
                 Target settings.
+            target_name (str):
+                Name of the target.
         """
         self.hub = hub
         self.task_id = task_id
         self.target_settings = target_settings
+        self.target_name = target_name
 
         # Which URL hostnames will the destination images be accessible by to customers
         self.dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
@@ -289,7 +292,7 @@ class SignatureHandler:
         # callback will be utilized by ManifestClaimsHandler, which will decide when to send msgs
         message_sender_callback = (
             lambda messages: self.hub.worker.umb_send_manifest_claim_messages(  # noqa: E731
-                self.task_id, messages
+                self.target_name, self.task_id, messages
             )
         )
 
@@ -643,7 +646,7 @@ class OperatorSignatureHandler(SignatureHandler):
 class BasicSignatureHandler(SignatureHandler):
     """Class that handles signing claims which were constructed by user."""
 
-    def __init__(self, hub, target_settings):
+    def __init__(self, hub, target_settings, target_name):
         """
         Initialize.
 
@@ -654,8 +657,10 @@ class BasicSignatureHandler(SignatureHandler):
                 Instance of XMLRPC pub-hub proxy.
             target_settings (dict):
                 Target settings.
+            target_name (str):
+                Name of the target.
         """
-        SignatureHandler.__init__(self, hub, "1", target_settings)
+        SignatureHandler.__init__(self, hub, "1", target_settings, target_name)
 
     def sign_claim_messages(self, claim_messages, remove_duplicates=True, filter_existing=True):
         """

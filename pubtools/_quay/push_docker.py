@@ -38,7 +38,7 @@ class PushDocker:
             task_id (str):
                 task id
             target_name (str):
-                target name
+                Name of the target.
             target_settings (dict):
                 Target settings.
         """
@@ -413,7 +413,7 @@ class PushDocker:
         try:
             # Sign container images
             container_signature_handler = ContainerSignatureHandler(
-                self.hub, self.task_id, self.target_settings
+                self.hub, self.task_id, self.target_settings, self.target_name
             )
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
@@ -426,7 +426,7 @@ class PushDocker:
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
                 operator_signature_handler = OperatorSignatureHandler(
-                    self.hub, self.task_id, self.target_settings
+                    self.hub, self.task_id, self.target_settings, self.target_name
                 )
                 operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay

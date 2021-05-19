@@ -65,6 +65,7 @@ def test_task_iib_add_bundles(
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -81,7 +82,9 @@ def test_task_iib_add_bundles(
         True,
         target_settings,
     )
-    mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
+    mock_operator_signature_handler.assert_called_once_with(
+        mock_hub, "1", target_settings, "some-target"
+    )
     mock_sign_task_index_image.assert_called_once_with(
         ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
     )
@@ -121,6 +124,7 @@ def test_task_iib_remove_operators(
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -136,7 +140,9 @@ def test_task_iib_remove_operators(
         True,
         target_settings,
     )
-    mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
+    mock_operator_signature_handler.assert_called_once_with(
+        mock_hub, "1", target_settings, "some-target"
+    )
     mock_sign_task_index_image.assert_called_once_with(
         ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
     )
@@ -176,6 +182,7 @@ def test_task_iib_build_from_scratch(
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -190,7 +197,9 @@ def test_task_iib_build_from_scratch(
         True,
         target_settings,
     )
-    mock_operator_signature_handler.assert_called_once_with(mock_hub, "1", target_settings)
+    mock_operator_signature_handler.assert_called_once_with(
+        mock_hub, "1", target_settings, "some-target"
+    )
     mock_sign_task_index_image.assert_called_once_with(
         ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "12"
     )
@@ -208,6 +217,7 @@ def test_iib_add_entrypoint(mock_add_bundles, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_add_bundles.assert_called_once_with(
@@ -219,6 +229,7 @@ def test_iib_add_entrypoint(mock_add_bundles, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
 
@@ -233,6 +244,7 @@ def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_remove_operators.assert_called_once_with(
@@ -243,6 +255,7 @@ def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
 
@@ -257,6 +270,7 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
 
     mock_build_from_scratch.assert_called_once_with(
@@ -267,4 +281,5 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         mock_hub,
         "1",
         target_settings,
+        "some-target",
     )
