@@ -150,15 +150,23 @@ class TagDocker:
             if item.metadata["tag_source"] and ":" in item.metadata["tag_source"]:
                 raise BadPushItem("Specifying source via digest is not allowed.")
 
-            # if prod target is selected, additional checks are made
-            if "propagated_from" in self.target_settings:
-                full_repo_schema = "{host}/{namespace}/{repo}"
+    def check_input_validity(self):
+        """
+        Check if input data satisfies tag-docker specific constraints.
 
+        The constraints are following:
+        1. If adding tags to prod target, these tags must already exist in stage target.
+        2. If removing tags from prod target, these tags must already not exist in stage target.
+        """
+        if "propagated_from" in self.target_settings:
+            full_repo_schema = "{host}/{namespace}/{repo}"
+            stage_target_info = self.hub.worker.get_target_info(
+                self.target_settings["propagated_from"]
+            )
+            stage_namespace = stage_target_info["settings"]["quay_namespace"]
+
+            for item in self.push_items:
                 internal_repo = get_internal_container_repo_name(list(item.repos.keys())[0])
-                stage_target_info = self.hub.worker.get_target_info(
-                    self.target_settings["propagated_from"]
-                )
-                stage_namespace = stage_target_info["settings"]["quay_namespace"]
                 stage_repo = full_repo_schema.format(
                     host=self.quay_host, namespace=stage_namespace, repo=internal_repo
                 )
@@ -698,6 +706,8 @@ class TagDocker:
         PushDocker.check_repos_validity(
             self.push_items, self.hub, self.target_settings, self.quay_api_client
         )
+        # perform tag-docker-specific checks
+        self.check_input_validity()
         signature_handler = BasicSignatureHandler(self.hub, self.target_settings)
 
         for item in self.push_items:
