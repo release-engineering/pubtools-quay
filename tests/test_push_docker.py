@@ -133,18 +133,11 @@ def test_get_container_push_items_ok(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_container_push_items_errors(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    container_push_item_errors,
+    mock_quay_api_client, mock_quay_client, target_settings, container_push_item_errors
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [container_push_item_errors],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [container_push_item_errors], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*contains errors.*"):
         items = push_docker_instance.get_docker_push_items()
@@ -153,18 +146,11 @@ def test_get_container_push_items_errors(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_container_push_items_no_pull_data(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    container_push_item_no_metadata,
+    mock_quay_api_client, mock_quay_client, target_settings, container_push_item_no_metadata
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [container_push_item_no_metadata],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [container_push_item_no_metadata], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*doesn't contain pull data.*"):
         items = push_docker_instance.get_docker_push_items()
@@ -217,18 +203,11 @@ def test_get_operator_push_items_ok(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_errors(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    operator_push_item_errors,
+    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_errors
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [operator_push_item_errors],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [operator_push_item_errors], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*contains errors.*"):
         items = push_docker_instance.get_operator_push_items()
@@ -237,18 +216,11 @@ def test_get_operator_push_item_errors(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_no_op_type(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    operator_push_item_no_op_type,
+    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_no_op_type
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [operator_push_item_no_op_type],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [operator_push_item_no_op_type], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*doesn't contain 'op_type'.*"):
         items = push_docker_instance.get_operator_push_items()
@@ -278,18 +250,11 @@ def test_get_operator_push_item_op_appregistry(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_unknown_op_type(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    operator_push_item_unknown_op_type,
+    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_unknown_op_type
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [operator_push_item_unknown_op_type],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [operator_push_item_unknown_op_type], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*has unknown op_type.*"):
         items = push_docker_instance.get_operator_push_items()
@@ -298,18 +263,11 @@ def test_get_operator_push_item_unknown_op_type(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_no_ocp_versions(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    operator_push_item_no_ocp,
+    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_no_ocp
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [operator_push_item_no_ocp],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [operator_push_item_no_ocp], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*specify 'com.redhat.openshift.versions'.*"):
         items = push_docker_instance.get_operator_push_items()
@@ -365,6 +323,7 @@ def test_check_repos_validity_success(
     target_settings,
     container_push_item_correct_repos,
     container_signing_push_item,
+    container_push_item_external_repos,
 ):
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
@@ -374,10 +333,11 @@ def test_check_repos_validity_success(
     hub.worker = mock_worker
 
     mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = ["repo_data1", "repo_data2"]
+    mock_get_repository_data.side_effect = ["repo_data1", "repo_data2", "repo_data3"]
     mock_quay_api_client.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
+        {"release_categories": "value2"},
         {"release_categories": "value1"},
         {"release_categories": "value2"},
     ]
@@ -390,17 +350,22 @@ def test_check_repos_validity_success(
         target_settings,
     )
     push_docker_instance.check_repos_validity(
-        [container_push_item_correct_repos, container_signing_push_item],
+        [
+            container_push_item_external_repos,
+            container_push_item_correct_repos,
+            container_signing_push_item,
+        ],
         hub,
         target_settings,
         mock_quay_api_client,
     )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
-    assert mock_get_repo_metadata.call_count == 2
+    assert mock_get_repo_metadata.call_count == 3
     mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
-    assert mock_get_repository_data.call_count == 2
+    mock_get_repo_metadata.call_args_list[2] == mock.call("namespace/repo3")
+    assert mock_get_repository_data.call_count == 3
     mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
     mock_get_repository_data.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
@@ -818,6 +783,7 @@ def test_push_docker_full_success(
     mock_rollback,
     target_settings,
     container_multiarch_push_item,
+    container_push_item_external_repos,
     operator_push_item_ok,
 ):
     hub = mock.MagicMock()
@@ -832,7 +798,10 @@ def test_push_docker_full_success(
     mock_sign_operator_images = mock.MagicMock()
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
-    mock_get_docker_push_items.return_value = [container_multiarch_push_item]
+    mock_get_docker_push_items.return_value = [
+        container_multiarch_push_item,
+        container_push_item_external_repos,
+    ]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
     mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
@@ -849,22 +818,29 @@ def test_push_docker_full_success(
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+        [container_multiarch_push_item, container_push_item_external_repos],
+        hub,
+        target_settings,
+        mock_quay_api_client.return_value,
     )
-    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_generate_backup_mapping.assert_called_once_with(
+        [container_multiarch_push_item, container_push_item_external_repos]
+    )
     mock_container_image_pusher.assert_called_once_with(
-        [container_multiarch_push_item], target_settings
+        [container_multiarch_push_item, container_push_item_external_repos], target_settings
     )
     mock_push_container_images.assert_called_once_with()
     mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
-    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    mock_sign_container_images.assert_called_once_with(
+        [container_multiarch_push_item, container_push_item_external_repos]
+    )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
     mock_operator_signature_handler.assert_called_once_with(hub, "1", target_settings)
     mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
     mock_rollback.assert_not_called()
-    assert repos == ["test_repo"]
+    assert repos == ["external/repo", "test_repo"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -910,11 +886,7 @@ def test_push_docker_no_operator_push_items(
     mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
 
     push_docker_instance = push_docker.PushDocker(
-        [container_multiarch_push_item],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
+        [container_multiarch_push_item], hub, "1", "some-target", target_settings
     )
     repos = push_docker_instance.run()
 
@@ -1037,3 +1009,16 @@ def test_mod_entrypoint(
         target_settings,
     )
     mock_run.assert_called_once_with()
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+def test_filter_unrelated_repos(patched_verify_target_settings, container_push_item_external_repos):
+    assert "test_repo" in container_push_item_external_repos.metadata["tags"]
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).filter_unrelated_repos([container_push_item_external_repos])
+    assert "test_repo" not in container_push_item_external_repos.metadata["tags"]

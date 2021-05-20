@@ -3,16 +3,8 @@ import logging
 
 import requests
 
-from .exceptions import (
-    BadPushItem,
-    InvalidTargetSettings,
-    InvalidRepository,
-)
-from .utils.misc import (
-    run_entrypoint,
-    get_internal_container_repo_name,
-    log_step,
-)
+from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
+from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
@@ -152,6 +144,21 @@ class PushDocker:
 
         return docker_push_items
 
+    @log_step("Translate docker push items")
+    def filter_unrelated_repos(self, push_items):
+        """Remove item repos from tag mapping if external_repos is set for push item.
+
+        Args:
+            push_items ([ContainerPushItem]):
+                Container push items containing the repositories.
+        """
+        for push_item in push_items:
+            if push_item.external_repos:
+                #  if external repos is defined, push items was populated by ET
+                #  item.repos have to be removed from tags mapping
+                for repo in list(push_item.repos):
+                    push_item.metadata["tags"].pop(repo)
+
     @log_step("Get operator push items")
     def get_operator_push_items(self):
         """
@@ -238,7 +245,11 @@ class PushDocker:
         """
         repos = []
         for item in push_items:
-            repos += item.repos.keys()
+            if item.external_repos:
+                repos += item.external_repos.keys()
+            else:
+                repos += item.repos.keys()
+
         repos = sorted(list(set(repos)))
         repo_schema = "{namespace}/{repo}"
 
@@ -390,6 +401,8 @@ class PushDocker:
         docker_push_items = self.get_docker_push_items()
         # Get operator push items (done early so that possible issues are detected)
         operator_push_items = self.get_operator_push_items()
+        # Remove item.repos from tag mapping if needed
+        self.filter_unrelated_repos(docker_push_items)
         # Check if we may push to destination repos
         self.check_repos_validity(
             docker_push_items, self.hub, self.target_settings, self.quay_api_client
@@ -426,7 +439,11 @@ class PushDocker:
         # Return repos for UD cache flush
         repos = []
         for item in docker_push_items:
-            repos += item.repos.keys()
+            if item.external_repos:
+                repos += item.external_repos.keys()
+            else:
+                repos += item.repos.keys()
+
         return sorted(list(set(repos)))
 
 
