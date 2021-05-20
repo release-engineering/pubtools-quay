@@ -293,7 +293,7 @@ def test_get_repo_metadata(
         "some-target",
         target_settings,
     )
-    res = push_docker_instance.get_repo_metadata("some_repo")
+    res = push_docker_instance.get_repo_metadata("some_repo", target_settings)
 
     assert res == {"key": "value"}
     mock_run_entrypoint.assert_called_once_with(
@@ -334,7 +334,7 @@ def test_check_repos_validity_success(
 
     mock_get_repository_data = mock.MagicMock()
     mock_get_repository_data.side_effect = ["repo_data1", "repo_data2", "repo_data3"]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value2"},
@@ -355,6 +355,9 @@ def test_check_repos_validity_success(
             container_push_item_correct_repos,
             container_signing_push_item,
         ]
+        hub,
+        target_settings,
+        mock_quay_api_client,
     )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -401,7 +404,10 @@ def test_check_repos_validity_missing_repo(
     )
     with pytest.raises(exceptions.InvalidRepository, match=".*doesn't exist in Comet.*"):
         push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item]
+            [container_push_item_ok, container_signing_push_item],
+            hub,
+            target_settings,
+            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -444,7 +450,10 @@ def test_check_repos_validity_get_repo_server_error(
     )
     with pytest.raises(requests.exceptions.HTTPError, match=".*server error.*"):
         push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item]
+            [container_push_item_ok, container_signing_push_item],
+            hub,
+            target_settings,
+            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -485,7 +494,10 @@ def test_check_repos_validity_deprecated_repo(
     )
     with pytest.raises(exceptions.InvalidRepository, match=".*is deprecated.*"):
         push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item]
+            [container_push_item_ok, container_signing_push_item],
+            hub,
+            target_settings,
+            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -519,7 +531,7 @@ def test_check_repos_validity_missing_stage_repo(
         "repo_data1",
         requests.exceptions.HTTPError("missing", response=response),
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -535,7 +547,10 @@ def test_check_repos_validity_missing_stage_repo(
     )
     with pytest.raises(exceptions.InvalidRepository, match=".*doesn't exist on stage.*"):
         push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item]
+            [container_push_item_ok, container_signing_push_item],
+            hub,
+            target_settings,
+            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -572,7 +587,7 @@ def test_check_repos_validity_get_stage_repo_server_error(
         "repo_data1",
         requests.exceptions.HTTPError("server error", response=response),
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -588,7 +603,10 @@ def test_check_repos_validity_get_stage_repo_server_error(
     )
     with pytest.raises(requests.exceptions.HTTPError, match=".*server error*"):
         push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item]
+            [container_push_item_ok, container_signing_push_item],
+            hub,
+            target_settings,
+            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -800,7 +818,7 @@ def test_push_docker_full_success(
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item, container_push_item_external_repos]
+        [container_multiarch_push_item, container_push_item_external_repos], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_generate_backup_mapping.assert_called_once_with(
         [container_multiarch_push_item, container_push_item_external_repos]
@@ -871,7 +889,9 @@ def test_push_docker_no_operator_push_items(
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
-    mock_check_repos_validity.assert_called_once_with([container_multiarch_push_item])
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+    )
     mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
@@ -944,7 +964,9 @@ def test_push_docker_failure_rollback(
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
-    mock_check_repos_validity.assert_called_once_with([container_multiarch_push_item])
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+    )
     mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings

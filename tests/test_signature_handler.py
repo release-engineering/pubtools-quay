@@ -49,7 +49,7 @@ def test_create_claim_message(
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings)
 
     claim_msg = sig_handler.create_manifest_claim_message(
-        "some-dest-repo", "key1", "sha256:f4f4f4f", "registry.com/image:1", "image"
+        "some-dest-repo", "key1", "sha256:f4f4f4f", "registry.com/image:1", "image", "1"
     )
     mock_encode.assert_called_with(
         json.dumps(
@@ -591,25 +591,31 @@ def test_sign_operator_images(
     target_settings,
 ):
     class IIBRes:
-        def __init__(self, index_image):
-            self.index_image = index_image
+        def __init__(self, index_image_resolved):
+            self.index_image_resolved = index_image_resolved
 
     hub = mock.MagicMock()
     mock_construct_index_claim_msgs.side_effect = [["msg1", "msg2"], ["msg3", "msg4"]]
     mock_get_radas_signatures.return_value = ["sig1", "sig2", "sig3", "sig4"]
     iib_results = {
-        "v4.5": {"iib_result": IIBRes("registry1/namespace/image:1"), "signing_keys": ["key1"]},
-        "v4.6": {"iib_result": IIBRes("registry1/namespace/image:2"), "signing_keys": ["key2"]},
+        "v4.5": {
+            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:a1a1a1"),
+            "signing_keys": ["key1"],
+        },
+        "v4.6": {
+            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:b2b2b2"),
+            "signing_keys": ["key2"],
+        },
     }
 
     sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
     sig_handler.sign_operator_images(iib_results)
     assert mock_construct_index_claim_msgs.call_count == 2
     mock_construct_index_claim_msgs.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/iib:1", "v4.5", ["key1"]
+        "quay.io/iib-namespace/iib@sha256:a1a1a1", "v4.5", ["key1"]
     )
     mock_construct_index_claim_msgs.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/iib:2", "v4.6", ["key2"]
+        "quay.io/iib-namespace/iib@sha256:b2b2b2", "v4.6", ["key2"]
     )
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_validate_radas_msgs.assert_called_once_with(
@@ -683,3 +689,114 @@ def test_sign_task_index_image(
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
     mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
     mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"], 100)
+
+
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_basic_signature_handler_init(mock_quay_api_client, mock_quay_client, target_settings):
+    hub = mock.MagicMock()
+    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
+
+    assert sig_handler.hub == hub
+    assert sig_handler.task_id == "1"
+    assert sig_handler.dest_registries == ["some-registry1.com", "some-registry2.com"]
+    assert sig_handler.target_settings == target_settings
+    assert sig_handler.quay_host == "quay.io"
+    mock_quay_client.assert_not_called()
+    mock_quay_api_client.assert_not_called()
+
+    assert sig_handler.quay_client == mock_quay_client.return_value
+    assert sig_handler.quay_api_client == mock_quay_api_client.return_value
+    mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
+    mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages")
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_claim_messages(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remove_duplicate_claim_msgs,
+    mock_filter_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+    container_signing_push_item,
+    container_multiarch_push_item,
+):
+    hub = mock.MagicMock()
+    mock_remove_duplicate_claim_msgs.return_value = ["msg1", "msg2", "msg3", "msg4"]
+    mock_filter_claim_msgs.return_value = ["msg2", "msg3"]
+    mock_get_radas_signatures.return_value = ["sig2", "sig3"]
+
+    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
+    sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
+    mock_remove_duplicate_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
+    mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
+    mock_get_radas_signatures.assert_called_once_with(["msg2", "msg3"])
+    mock_validate_radas_msgs.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"], 100)
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_claim_messages_not_allowed(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_filter_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+    container_signing_push_item,
+):
+    hub = mock.MagicMock()
+    target_settings["docker_settings"]["docker_container_signing_enabled"] = False
+    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
+    sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
+    mock_filter_claim_msgs.assert_not_called()
+    mock_get_radas_signatures.assert_not_called()
+    mock_validate_radas_msgs.assert_not_called()
+    mock_upload_signatures_to_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages")
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_claim_messages_no_signatures(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remove_duplicate_claim_msgs,
+    mock_filter_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+    container_signing_push_item,
+    container_multiarch_push_item,
+):
+    hub = mock.MagicMock()
+    mock_remove_duplicate_claim_msgs.return_value = ["msg1", "msg2", "msg3", "msg4"]
+    mock_filter_claim_msgs.return_value = []
+
+    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
+    sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
+    mock_remove_duplicate_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
+    mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
+    mock_get_radas_signatures.assert_not_called()
+    mock_validate_radas_msgs.assert_not_called()
+    mock_upload_signatures_to_pyxis.assert_not_called()

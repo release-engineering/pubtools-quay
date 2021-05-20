@@ -20,6 +20,7 @@ class QuayClient:
     """Class for performing Docker HTTP API operations with the Quay registry."""
 
     MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
+    MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 
     def __init__(self, username, password, host=None):
         """
@@ -41,7 +42,10 @@ class QuayClient:
         """
         Get manifest of a given image along with its type.
 
-        If reference contains multiple manifests, manifest list will be returned.
+        Manifest type order of preference is:
+        1. manifest list
+        2. V2S2 manifest
+        3. anything else
 
         Args:
             image (str):
@@ -65,12 +69,20 @@ class QuayClient:
         if manifest_list and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE:
             raise ManifestTypeError("Image {0} doesn't have a manifest list".format(image))
 
+        # We asked for ML but received neither ML nor V2S2. Let's ask again for V2S2
+        if (
+            response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
+            and response.headers["Content-Type"] != QuayClient.MANIFEST_V2S2_TYPE
+        ):
+            kwargs = {"headers": {"Accept": QuayClient.MANIFEST_V2S2_TYPE}}
+            response = self._request_quay("GET", endpoint, kwargs)
+
         if raw:
             return response.text
         else:
             return response.json()
 
-    def upload_manifest(self, manifest, image):
+    def upload_manifest(self, manifest, image, raw=False):
         """
         Upload manifest to a specified image.
 
@@ -81,14 +93,24 @@ class QuayClient:
                 Manifest to be uploaded.
             image (str):
                 Image address to upload the manifest to.
+            raw (bool):
+                Whether the given manifest is a string (raw) or a Python dictionary
         """
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
-        manifest_type = manifest["mediaType"]
-        kwargs = {
-            "headers": {"Content-Type": manifest_type},
-            "data": json.dumps(manifest, sort_keys=True, indent=4),
-        }
+
+        if raw:
+            manifest_type = json.loads(manifest)["mediaType"]
+            kwargs = {
+                "headers": {"Content-Type": manifest_type},
+                "data": manifest,
+            }
+        else:
+            manifest_type = manifest["mediaType"]
+            kwargs = {
+                "headers": {"Content-Type": manifest_type},
+                "data": json.dumps(manifest, sort_keys=True, indent=4),
+            }
         self._request_quay("PUT", endpoint, kwargs)
 
     def _request_quay(self, method, endpoint, kwargs={}):
