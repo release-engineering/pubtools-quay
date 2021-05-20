@@ -423,6 +423,9 @@ class PushDocker:
             if operator_push_items:
                 # Build index images
                 operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
+                existing_index_images = operator_pusher.get_existing_index_images(
+                    self.quay_api_client
+                )
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
                 operator_signature_handler = OperatorSignatureHandler(
@@ -435,6 +438,16 @@ class PushDocker:
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
             raise
+        else:
+            # Remove old signatures
+            container_signature_handler.remove_outdated_signatures(
+                [
+                    (image_data.repo, manifest["digest"], image_data.tag)
+                    for image_data, manifest in backup_tags.items()
+                ]
+            )
+            if operator_push_items:
+                container_signature_handler.remove_outdated_signatures(existing_index_images)
 
         # Return repos for UD cache flush
         repos = []

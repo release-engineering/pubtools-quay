@@ -803,7 +803,10 @@ def test_push_docker_full_success(
         container_push_item_external_repos,
     ]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
+    mock_generate_backup_mapping.return_value = (
+        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        ["item1", "item2"],
+    )
     mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
 
     push_docker_instance = push_docker.PushDocker(
@@ -887,7 +890,10 @@ def test_push_docker_no_operator_push_items(
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = []
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
+    mock_generate_backup_mapping.return_value = (
+        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        ["item1", "item2"],
+    )
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item], hub, "1", "some-target", target_settings
@@ -959,7 +965,10 @@ def test_push_docker_failure_rollback(
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
+    mock_generate_backup_mapping.return_value = (
+        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        ["item1", "item2"],
+    )
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
@@ -990,7 +999,10 @@ def test_push_docker_failure_rollback(
     mock_push_index_images.assert_not_called()
     mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
-    mock_rollback.assert_called_once_with({"some-key": "some-val"}, ["item1", "item2"])
+    mock_rollback.assert_called_once_with(
+        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        ["item1", "item2"],
+    )
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker")

@@ -7,11 +7,7 @@ import uuid
 import proton
 
 from .exceptions import SigningError
-from .utils.misc import (
-    run_entrypoint,
-    get_internal_container_repo_name,
-    log_step,
-)
+from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
@@ -80,13 +76,7 @@ class SignatureHandler:
 
     @classmethod
     def create_manifest_claim_message(
-        cls,
-        destination_repo,
-        signature_key,
-        manifest_digest,
-        docker_reference,
-        image_name,
-        task_id,
+        cls, destination_repo, signature_key, manifest_digest, docker_reference, image_name, task_id
     ):
         """
         Construct a manifest claim (image signature) as well as a message to send to RADAS.
@@ -381,6 +371,37 @@ class SignatureHandler:
                 env_vars,
             )
 
+    def remove_signatures_from_pyxis(self, signatures_to_remove):
+        """
+        Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
+
+        Args:
+            signature_to_remove ([repo, tag, manifest]):
+                tuples of signature composed keys which need to be removed
+        """
+        LOG.info("Removing outdated signatures from pyxis")
+
+        for sig_to_remove in signatures_to_remove:
+            repo, digest, reference = sig_to_remove
+            args = [
+                "--pyxis-server",
+                self.target_settings["pyxis_server"],
+                "--pyxis-krb-principal",
+                self.target_settings["iib_krb_principal"],
+            ]
+            if "iib_krb_ktfile" in self.target_settings:
+                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+            args += ["--repo", repo, "--digest", digest, "--reference", reference]
+            LOG.info("Removing signature %s (%s)", reference, digest)
+
+            env_vars = {}
+            run_entrypoint(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
+                "pubtools-pyxis-remove-signatures",
+                args,
+                env_vars,
+            )
+
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
         Check if messages received from RADAS contain any errors.
@@ -412,6 +433,27 @@ class SignatureHandler:
                     failed_messages, len(claim_messages)
                 )
             )
+
+    def remove_outdated_signatures(self, outdated_containers):
+        """
+        Remove outdated signatures from sigstore.
+
+        Method removes signatures for all referenced registries
+
+        Args:
+            outdated_containers [(repo, manifest, tag)]:
+                List of tuples container repo, manifest and tag of outdated container
+
+
+        """
+        image_schema = "{host}/{repository}:{tag}"
+        signatures_to_remove = []
+        for registry in self.dest_registries:
+            for repo_manifest_tag in outdated_containers:
+                repo, manifest, tag = repo_manifest_tag
+                reference = image_schema.format(host=registry, repository=repo, tag=tag)
+                signatures_to_remove.append((repo, manifest["digest"], reference))
+        self.remove_signatures_from_pyxis(signatures_to_remove)
 
 
 class ContainerSignatureHandler(SignatureHandler):
