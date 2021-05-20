@@ -354,7 +354,7 @@ def test_check_repos_validity_success(
             container_push_item_external_repos,
             container_push_item_correct_repos,
             container_signing_push_item,
-        ]
+        ],
         hub,
         target_settings,
         mock_quay_api_client,
@@ -818,7 +818,10 @@ def test_push_docker_full_success(
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item, container_push_item_external_repos], hub, target_settings, mock_quay_api_client.return_value
+        [container_multiarch_push_item, container_push_item_external_repos],
+        hub,
+        target_settings,
+        mock_quay_api_client.return_value,
     )
     mock_generate_backup_mapping.assert_called_once_with(
         [container_multiarch_push_item, container_push_item_external_repos]
