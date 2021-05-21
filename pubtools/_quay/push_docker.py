@@ -415,7 +415,9 @@ class PushDocker:
             container_signature_handler = ContainerSignatureHandler(
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
-            container_signature_handler.sign_container_images(docker_push_items)
+            manifest_claims, _ = container_signature_handler.sign_container_images(
+                docker_push_items
+            )
             # Push container images
             container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
             container_pusher.push_container_images()
@@ -431,7 +433,9 @@ class PushDocker:
                 operator_signature_handler = OperatorSignatureHandler(
                     self.hub, self.task_id, self.target_settings, self.target_name
                 )
-                operator_signature_handler.sign_operator_images(iib_results)
+                operator_manifest_claims, _ = operator_signature_handler.sign_operator_images(
+                    iib_results
+                )
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
         except Exception:
@@ -440,13 +444,26 @@ class PushDocker:
             raise
         else:
             # Remove old signatures
+
+            new_signatures = [
+                (m["manifest_digest"], m["docker_reference"].split(":")[1]) for m in manifest_claims
+            ]
             outdated_signatures = []
             for image_data, manifest in backup_tags.items():
                 if "manifests" in manifest:
                     for arch_manifest in manifest["manifests"]:
-                        outdated_signatures.append((image_data.repo, arch_manifest, image_data.tag))
+                        if (arch_manifest["digest"], image_data.tag) not in new_signatures:
+                            outdated_signatures.append((arch_manifest, image_data.tag))
             container_signature_handler.remove_outdated_signatures(outdated_signatures)
             if operator_push_items:
+                new_operator_signatures = [
+                    (m["manifest_digest"], m["docker_reference"].split(":")[1])
+                    for m in manifest_claims
+                ]
+                filtered_existing_index_images = []
+                for repo_digest_version in existing_index_images:
+                    if repo_digest_version not in new_operator_signatures:
+                        filtered_existing_index_images.append(repo_digest_version)
                 container_signature_handler.remove_outdated_signatures(existing_index_images)
 
         # Return repos for UD cache flush

@@ -381,26 +381,38 @@ class SignatureHandler:
         """
         LOG.info("Removing outdated signatures from pyxis")
 
-        for sig_to_remove in signatures_to_remove:
-            repo, digest, reference = sig_to_remove
-            args = [
-                "--pyxis-server",
-                self.target_settings["pyxis_server"],
-                "--pyxis-krb-principal",
-                self.target_settings["iib_krb_principal"],
-            ]
-            if "iib_krb_ktfile" in self.target_settings:
-                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-            args += ["--repo", repo, "--digest", digest, "--reference", reference]
-            LOG.info("Removing signature %s (%s)", reference, digest)
+        digests = []
+        references = []
 
-            env_vars = {}
-            run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-                "pubtools-pyxis-remove-signatures",
-                args,
-                env_vars,
-            )
+        for sig_to_remove in signatures_to_remove:
+            digest, reference = sig_to_remove
+            digests.append(digest)
+            references.append(reference)
+
+        args = [
+            "--pyxis-server",
+            self.target_settings["pyxis_server"],
+            "--pyxis-krb-principal",
+            self.target_settings["iib_krb_principal"],
+        ]
+        if "iib_krb_ktfile" in self.target_settings:
+            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+        args += [
+            "--digest",
+            ",".join(digests).rstrip(","),
+            "--reference",
+            ",".join(references).rstrip(","),
+        ]
+
+        LOG.info("Removing signature %s (%s)", reference, digest)
+
+        env_vars = {}
+        run_entrypoint(
+            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
+            "pubtools-pyxis-remove-signatures",
+            args,
+            env_vars,
+        )
 
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
@@ -452,7 +464,7 @@ class SignatureHandler:
             for repo_manifest_tag in outdated_containers:
                 repo, manifest, tag = repo_manifest_tag
                 reference = image_schema.format(host=registry, repository=repo, tag=tag)
-                signatures_to_remove.append((repo, manifest["digest"], reference))
+                signatures_to_remove.append((manifest["digest"], reference))
         self.remove_signatures_from_pyxis(signatures_to_remove)
 
 
@@ -565,6 +577,7 @@ class ContainerSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
+        return (claim_messages, signature_messages)
 
 
 class OperatorSignatureHandler(SignatureHandler):
@@ -660,6 +673,7 @@ class OperatorSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
+        return (claim_messages, signature_messages)
 
     def sign_task_index_image(self, signing_keys, index_image, tag):
         """

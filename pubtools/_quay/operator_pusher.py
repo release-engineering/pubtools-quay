@@ -352,7 +352,7 @@ class OperatorPusher:
                 else:
                     raise e
             for manifest in manifest_list["manifests"]:
-                current_index_images.append((iib_repo, manifest["digest"], version))
+                current_index_images.append((manifest["digest"], version))
         return list(set(current_index_images))
 
     @log_step("Build index images")

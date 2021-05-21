@@ -789,13 +789,101 @@ def test_push_docker_full_success(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
+    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
+    mock_get_docker_push_items.return_value = [container_multiarch_push_item]
+    mock_get_operator_push_items.return_value = [operator_push_item_ok]
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"},
+            push_docker.PushDocker.ImageData("somerepo", "sometag2"): {
+                "manifests": [{"digest": "some-digest"}]
+            },
+        },
+        ["item1", "item2"],
+    )
+    mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
+
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, operator_push_item_ok],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    repos = push_docker_instance.run()
+
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+    )
+    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_container_image_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_push_container_images.assert_called_once_with()
+    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
+    mock_build_index_images.assert_called_once_with()
+    mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_operator_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_rollback.assert_not_called()
+    assert repos == ["test_repo"]
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorPusher")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.ContainerImagePusher")
+@mock.patch("pubtools._quay.push_docker.PushDocker.generate_backup_mapping")
+@mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_push_docker_full_success_repush(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_docker_push_items,
+    mock_get_operator_push_items,
+    mock_check_repos_validity,
+    mock_generate_backup_mapping,
+    mock_container_image_pusher,
+    mock_container_signature_handler,
+    mock_operator_pusher,
+    mock_operator_signature_handler,
+    mock_rollback,
+    target_settings,
+    container_multiarch_push_item,
+    operator_push_item_ok,
+):
+    hub = mock.MagicMock()
+    mock_push_container_images = mock.MagicMock()
+    mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_build_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.build_index_images = mock_build_index_images
+    mock_push_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.push_index_images = mock_push_index_images
+    mock_get_existing_index_images = mock.MagicMock(
+        return_value=[("somerepo", "somedigest", "sometag")]
+    )
+    mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
+    mock_sign_operator_images = mock.MagicMock(
+        return_value=([("somerepo", "somedigest", "sometag")], [])
+    )
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [
@@ -884,13 +972,13 @@ def test_push_docker_no_operator_push_items(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
@@ -959,13 +1047,13 @@ def test_push_docker_failure_rollback(
     mock_push_container_images = mock.MagicMock()
     mock_push_container_images.side_effect = ValueError("Error pushing container images")
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
