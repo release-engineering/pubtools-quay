@@ -804,7 +804,12 @@ def test_push_docker_full_success(
     ]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
-        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        {
+            push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"},
+            push_docker.PushDocker.ImageData("somerepo", "sometag2"): {
+                "manifests": [{"digest": "some-digest"}]
+            },
+        },
         ["item1", "item2"],
     )
     mock_build_index_images.return_value = {"v4.5": {"some": "data"}}

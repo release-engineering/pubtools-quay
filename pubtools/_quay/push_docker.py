@@ -440,12 +440,12 @@ class PushDocker:
             raise
         else:
             # Remove old signatures
-            container_signature_handler.remove_outdated_signatures(
-                [
-                    (image_data.repo, manifest["digest"], image_data.tag)
-                    for image_data, manifest in backup_tags.items()
-                ]
-            )
+            outdated_signatures = []
+            for image_data, manifest in backup_tags.items():
+                if "manifests" in manifest:
+                    for arch_manifest in manifest["manifests"]:
+                        outdated_signatures.append((image_data.repo, arch_manifest, image_data.tag))
+            container_signature_handler.remove_outdated_signatures(outdated_signatures)
             if operator_push_items:
                 container_signature_handler.remove_outdated_signatures(existing_index_images)
 
