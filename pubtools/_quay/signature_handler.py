@@ -425,15 +425,17 @@ class ContainerSignatureHandler(SignatureHandler):
         """
         LOG.info("Constructing claim messages for push item '{0}'".format(push_item))
         claim_messages = []
-        digests = self.get_tagged_image_digests(push_item.metadata["pull_url"])
-        # each image digest needs its own signature
-        for digest in digests:
-            # each destination image reference needs its own signature
-            for repo, tags in sorted(push_item.metadata["tags"].items()):
-                for tag in tags:
-                    claim_messages += self.construct_variant_claim_messages(
-                        repo, tag, digest, [push_item.claims_signing_key]
-                    )
+
+        if push_item.claims_signing_key:
+            digests = self.get_tagged_image_digests(push_item.metadata["pull_url"])
+            # each image digest needs its own signature
+            for digest in digests:
+                # each destination image reference needs its own signature
+                for repo, tags in sorted(push_item.metadata["tags"].items()):
+                    for tag in tags:
+                        claim_messages += self.construct_variant_claim_messages(
+                            repo, tag, digest, [push_item.claims_signing_key]
+                        )
 
         return claim_messages
 
@@ -547,6 +549,8 @@ class OperatorSignatureHandler(SignatureHandler):
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
             for signing_key in signing_keys:
+                if not signing_key:
+                    continue
                 for digest in digests:
                     repo = self.target_settings["quay_operator_repository"]
                     internal_repo = get_internal_container_repo_name(repo)

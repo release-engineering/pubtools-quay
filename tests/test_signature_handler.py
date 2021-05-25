@@ -800,3 +800,45 @@ def test_sign_claim_messages_no_signatures(
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
     mock_upload_signatures_to_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_construct_item_claim_messages_none_signing_key(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_signing_push_item,
+):
+    hub = mock.MagicMock()
+
+    sig_handler = signature_handler.ContainerSignatureHandler(hub, "1", target_settings)
+    push_item_invalid_key = container_signing_push_item
+    push_item_invalid_key.claims_signing_key = None
+
+    claim_messages = sig_handler.construct_item_claim_messages(push_item_invalid_key)
+
+    assert claim_messages == []
+
+
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_construct_operator_item_claim_messages_none_signing_key(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    operator_signing_push_item,
+    signing_manifest_list_data,
+):
+    hub = mock.MagicMock()
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = signing_manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
+
+    claim_messages = sig_handler.construct_index_image_claim_messages(
+        operator_signing_push_item, "v4.5", [None]
+    )
+
+    assert claim_messages == []
