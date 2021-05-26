@@ -137,7 +137,7 @@ class ManifestListMerger:
             if e.response.status_code == 404:
                 dest_manifest_list = None
             else:
-                raise e
+                raise
 
         archs_to_add = []
         manifests_to_add = []
