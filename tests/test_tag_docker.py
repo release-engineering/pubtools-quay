@@ -218,6 +218,181 @@ def test_init_wrong_input_data_hash_tag_source(
 @mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_check_input_validity_new_tag_not_in_stage(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_add,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 404
+    mock_get_manifest.side_effect = [
+        {"some": "manifest"},
+        requests.exceptions.HTTPError("not found", response=response),
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(exceptions.BadPushItem, match="To-be-added tag v1.7 must.*"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_add],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+        tag_docker_instance.check_input_validity()
+
+    mock_get_target_info.assert_called_once_with("quay-stage-target")
+    assert mock_get_manifest.call_count == 2
+    assert mock_get_manifest.call_args_list[0] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo:v1.6"
+    )
+    assert mock_get_manifest.call_args_list[1] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo:v1.7"
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_check_input_validity_new_tag_server_error(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_add,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 500
+    mock_get_manifest.side_effect = [
+        {"some": "manifest"},
+        requests.exceptions.HTTPError("server error", response=response),
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(requests.exceptions.HTTPError, match="server error"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_add],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+        tag_docker_instance.check_input_validity()
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_check_input_validity_remove_tag_still_in_stage(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_remove_no_src,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 404
+    mock_get_manifest.side_effect = [
+        requests.exceptions.HTTPError("not found", response=response),
+        {"some": "manifest"},
+    ]
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(exceptions.BadPushItem, match="To-be-removed tag v1.9 must already.*"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_remove_no_src],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+        tag_docker_instance.check_input_validity()
+
+    mock_get_target_info.assert_called_once_with("quay-stage-target")
+    assert mock_get_manifest.call_count == 2
+    assert mock_get_manifest.call_args_list[0] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo2:v1.8"
+    )
+    assert mock_get_manifest.call_args_list[1] == mock.call(
+        "quay.io/stage-namespace/namespace----test_repo2:v1.9"
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
+def test_check_input_validity_remove_tag_server_error(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_remote_executor,
+    target_settings,
+    tag_docker_push_item_remove_no_src,
+):
+    mock_skopeo_login = mock.MagicMock()
+    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    hub = mock.MagicMock()
+    target_settings["propagated_from"] = "quay-stage-target"
+    mock_worker = mock.MagicMock()
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_worker.get_target_info = mock_get_target_info
+    hub.worker = mock_worker
+
+    mock_get_manifest = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 500
+    mock_get_manifest.side_effect = requests.exceptions.HTTPError("server error", response=response)
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    with pytest.raises(requests.exceptions.HTTPError, match="server error"):
+        tag_docker_instance = tag_docker.TagDocker(
+            [tag_docker_push_item_remove_no_src],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+        tag_docker_instance.check_input_validity()
+
+
+@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.QuayApiClient")
 def test_get_image_details_multiarch(
     mock_quay_api_client,
     mock_quay_client,
@@ -1788,7 +1963,9 @@ def test_manifest_list_remove_archs(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_add_noop(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -1819,6 +1996,7 @@ def test_run_add_noop(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
@@ -1845,7 +2023,9 @@ def test_run_add_noop(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_add_tag_images(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -1876,6 +2056,7 @@ def test_run_add_tag_images(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
@@ -1908,7 +2089,9 @@ def test_run_add_tag_images(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_add_merge_manifest_lists(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -1939,6 +2122,7 @@ def test_run_add_merge_manifest_lists(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
@@ -1977,7 +2161,9 @@ def test_run_add_merge_manifest_lists(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_remove_noop(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -2008,6 +2194,7 @@ def test_run_remove_noop(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
@@ -2034,7 +2221,9 @@ def test_run_remove_noop(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_remove_untag_image(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -2065,6 +2254,7 @@ def test_run_remove_untag_image(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
@@ -2093,7 +2283,9 @@ def test_run_remove_untag_image(
 @mock.patch("pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.check_input_validity")
 def test_run_remove_manifest_list_remove_archs(
+    mock_check_input_validity,
     mock_tag_remove_calculate_archs,
     mock_tag_add_calculate_archs,
     mock_manifest_list_remove_archs,
@@ -2127,6 +2319,7 @@ def test_run_remove_manifest_list_remove_archs(
     mock_check_repos_validity.assert_called_once_with(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
+    mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
