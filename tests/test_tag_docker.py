@@ -1997,7 +1997,7 @@ def test_run_add_noop(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
         tag_docker_push_item_add, "v1.6"
@@ -2057,7 +2057,7 @@ def test_run_add_tag_images(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
         tag_docker_push_item_add, "v1.6"
@@ -2123,7 +2123,7 @@ def test_run_add_merge_manifest_lists(
         [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
         tag_docker_push_item_add, "v1.6"
@@ -2195,7 +2195,7 @@ def test_run_remove_noop(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -2255,7 +2255,7 @@ def test_run_remove_untag_image(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -2320,7 +2320,7 @@ def test_run_remove_manifest_list_remove_archs(
         [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
     )
     mock_check_input_validity.assert_called_once_with()
-    mock_basic_signature_handler.assert_called_once_with(hub, target_settings)
+    mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()

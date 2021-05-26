@@ -48,14 +48,13 @@ class TagDocker:
             task_id (str):
                 task id
             target_name (str):
-                target name
+                Name of the target.
             target_settings (dict):
                 Target settings.
         """
         self.push_items = push_items
         self.hub = hub
         self.task_id = task_id
-        # TODO: should target_name be removed? (also in PushDocker)
         self.target_name = target_name
         self.target_settings = target_settings
 
@@ -708,7 +707,7 @@ class TagDocker:
         )
         # perform tag-docker-specific checks
         self.check_input_validity()
-        signature_handler = BasicSignatureHandler(self.hub, self.target_settings)
+        signature_handler = BasicSignatureHandler(self.hub, self.target_settings, self.target_name)
 
         for item in self.push_items:
             for tag in item.metadata["add_tags"]:

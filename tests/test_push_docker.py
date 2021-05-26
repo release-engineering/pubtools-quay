@@ -830,14 +830,18 @@ def test_push_docker_full_success(
         [container_multiarch_push_item, container_push_item_external_repos], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
     mock_sign_container_images.assert_called_once_with(
         [container_multiarch_push_item, container_push_item_external_repos]
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
-    mock_operator_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_operator_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
     mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
     mock_rollback.assert_not_called()
     assert repos == ["external/repo", "test_repo"]
@@ -900,7 +904,9 @@ def test_push_docker_no_operator_push_items(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
@@ -975,7 +981,9 @@ def test_push_docker_failure_rollback(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
