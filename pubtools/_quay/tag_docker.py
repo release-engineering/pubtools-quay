@@ -181,7 +181,7 @@ class TagDocker:
                                 "To-be-added tag {0} must already exist in stage repo".format(tag)
                             )
                         else:
-                            raise e
+                            raise
 
                 # all to-be-removed tags must already be removed from stage
                 for tag in item.metadata["remove_tags"]:
@@ -193,7 +193,7 @@ class TagDocker:
                             # 404 -> all good
                             pass
                         else:
-                            raise e
+                            raise
                     else:
                         raise BadPushItem(
                             "To-be-removed tag {0} must already be removed from stage repo".format(
@@ -503,7 +503,7 @@ class TagDocker:
         dest_repo = "{0}/{1}".format(self.target_settings["quay_namespace"], internal_repo)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
-        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE:
+        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:
             for registry in registries:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -563,20 +563,21 @@ class TagDocker:
         merger.set_quay_client(self.quay_client)
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
 
-        for manifest in new_manifest_list["manifests"]:
-            for registry in registries:
-                reference = external_image_schema.format(
-                    host=registry, repo=list(push_item.repos.keys())[0], tag=tag
-                )
-                message = SignatureHandler.create_manifest_claim_message(
-                    destination_repo=dest_repo,
-                    signature_key=push_item.claims_signing_key,
-                    manifest_digest=manifest["digest"],
-                    docker_reference=reference,
-                    image_name=list(push_item.repos.keys())[0],
-                    task_id=self.task_id,
-                )
-                claim_messages.append(message)
+        if push_item.claims_signing_key:
+            for manifest in new_manifest_list["manifests"]:
+                for registry in registries:
+                    reference = external_image_schema.format(
+                        host=registry, repo=list(push_item.repos.keys())[0], tag=tag
+                    )
+                    message = SignatureHandler.create_manifest_claim_message(
+                        destination_repo=dest_repo,
+                        signature_key=push_item.claims_signing_key,
+                        manifest_digest=manifest["digest"],
+                        docker_reference=reference,
+                        image_name=list(push_item.repos.keys())[0],
+                        task_id=self.task_id,
+                    )
+                    claim_messages.append(message)
 
         signature_handler.sign_claim_messages(claim_messages, True, True)
 

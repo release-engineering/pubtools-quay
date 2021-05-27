@@ -830,11 +830,13 @@ def test_construct_item_claim_messages_none_signing_key(
 ):
     hub = mock.MagicMock()
 
-    sig_handler = signature_handler.ContainerSignatureHandler(hub, "1", target_settings)
-    push_item_invalid_key = container_signing_push_item
-    push_item_invalid_key.claims_signing_key = None
+    sig_handler = signature_handler.ContainerSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
+    push_item_none_key = container_signing_push_item
+    push_item_none_key.claims_signing_key = None
 
-    claim_messages = sig_handler.construct_item_claim_messages(push_item_invalid_key)
+    claim_messages = sig_handler.construct_item_claim_messages(push_item_none_key)
 
     assert claim_messages == []
 
@@ -853,7 +855,9 @@ def test_construct_operator_item_claim_messages_none_signing_key(
     mock_get_manifest.return_value = signing_manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
-    sig_handler = signature_handler.OperatorSignatureHandler(hub, "1", target_settings)
+    sig_handler = signature_handler.OperatorSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
 
     claim_messages = sig_handler.construct_index_image_claim_messages(
         operator_signing_push_item, "v4.5", [None]
