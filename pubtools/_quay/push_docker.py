@@ -267,7 +267,7 @@ class PushDocker:
                 if e.response.status_code == 404:
                     raise InvalidRepository("Repository {0} doesn't exist in Comet".format(repo))
                 else:
-                    raise e
+                    raise
 
             # Check if repo is not deprecated
             # TODO: check with Comet team if this is a reliable way of checking
@@ -286,7 +286,7 @@ class PushDocker:
                             "Repository {0} doesn't exist on stage".format(repo)
                         )
                     else:
-                        raise e
+                        raise
 
     @log_step("Generate backup mapping")
     def generate_backup_mapping(self, push_items):
@@ -326,7 +326,7 @@ class PushDocker:
                     if e.response.status_code == 404:
                         repo_data = None
                     else:
-                        raise e
+                        raise
 
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
@@ -431,10 +431,10 @@ class PushDocker:
                 operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
-        except Exception as e:
+        except Exception:
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
-            raise e
+            raise
 
         # Return repos for UD cache flush
         repos = []

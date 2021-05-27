@@ -210,7 +210,7 @@ class ContainerImagePusher:
                     if e.response.status_code == 404:
                         simple_dest_refs.append(dest_ref)
                     else:
-                        raise e
+                        raise
 
         if simple_dest_refs:
             LOG.info(

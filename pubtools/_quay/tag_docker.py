@@ -219,7 +219,7 @@ class TagDocker:
                 LOG.info("Image '{0}' doesn't exist".format(reference))
                 return None
             else:
-                raise e
+                raise
 
         manifest_type = manifest["mediaType"]
         if manifest_type not in [TagDocker.MANIFEST_V2S2_TYPE, TagDocker.MANIFEST_LIST_TYPE]:
