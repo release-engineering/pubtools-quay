@@ -350,7 +350,7 @@ class OperatorPusher:
                 if e.response.status_code == 404:
                     continue
                 else:
-                    raise e
+                    raise
             for manifest in manifest_list["manifests"]:
                 current_index_images.append((manifest["digest"], version))
         return list(set(current_index_images))

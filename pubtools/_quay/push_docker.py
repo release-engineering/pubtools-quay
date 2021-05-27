@@ -10,6 +10,7 @@ from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .operator_pusher import OperatorPusher
+from .utils.misc import INTERNAL_DELIMITER
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -446,25 +447,46 @@ class PushDocker:
             # Remove old signatures
 
             new_signatures = [
-                (m["manifest_digest"], m["docker_reference"].split(":")[1]) for m in manifest_claims
+                (m["manifest_digest"], m["docker_reference"]) for m in manifest_claims
             ]
             outdated_signatures = []
+
             for image_data, manifest in backup_tags.items():
+                ext_repo = image_data.repo.split("/")[1].replace(INTERNAL_DELIMITER, "/")
                 if "manifests" in manifest:
                     for arch_manifest in manifest["manifests"]:
-                        if (arch_manifest["digest"], image_data.tag) not in new_signatures:
-                            outdated_signatures.append((arch_manifest, image_data.tag))
-            container_signature_handler.remove_outdated_signatures(outdated_signatures)
+                        outdated_signatures.append((arch_manifest, image_data.tag, ext_repo))
+                else:
+                    outdated_signatures.append((manifest["digest"], image_data.tag, ext_repo))
+
+            signatures_to_remove = []
+            for esig in container_signature_handler.get_signatures_from_pyxis(
+                [sig[0] for sig in outdated_signatures]
+            ):
+                if (
+                    esig["manifest_digest"],
+                    esig["reference"].split(":")[-1],
+                    esig["repository"],
+                ) in outdated_signatures and (
+                    esig["manifest_digest"],
+                    esig["reference"],
+                ) not in new_signatures:
+                    signatures_to_remove.append((esig["manifest_digest"], esig["reference"]))
+
+            container_signature_handler.remove_outdated_signatures(signatures_to_remove)
+
+            signatures_to_remove = []
             if operator_push_items:
+                outdated_signatures = []
                 new_operator_signatures = [
-                    (m["manifest_digest"], m["docker_reference"].split(":")[1])
-                    for m in manifest_claims
+                    (m["manifest_digest"], m["docker_reference"]) for m in manifest_claims
                 ]
-                filtered_existing_index_images = []
-                for repo_digest_version in existing_index_images:
-                    if repo_digest_version not in new_operator_signatures:
-                        filtered_existing_index_images.append(repo_digest_version)
-                container_signature_handler.remove_outdated_signatures(existing_index_images)
+                for esig in container_signature_handler.get_signatures_from_pyxis(
+                    [repo_digest_version[1] for repo_digest_version in existing_index_images]
+                ):
+                    if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures:
+                        signatures_to_remove.append((esig["manifest_digest"], esig["reference"]))
+                container_signature_handler.remove_outdated_signatures(signatures_to_remove)
 
         # Return repos for UD cache flush
         repos = []

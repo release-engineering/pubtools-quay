@@ -791,6 +791,20 @@ def test_push_docker_full_success(
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
     mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "orig-ns/some-repo",
+                    "reference": "registry/orig-ns/some-repo:sometag",
+                }
+            ]
+        )
+    )
+    mock_container_signature_handler.return_value.get_signatures_from_pyxis = (
+        mock_get_signatures_from_pyxis
+    )
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
@@ -802,8 +816,10 @@ def test_push_docker_full_success(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"},
-            push_docker.PushDocker.ImageData("somerepo", "sometag2"): {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag"): {
+                "digest": "some-digest"
+            },
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag2"): {
                 "manifests": [{"digest": "some-digest"}]
             },
         },
@@ -893,8 +909,10 @@ def test_push_docker_full_success_repush(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"},
-            push_docker.PushDocker.ImageData("somerepo", "sometag2"): {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag"): {
+                "digest": "some-digest"
+            },
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag2"): {
                 "manifests": [{"digest": "some-digest"}]
             },
         },
@@ -984,7 +1002,11 @@ def test_push_docker_no_operator_push_items(
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = []
     mock_generate_backup_mapping.return_value = (
-        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag"): {
+                "digest": "some-digest"
+            }
+        },
         ["item1", "item2"],
     )
 
@@ -1059,7 +1081,11 @@ def test_push_docker_failure_rollback(
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
-        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag"): {
+                "digest": "some-digest"
+            }
+        },
         ["item1", "item2"],
     )
 
@@ -1093,7 +1119,11 @@ def test_push_docker_failure_rollback(
     mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
     mock_rollback.assert_called_once_with(
-        {push_docker.PushDocker.ImageData("somerepo", "sometag"): {"digest": "some-digest"}},
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag"): {
+                "digest": "some-digest"
+            }
+        },
         ["item1", "item2"],
     )
 

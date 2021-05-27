@@ -373,10 +373,10 @@ class SignatureHandler:
 
     def remove_signatures_from_pyxis(self, signatures_to_remove):
         """
-        Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
+        Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
 
         Args:
-            signature_to_remove ([repo, tag, manifest]):
+            signatures_to_remove ([manifest-digest, reference]):
                 tuples of signature composed keys which need to be removed
         """
         LOG.info("Removing outdated signatures from pyxis")
@@ -446,25 +446,18 @@ class SignatureHandler:
                 )
             )
 
-    def remove_outdated_signatures(self, outdated_containers):
+    def remove_outdated_signatures(self, signatures_to_remove):
         """
         Remove outdated signatures from sigstore.
 
         Method removes signatures for all referenced registries
 
         Args:
-            outdated_containers [(repo, manifest, tag)]:
+            outdated_containers [(digest, reference)]:
                 List of tuples container repo, manifest and tag of outdated container
 
 
         """
-        image_schema = "{host}/{repository}:{tag}"
-        signatures_to_remove = []
-        for registry in self.dest_registries:
-            for repo_manifest_tag in outdated_containers:
-                repo, manifest, tag = repo_manifest_tag
-                reference = image_schema.format(host=registry, repository=repo, tag=tag)
-                signatures_to_remove.append((manifest["digest"], reference))
         self.remove_signatures_from_pyxis(signatures_to_remove)
 
 

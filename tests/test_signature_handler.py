@@ -872,7 +872,14 @@ def test_remove_outdated_signatures(
 ):
     hub = mock.MagicMock()
     sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
-    sig_handler.remove_outdated_signatures([("test-repo", {"digest": "test-digest"}, "test-tag")])
+    sig_handler.remove_outdated_signatures(
+        [
+            (
+                "test-digest",
+                "some-registry1.com/test-repo:test-tag,some-registry2.com/test-repo:test-tag",
+            )
+        ]
+    )
     mock_run_entrypoint.assert_has_calls(
         [
             mock.call(
@@ -886,7 +893,7 @@ def test_remove_outdated_signatures(
                     "--pyxis-krb-ktfile",
                     "/etc/pub/some.keytab",
                     "--digest",
-                    "test-digest,test-digest",
+                    "test-digest",
                     "--reference",
                     "some-registry1.com/test-repo:test-tag,some-registry2.com/test-repo:test-tag",
                 ],
