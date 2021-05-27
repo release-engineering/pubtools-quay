@@ -69,3 +69,21 @@ class QuayApiClient:
             LOG.warning("Tag '{0}' already doesn't exist in repo '{1}'".format(tag, repository))
 
         return response
+
+    def delete_repository(self, repository):
+        """
+        Delete a Quay repository.
+
+        Args:
+            repository (str):
+                Repository to remove.
+
+        Returns (Response):
+            Request library's Response object.
+        """
+        endpoint = "repository/{0}".format(repository)
+        response = self.session.delete(endpoint)
+
+        # API doesn't return 404 even if repo doesn't exist. Thus no exception needs to be made
+        response.raise_for_status()
+        return response
