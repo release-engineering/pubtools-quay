@@ -2364,3 +2364,98 @@ def test_mod_entrypoint(
         target_settings,
     )
     mock_run.assert_called_once_with()
+
+
+@mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
+@mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
+@mock.patch("pubtools._quay.tag_docker.ContainerImagePusher.run_tag_images")
+def test_copy_all_archs_sign_images_source_none_signing_key(
+    mock_run_tag_images,
+    mock_create_claim_message,
+    mock_get_image_details,
+    target_settings,
+    tag_docker_push_item_add,
+    v2s2_manifest_data,
+):
+    hub = mock.MagicMock()
+    sig_handler = mock.MagicMock()
+    mock_sign_claim_messages = mock.MagicMock()
+    sig_handler.sign_claim_messages = mock_sign_claim_messages
+    source_details = tag_docker.TagDocker.ImageDetails(
+        "quay.io/some-namespace/namespace----test_repo:v1.5",
+        v2s2_manifest_data,
+        "application/vnd.docker.distribution.manifest.v2+json",
+        "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
+    )
+    mock_get_image_details.return_value = source_details
+    push_item_none_key = tag_docker_push_item_add
+    push_item_none_key.claims_signing_key = None
+
+    tag_docker_instance = tag_docker.TagDocker(
+        [push_item_none_key],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    tag_docker_instance.copy_tag_sign_images(push_item_none_key, "v1.6", sig_handler)
+
+    assert mock_create_claim_message.call_count == 0
+    mock_sign_claim_messages.assert_called_once_with([], True, True)
+    mock_run_tag_images.assert_called_once_with(
+        "quay.io/some-namespace/namespace----test_repo:v1.5",
+        ["quay.io/some-namespace/namespace----test_repo:v1.6"],
+        True,
+        target_settings,
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.QuayClient")
+@mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
+@mock.patch("pubtools._quay.tag_docker.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.tag_docker.ManifestListMerger")
+def test_merge_manifest_lists_sign_images_none_signing_key(
+    mock_manifest_list_merger,
+    mock_run_tag_images,
+    mock_create_claim_message,
+    mock_quay_client,
+    target_settings,
+    tag_docker_push_item_add,
+    manifest_list_data,
+):
+    hub = mock.MagicMock()
+    sig_handler = mock.MagicMock()
+    mock_sign_claim_messages = mock.MagicMock()
+    sig_handler.sign_claim_messages = mock_sign_claim_messages
+
+    new_manifest_list = deepcopy(manifest_list_data)
+    new_manifest_list["manifests"] = new_manifest_list["manifests"][:2]
+    mock_merge_manifest_lists = mock.MagicMock()
+    mock_merge_manifest_lists.return_value = new_manifest_list
+    mock_manifest_list_merger.return_value.merge_manifest_lists_selected_architectures = (
+        mock_merge_manifest_lists
+    )
+    mock_upload_manifest = mock.MagicMock()
+    mock_quay_client.return_value.upload_manifest = mock_upload_manifest
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = json.dumps(manifest_list_data)
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+    push_item_none_key = tag_docker_push_item_add
+    push_item_none_key.claims_signing_key = None
+
+    tag_docker_instance = tag_docker.TagDocker(
+        [push_item_none_key],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    tag_docker_instance.merge_manifest_lists_sign_images(
+        push_item_none_key, "v1.6", ["arm64", "amd64"], sig_handler
+    )
+
+    assert mock_create_claim_message.call_count == 0
+    mock_sign_claim_messages.assert_called_once_with([], True, True)
+    mock_upload_manifest.assert_called_once_with(
+        new_manifest_list, "quay.io/some-namespace/namespace----test_repo:v1.6"
+    )
