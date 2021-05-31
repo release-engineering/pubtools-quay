@@ -798,6 +798,7 @@ def test_push_docker_full_success(
                     "manifest_digest": "some-digest",
                     "repository": "orig-ns/some-repo",
                     "reference": "registry/orig-ns/some-repo:sometag",
+                    "_id": "signature-id-1",
                 }
             ]
         )
@@ -898,7 +899,16 @@ def test_push_docker_full_success_repush(
     )
     mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
     mock_sign_operator_images = mock.MagicMock(
-        return_value=([("somerepo", "somedigest", "sometag")], [])
+        return_value=(
+            [
+                {
+                    "repo": "somerepo",
+                    "manifest_digest": "somedigest",
+                    "docker_reference": "reference/repo:sometag",
+                }
+            ],
+            [],
+        )
     )
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
@@ -1165,3 +1175,141 @@ def test_filter_unrelated_repos(patched_verify_target_settings, container_push_i
         mock.MagicMock(),
     ).filter_unrelated_repos([container_push_item_external_repos])
     assert "test_repo" not in container_push_item_external_repos.metadata["tags"]
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+def test_remove_old_signatures_no_old_signatures(
+    container_signature_handler, patched_verify_target_settings, container_push_item_external_repos
+):
+    manifest_claims = [
+        {
+            "repo": "somerepo",
+            "manifest_digest": "somedigest",
+            "docker_reference": "reference/repo:sometag",
+        }
+    ]
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData("another-reference/repo:sometag", "sometag")
+    backup_tags[image_data] = {"digest": "somedigest"}
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).remove_old_signatures(manifest_claims, [], [], backup_tags, container_signature_handler)
+    container_signature_handler.remove_outdated_signatures.assert_called_with([])
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+def test_remove_old_signatures_container_signatures(
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+):
+    manifest_claims = [
+        {
+            "repo": "somerepo",
+            "manifest_digest": "somedigest2",
+            "docker_reference": "reference/repo:sometag",
+        }
+    ]
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ]
+        )
+    )
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData("reference/some-product----some-repo", "sometag")
+    backup_tags[image_data] = {"digest": "some-digest"}
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).remove_old_signatures(manifest_claims, [], [], backup_tags, mock_container_signature_handler)
+    mock_container_signature_handler.remove_outdated_signatures.assert_called_with(
+        ["signature-id-1"]
+    )
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+def test_remove_old_signatures_operator_signatures(
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+):
+    manifest_claims = [
+        {
+            "repo": "somerepo",
+            "manifest_digest": "somedigest2",
+            "docker_reference": "reference/repo:sometag",
+        }
+    ]
+    operator_manifest_claims = [
+        {
+            "repo": "operator-repo",
+            "manifest_digest": "somedigest3",
+            "docker_reference": "reference/operator-repo:someversion",
+        }
+    ]
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        side_effect=[
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ],
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-2",
+                }
+            ],
+        ]
+    )
+    existing_index_images = [("somedigest2", "someversion")]
+
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData("reference/some-product----some-repo", "sometag")
+    backup_tags[image_data] = {"digest": "some-digest"}
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).remove_old_signatures(
+        manifest_claims,
+        operator_manifest_claims,
+        existing_index_images,
+        backup_tags,
+        mock_container_signature_handler,
+    )
+    mock_container_signature_handler.remove_outdated_signatures.has_calls(
+        mock.call(["signature-id-1"])
+    )
+    mock_container_signature_handler.remove_outdated_signatures.has_calls(
+        mock.call(["signature-id-2"])
+    )

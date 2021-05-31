@@ -329,8 +329,8 @@ class OperatorPusher:
         Args:
             quay_client (QuayClient): quay_client_instance
 
-        Returns [(repo, digest, tag)]:
-            List of tuples containing repo, digest and tag of existing index image
+        Returns [(digest, tag)]:
+            List of tuples containing digest and tag of existing index image
         """
         image_schema = "{host}/{namespace}/{repo}"
         iib_repo = get_internal_container_repo_name(

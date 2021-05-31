@@ -867,8 +867,9 @@ def test_construct_operator_item_claim_messages_none_signing_key(
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 @mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+@mock.patch("tempfile.NamedTemporaryFile")
 def test_remove_outdated_signatures(
-    mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
+    mock_named_temp, mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
 ):
     hub = mock.MagicMock()
     sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
@@ -892,10 +893,8 @@ def test_remove_outdated_signatures(
                     "some-principal@REDHAT.COM",
                     "--pyxis-krb-ktfile",
                     "/etc/pub/some.keytab",
-                    "--digest",
-                    "test-digest",
-                    "--reference",
-                    "some-registry1.com/test-repo:test-tag,some-registry2.com/test-repo:test-tag",
+                    "--ids",
+                    "@%s" % mock_named_temp.return_value.__enter__.return_value.name,
                 ],
                 {},
             )

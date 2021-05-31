@@ -2,6 +2,7 @@ import base64
 from datetime import datetime
 import json
 import logging
+import tempfile
 import uuid
 
 import proton
@@ -376,18 +377,10 @@ class SignatureHandler:
         Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
 
         Args:
-            signatures_to_remove ([manifest-digest, reference]):
-                tuples of signature composed keys which need to be removed
+            signatures_to_remove (list):
+                list of signature ids to be removed
         """
         LOG.info("Removing outdated signatures from pyxis")
-
-        digests = []
-        references = []
-
-        for sig_to_remove in signatures_to_remove:
-            digest, reference = sig_to_remove
-            digests.append(digest)
-            references.append(reference)
 
         args = [
             "--pyxis-server",
@@ -397,22 +390,18 @@ class SignatureHandler:
         ]
         if "iib_krb_ktfile" in self.target_settings:
             args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-        args += [
-            "--digest",
-            ",".join(digests).rstrip(","),
-            "--reference",
-            ",".join(references).rstrip(","),
-        ]
+        with tempfile.NamedTemporaryFile() as temp:
+            json.dump(signatures_to_remove, temp)
 
-        LOG.info("Removing signature %s (%s)", reference, digest)
+            args += ["--ids", "@%s" % temp.name]
 
-        env_vars = {}
-        run_entrypoint(
-            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-            "pubtools-pyxis-remove-signatures",
-            args,
-            env_vars,
-        )
+            env_vars = {}
+            run_entrypoint(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
+                "pubtools-pyxis-remove-signatures",
+                args,
+                env_vars,
+            )
 
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
