@@ -25,7 +25,7 @@ LOG.setLevel(logging.INFO)
 class PushDocker:
     """Handle full Docker push workflow."""
 
-    ImageData = namedtuple("ImageData", ["repo", "tag"])
+    ImageData = namedtuple("ImageData", ["repo", "tag", "digest"])
 
     def __init__(self, push_items, hub, task_id, target_name, target_settings):
         """
@@ -332,11 +332,13 @@ class PushDocker:
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
                     if not repo_data:
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag))
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
                         continue
                     # tag exists in the repo, add to backup tags
                     if tag in repo_data.get("tags", {}):
-                        image_data = PushDocker.ImageData(full_repo, tag)
+                        image_data = PushDocker.ImageData(
+                            full_repo, tag, repo_data["tags"][tag]["manifest_digest"]
+                        )
                         image = image_schema.format(
                             host=self.quay_host,
                             repo=full_repo,
@@ -346,7 +348,7 @@ class PushDocker:
                         backup_tags[image_data] = manifest
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag))
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
 
         # it's possible that rollback tags will contain duplicate entries
         rollback_tags = sorted(list(set(rollback_tags)))
@@ -380,13 +382,39 @@ class PushDocker:
 
     def remove_old_signatures(
         self,
-        manifest_claims,
-        operator_manifest_claims,
+        push_items,
+        operator_push_items,
         existing_index_images,
         backup_tags,
         container_signature_handler,
     ):
-        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in manifest_claims]
+        """
+        Remove signatures of containers for tags which were overwritten in the current push.
+
+        Method fetches all existing signatures for digests in backup tags. Only signatures with
+        repo, tag pairs  matching to backup tags are then processes forward as also signatures
+        for different repos could be returned. From those, only signature not
+        matching signatures which were just created for current push are removed.
+        Mechanism is the same for index images signatures.
+
+        Args:
+            push_items ([_PushItem]):
+                List of container push items.
+            operator_push_items ([_PushItem]):
+                List of operator push items.
+            existing_index_images: ([(digest, version)]):
+                List of tuple of digest + version(tag) of index images which existed
+                before new index image was pushed in the current task
+            backup_tags ({ImageData: str}):
+                Dictionary of ImageData (repo, tag, digest) -> manifest
+                holding containers which were overwritten in the currently running task
+            container_signature_handler (ContainerSignatureHandler):
+                ContanerSignatureHandler instance.
+        """
+        claim_messages = []
+        for item in push_items:
+            claim_messages += container_signature_handler.construct_item_claim_messages(item)
+        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
         for image_data, manifest in backup_tags.items():
@@ -395,7 +423,7 @@ class PushDocker:
                 for arch_manifest in manifest["manifests"]:
                     outdated_signatures.append((arch_manifest["digest"], image_data.tag, ext_repo))
             else:
-                outdated_signatures.append((manifest["digest"], image_data.tag, ext_repo))
+                outdated_signatures.append((image_data.digest, image_data.tag, ext_repo))
 
         signatures_to_remove = []
         for esig in container_signature_handler.get_signatures_from_pyxis(
@@ -411,20 +439,32 @@ class PushDocker:
             ) not in new_signatures:
                 signatures_to_remove.append(esig["_id"])
 
-        container_signature_handler.remove_outdated_signatures(signatures_to_remove)
+        container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
+
+        for item in push_items:
+            claim_messages += container_signature_handler.construct_item_claim_messages(item)
+        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
 
         signatures_to_remove = []
         if existing_index_images:
             outdated_signatures = []
+            operator_claim_messages = []
+            for item in operator_push_items:
+                operator_claim_messages += (
+                    container_signature_handler.construct_item_claim_messages(item)
+                )
             new_operator_signatures = [
-                (m["manifest_digest"], m["docker_reference"]) for m in operator_manifest_claims
+                (m["manifest_digest"], m["docker_reference"]) for m in operator_claim_messages
             ]
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
-                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures:
+                if (
+                    esig["manifest_digest"],
+                    esig["reference"],
+                ) not in new_operator_signatures:
                     signatures_to_remove.append(esig["_id"])
-            container_signature_handler.remove_outdated_signatures(signatures_to_remove)
+            container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
 
     def run(self):
         """
@@ -440,6 +480,7 @@ class PushDocker:
         - Add operator bundles to index images by using IIB
         - Sign index images using RADAS and upload signatures to Pyxis
         - Push the index images to Quay
+        - Remove outdated container signatures
         - (in case of failure) Rollback destination repos to the pre-push state
 
         Returns ([str]):
@@ -458,7 +499,6 @@ class PushDocker:
         )
         # Generate resources for rollback in case there are errors during the push
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
-        operator_manifest_claims = []
         existing_index_images = []
 
         try:
@@ -466,9 +506,7 @@ class PushDocker:
             container_signature_handler = ContainerSignatureHandler(
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
-            manifest_claims, _ = container_signature_handler.sign_container_images(
-                docker_push_items
-            )
+            container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
             container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
             container_pusher.push_container_images()
@@ -484,9 +522,7 @@ class PushDocker:
                 operator_signature_handler = OperatorSignatureHandler(
                     self.hub, self.task_id, self.target_settings, self.target_name
                 )
-                operator_manifest_claims, _ = operator_signature_handler.sign_operator_images(
-                    iib_results
-                )
+                operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
         except Exception:
@@ -496,8 +532,8 @@ class PushDocker:
         else:
             # Remove old signatures
             self.remove_old_signatures(
-                manifest_claims,
-                operator_manifest_claims,
+                docker_push_items,
+                operator_push_items,
                 existing_index_images,
                 backup_tags,
                 container_signature_handler,

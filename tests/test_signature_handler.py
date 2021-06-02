@@ -868,12 +868,12 @@ def test_construct_operator_item_claim_messages_none_signing_key(
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 @mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 @mock.patch("tempfile.NamedTemporaryFile")
-def test_remove_outdated_signatures(
+def test_remove_signatures_from_pyxis(
     mock_named_temp, mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
 ):
     hub = mock.MagicMock()
     sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
-    sig_handler.remove_outdated_signatures(
+    sig_handler.remove_signatures_from_pyxis(
         [
             (
                 "test-digest",

@@ -435,20 +435,6 @@ class SignatureHandler:
                 )
             )
 
-    def remove_outdated_signatures(self, signatures_to_remove):
-        """
-        Remove outdated signatures from sigstore.
-
-        Method removes signatures for all referenced registries
-
-        Args:
-            outdated_containers [(digest, reference)]:
-                List of tuples container repo, manifest and tag of outdated container
-
-
-        """
-        self.remove_signatures_from_pyxis(signatures_to_remove)
-
 
 class ContainerSignatureHandler(SignatureHandler):
     """Class for handling the signing of container images."""
@@ -559,7 +545,6 @@ class ContainerSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
-        return (claim_messages, signature_messages)
 
 
 class OperatorSignatureHandler(SignatureHandler):
@@ -655,7 +640,6 @@ class OperatorSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
-        return (claim_messages, signature_messages)
 
     def sign_task_index_image(self, signing_keys, index_image, tag):
         """
