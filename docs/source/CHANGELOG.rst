@@ -1,6 +1,15 @@
 ChangeLog
 =========
 
+0.5.0 (2021-6-2)
+------------------
+
+* Fix intermediate index image
+* Implement tag docker
+* Add skip to signing if signing key is None
+* Fix pub XMLRPC call
+* Implement entrypoints for IIB methods
+
 0.4.0 (2021-5-4)
 ------------------
 
