@@ -378,7 +378,7 @@ class SignatureHandler:
 
         Args:
             signatures_to_remove (list):
-                list of signature ids to be removed
+                List of signature ids to be removed.
         """
         LOG.info("Removing outdated signatures from pyxis")
 
