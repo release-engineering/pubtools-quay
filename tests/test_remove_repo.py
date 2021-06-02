@@ -339,10 +339,6 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
     )
     remove_repo.remove_repository_main(args)
 
-    mock_quay_api_client.assert_called_once_with("some-token")
-    mock_signature_remover.assert_called_once_with(
-        quay_user="some-user", quay_password="some-password"
-    )
     mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "internal-namespace", "pyxis-url.com", "some-principal", None
