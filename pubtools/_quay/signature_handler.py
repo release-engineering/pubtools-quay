@@ -380,7 +380,7 @@ class SignatureHandler:
             signatures_to_remove (list):
                 List of signature ids to be removed.
         """
-        LOG.info("Removing outdated signatures from pyxis")
+        LOG.info("Removing outdated signatures from Pyxis")
 
         args = [
             "--pyxis-server",
