@@ -7,7 +7,7 @@ from copy import deepcopy
 from pubtools._quay.push_docker import PushDocker
 from pubtools._quay.tag_docker import TagDocker
 from pubtools._quay import iib_operations
-from .utils.misc import sort_dictionary_sortable_values, compare_logs
+from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 
 # flake8: noqa: E501
 
@@ -33,11 +33,6 @@ def test_push_docker_multiarch_merge_ml_operator(
     src_manifest_list,
     dest_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     # hub usage has to be mocked
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -162,11 +157,6 @@ def test_push_docker_multiarch_simple_workflow(
     container_multiarch_push_item_integration,
     src_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     # hub usage has to be mocked
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -253,11 +243,6 @@ def test_push_docker_source(
     container_source_push_item_integration,
     src_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     # hub usage has to be mocked
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -344,11 +329,6 @@ def test_push_docker_multiarch_rollback(
     container_multiarch_push_item_integration,
     src_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     # hub usage has to be mocked
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -721,11 +701,6 @@ def test_task_iib_remove_operators(
     target_settings,
     src_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -768,11 +743,6 @@ def test_task_iib_build_from_scratch(
     target_settings,
     src_manifest_list,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
