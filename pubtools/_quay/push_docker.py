@@ -459,10 +459,7 @@ class PushDocker:
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
-                if (
-                    esig["manifest_digest"],
-                    esig["reference"],
-                ) not in new_operator_signatures:
+                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures:
                     signatures_to_remove.append(esig["_id"])
             container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
 
