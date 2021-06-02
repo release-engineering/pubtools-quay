@@ -377,7 +377,7 @@ class SignatureHandler:
         Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
 
         Args:
-            signatures_to_remove (list):
+            signatures_to_remove ([str]):
                 List of signature ids to be removed.
         """
         LOG.info("Removing outdated signatures from Pyxis")
