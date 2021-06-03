@@ -352,7 +352,9 @@ class OperatorPusher:
                 else:
                     raise
             for manifest in manifest_list["manifests"]:
-                current_index_images.append((manifest["digest"], version))
+                current_index_images.append(
+                    (manifest["digest"], version, self.target_settings["quay_operator_repository"])
+                )
         return list(set(current_index_images))
 
     @log_step("Build index images")

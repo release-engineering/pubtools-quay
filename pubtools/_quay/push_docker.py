@@ -10,7 +10,7 @@ from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .operator_pusher import OperatorPusher
-from .utils.misc import INTERNAL_DELIMITER
+from .utils.misc import get_external_container_repo_name
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -294,7 +294,7 @@ class PushDocker:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
-        Specifically, create two resources: 'backup_tags' and 'rollback_tags'.
+        Specifically, create two resources: 'backup_tags' and 'pollback_tags'.
         - 'backup_tags' is a mapping of ImageData->manifest, and consists of images which will
           be overwritten. During rollback, tag is made to re-reference the old manifest.
         - 'rollback_tags' is a list of ImageData which don't yet exist. During rollback, they
@@ -332,10 +332,12 @@ class PushDocker:
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
                     if not repo_data:
+                        # for rollback tags digest is not known
                         rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
                         continue
                     # tag exists in the repo, add to backup tags
                     if tag in repo_data.get("tags", {}):
+                        # for backup tags store also digest
                         image_data = PushDocker.ImageData(
                             full_repo, tag, repo_data["tags"][tag]["manifest_digest"]
                         )
@@ -348,6 +350,7 @@ class PushDocker:
                         backup_tags[image_data] = manifest
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
+                        # for rollback tags digest is not known
                         rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
 
         # it's possible that rollback tags will contain duplicate entries
@@ -395,7 +398,8 @@ class PushDocker:
         repo, tag pairs  matching to backup tags are then processes forward as also signatures
         for different repos could be returned. From those, only signature not
         matching signatures which were just created for current push are removed.
-        Mechanism is the same for index images signatures.
+        Mechanism is the same for index images signatures, except those are not compared to
+        any backup tags.
 
         Args:
             push_items ([_PushItem]):
@@ -418,7 +422,7 @@ class PushDocker:
         outdated_signatures = []
 
         for image_data, manifest in backup_tags.items():
-            ext_repo = image_data.repo.split("/")[1].replace(INTERNAL_DELIMITER, "/")
+            ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
             if "manifests" in manifest:
                 for arch_manifest in manifest["manifests"]:
                     outdated_signatures.append((arch_manifest["digest"], image_data.tag, ext_repo))
@@ -441,10 +445,6 @@ class PushDocker:
 
         container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
 
-        for item in push_items:
-            claim_messages += container_signature_handler.construct_item_claim_messages(item)
-        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
-
         signatures_to_remove = []
         if existing_index_images:
             outdated_signatures = []
@@ -459,7 +459,11 @@ class PushDocker:
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
-                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures:
+                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures and (
+                    esig["manifest_digest"],
+                    esig["reference"].split(":")[-1],
+                    esig["repository"],
+                ) in existing_index_images:
                     signatures_to_remove.append(esig["_id"])
             container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
 

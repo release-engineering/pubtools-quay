@@ -1196,15 +1196,10 @@ def test_remove_old_signatures_no_old_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
 ):
-    manifest_claims = [
-        {
-            "repo": "somerepo",
-            "manifest_digest": "somedigest",
-            "docker_reference": "reference/repo:sometag",
-        }
-    ]
     backup_tags = {}
-    image_data = push_docker.PushDocker.ImageData("another-reference/repo:sometag", "sometag", None)
+    image_data = push_docker.PushDocker.ImageData(
+        "another-reference/some-product----repo:sometag", "sometag", None
+    )
     backup_tags[image_data] = {"digest": "somedigest"}
 
     mock_get_signatures_from_pyxis = mock.MagicMock(
@@ -1230,7 +1225,6 @@ def test_remove_old_signatures_no_old_signatures(
     ).remove_old_signatures(
         [container_push_item_external_repos], [], [], backup_tags, mock_container_signature_handler
     )
-    print(mock_container_signature_handler.mock_calls)
     mock_container_signature_handler.remove_signatures_from_pyxis.assert_called_with([])
 
 
@@ -1241,13 +1235,6 @@ def test_remove_old_signatures_container_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
 ):
-    manifest_claims = [
-        {
-            "repo": "somerepo",
-            "manifest_digest": "somedigest2",
-            "docker_reference": "reference/repo:sometag",
-        }
-    ]
     mock_get_signatures_from_pyxis = mock.MagicMock(
         return_value=(
             [
@@ -1273,7 +1260,9 @@ def test_remove_old_signatures_container_signatures(
         mock.MagicMock(),
         mock.MagicMock(),
         mock.MagicMock(),
-    ).remove_old_signatures(manifest_claims, [], [], backup_tags, mock_container_signature_handler)
+    ).remove_old_signatures(
+        [container_push_item_external_repos], [], [], backup_tags, mock_container_signature_handler
+    )
     mock_container_signature_handler.remove_signatures_from_pyxis.assert_called_with(
         ["signature-id-1"]
     )
@@ -1285,21 +1274,8 @@ def test_remove_old_signatures_operator_signatures(
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
+    operator_push_item_ok,
 ):
-    manifest_claims = [
-        {
-            "repo": "somerepo",
-            "manifest_digest": "somedigest2",
-            "docker_reference": "reference/repo:sometag",
-        }
-    ]
-    operator_manifest_claims = [
-        {
-            "repo": "operator-repo",
-            "manifest_digest": "somedigest3",
-            "docker_reference": "reference/operator-repo:someversion",
-        }
-    ]
     mock_get_signatures_from_pyxis = mock.MagicMock(
         side_effect=[
             [
@@ -1314,18 +1290,18 @@ def test_remove_old_signatures_operator_signatures(
                 {
                     "manifest_digest": "some-digest",
                     "repository": "some-product/some-repo",
-                    "reference": "registry/some-product/some-repo:sometag",
+                    "reference": "registry/some-product/some-repo:someversion",
                     "_id": "signature-id-2",
                 }
             ],
         ]
     )
-    existing_index_images = [("somedigest2", "someversion")]
+    existing_index_images = [("some-digest", "someversion", "some-product/some-repo")]
 
     mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
-        "reference/some-product----some-repo", "sometag", None
+        "reference/some-product----some-repo", "someversion", None
     )
     backup_tags[image_data] = {"digest": "some-digest"}
 
@@ -1336,8 +1312,8 @@ def test_remove_old_signatures_operator_signatures(
         mock.MagicMock(),
         mock.MagicMock(),
     ).remove_old_signatures(
-        manifest_claims,
-        operator_manifest_claims,
+        [container_push_item_external_repos],
+        [operator_push_item_ok],
         existing_index_images,
         backup_tags,
         mock_container_signature_handler,

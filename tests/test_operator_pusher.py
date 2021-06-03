@@ -391,42 +391,52 @@ def test_get_existing_index_images(
         (
             "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
             "v4.5",
+            "operators/index-image",
         ),
         (
             "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
             "v4.5",
+            "operators/index-image",
         ),
         (
             "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
             "v4.5",
+            "operators/index-image",
         ),
         (
             "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             "v4.5",
+            "operators/index-image",
         ),
         (
             "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
             "v4.5",
+            "operators/index-image",
         ),
         (
             "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
             "v4.6",
+            "operators/index-image",
         ),
     ]
 
@@ -460,22 +470,27 @@ def test_get_existing_index_images_raises_404(
         (
             "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             "v4.6",
+            "operators/index-image",
         ),
         (
             "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
             "v4.6",
+            "operators/index-image",
         ),
     ]
 
