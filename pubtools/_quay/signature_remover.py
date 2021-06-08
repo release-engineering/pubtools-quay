@@ -169,13 +169,14 @@ class SignatureRemover:
             args += ["--pyxis-krb-ktfile", pyxis_krb_ktfile]
         with tempfile.NamedTemporaryFile(mode="w") as temp:
             json.dump(signatures_to_remove, temp)
+            temp.flush()
 
             args += ["--ids", "@%s" % temp.name]
 
             env_vars = {}
             run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-                "pubtools-pyxis-remove-signatures",
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-delete-signatures"),
+                "pubtools-pyxis-delete-signatures",
                 args,
                 env_vars,
             )
@@ -240,8 +241,11 @@ class SignatureRemover:
             if signature["repository"] == repository:
                 remove_signature_ids.append(signature["_id"])
 
-        LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
+        if len(remove_signature_ids) > 0:
+            LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
 
-        self.remove_signatures_from_pyxis(
-            remove_signature_ids, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
-        )
+            self.remove_signatures_from_pyxis(
+                remove_signature_ids, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            )
+        else:
+            LOG.info("No signatures need to be removed")

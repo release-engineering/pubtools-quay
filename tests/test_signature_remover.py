@@ -133,8 +133,8 @@ def test_remove_signatures_from_pyxis(mock_run_entrypoint, mock_temp_file):
     )
 
     mock_run_entrypoint.assert_called_once_with(
-        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-        "pubtools-pyxis-remove-signatures",
+        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-delete-signatures"),
+        "pubtools-pyxis-delete-signatures",
         [
             "--pyxis-server",
             "pyxis-server.com",
@@ -217,3 +217,34 @@ def test_remove_repository_signatures(
     mock_remove_signatures.assert_called_once_with(
         ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab"
     )
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_repository_digests")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_repository_signatures_none_to_remove(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_repo_digests,
+    mock_get_signatures,
+    mock_remove_signatures,
+):
+    mock_get_repo_digests.return_value = ["digest1", "digest2"]
+    mock_get_signatures.return_value = [
+        {"repository": "namespace/different-repo", "_id": "id3"},
+    ]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_repository_signatures(
+        "namespace/repo", "internal-namespace", "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+    mock_get_repo_digests.assert_called_once_with("internal-namespace/namespace----repo")
+    mock_get_signatures.assert_called_once_with(
+        ["digest1", "digest2"], "pyxis-server.com", "some-principal", "some-keytab"
+    )
+    mock_remove_signatures.assert_not_called()
