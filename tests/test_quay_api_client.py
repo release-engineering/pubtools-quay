@@ -55,3 +55,23 @@ def test_delete_client():
         assert resp.status_code == 400
 
         assert m.call_count == 3
+
+
+def test_delete_repository():
+    client = quay_api_client.QuayApiClient("some-token", "stage.quay.io")
+
+    with requests_mock.Mocker() as m:
+        m.delete(
+            "https://stage.quay.io/api/v1/repository/some-namespace/some-repo",
+            [
+                {"text": "Server error", "status_code": 500},
+                {"text": "Success", "status_code": 200},
+            ],
+        )
+        with pytest.raises(requests.HTTPError, match="500 Server Error.*"):
+            client.delete_repository("some-namespace/some-repo")
+
+        response = client.delete_repository("some-namespace/some-repo")
+        assert response.status_code == 200
+
+        assert m.call_count == 2
