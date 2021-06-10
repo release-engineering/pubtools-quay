@@ -1225,7 +1225,7 @@ def test_remove_old_signatures_no_old_signatures(
     ).remove_old_signatures(
         [container_push_item_external_repos], [], [], backup_tags, mock_container_signature_handler
     )
-    mock_container_signature_handler.remove_signatures_from_pyxis.assert_called_with([])
+    mock_container_signature_handler.remove_signatures_from_pyxis.assert_not_called()
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
