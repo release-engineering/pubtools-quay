@@ -3,6 +3,8 @@ import pytest
 
 from pubtools._quay import signature_remover
 
+# flake8: noqa: E501
+
 
 def test_init():
     sig_remover = signature_remover.SignatureRemover()
@@ -248,3 +250,347 @@ def test_remove_repository_signatures_none_to_remove(
         ["digest1", "digest2"], "pyxis-server.com", "some-principal", "some-keytab"
     )
     mock_remove_signatures.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_multiarch(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    mock_get_repository_data = mock.MagicMock()
+    mock_get_repository_data.return_value = repo_api_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_signatures.return_value = [
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id1",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id2",
+            "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        },
+        {
+            "reference": "quay.io/some-namespace/other-repo:1",
+            "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+    ]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_tag_signatures(
+        "quay.io/some-namespace/some-repo:1", "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/some-repo:1", manifest_list=True
+    )
+    mock_get_signatures.assert_called_once_with(
+        [
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        ],
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+    )
+    mock_remove_signatures.assert_called_once_with(
+        ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_source(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    mock_get_repository_data = mock.MagicMock()
+    mock_get_repository_data.return_value = repo_api_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_signatures.return_value = [
+        {
+            "reference": "quay.io/some-namespace/some-repo:3",
+            "_id": "id1",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "reference": "quay.io/some-namespace/some-repo:3",
+            "_id": "id2",
+            "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        },
+        {
+            "reference": "quay.io/some-namespace/other-repo:3",
+            "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+    ]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_tag_signatures(
+        "quay.io/some-namespace/some-repo:3", "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_manifest.assert_not_called()
+    mock_get_signatures.assert_called_once_with(
+        ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"],
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+    )
+    mock_remove_signatures.assert_called_once_with(
+        ["id1"], "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_digest(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    with pytest.raises(ValueError, match=".*removed must be specified by tag."):
+        sig_remover.remove_tag_signatures(
+            "quay.io/some-namespace/some-repo@sha256:a1a1a1",
+            "pyxis-server.com",
+            "some-principal",
+            "some-keytab",
+        )
+
+    mock_get_signatures.assert_not_called()
+    mock_remove_signatures.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_no_signatures(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    mock_get_repository_data = mock.MagicMock()
+    mock_get_repository_data.return_value = repo_api_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_signatures.return_value = [
+        {
+            "reference": "quay.io/some-namespace/some-repo:2",
+            "_id": "id1",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "reference": "quay.io/some-namespace/some-repo:3",
+            "_id": "id2",
+            "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        },
+        {
+            "reference": "quay.io/some-namespace/other-repo:1",
+            "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+    ]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_tag_signatures(
+        "quay.io/some-namespace/some-repo:1", "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+    mock_remove_signatures.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_exclude_by_claims(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    mock_get_repository_data = mock.MagicMock()
+    mock_get_repository_data.return_value = repo_api_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_signatures.return_value = [
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id1",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id2",
+            "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        },
+        {
+            "reference": "quay.io/some-namespace/other-repo:1",
+            "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+    ]
+
+    claim_messages = [
+        {
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "docker_reference": "quay.io/some-namespace/some-repo:1",
+        },
+        {
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "docker_reference": "quay.io/some-namespace/some-repo:1",
+        },
+    ]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_tag_signatures(
+        "quay.io/some-namespace/some-repo:1",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+        exclude_by_claims=claim_messages,
+    )
+
+    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/some-repo:1", manifest_list=True
+    )
+    mock_get_signatures.assert_called_once_with(
+        [
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        ],
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+    )
+    mock_remove_signatures.assert_called_once_with(
+        ["id2"], "pyxis-server.com", "some-principal", "some-keytab"
+    )
+
+
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
+@mock.patch("pubtools._quay.signature_remover.QuayClient")
+@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
+def test_remove_tag_signatures_selected_archs(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_signatures,
+    mock_remove_signatures,
+    repo_api_data,
+    manifest_list_data,
+):
+    mock_get_repository_data = mock.MagicMock()
+    mock_get_repository_data.return_value = repo_api_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = manifest_list_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_signatures.return_value = [
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id1",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "reference": "quay.io/some-namespace/some-repo:1",
+            "_id": "id2",
+            "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        },
+        {
+            "reference": "quay.io/some-namespace/other-repo:1",
+            "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+    ]
+
+    selected_archs = ["ppc64le", "arm64"]
+
+    sig_remover = signature_remover.SignatureRemover(
+        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+    )
+    sig_remover.remove_tag_signatures(
+        "quay.io/some-namespace/some-repo:1",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+        remove_archs=selected_archs,
+    )
+
+    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/some-repo:1", manifest_list=True
+    )
+    mock_get_signatures.assert_called_once_with(
+        [
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        ],
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+    )
+    mock_remove_signatures.assert_called_once_with(
+        ["id1"], "pyxis-server.com", "some-principal", "some-keytab"
+    )

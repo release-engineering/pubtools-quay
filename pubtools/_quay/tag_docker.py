@@ -18,6 +18,7 @@ from .signature_handler import SignatureHandler, BasicSignatureHandler
 from .manifest_list_merger import ManifestListMerger
 from .untag_images import untag_images
 from .push_docker import PushDocker
+from .signature_remover import SignatureRemover
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -63,6 +64,10 @@ class TagDocker:
         self._executor = None
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
+
+        self.signature_remover = SignatureRemover()
+        self.signature_remover.set_quay_api_client(self.quay_api_client)
+        self.signature_remover.set_quay_client(self.quay_client)
 
         self.verify_target_settings()
         self.verify_input_data()
@@ -117,6 +122,7 @@ class TagDocker:
             "pyxis_server",
             "quay_namespace",
             "iib_index_image",
+            "iib_krb_principal",
             "quay_operator_repository",
             "ssh_remote_host",
             "ssh_user",
@@ -527,7 +533,17 @@ class TagDocker:
         elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
-        signature_handler.sign_claim_messages(claim_messages, True, True)
+        self.signature_remover.remove_tag_signatures(
+            reference=dest_image,
+            pyxis_server=self.target_settings["pyxis_server"],
+            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
+            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            exclude_by_claims=claim_messages,
+        )
+
+        filtered_claim_messages = signature_handler.filter_claim_messages(claim_messages)
+
+        signature_handler.sign_claim_messages(filtered_claim_messages, True, True)
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
     def merge_manifest_lists_sign_images(self, push_item, tag, add_archs, signature_handler):
@@ -586,7 +602,17 @@ class TagDocker:
                     )
                     claim_messages.append(message)
 
-        signature_handler.sign_claim_messages(claim_messages, True, True)
+        # claim messages ensure that signatures of non-modified archs won't get removed
+        self.signature_remover.remove_tag_signatures(
+            reference=dest_image,
+            pyxis_server=self.target_settings["pyxis_server"],
+            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
+            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            exclude_by_claims=claim_messages,
+        )
+
+        filtered_claim_messages = signature_handler.filter_claim_messages(claim_messages)
+        signature_handler.sign_claim_messages(filtered_claim_messages, True, True)
 
         raw_src_manifest = self.quay_client.get_manifest(source_image, manifest_list=True, raw=True)
 
@@ -655,6 +681,13 @@ class TagDocker:
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
 
+        self.signature_remover.remove_tag_signatures(
+            reference=dest_image,
+            pyxis_server=self.target_settings["pyxis_server"],
+            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
+            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+        )
+
         self.run_untag_images([dest_image], True, self.target_settings)
 
     def manifest_list_remove_archs(self, push_item, tag, remove_archs):
@@ -687,6 +720,14 @@ class TagDocker:
 
         new_manifest_list = deepcopy(manifest_list)
         new_manifest_list["manifests"] = keep_manifests
+
+        self.signature_remover.remove_tag_signatures(
+            reference=dest_image,
+            pyxis_server=self.target_settings["pyxis_server"],
+            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
+            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            remove_archs=remove_archs,
+        )
 
         self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
