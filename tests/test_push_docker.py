@@ -838,7 +838,8 @@ def test_push_docker_full_success(
         },
         ["item1", "item2"],
     )
-    mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
@@ -863,9 +864,15 @@ def test_push_docker_full_success(
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
-    mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
-    mock_operator_signature_handler.assert_called_once_with(hub, "1", target_settings)
-    mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_push_index_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
+    mock_operator_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
+    mock_sign_operator_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]
 
@@ -940,7 +947,8 @@ def test_push_docker_full_success_repush(
         },
         ["item1", "item2"],
     )
-    mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
@@ -974,11 +982,15 @@ def test_push_docker_full_success_repush(
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
-    mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_push_index_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
     mock_operator_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_sign_operator_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
     mock_rollback.assert_not_called()
     assert repos == ["external/repo", "test_repo"]
 
@@ -1054,7 +1066,6 @@ def test_push_docker_no_operator_push_items(
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
-    mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]
@@ -1138,7 +1149,6 @@ def test_push_docker_failure_rollback(
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
-    mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
     mock_rollback.assert_called_once_with(
         {
@@ -1191,7 +1201,9 @@ def test_filter_unrelated_repos(patched_verify_target_settings, container_push_i
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 def test_remove_old_signatures_no_old_signatures(
+    mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
@@ -1223,14 +1235,22 @@ def test_remove_old_signatures_no_old_signatures(
         mock.MagicMock(),
         mock.MagicMock(),
     ).remove_old_signatures(
-        [container_push_item_external_repos], [], [], backup_tags, mock_container_signature_handler
+        [container_push_item_external_repos],
+        [],
+        [],
+        backup_tags,
+        {},
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
     )
     mock_container_signature_handler.remove_signatures_from_pyxis.assert_not_called()
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 def test_remove_old_signatures_container_signatures(
+    mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
@@ -1261,7 +1281,13 @@ def test_remove_old_signatures_container_signatures(
         mock.MagicMock(),
         mock.MagicMock(),
     ).remove_old_signatures(
-        [container_push_item_external_repos], [], [], backup_tags, mock_container_signature_handler
+        [container_push_item_external_repos],
+        [],
+        [],
+        {},
+        backup_tags,
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
     )
     mock_container_signature_handler.remove_signatures_from_pyxis.assert_called_with(
         ["signature-id-1"]
@@ -1270,7 +1296,9 @@ def test_remove_old_signatures_container_signatures(
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 def test_remove_old_signatures_operator_signatures(
+    mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
@@ -1315,8 +1343,15 @@ def test_remove_old_signatures_operator_signatures(
         [container_push_item_external_repos],
         [operator_push_item_ok],
         existing_index_images,
+        {
+            "v4.5": {
+                "iib_result": mock.MagicMock(index_image_resolved="registy/ns/iib@digest"),
+                "signing_keys": ["sig_key1"],
+            }
+        },
         backup_tags,
         mock_container_signature_handler,
+        mock_operator_signature_handler,
     )
     mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
         mock.call(["signature-id-1"])

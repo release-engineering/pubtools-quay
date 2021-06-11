@@ -640,6 +640,7 @@ class OperatorSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
+        return claim_messages
 
     def sign_task_index_image(self, signing_keys, index_image, tag):
         """

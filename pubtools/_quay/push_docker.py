@@ -388,8 +388,10 @@ class PushDocker:
         push_items,
         operator_push_items,
         existing_index_images,
+        iib_results,
         backup_tags,
         container_signature_handler,
+        operator_signature_handler,
     ):
         """
         Remove signatures of containers for tags which were overwritten in the current push.
@@ -409,10 +411,14 @@ class PushDocker:
             existing_index_images: ([(digest, version)]):
                 List of tuple of digest + version(tag) of index images which existed
                 before new index image was pushed in the current task
+            iib_results (({str:dict})):
+                Dictionary containing IIB results and signing keys for all OPM versions.
             backup_tags ({ImageData: str}):
                 Dictionary of ImageData (repo, tag, digest) -> manifest
                 holding containers which were overwritten in the currently running task
             container_signature_handler (ContainerSignatureHandler):
+                ContanerSignatureHandler instance.
+            operator_signature_handler (OperatorSignatureHandler):
                 ContanerSignatureHandler instance.
         """
         claim_messages = []
@@ -447,21 +453,29 @@ class PushDocker:
             container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
 
         signatures_to_remove = []
+        ii_claim_messages = []
         if existing_index_images:
-            outdated_signatures = []
-            iib_repo = self.target_settings["quay_operator_repository"]
-            image_schema = "{host}/{repository}:{tag}"
-            new_operator_signatures = []
-            for dest_reg in self.target_settings["docker_settings"]["docker_reference_registry"]:
-                new_operator_signatures.extend(
-                    [
-                        (
-                            eii[0],
-                            image_schema.format(host=dest_reg, repository=iib_repo, tag=eii[1]),
-                        )
-                        for eii in existing_index_images
-                    ]
+            for version, iib_details in sorted(iib_results.items()):
+                iib_result = iib_details["iib_result"]
+                signing_keys = iib_details["signing_keys"]
+                image_schema = "{host}/{namespace}/{repo}@{digest}"
+                iib_namespace = iib_result.index_image_resolved.split("/")[1]
+                image_digest = iib_result.index_image_resolved.split("@")[1]
+                intermediate_index_image = image_schema.format(
+                    host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
+                    namespace=iib_namespace,
+                    repo="iib",
+                    digest=image_digest,
                 )
+                ii_claim_messages += (
+                    operator_signature_handler.construct_index_image_claim_messages(
+                        intermediate_index_image, version, signing_keys
+                    )
+                )
+            new_operator_signatures = [
+                (m["manifest_digest"], m["docker_reference"]) for m in ii_claim_messages
+            ]
+
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
@@ -508,10 +522,14 @@ class PushDocker:
         # Generate resources for rollback in case there are errors during the push
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
         existing_index_images = []
+        iib_results = None
 
         try:
             # Sign container images
             container_signature_handler = ContainerSignatureHandler(
+                self.hub, self.task_id, self.target_settings, self.target_name
+            )
+            operator_signature_handler = OperatorSignatureHandler(
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
             container_signature_handler.sign_container_images(docker_push_items)
@@ -525,9 +543,6 @@ class PushDocker:
                 existing_index_images = operator_pusher.get_existing_index_images(self.quay_client)
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
-                operator_signature_handler = OperatorSignatureHandler(
-                    self.hub, self.task_id, self.target_settings, self.target_name
-                )
                 operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
@@ -541,8 +556,10 @@ class PushDocker:
                 docker_push_items,
                 operator_push_items,
                 existing_index_images,
+                iib_results,
                 backup_tags,
                 container_signature_handler,
+                operator_signature_handler,
             )
 
         # Return repos for UD cache flush
