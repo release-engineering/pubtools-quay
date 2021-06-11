@@ -9,6 +9,7 @@ from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
+from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
 from .utils.misc import get_external_container_repo_name
 
@@ -392,6 +393,7 @@ class PushDocker:
         backup_tags,
         container_signature_handler,
         operator_signature_handler,
+        signature_remover,
     ):
         """
         Remove signatures of containers for tags which were overwritten in the current push.
@@ -420,6 +422,8 @@ class PushDocker:
                 ContanerSignatureHandler instance.
             operator_signature_handler (OperatorSignatureHandler):
                 ContanerSignatureHandler instance.
+            operator_signature_handler (SignatureRemover):
+                SignatureRemover instance.
         """
         claim_messages = []
         for item in push_items:
@@ -450,7 +454,12 @@ class PushDocker:
                 signatures_to_remove.append(esig["_id"])
 
         if signatures_to_remove:
-            container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
+            signature_remover.remove_signatures_from_pyxis(
+                signatures_to_remove,
+                self.target_settings["pyxis_server"],
+                self.target_settings["pyxis_krb_principal"],
+                self.target_settings["pyxis_krb_ktfile"],
+            )
 
         signatures_to_remove = []
         ii_claim_messages = []
@@ -486,7 +495,7 @@ class PushDocker:
                 ) in existing_index_images:
                     signatures_to_remove.append(esig["_id"])
             if signatures_to_remove:
-                container_signature_handler.remove_signatures_from_pyxis(signatures_to_remove)
+                signature_remover.remove_signatures_from_pyxis(signatures_to_remove)
 
     def run(self):
         """
@@ -532,6 +541,10 @@ class PushDocker:
             operator_signature_handler = OperatorSignatureHandler(
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
+            sig_remover = SignatureRemover()
+            sig_remover.set_quay_client(self.quay_client)
+            sig_remover.set_quay_api_client(self.quay_api_client)
+
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
             container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
@@ -560,6 +573,7 @@ class PushDocker:
                 backup_tags,
                 container_signature_handler,
                 operator_signature_handler,
+                sig_remover,
             )
 
         # Return repos for UD cache flush

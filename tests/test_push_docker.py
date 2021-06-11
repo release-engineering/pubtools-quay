@@ -860,7 +860,9 @@ def test_push_docker_full_success(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(hub, "1", target_settings)
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
@@ -902,6 +904,7 @@ def test_push_docker_full_success_repush(
     mock_rollback,
     target_settings,
     container_multiarch_push_item,
+    container_push_item_external_repos,
     operator_push_item_ok,
 ):
     hub = mock.MagicMock()
@@ -1202,7 +1205,9 @@ def test_filter_unrelated_repos(patched_verify_target_settings, container_push_i
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
 def test_remove_old_signatures_no_old_signatures(
+    mock_signature_remover,
     mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
@@ -1242,14 +1247,17 @@ def test_remove_old_signatures_no_old_signatures(
         {},
         mock_container_signature_handler,
         mock_operator_signature_handler,
+        mock_signature_remover,
     )
-    mock_container_signature_handler.remove_signatures_from_pyxis.assert_not_called()
+    mock_signature_remover.remove_signatures_from_pyxis.assert_not_called()
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
 def test_remove_old_signatures_container_signatures(
+    mock_signature_remover,
     mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
@@ -1273,13 +1281,18 @@ def test_remove_old_signatures_container_signatures(
         "reference/some-product----some-repo", "sometag", "some-digest"
     )
     backup_tags[image_data] = "v2sch2-manifest"
+    mock_target_settings = {
+        "pyxis_server": "mock_pyxis_server",
+        "pyxis_krb_principal": "mock_pyxis_principal",
+        "pyxis_krb_ktfile": "mock_pyxis_krb_ktfile",
+    }
 
     push_docker.PushDocker(
         [container_push_item_external_repos],
         mock.MagicMock(),
         mock.MagicMock(),
         mock.MagicMock(),
-        mock.MagicMock(),
+        mock_target_settings,
     ).remove_old_signatures(
         [container_push_item_external_repos],
         [],
@@ -1288,16 +1301,19 @@ def test_remove_old_signatures_container_signatures(
         backup_tags,
         mock_container_signature_handler,
         mock_operator_signature_handler,
+        mock_signature_remover,
     )
-    mock_container_signature_handler.remove_signatures_from_pyxis.assert_called_with(
-        ["signature-id-1"]
+    mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
+        ["signature-id-1"], "mock_pyxis_server", "mock_pyxis_principal", "mock_pyxis_krb_ktfile"
     )
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
 @mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
 def test_remove_old_signatures_operator_signatures(
+    mock_signature_remover,
     mock_operator_signature_handler,
     mock_container_signature_handler,
     patched_verify_target_settings,
@@ -1352,6 +1368,7 @@ def test_remove_old_signatures_operator_signatures(
         backup_tags,
         mock_container_signature_handler,
         mock_operator_signature_handler,
+        mock_signature_remover,
     )
     mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
         mock.call(["signature-id-1"])

@@ -820,44 +820,6 @@ def test_sign_claim_messages_no_signatures(
     mock_upload_signatures_to_pyxis.assert_not_called()
 
 
-@mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
-@mock.patch("tempfile.NamedTemporaryFile")
-def test_remove_signatures_from_pyxis(
-    mock_named_temp, mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
-):
-    hub = mock.MagicMock()
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
-    sig_handler.remove_signatures_from_pyxis(
-        [
-            (
-                "test-digest",
-                "some-registry1.com/test-repo:test-tag,some-registry2.com/test-repo:test-tag",
-            )
-        ]
-    )
-    mock_run_entrypoint.assert_has_calls(
-        [
-            mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-                "pubtools-pyxis-remove-signatures",
-                [
-                    "--pyxis-server",
-                    "pyxis-url.com",
-                    "--pyxis-krb-principal",
-                    "some-principal@REDHAT.COM",
-                    "--pyxis-krb-ktfile",
-                    "/etc/pub/some.keytab",
-                    "--ids",
-                    "@%s" % mock_named_temp.return_value.__enter__.return_value.name,
-                ],
-                {},
-            )
-        ]
-    )
-
-
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 @mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_construct_item_claim_messages_none_signing_key(
@@ -902,39 +864,3 @@ def test_construct_operator_item_claim_messages_none_signing_key(
     )
 
     assert claim_messages == []
-@mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
-@mock.patch("tempfile.NamedTemporaryFile")
-def test_remove_signatures_from_pyxis(
-    mock_named_temp, mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
-):
-    hub = mock.MagicMock()
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings)
-    sig_handler.remove_signatures_from_pyxis(
-        [
-            (
-                "test-digest",
-                "some-registry1.com/test-repo:test-tag,some-registry2.com/test-repo:test-tag",
-            )
-        ]
-    )
-    mock_run_entrypoint.assert_has_calls(
-        [
-            mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-                "pubtools-pyxis-remove-signatures",
-                [
-                    "--pyxis-server",
-                    "pyxis-url.com",
-                    "--pyxis-krb-principal",
-                    "some-principal@REDHAT.COM",
-                    "--pyxis-krb-ktfile",
-                    "/etc/pub/some.keytab",
-                    "--ids",
-                    "@%s" % mock_named_temp.return_value.__enter__.return_value.name,
-                ],
-                {},
-            )
-        ]
-    )

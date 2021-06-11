@@ -2,7 +2,6 @@ import base64
 from datetime import datetime
 import json
 import logging
-import tempfile
 import uuid
 
 import proton
@@ -368,37 +367,6 @@ class SignatureHandler:
             run_entrypoint(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
-                args,
-                env_vars,
-            )
-
-    def remove_signatures_from_pyxis(self, signatures_to_remove):
-        """
-        Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
-
-        Args:
-            signatures_to_remove ([str]):
-                List of signature ids to be removed.
-        """
-        LOG.info("Removing outdated signatures from Pyxis")
-
-        args = [
-            "--pyxis-server",
-            self.target_settings["pyxis_server"],
-            "--pyxis-krb-principal",
-            self.target_settings["iib_krb_principal"],
-        ]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-        with tempfile.NamedTemporaryFile() as temp:
-            json.dump(signatures_to_remove, temp)
-
-            args += ["--ids", "@%s" % temp.name]
-
-            env_vars = {}
-            run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-remove-signatures"),
-                "pubtools-pyxis-remove-signatures",
                 args,
                 env_vars,
             )
