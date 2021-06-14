@@ -19,8 +19,8 @@ REMOVE_REPO_ARGS = {
         "required": True,
         "type": str,
     },
-    ("--namespace",): {
-        "help": "Internal Quay namespace in which repository resides.",
+    ("--quay-org",): {
+        "help": "Quay organization in which repository resides.",
         "required": True,
         "type": str,
     },
@@ -146,7 +146,7 @@ def verify_remove_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
 # TODO: integration tests
 def remove_repository(
     repository,
-    namespace,
+    quay_org,
     quay_api_token,
     quay_user,
     quay_password,
@@ -166,8 +166,8 @@ def remove_repository(
     Args:
         repository (str):
             External repository to remove.
-        namespace (str):
-            Internal Quay namespace in which repository resides..
+        quay_org (str):
+            Quay organization in which repository resides.
         quay_api_token (str):
             OAuth token for authentication of Quay REST API.
         quay_user (str):
@@ -201,10 +201,10 @@ def remove_repository(
     sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
     sig_remover.set_quay_api_client(quay_api_client)
     sig_remover.remove_repository_signatures(
-        repository, namespace, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        repository, quay_org, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
     )
 
-    internal_repo = "{0}/{1}".format(namespace, get_internal_container_repo_name(repository))
+    internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
     quay_api_client.delete_repository(internal_repo)
 
     LOG.info("Repository has been removed")

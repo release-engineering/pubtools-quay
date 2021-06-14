@@ -10,8 +10,8 @@ def test_arg_constructor_required_args(mock_remove_repository):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -27,7 +27,7 @@ def test_arg_constructor_required_args(mock_remove_repository):
     _, called_args = mock_remove_repository.call_args
 
     assert called_args["repository"] == "namespace/image"
-    assert called_args["namespace"] == "internal-namespace"
+    assert called_args["quay_org"] == "quay-organization"
     assert called_args["quay_user"] == "some-user"
     assert called_args["quay_password"] == "some-password"
     assert called_args["quay_api_token"] == "some-token"
@@ -43,8 +43,8 @@ def test_arg_constructor_all_args(mock_remove_repository):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--pyxis-server",
@@ -69,7 +69,7 @@ def test_arg_constructor_all_args(mock_remove_repository):
     _, called_args = mock_remove_repository.call_args
 
     assert called_args["repository"] == "namespace/image"
-    assert called_args["namespace"] == "internal-namespace"
+    assert called_args["quay_org"] == "quay-organization"
     assert called_args["quay_user"] == "some-user"
     assert called_args["quay_password"] == "some-password"
     assert called_args["pyxis_server"] == "pyxis-url.com"
@@ -87,8 +87,8 @@ def test_arg_constructor_all_args(mock_remove_repository):
 def test_args_missing_repository(mock_remove_repository):
     wrong_args = [
         "dummy",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -115,8 +115,8 @@ def test_args_missing_api_token(mock_remove_repository):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -139,8 +139,8 @@ def test_args_missing_quay_password(mock_remove_repository):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-api-token",
@@ -164,8 +164,8 @@ def test_args_incorrect_repo(mock_quay_api_client, mock_send_umb_message):
         "dummy",
         "--repository",
         "namespace---image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -198,8 +198,8 @@ def test_args_missing_umb_url(mock_quay_api_client, mock_send_umb_message):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -229,8 +229,8 @@ def test_args_missing_umb_cert(mock_quay_api_client, mock_send_umb_message):
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -261,8 +261,8 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -291,9 +291,9 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
     )
     mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
-        "namespace/image", "internal-namespace", "pyxis-url.com", "some-principal", None
+        "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )
-    mock_delete_repo.assert_called_once_with("internal-namespace/namespace----image")
+    mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
     mock_send_umb_message.assert_not_called()
 
 
@@ -305,8 +305,8 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
         "dummy",
         "--repository",
         "namespace/image",
-        "--namespace",
-        "internal-namespace",
+        "--quay-org",
+        "quay-organization",
         "--quay-user",
         "some-user",
         "--quay-password",
@@ -341,9 +341,9 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
 
     mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
-        "namespace/image", "internal-namespace", "pyxis-url.com", "some-principal", None
+        "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )
-    mock_delete_repo.assert_called_once_with("internal-namespace/namespace----image")
+    mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
     mock_send_umb_message.assert_called_once_with(
         ["amqps://url:5671"],
         {"removed_repository": "namespace/image"},

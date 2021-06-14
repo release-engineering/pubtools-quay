@@ -20,8 +20,8 @@ CLEAR_REPO_ARGS = {
         "required": True,
         "type": str,
     },
-    ("--namespace",): {
-        "help": "Internal Quay namespace in which repository resides.",
+    ("--quay-org",): {
+        "help": "Quay organization in which repository resides.",
         "required": True,
         "type": str,
     },
@@ -147,7 +147,7 @@ def verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
 # TODO: integration tests
 def clear_repository(
     repository,
-    namespace,
+    quay_org,
     quay_api_token,
     quay_user,
     quay_password,
@@ -167,8 +167,8 @@ def clear_repository(
     Args:
         repository (str):
             External repository to clear.
-        namespace (str):
-            Internal Quay namespace in which repository resides.
+        quay_org (str):
+            Quay organization in which repository resides.
         quay_api_token (str):
             OAuth token for authentication of Quay REST API.
         quay_user (str):
@@ -202,17 +202,17 @@ def clear_repository(
     sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
     sig_remover.set_quay_api_client(quay_api_client)
     sig_remover.remove_repository_signatures(
-        repository, namespace, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        repository, quay_org, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
     )
 
-    internal_repo = "{0}/{1}".format(namespace, get_internal_container_repo_name(repository))
+    internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
     repo_data = quay_api_client.get_repository_data(internal_repo)
     refrences_to_remove = []
     for tag in repo_data["tags"]:
         refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
 
     untag_images(
-        refrences_to_remove,
+        sorted(refrences_to_remove),
         quay_api_token,
         remove_last=True,
         quay_user=quay_user,
