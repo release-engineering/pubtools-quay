@@ -1283,8 +1283,8 @@ def test_remove_old_signatures_container_signatures(
     backup_tags[image_data] = "v2sch2-manifest"
     mock_target_settings = {
         "pyxis_server": "mock_pyxis_server",
-        "pyxis_krb_principal": "mock_pyxis_principal",
-        "pyxis_krb_ktfile": "mock_pyxis_krb_ktfile",
+        "iib_krb_principal": "mock_pyxis_principal",
+        "iib_krb_ktfile": "mock_pyxis_krb_ktfile",
     }
 
     push_docker.PushDocker(

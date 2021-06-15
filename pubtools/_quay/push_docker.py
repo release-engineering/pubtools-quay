@@ -457,8 +457,8 @@ class PushDocker:
             signature_remover.remove_signatures_from_pyxis(
                 signatures_to_remove,
                 self.target_settings["pyxis_server"],
-                self.target_settings["pyxis_krb_principal"],
-                self.target_settings["pyxis_krb_ktfile"],
+                self.target_settings["iib_krb_principal"],
+                self.target_settings["iib_krb_ktfile"],
             )
 
         signatures_to_remove = []
@@ -495,7 +495,12 @@ class PushDocker:
                 ) in existing_index_images:
                     signatures_to_remove.append(esig["_id"])
             if signatures_to_remove:
-                signature_remover.remove_signatures_from_pyxis(signatures_to_remove)
+                signature_remover.remove_signatures_from_pyxis(
+                    signatures_to_remove,
+                    self.target_settings["pyxis_server"],
+                    self.target_settings["iib_krb_principal"],
+                    self.target_settings["iib_krb_ktfile"],
+                )
 
     def run(self):
         """
