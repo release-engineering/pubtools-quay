@@ -41,6 +41,7 @@ class ContainerImagePusher:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
         self._quay_client = None
+        self._quay_client_osbs = None
 
     @property
     def quay_client(self):
@@ -52,6 +53,17 @@ class ContainerImagePusher:
                 self.quay_host,
             )
         return self._quay_client
+
+    @property
+    def quay_client_osbs(self):
+        """Create and access QuayClient for osbs organization."""
+        if self._quay_client_osbs is None:
+            self._quay_client_osbs = QuayClient(
+                self.target_settings["quay_user_osbs"],
+                self.target_settings["quay_password_osbs"],
+                self.quay_host,
+            )
+        return self._quay_client_osbs
 
     @classmethod
     def run_tag_images(cls, source_ref, dest_refs, all_arch, target_settings):
@@ -140,7 +152,7 @@ class ContainerImagePusher:
 
         # get unique destination repositories
         dest_repos = sorted(list(set([ref.split(":")[0] for ref in dest_refs])))
-        source_ml = self.quay_client.get_manifest(source_ref, manifest_list=True)
+        source_ml = self.quay_client_osbs.get_manifest(source_ref, manifest_list=True)
 
         # copy each arch source image to all destination repos
         for manifest in source_ml["manifests"]:
@@ -238,7 +250,7 @@ class ContainerImagePusher:
         """
         for item in self.push_items:
             try:
-                source_ml = self.quay_client.get_manifest(
+                source_ml = self.quay_client_osbs.get_manifest(
                     item.metadata["pull_url"], manifest_list=True
                 )
             except ManifestTypeError:

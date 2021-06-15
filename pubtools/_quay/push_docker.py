@@ -84,7 +84,10 @@ class PushDocker:
         required_settings = [
             "quay_user",
             "quay_password",
+            "quay_user_osbs",
+            "quay_password_osbs",
             "quay_api_token",
+            "quay_api_token_osbs",
             "pyxis_server",
             "quay_namespace",
             "iib_krb_principal",

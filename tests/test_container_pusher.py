@@ -24,7 +24,11 @@ def test_init(mock_quay_client, target_settings, container_multiarch_push_item):
     mock_quay_client.assert_not_called()
 
     assert pusher.quay_client == mock_quay_client.return_value
-    mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
+    assert pusher.quay_client_osbs == mock_quay_client.return_value
+    assert mock_quay_client.call_args_list == [
+        mock.call("quay-user", "quay-pass", "quay.io"),
+        mock.call("quay-user-osbs", "quay-pass-osbs", "quay.io"),
+    ]
 
 
 @mock.patch("pubtools._quay.container_image_pusher.tag_images")
