@@ -2,6 +2,7 @@ import logging
 
 from .signature_remover import SignatureRemover
 from .quay_api_client import QuayApiClient
+from .untag_images import untag_images
 from .utils.misc import (
     setup_arg_parser,
     add_args_env_variables,
@@ -13,9 +14,9 @@ LOG = logging.getLogger()
 logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
-REMOVE_REPO_ARGS = {
+CLEAR_REPO_ARGS = {
     ("--repository",): {
-        "help": "External repository to remove. Must be in format <namespace>/<repo>.",
+        "help": "External repository to clear. Must be in format <namespace>/<repo>.",
         "required": True,
         "type": str,
     },
@@ -86,7 +87,7 @@ REMOVE_REPO_ARGS = {
         "help": "UMB topic to send the message to.",
         "required": False,
         "type": str,
-        "default": "VirtualTopic.eng.pub.quay_remove_repository",
+        "default": "VirtualTopic.eng.pub.quay_clear_repository",
     },
 }
 
@@ -105,7 +106,7 @@ def construct_kwargs(args):
     kwargs = args.__dict__
 
     # in args.__dict__ unspecified bool values have 'None' instead of 'False'
-    for name, attributes in REMOVE_REPO_ARGS.items():
+    for name, attributes in CLEAR_REPO_ARGS.items():
         if attributes["type"] is bool:
             bool_var = name[0].lstrip("-").replace("-", "_")
             if kwargs[bool_var] is None:
@@ -117,7 +118,7 @@ def construct_kwargs(args):
     return kwargs
 
 
-def verify_remove_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
+def verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
     """
     Verify the presence and correctness of input parameters.
 
@@ -144,7 +145,7 @@ def verify_remove_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
 
 
 # TODO: integration tests
-def remove_repository(
+def clear_repository(
     repository,
     quay_org,
     quay_api_token,
@@ -158,14 +159,14 @@ def remove_repository(
     umb_cert=None,
     umb_client_key=None,
     umb_ca_cert=None,
-    umb_topic="VirtualTopic.eng.pub.quay_remove_repository",
+    umb_topic="VirtualTopic.eng.pub.quay_clear_repository",
 ):
     """
-    Remove Quay repository.
+    Clear Quay repository.
 
     Args:
         repository (str):
-            External repository to remove.
+            External repository to clear.
         quay_org (str):
             Quay organization in which repository resides.
         quay_api_token (str):
@@ -193,9 +194,9 @@ def remove_repository(
         umb_topic (str):
             Topic to send the UMB messages to.
     """
-    verify_remove_repo_args(repository, send_umb_msg, umb_urls, umb_cert)
+    verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert)
 
-    LOG.info("Removing repository '{0}'".format(repository))
+    LOG.info("Clearing repository '{0}'".format(repository))
     quay_api_client = QuayApiClient(quay_api_token)
 
     sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
@@ -205,12 +206,28 @@ def remove_repository(
     )
 
     internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
-    quay_api_client.delete_repository(internal_repo)
+    repo_data = quay_api_client.get_repository_data(internal_repo)
+    refrences_to_remove = []
+    for tag in repo_data["tags"]:
+        refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
 
-    LOG.info("Repository has been removed")
+    untag_images(
+        sorted(refrences_to_remove),
+        quay_api_token,
+        remove_last=True,
+        quay_user=quay_user,
+        quay_password=quay_password,
+        send_umb_msg=send_umb_msg,
+        umb_urls=umb_urls,
+        umb_cert=umb_cert,
+        umb_client_key=umb_client_key,
+        umb_ca_cert=umb_ca_cert,
+    )
+
+    LOG.info("Repository has been cleared")
     if send_umb_msg:
         LOG.info("Sending a UMB message")
-        props = {"removed_repository": repository}
+        props = {"cleared_repository": repository}
         send_umb_message(
             umb_urls,
             props,
@@ -221,14 +238,14 @@ def remove_repository(
         )
 
 
-def remove_repository_main(sysargs=None):
-    """Entrypoint for removing a repository."""
-    parser = setup_arg_parser(REMOVE_REPO_ARGS)
+def clear_repository_main(sysargs=None):
+    """Entrypoint for clearing a repository."""
+    parser = setup_arg_parser(CLEAR_REPO_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])
     else:
         args = parser.parse_args()  # pragma: no cover"
-    args = add_args_env_variables(args, REMOVE_REPO_ARGS)
+    args = add_args_env_variables(args, CLEAR_REPO_ARGS)
 
     if not args.quay_api_token:
         raise ValueError("--quay-api-token must be specified")
@@ -236,4 +253,4 @@ def remove_repository_main(sysargs=None):
         raise ValueError("--quay-password must be specified")
 
     kwargs = construct_kwargs(args)
-    remove_repository(**kwargs)
+    clear_repository(**kwargs)
