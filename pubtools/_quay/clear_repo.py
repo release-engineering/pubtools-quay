@@ -15,13 +15,13 @@ logging.basicConfig()
 LOG.setLevel(logging.INFO)
 
 CLEAR_REPO_ARGS = {
-    ("--repository",): {
-        "help": "External repository to clear. Must be in format <namespace>/<repo>.",
+    ("--repositories",): {
+        "help": "External repositories to clear as CSV. Must be in format <namespace>/<repo>.",
         "required": True,
         "type": str,
     },
     ("--quay-org",): {
-        "help": "Quay organization in which repository resides.",
+        "help": "Quay organization in which repositories reside.",
         "required": True,
         "type": str,
     },
@@ -87,7 +87,7 @@ CLEAR_REPO_ARGS = {
         "help": "UMB topic to send the message to.",
         "required": False,
         "type": str,
-        "default": "VirtualTopic.eng.pub.quay_clear_repository",
+        "default": "VirtualTopic.eng.pub.quay_clear_repositories",
     },
 }
 
@@ -101,7 +101,7 @@ def construct_kwargs(args):
             Parsed command line arguments.
 
     Returns (dict):
-        Keyword arguments for the 'remove_repository' function.
+        Keyword arguments for the 'clear_repositories' function.
     """
     kwargs = args.__dict__
 
@@ -118,13 +118,11 @@ def construct_kwargs(args):
     return kwargs
 
 
-def verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
+def verify_clear_repo_args(send_umb_msg, umb_urls, umb_cert):
     """
     Verify the presence and correctness of input parameters.
 
     Args:
-        repository (str):
-            Repository to remove.
         send_umb_msg (bool):
             Whether to send UMB messages about the untagged images.
         umb_urls ([str]):
@@ -132,9 +130,6 @@ def verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
         umb_cert (str):
             Path to a certificate used for UMB authentication.
     """
-    if repository.count("/") != 1 or repository[0] == "/" or repository[-1] == "/":
-        raise ValueError("Provided repository must have format <namespace>/<repo>.")
-
     if send_umb_msg:
         if not umb_urls:
             raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
@@ -145,8 +140,8 @@ def verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert):
 
 
 # TODO: integration tests
-def clear_repository(
-    repository,
+def clear_repositories(
+    repositories,
     quay_org,
     quay_api_token,
     quay_user,
@@ -159,16 +154,16 @@ def clear_repository(
     umb_cert=None,
     umb_client_key=None,
     umb_ca_cert=None,
-    umb_topic="VirtualTopic.eng.pub.quay_clear_repository",
+    umb_topic="VirtualTopic.eng.pub.quay_clear_repositories",
 ):
     """
     Clear Quay repository.
 
     Args:
         repository (str):
-            External repository to clear.
+            External repositories to clear. Comma separated values.
         quay_org (str):
-            Quay organization in which repository resides.
+            Quay organization in which repositories reside.
         quay_api_token (str):
             OAuth token for authentication of Quay REST API.
         quay_user (str):
@@ -194,22 +189,26 @@ def clear_repository(
         umb_topic (str):
             Topic to send the UMB messages to.
     """
-    verify_clear_repo_args(repository, send_umb_msg, umb_urls, umb_cert)
+    parsed_repositories = repositories.split(",")
+    verify_clear_repo_args(send_umb_msg, umb_urls, umb_cert)
 
-    LOG.info("Clearing repository '{0}'".format(repository))
+    LOG.info("Clearing repositories '{0}'".format(repositories))
     quay_api_client = QuayApiClient(quay_api_token)
 
     sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
     sig_remover.set_quay_api_client(quay_api_client)
-    sig_remover.remove_repository_signatures(
-        repository, quay_org, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
-    )
 
-    internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
-    repo_data = quay_api_client.get_repository_data(internal_repo)
     refrences_to_remove = []
-    for tag in repo_data["tags"]:
-        refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
+    for repository in parsed_repositories:
+        sig_remover.remove_repository_signatures(
+            repository, quay_org, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        )
+
+        internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
+        repo_data = quay_api_client.get_repository_data(internal_repo)
+
+        for tag in repo_data["tags"]:
+            refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
 
     untag_images(
         sorted(refrences_to_remove),
@@ -224,10 +223,10 @@ def clear_repository(
         umb_ca_cert=umb_ca_cert,
     )
 
-    LOG.info("Repository has been cleared")
+    LOG.info("Repositories have been cleared")
     if send_umb_msg:
         LOG.info("Sending a UMB message")
-        props = {"cleared_repository": repository}
+        props = {"cleared_repositories": parsed_repositories}
         send_umb_message(
             umb_urls,
             props,
@@ -238,8 +237,8 @@ def clear_repository(
         )
 
 
-def clear_repository_main(sysargs=None):
-    """Entrypoint for clearing a repository."""
+def clear_repositories_main(sysargs=None):
+    """Entrypoint for clearing repositories."""
     parser = setup_arg_parser(CLEAR_REPO_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])
@@ -253,4 +252,4 @@ def clear_repository_main(sysargs=None):
         raise ValueError("--quay-password must be specified")
 
     kwargs = construct_kwargs(args)
-    clear_repository(**kwargs)
+    clear_repositories(**kwargs)
