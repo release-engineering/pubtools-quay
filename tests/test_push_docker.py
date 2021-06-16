@@ -995,7 +995,7 @@ def test_push_docker_full_success_repush(
         {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
     )
     mock_rollback.assert_not_called()
-    assert repos == ["external/repo", "test_repo"]
+    assert repos == ["test_repo"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -1187,19 +1187,6 @@ def test_mod_entrypoint(
         target_settings,
     )
     mock_run.assert_called_once_with()
-
-
-@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
-def test_filter_unrelated_repos(patched_verify_target_settings, container_push_item_external_repos):
-    assert "test_repo" in container_push_item_external_repos.metadata["tags"]
-    push_docker.PushDocker(
-        [container_push_item_external_repos],
-        mock.MagicMock(),
-        mock.MagicMock(),
-        mock.MagicMock(),
-        mock.MagicMock(),
-    ).filter_unrelated_repos([container_push_item_external_repos])
-    assert "test_repo" not in container_push_item_external_repos.metadata["tags"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
