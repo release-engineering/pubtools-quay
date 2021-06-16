@@ -42,11 +42,7 @@ def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_pyxis_get_ocp_versions(
-    mock_run_entrypoint,
-    target_settings,
-    operator_push_item_ok,
-):
+def test_pyxis_get_ocp_versions(mock_run_entrypoint, target_settings, operator_push_item_ok):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
@@ -74,9 +70,7 @@ def test_pyxis_get_ocp_versions(
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions_no_data(
-    mock_run_entrypoint,
-    target_settings,
-    operator_push_item_ok,
+    mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
@@ -101,7 +95,7 @@ def test_pyxis_generate_mapping(
         [operator_push_item_ok, operator_push_item_different_version], target_settings
     )
 
-    mapping = pusher.generate_version_items_mapping()
+    mapping = pusher.version_items_mapping
     assert mock_run_entrypoint.call_count == 2
     assert len(mapping["v4.5"]) == 1
     assert len(mapping["v4.6"]) == 1
@@ -143,9 +137,7 @@ def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_o
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles_str_deprecation_list(
-    mock_run_entrypoint,
-    target_settings,
-    operator_push_item_ok,
+    mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
@@ -189,9 +181,7 @@ def test_iib_add_bundles_str_deprecation_list(
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles_list_deprecation_list(
-    mock_run_entrypoint,
-    target_settings,
-    operator_push_item_ok,
+    mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
@@ -234,11 +224,7 @@ def test_iib_add_bundles_list_deprecation_list(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_iib_remove_operators(
-    mock_run_entrypoint,
-    target_settings,
-    operator_push_item_ok,
-):
+def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_push_item_ok):
     mock_run_entrypoint.return_value = "some-data"
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
     result = pusher.iib_remove_operators(
@@ -347,21 +333,185 @@ def test_push_operators(
     pusher.push_index_images(results)
 
     assert mock_run_tag_images.call_count == 3
-    assert mock_run_tag_images.call_args_list[0] == mock.call(
-        "some-registry.com/index-image:5",
-        ["quay.io/some-namespace/operators----index-image:5"],
-        True,
-        target_settings,
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index-image:5",
+                ["quay.io/some-namespace/operators----index-image:5"],
+                True,
+                target_settings,
+            )
+        ]
     )
-    assert mock_run_tag_images.call_args_list[1] == mock.call(
-        "some-registry.com/index-image:6",
-        ["quay.io/some-namespace/operators----index-image:6"],
-        True,
-        target_settings,
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index-image:6",
+                ["quay.io/some-namespace/operators----index-image:6"],
+                True,
+                target_settings,
+            )
+        ]
     )
-    assert mock_run_tag_images.call_args_list[2] == mock.call(
-        "some-registry.com/index-image:7",
-        ["quay.io/some-namespace/operators----index-image:7"],
-        True,
-        target_settings,
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index-image:7",
+                ["quay.io/some-namespace/operators----index-image:7"],
+                True,
+                target_settings,
+            )
+        ]
     )
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_get_existing_index_images(
+    mock_run_entrypoint,
+    mock_quay_client,
+    mock_quay_api,
+    target_settings,
+    operator_push_item_ok,
+    manifest_list_data,
+):
+    mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
+    mock_quay_client.get_manifest.return_value = manifest_list_data
+
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    existing_index_images = pusher.get_existing_index_images(mock_quay_client)
+    mock_quay_client.get_manifest.assert_has_calls(
+        [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
+    )
+    mock_quay_client.get_manifest.assert_has_calls(
+        [mock.call("quay.io/some-namespace/operators----index-image:v4.6", manifest_list=True)]
+    )
+    assert sorted(existing_index_images) == [
+        (
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "v4.5",
+            "operators/index-image",
+        ),
+        (
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "v4.5",
+            "operators/index-image",
+        ),
+        (
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "v4.5",
+            "operators/index-image",
+        ),
+        (
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "v4.5",
+            "operators/index-image",
+        ),
+        (
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "v4.5",
+            "operators/index-image",
+        ),
+        (
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "v4.6",
+            "operators/index-image",
+        ),
+    ]
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_get_existing_index_images_raises_404(
+    mock_run_entrypoint,
+    mock_quay_client,
+    mock_quay_api,
+    target_settings,
+    operator_push_item_ok,
+    manifest_list_data,
+):
+    mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
+    mock_quay_client.get_manifest.side_effect = [
+        requests.exceptions.HTTPError(response=mock.Mock(status_code=404)),
+        manifest_list_data,
+    ]
+
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    existing_index_images = pusher.get_existing_index_images(mock_quay_client)
+    mock_quay_client.get_manifest.assert_has_calls(
+        [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
+    )
+    mock_quay_client.get_manifest.assert_has_calls(
+        [mock.call("quay.io/some-namespace/operators----index-image:v4.6", manifest_list=True)]
+    )
+    assert sorted(existing_index_images) == [
+        (
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "v4.6",
+            "operators/index-image",
+        ),
+        (
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "v4.6",
+            "operators/index-image",
+        ),
+    ]
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_get_existing_index_images_raises_500(
+    mock_run_entrypoint,
+    mock_quay_client,
+    mock_quay_api,
+    target_settings,
+    operator_push_item_ok,
+    manifest_list_data,
+):
+    mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
+    mock_quay_client.get_manifest.side_effect = [
+        requests.exceptions.HTTPError("500", response=mock.Mock(status_code=500)),
+        manifest_list_data,
+    ]
+
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    with pytest.raises(requests.exceptions.HTTPError, match=".*500.*"):
+        existing_index_images = pusher.get_existing_index_images(mock_quay_client)

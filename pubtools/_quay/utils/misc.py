@@ -230,7 +230,9 @@ def get_external_container_repo_name(internal_name):
         or internal_name.find(INTERNAL_DELIMITER) == 0
         or internal_name.find(INTERNAL_DELIMITER) == len(internal_name) - 4
     ):
-        raise ValueError("Input repository should have the format '<namespace>----<product>'")
+        raise ValueError(
+            "Input repository should have the format '<namespace>----<product>'", internal_name
+        )
 
     return internal_name.replace(INTERNAL_DELIMITER, "/")
 

@@ -9,7 +9,9 @@ from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
+from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
+from .utils.misc import get_external_container_repo_name
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -24,7 +26,7 @@ LOG.setLevel(logging.INFO)
 class PushDocker:
     """Handle full Docker push workflow."""
 
-    ImageData = namedtuple("ImageData", ["repo", "tag"])
+    ImageData = namedtuple("ImageData", ["repo", "tag", "digest"])
 
     def __init__(self, push_items, hub, task_id, target_name, target_settings):
         """
@@ -331,11 +333,15 @@ class PushDocker:
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
                     if not repo_data:
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag))
+                        # for rollback tags digest is not known
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
                         continue
                     # tag exists in the repo, add to backup tags
                     if tag in repo_data.get("tags", {}):
-                        image_data = PushDocker.ImageData(full_repo, tag)
+                        # for backup tags store also digest
+                        image_data = PushDocker.ImageData(
+                            full_repo, tag, repo_data["tags"][tag]["manifest_digest"]
+                        )
                         image = image_schema.format(
                             host=self.quay_host,
                             repo=full_repo,
@@ -345,7 +351,8 @@ class PushDocker:
                         backup_tags[image_data] = manifest
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag))
+                        # for rollback tags digest is not known
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
 
         # it's possible that rollback tags will contain duplicate entries
         rollback_tags = sorted(list(set(rollback_tags)))
@@ -377,6 +384,124 @@ class PushDocker:
             LOG.info("Removing tag '{0}'".format(image_ref))
             self.quay_api_client.delete_tag(image_data.repo, image_data.tag)
 
+    def remove_old_signatures(
+        self,
+        push_items,
+        operator_push_items,
+        existing_index_images,
+        iib_results,
+        backup_tags,
+        container_signature_handler,
+        operator_signature_handler,
+        signature_remover,
+    ):
+        """
+        Remove signatures of containers for tags which were overwritten in the current push.
+
+        Method fetches all existing signatures for digests in backup tags. Only signatures with
+        repo, tag pairs  matching to backup tags are then processes forward as also signatures
+        for different repos could be returned. From those, only signature not
+        matching signatures which were just created for current push are removed.
+        Mechanism is the same for index images signatures, except those are not compared to
+        any backup tags.
+
+        Args:
+            push_items ([_PushItem]):
+                List of container push items.
+            operator_push_items ([_PushItem]):
+                List of operator push items.
+            existing_index_images: ([(digest, version)]):
+                List of tuple of digest + version(tag) of index images which existed
+                before new index image was pushed in the current task
+            iib_results (({str:dict})):
+                Dictionary containing IIB results and signing keys for all OPM versions.
+            backup_tags ({ImageData: str}):
+                Dictionary of ImageData (repo, tag, digest) -> manifest
+                holding containers which were overwritten in the currently running task
+            container_signature_handler (ContainerSignatureHandler):
+                ContanerSignatureHandler instance.
+            operator_signature_handler (OperatorSignatureHandler):
+                ContanerSignatureHandler instance.
+            operator_signature_handler (SignatureRemover):
+                SignatureRemover instance.
+        """
+        claim_messages = []
+        for item in push_items:
+            claim_messages += container_signature_handler.construct_item_claim_messages(item)
+        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
+        outdated_signatures = []
+
+        for image_data, manifest in backup_tags.items():
+            ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
+            if "manifests" in manifest:
+                for arch_manifest in manifest["manifests"]:
+                    outdated_signatures.append((arch_manifest["digest"], image_data.tag, ext_repo))
+            else:
+                outdated_signatures.append((image_data.digest, image_data.tag, ext_repo))
+
+        signatures_to_remove = []
+        for esig in container_signature_handler.get_signatures_from_pyxis(
+            [sig[0] for sig in outdated_signatures]
+        ):
+            if (
+                esig["manifest_digest"],
+                esig["reference"].split(":")[-1],
+                esig["repository"],
+            ) in outdated_signatures and (
+                esig["manifest_digest"],
+                esig["reference"],
+            ) not in new_signatures:
+                signatures_to_remove.append(esig["_id"])
+
+        if signatures_to_remove:
+            signature_remover.remove_signatures_from_pyxis(
+                signatures_to_remove,
+                self.target_settings["pyxis_server"],
+                self.target_settings["iib_krb_principal"],
+                self.target_settings["iib_krb_ktfile"],
+            )
+
+        signatures_to_remove = []
+        ii_claim_messages = []
+        if existing_index_images:
+            for version, iib_details in sorted(iib_results.items()):
+                iib_result = iib_details["iib_result"]
+                signing_keys = iib_details["signing_keys"]
+                image_schema = "{host}/{namespace}/{repo}@{digest}"
+                iib_namespace = iib_result.index_image_resolved.split("/")[1]
+                image_digest = iib_result.index_image_resolved.split("@")[1]
+                intermediate_index_image = image_schema.format(
+                    host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
+                    namespace=iib_namespace,
+                    repo="iib",
+                    digest=image_digest,
+                )
+                ii_claim_messages += (
+                    operator_signature_handler.construct_index_image_claim_messages(
+                        intermediate_index_image, version, signing_keys
+                    )
+                )
+            new_operator_signatures = [
+                (m["manifest_digest"], m["docker_reference"]) for m in ii_claim_messages
+            ]
+
+            for esig in container_signature_handler.get_signatures_from_pyxis(
+                [digest_version[0] for digest_version in existing_index_images]
+            ):
+                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures and (
+                    esig["manifest_digest"],
+                    esig["reference"].split(":")[-1],
+                    esig["repository"],
+                ) in existing_index_images:
+                    signatures_to_remove.append(esig["_id"])
+            if signatures_to_remove:
+                signature_remover.remove_signatures_from_pyxis(
+                    signatures_to_remove,
+                    self.target_settings["pyxis_server"],
+                    self.target_settings["iib_krb_principal"],
+                    self.target_settings["iib_krb_ktfile"],
+                )
+
     def run(self):
         """
         Perform the full push-docker workflow.
@@ -391,6 +516,7 @@ class PushDocker:
         - Add operator bundles to index images by using IIB
         - Sign index images using RADAS and upload signatures to Pyxis
         - Push the index images to Quay
+        - Remove outdated container signatures
         - (in case of failure) Rollback destination repos to the pre-push state
 
         Returns ([str]):
@@ -409,12 +535,21 @@ class PushDocker:
         )
         # Generate resources for rollback in case there are errors during the push
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
+        existing_index_images = []
+        iib_results = None
 
         try:
             # Sign container images
             container_signature_handler = ContainerSignatureHandler(
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
+            operator_signature_handler = OperatorSignatureHandler(
+                self.hub, self.task_id, self.target_settings, self.target_name
+            )
+            sig_remover = SignatureRemover()
+            sig_remover.set_quay_client(self.quay_client)
+            sig_remover.set_quay_api_client(self.quay_api_client)
+
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
             container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
@@ -423,11 +558,9 @@ class PushDocker:
             if operator_push_items:
                 # Build index images
                 operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
+                existing_index_images = operator_pusher.get_existing_index_images(self.quay_client)
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
-                operator_signature_handler = OperatorSignatureHandler(
-                    self.hub, self.task_id, self.target_settings, self.target_name
-                )
                 operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
@@ -435,6 +568,18 @@ class PushDocker:
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
             raise
+        else:
+            # Remove old signatures
+            self.remove_old_signatures(
+                docker_push_items,
+                operator_push_items,
+                existing_index_images,
+                iib_results,
+                backup_tags,
+                container_signature_handler,
+                operator_signature_handler,
+                sig_remover,
+            )
 
         # Return repos for UD cache flush
         repos = []

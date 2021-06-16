@@ -656,13 +656,21 @@ def test_generate_backup_mapping(
 
     assert backup_tags == {
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo", tag="latest-test-tag"
+            repo="some-namespace/target----repo",
+            tag="latest-test-tag",
+            digest="sha256:a1a1a1a1a1a1",
         ): "some-manifest-list"
     }
     assert rollback_tags == [
-        push_docker.PushDocker.ImageData(repo="some-namespace/target----repo1", tag="tag1"),
-        push_docker.PushDocker.ImageData(repo="some-namespace/target----repo1", tag="tag2"),
-        push_docker.PushDocker.ImageData(repo="some-namespace/target----repo2", tag="tag3"),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo1", tag="tag1", digest=None
+        ),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo1", tag="tag2", digest=None
+        ),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo2", tag="tag3", digest=None
+        ),
     ]
     assert mock_get_repository_data.call_count == 3
     assert mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/target----repo")
@@ -727,15 +735,19 @@ def test_rollback(
 
     backup_tags = {
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo1", tag="1"
+            repo="some-namespace/target----repo1", tag="1", digest=None
         ): "some-manifest-list",
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo2", tag="2"
+            repo="some-namespace/target----repo2", tag="2", digest=None
         ): "other-manifest-list",
     }
     rollback_tags = [
-        push_docker.PushDocker.ImageData(repo="some-namespace/target----repo3", tag="3"),
-        push_docker.PushDocker.ImageData(repo="some-namespace/target----repo4", tag="4"),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo3", tag="3", digest=None
+        ),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo4", tag="4", digest=None
+        ),
     ]
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, container_signing_push_item],
@@ -789,13 +801,137 @@ def test_push_docker_full_success(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "orig-ns/some-repo",
+                    "reference": "registry/orig-ns/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ]
+        )
+    )
+    mock_container_signature_handler.return_value.get_signatures_from_pyxis = (
+        mock_get_signatures_from_pyxis
+    )
+    mock_build_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.build_index_images = mock_build_index_images
+    mock_push_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.push_index_images = mock_push_index_images
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
+    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
+    mock_get_docker_push_items.return_value = [container_multiarch_push_item]
+    mock_get_operator_push_items.return_value = [operator_push_item_ok]
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag", None): {
+                "digest": "some-digest"
+            },
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag2", None): {
+                "manifests": [{"digest": "some-digest"}]
+            },
+        },
+        ["item1", "item2"],
+    )
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, operator_push_item_ok],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    repos = push_docker_instance.run()
+
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+    )
+    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_container_image_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_push_container_images.assert_called_once_with()
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
+    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
+    mock_build_index_images.assert_called_once_with()
+    mock_push_index_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
+    mock_operator_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
+    mock_sign_operator_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
+    mock_rollback.assert_not_called()
+    assert repos == ["test_repo"]
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorPusher")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.ContainerImagePusher")
+@mock.patch("pubtools._quay.push_docker.PushDocker.generate_backup_mapping")
+@mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_push_docker_full_success_repush(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_docker_push_items,
+    mock_get_operator_push_items,
+    mock_check_repos_validity,
+    mock_generate_backup_mapping,
+    mock_container_image_pusher,
+    mock_container_signature_handler,
+    mock_operator_pusher,
+    mock_operator_signature_handler,
+    mock_rollback,
+    target_settings,
+    container_multiarch_push_item,
+    container_push_item_external_repos,
+    operator_push_item_ok,
+):
+    hub = mock.MagicMock()
+    mock_push_container_images = mock.MagicMock()
+    mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_get_existing_index_images = mock.MagicMock(
+        return_value=[("somerepo", "somedigest", "sometag")]
+    )
+    mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
+    mock_sign_operator_images = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "repo": "somerepo",
+                    "manifest_digest": "somedigest",
+                    "docker_reference": "reference/repo:sometag",
+                }
+            ],
+            [],
+        )
+    )
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [
@@ -803,8 +939,19 @@ def test_push_docker_full_success(
         container_push_item_external_repos,
     ]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
-    mock_build_index_images.return_value = {"v4.5": {"some": "data"}}
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
+                "digest": "some-digest"
+            },
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag2", None): {
+                "manifests": [{"digest": "some-digest"}]
+            },
+        },
+        ["item1", "item2"],
+    )
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
@@ -838,11 +985,15 @@ def test_push_docker_full_success(
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
-    mock_push_index_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_push_index_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
     mock_operator_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_operator_images.assert_called_once_with({"v4.5": {"some": "data"}})
+    mock_sign_operator_images.assert_called_once_with(
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+    )
     mock_rollback.assert_not_called()
     assert repos == ["external/repo", "test_repo"]
 
@@ -876,18 +1027,25 @@ def test_push_docker_no_operator_push_items(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = []
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
+                "digest": "some-digest"
+            }
+        },
+        ["item1", "item2"],
+    )
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item], hub, "1", "some-target", target_settings
@@ -911,7 +1069,6 @@ def test_push_docker_no_operator_push_items(
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
-    mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]
@@ -948,18 +1105,25 @@ def test_push_docker_failure_rollback(
     mock_push_container_images = mock.MagicMock()
     mock_push_container_images.side_effect = ValueError("Error pushing container images")
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock()
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock()
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
-    mock_generate_backup_mapping.return_value = ({"some-key": "some-val"}, ["item1", "item2"])
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
+                "digest": "some-digest"
+            }
+        },
+        ["item1", "item2"],
+    )
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
@@ -988,9 +1152,15 @@ def test_push_docker_failure_rollback(
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
-    mock_operator_signature_handler.assert_not_called()
     mock_sign_operator_images.assert_not_called()
-    mock_rollback.assert_called_once_with({"some-key": "some-val"}, ["item1", "item2"])
+    mock_rollback.assert_called_once_with(
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
+                "digest": "some-digest"
+            }
+        },
+        ["item1", "item2"],
+    )
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker")
@@ -1030,3 +1200,179 @@ def test_filter_unrelated_repos(patched_verify_target_settings, container_push_i
         mock.MagicMock(),
     ).filter_unrelated_repos([container_push_item_external_repos])
     assert "test_repo" not in container_push_item_external_repos.metadata["tags"]
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
+def test_remove_old_signatures_no_old_signatures(
+    mock_signature_remover,
+    mock_operator_signature_handler,
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+):
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData(
+        "another-reference/some-product----repo:sometag", "sometag", None
+    )
+    backup_tags[image_data] = {"digest": "somedigest"}
+
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ]
+        )
+    )
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).remove_old_signatures(
+        [container_push_item_external_repos],
+        [],
+        [],
+        backup_tags,
+        {},
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
+        mock_signature_remover,
+    )
+    mock_signature_remover.remove_signatures_from_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
+def test_remove_old_signatures_container_signatures(
+    mock_signature_remover,
+    mock_operator_signature_handler,
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+):
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        return_value=(
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ]
+        )
+    )
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData(
+        "reference/some-product----some-repo", "sometag", "some-digest"
+    )
+    backup_tags[image_data] = "v2sch2-manifest"
+    mock_target_settings = {
+        "pyxis_server": "mock_pyxis_server",
+        "iib_krb_principal": "mock_pyxis_principal",
+        "iib_krb_ktfile": "mock_pyxis_krb_ktfile",
+    }
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock_target_settings,
+    ).remove_old_signatures(
+        [container_push_item_external_repos],
+        [],
+        [],
+        {},
+        backup_tags,
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
+        mock_signature_remover,
+    )
+    mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
+        ["signature-id-1"], "mock_pyxis_server", "mock_pyxis_principal", "mock_pyxis_krb_ktfile"
+    )
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
+def test_remove_old_signatures_operator_signatures(
+    mock_signature_remover,
+    mock_operator_signature_handler,
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+    operator_push_item_ok,
+):
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        side_effect=[
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ],
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:someversion",
+                    "_id": "signature-id-2",
+                }
+            ],
+        ]
+    )
+    existing_index_images = [("some-digest", "someversion", "some-product/some-repo")]
+
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData(
+        "reference/some-product----some-repo", "someversion", None
+    )
+    backup_tags[image_data] = {"digest": "some-digest"}
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+    ).remove_old_signatures(
+        [container_push_item_external_repos],
+        [operator_push_item_ok],
+        existing_index_images,
+        {
+            "v4.5": {
+                "iib_result": mock.MagicMock(index_image_resolved="registy/ns/iib@digest"),
+                "signing_keys": ["sig_key1"],
+            }
+        },
+        backup_tags,
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
+        mock_signature_remover,
+    )
+    mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
+        mock.call(["signature-id-1"])
+    )
+    mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
+        mock.call(["signature-id-2"])
+    )

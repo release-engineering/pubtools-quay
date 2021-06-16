@@ -7,11 +7,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from .container_image_pusher import ContainerImagePusher
-from .utils.misc import (
-    run_entrypoint,
-    get_internal_container_repo_name,
-    log_step,
-)
+from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 
 LOG = logging.getLogger("PubLogger")
 logging.basicConfig()
@@ -39,6 +35,7 @@ class OperatorPusher:
         self.target_settings = target_settings
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
+        self._version_items_mapping = {}
 
     @staticmethod
     def _get_immutable_tag(push_item):
@@ -123,7 +120,8 @@ class OperatorPusher:
         # Versions returned by Pyxis don't contain 'v' at the front (4.5 -> v4.5)
         return ["v{0}".format(item["ocp_version"]) for item in data]
 
-    def generate_version_items_mapping(self):
+    @property
+    def version_items_mapping(self):
         """
         Generate mapping of OCP version -> push_items.
 
@@ -132,19 +130,19 @@ class OperatorPusher:
         Returns ({str: [ContainerPushItem]})
             Mapping of OCP version -> Push items
         """
-        version_items_mapping = {}
-        ocp_versions_resolved = {}
+        if not self._version_items_mapping:
+            ocp_versions_resolved = {}
 
-        for item in self.push_items:
-            ocp_versions = item.metadata["com.redhat.openshift.versions"]
-            # we haven't yet encountered this pattern, contact Pyxis for resolution
-            if ocp_versions not in ocp_versions_resolved:
-                ocp_versions_resolved[ocp_versions] = self.pyxis_get_ocp_versions(item)
+            for item in self.push_items:
+                ocp_versions = item.metadata["com.redhat.openshift.versions"]
+                # we haven't yet encountered this pattern, contact Pyxis for resolution
+                if ocp_versions not in ocp_versions_resolved:
+                    ocp_versions_resolved[ocp_versions] = self.pyxis_get_ocp_versions(item)
 
-            for version in ocp_versions_resolved[ocp_versions]:
-                version_items_mapping.setdefault(version, []).append(item)
+                for version in ocp_versions_resolved[ocp_versions]:
+                    self._version_items_mapping.setdefault(version, []).append(item)
 
-        return version_items_mapping
+        return self._version_items_mapping
 
     def get_deprecation_list(self, version):
         """
@@ -324,6 +322,41 @@ class OperatorPusher:
             env_vars,
         )
 
+    def get_existing_index_images(self, quay_client):
+        """
+        Return existing index images for push items.
+
+        Args:
+            quay_client (QuayClient): quay_client_instance
+
+        Returns [(digest, tag)]:
+            List of tuples containing digest and tag of existing index image
+        """
+        image_schema = "{host}/{namespace}/{repo}"
+        iib_repo = get_internal_container_repo_name(
+            self.target_settings["quay_operator_repository"]
+        )
+        index_image_repo = image_schema.format(
+            host=self.quay_host, namespace=self.target_settings["quay_namespace"], repo=iib_repo
+        )
+        current_index_images = []
+
+        manifest_list = {}
+        for version in sorted(self.version_items_mapping.keys()):
+            image_ref = "{0}:{1}".format(index_image_repo, version)
+            try:
+                manifest_list = quay_client.get_manifest(image_ref, manifest_list=True)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    continue
+                else:
+                    raise
+            for manifest in manifest_list["manifests"]:
+                current_index_images.append(
+                    (manifest["digest"], version, self.target_settings["quay_operator_repository"])
+                )
+        return list(set(current_index_images))
+
     @log_step("Build index images")
     def build_index_images(self):
         """
@@ -347,10 +380,9 @@ class OperatorPusher:
             }
 
         """
-        version_items_mapping = self.generate_version_items_mapping()
         iib_results = {}
 
-        for version, items in sorted(version_items_mapping.items()):
+        for version, items in sorted(self.version_items_mapping.items()):
             bundles = [self.public_bundle_ref(i) for i in items]
             all_archs = [
                 i.metadata["arch"] if i.metadata["arch"] != "x86_64" else "amd64" for i in items
@@ -393,7 +425,7 @@ class OperatorPusher:
             repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
         )
 
-        for version in sorted(iib_results.keys()):
+        for version in self.version_items_mapping:
             build_details = iib_results[version]["iib_result"]
 
             _, tag = build_details.index_image.split(":", 1)

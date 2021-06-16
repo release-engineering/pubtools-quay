@@ -7,11 +7,7 @@ import uuid
 import proton
 
 from .exceptions import SigningError
-from .utils.misc import (
-    run_entrypoint,
-    get_internal_container_repo_name,
-    log_step,
-)
+from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
@@ -80,13 +76,7 @@ class SignatureHandler:
 
     @classmethod
     def create_manifest_claim_message(
-        cls,
-        destination_repo,
-        signature_key,
-        manifest_digest,
-        docker_reference,
-        image_name,
-        task_id,
+        cls, destination_repo, signature_key, manifest_digest, docker_reference, image_name, task_id
     ):
         """
         Construct a manifest claim (image signature) as well as a message to send to RADAS.
@@ -618,6 +608,7 @@ class OperatorSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
+        return claim_messages
 
     def sign_task_index_image(self, signing_keys, index_image, tag):
         """
