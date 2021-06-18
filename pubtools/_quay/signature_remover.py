@@ -2,7 +2,11 @@ import logging
 import json
 import tempfile
 
-from .utils.misc import get_internal_container_repo_name, run_entrypoint
+from .utils.misc import (
+    get_internal_container_repo_name,
+    run_entrypoint,
+    get_external_container_repo_name,
+)
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 
@@ -287,6 +291,7 @@ class SignatureRemover:
             raise ValueError("Image, whose signatures are being removed must be specified by tag.")
 
         full_repo, tag = reference.split(":", 1)
+        external_repo = get_external_container_repo_name(full_repo.split("/")[-1])
         image_digests = []
         repo_data = self.quay_api_client.get_repository_data(full_repo.split("/", 1)[-1])
         # if image_id of the tag is specified, the image is V2S2 AKA source image
@@ -313,7 +318,8 @@ class SignatureRemover:
             # if signature corresponds to to-be-removed digest+reference and isn't among new sigs
             if (
                 sig["manifest_digest"] in image_digests
-                and sig["reference"] == reference
+                and sig["repository"] == external_repo
+                and sig["reference"].split(":")[-1] == tag
                 and (sig["manifest_digest"], sig["reference"]) not in new_claims_signatures
             ):
                 remove_signature_ids.append(sig["_id"])

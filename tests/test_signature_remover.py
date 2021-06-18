@@ -273,18 +273,27 @@ def test_remove_tag_signatures_multiarch(
 
     mock_get_signatures.return_value = [
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         },
         {
-            "reference": "quay.io/some-namespace/other-repo:1",
+            "repository": "external-repo/other-image",
+            "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
+            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        },
+        {
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:2",
+            "_id": "id4",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         },
     ]
@@ -293,12 +302,17 @@ def test_remove_tag_signatures_multiarch(
         quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
     )
     sig_remover.remove_tag_signatures(
-        "quay.io/some-namespace/some-repo:1", "pyxis-server.com", "some-principal", "some-keytab"
+        "quay.io/internal-namespace/external-repo----external-image:1",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_repository_data.assert_called_once_with(
+        "internal-namespace/external-repo----external-image"
+    )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/some-repo:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -338,19 +352,28 @@ def test_remove_tag_signatures_source(
 
     mock_get_signatures.return_value = [
         {
-            "reference": "quay.io/some-namespace/some-repo:3",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:3",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
         {
-            "reference": "quay.io/some-namespace/some-repo:3",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:3",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         },
         {
-            "reference": "quay.io/some-namespace/other-repo:3",
+            "repository": "external-repo/other-image",
+            "reference": "redhat.com/external-repo/other-image:3",
             "_id": "id3",
-            "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        },
+        {
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:4",
+            "_id": "id4",
+            "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
     ]
 
@@ -358,10 +381,15 @@ def test_remove_tag_signatures_source(
         quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
     )
     sig_remover.remove_tag_signatures(
-        "quay.io/some-namespace/some-repo:3", "pyxis-server.com", "some-principal", "some-keytab"
+        "quay.io/internal-namespace/external-repo----external-image:3",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_repository_data.assert_called_once_with(
+        "internal-namespace/external-repo----external-image"
+    )
     mock_get_manifest.assert_not_called()
     mock_get_signatures.assert_called_once_with(
         ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"],
@@ -422,17 +450,20 @@ def test_remove_tag_signatures_no_signatures(
 
     mock_get_signatures.return_value = [
         {
-            "reference": "quay.io/some-namespace/some-repo:2",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:2",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
         {
-            "reference": "quay.io/some-namespace/some-repo:3",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:3",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         },
         {
-            "reference": "quay.io/some-namespace/other-repo:1",
+            "repository": "external-repo/other-image",
+            "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         },
@@ -442,7 +473,10 @@ def test_remove_tag_signatures_no_signatures(
         quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
     )
     sig_remover.remove_tag_signatures(
-        "quay.io/some-namespace/some-repo:1", "pyxis-server.com", "some-principal", "some-keytab"
+        "quay.io/internal-namespace/external-repo----external-image:1",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
     )
 
     mock_remove_signatures.assert_not_called()
@@ -469,17 +503,20 @@ def test_remove_tag_signatures_exclude_by_claims(
 
     mock_get_signatures.return_value = [
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         },
         {
-            "reference": "quay.io/some-namespace/other-repo:1",
+            "repository": "external-repo/other-image",
+            "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         },
@@ -488,11 +525,11 @@ def test_remove_tag_signatures_exclude_by_claims(
     claim_messages = [
         {
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
-            "docker_reference": "quay.io/some-namespace/some-repo:1",
+            "docker_reference": "redhat.com/external-repo/external-image:1",
         },
         {
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
-            "docker_reference": "quay.io/some-namespace/some-repo:1",
+            "docker_reference": "redhat.com/external-repo/external-image:1",
         },
     ]
 
@@ -500,16 +537,18 @@ def test_remove_tag_signatures_exclude_by_claims(
         quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
     )
     sig_remover.remove_tag_signatures(
-        "quay.io/some-namespace/some-repo:1",
+        "quay.io/internal-namespace/external-repo----external-image:1",
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
         exclude_by_claims=claim_messages,
     )
 
-    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_repository_data.assert_called_once_with(
+        "internal-namespace/external-repo----external-image"
+    )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/some-repo:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -549,17 +588,20 @@ def test_remove_tag_signatures_selected_archs(
 
     mock_get_signatures.return_value = [
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         },
         {
-            "reference": "quay.io/some-namespace/some-repo:1",
+            "repository": "external-repo/external-image",
+            "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         },
         {
-            "reference": "quay.io/some-namespace/other-repo:1",
+            "repository": "external-repo/other-image",
+            "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         },
@@ -571,16 +613,18 @@ def test_remove_tag_signatures_selected_archs(
         quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
     )
     sig_remover.remove_tag_signatures(
-        "quay.io/some-namespace/some-repo:1",
+        "quay.io/internal-namespace/external-repo----external-image:1",
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
         remove_archs=selected_archs,
     )
 
-    mock_get_repository_data.assert_called_once_with("some-namespace/some-repo")
+    mock_get_repository_data.assert_called_once_with(
+        "internal-namespace/external-repo----external-image"
+    )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/some-repo:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
     )
     mock_get_signatures.assert_called_once_with(
         [

@@ -541,9 +541,7 @@ class TagDocker:
             exclude_by_claims=claim_messages,
         )
 
-        filtered_claim_messages = signature_handler.filter_claim_messages(claim_messages)
-
-        signature_handler.sign_claim_messages(filtered_claim_messages, True, True)
+        signature_handler.sign_claim_messages(claim_messages, True, True)
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
     def merge_manifest_lists_sign_images(self, push_item, tag, add_archs, signature_handler):
@@ -611,8 +609,7 @@ class TagDocker:
             exclude_by_claims=claim_messages,
         )
 
-        filtered_claim_messages = signature_handler.filter_claim_messages(claim_messages)
-        signature_handler.sign_claim_messages(filtered_claim_messages, True, True)
+        signature_handler.sign_claim_messages(claim_messages, True, True)
 
         raw_src_manifest = self.quay_client.get_manifest(source_image, manifest_list=True, raw=True)
 

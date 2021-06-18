@@ -1608,9 +1608,6 @@ def test_copy_all_archs_sign_images_source(
     sig_handler = mock.MagicMock()
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
-    mock_filter_claim_messages = mock.MagicMock()
-    mock_filter_claim_messages.side_effect = lambda claims: claims
-    sig_handler.filter_claim_messages = mock_filter_claim_messages
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
     # shorten the ML to have less claim messages
     source_details = tag_docker.TagDocker.ImageDetails(
@@ -1660,7 +1657,6 @@ def test_copy_all_archs_sign_images_source(
         True,
         target_settings,
     )
-    mock_filter_claim_messages.assert_called_once_with(["msg0", "msg1"])
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
@@ -1739,9 +1735,6 @@ def test_merge_manifest_lists_sign_images(
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
-    mock_filter_claim_messages = mock.MagicMock()
-    mock_filter_claim_messages.side_effect = lambda claims: claims
-    sig_handler.filter_claim_messages = mock_filter_claim_messages
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
 
@@ -1818,7 +1811,6 @@ def test_merge_manifest_lists_sign_images(
         new_manifest_list, "quay.io/some-namespace/namespace----test_repo:v1.6"
     )
 
-    mock_filter_claim_messages.assert_called_once_with(["msg0", "msg1", "msg2", "msg3"])
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
@@ -1854,9 +1846,6 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
-    mock_filter_claim_messages = mock.MagicMock()
-    mock_filter_claim_messages.side_effect = lambda claims: claims
-    sig_handler.filter_claim_messages = mock_filter_claim_messages
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
 
@@ -1906,7 +1895,6 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
         "quay.io/some-namespace/namespace----test_repo:v1.6",
         raw=True,
     )
-    mock_filter_claim_messages.assert_called_once_with(["msg0", "msg1", "msg2", "msg3"])
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
@@ -2485,9 +2473,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     push_item_none_key.claims_signing_key = None
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
-    mock_filter_claim_messages = mock.MagicMock()
-    mock_filter_claim_messages.side_effect = lambda claims: claims
-    sig_handler.filter_claim_messages = mock_filter_claim_messages
 
     tag_docker_instance = tag_docker.TagDocker(
         [push_item_none_key],
@@ -2506,7 +2491,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
         True,
         target_settings,
     )
-    mock_filter_claim_messages.assert_called_once_with([])
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
@@ -2552,9 +2536,6 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
     push_item_none_key.claims_signing_key = None
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
-    mock_filter_claim_messages = mock.MagicMock()
-    mock_filter_claim_messages.side_effect = lambda claims: claims
-    sig_handler.filter_claim_messages = mock_filter_claim_messages
 
     tag_docker_instance = tag_docker.TagDocker(
         [push_item_none_key],
@@ -2572,7 +2553,6 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
     mock_upload_manifest.assert_called_once_with(
         new_manifest_list, "quay.io/some-namespace/namespace----test_repo:v1.6"
     )
-    mock_filter_claim_messages.assert_called_once_with([])
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
