@@ -16,18 +16,24 @@ def test_arg_parser_required_args(mock_merge_manifest_lists, mock_list_merger, m
         "quay.io/repo/souce-image:1",
         "--dest-ref",
         "quay.io/repo/target-image:1",
-        "--quay-user",
-        "user",
-        "--quay-password",
-        "token",
+        "--source-quay-user",
+        "src-user",
+        "--source-quay-password",
+        "src-token",
+        "--dest-quay-user",
+        "dest-user",
+        "--dest-quay-password",
+        "dest-token",
     ]
     merge_manifest_list.merge_manifest_list_main(required_args)
     called_args, _ = mock_set_env_vars.call_args
 
     assert called_args[0].source_ref == "quay.io/repo/souce-image:1"
     assert called_args[0].dest_ref == "quay.io/repo/target-image:1"
-    assert called_args[0].quay_user == "user"
-    assert called_args[0].quay_password == "token"
+    assert called_args[0].source_quay_user == "src-user"
+    assert called_args[0].source_quay_password == "src-token"
+    assert called_args[0].dest_quay_user == "dest-user"
+    assert called_args[0].dest_quay_password == "dest-token"
 
 
 @mock.patch("pubtools._quay.merge_manifest_list.add_args_env_variables")
@@ -40,10 +46,10 @@ def test_arg_parser_missing_required(
         "dummy",
         "--source-ref",
         "quay.io/repo/souce-image:1",
-        "--quay-user",
-        "user",
-        "--quay-password",
-        "token",
+        "--source-quay-user",
+        "src-user",
+        "--source-quay-password",
+        "src-token",
     ]
 
     with pytest.raises(SystemExit) as system_error:
@@ -63,10 +69,14 @@ def test_arg_parser_dest_digest(mock_merge_manifest_lists, mock_list_merger):
         "quay.io/repo/souce-image:1",
         "--dest-ref",
         "quay.io/repo/target-image@sha256:dfg5dfgd6f5g6",
-        "--quay-user",
-        "user",
-        "--quay-password",
-        "token",
+        "--source-quay-user",
+        "src-user",
+        "--source-quay-password",
+        "src-token",
+        "--dest-quay-user",
+        "dest-user",
+        "--dest-quay-password",
+        "dest-token",
     ]
 
     with pytest.raises(ValueError, match="Destination must be specified via tag, not digest"):
@@ -84,11 +94,15 @@ def test_arg_parser_missing_password(mock_merge_manifest_lists, mock_list_merger
         "quay.io/repo/souce-image:1",
         "--dest-ref",
         "quay.io/repo/target-image:1",
-        "--quay-user",
-        "user",
+        "--source-quay-user",
+        "src-user",
+        "--dest-quay-user",
+        "dest-user",
     ]
 
-    with pytest.raises(ValueError, match="Quay password must be set"):
+    with pytest.raises(
+        ValueError, match="Quay password must be set for both source and dest images"
+    ):
         merge_manifest_list.merge_manifest_list_main(args)
 
     mock_merge_manifest_lists.assert_not_called()
@@ -101,10 +115,14 @@ def test_merge_manifest_list_full():
         "quay.io/src/image:1",
         "--dest-ref",
         "quay.io/dest/image:1",
-        "--quay-user",
-        "user",
-        "--quay-password",
-        "pass",
+        "--source-quay-user",
+        "src-user",
+        "--source-quay-password",
+        "src-token",
+        "--dest-quay-user",
+        "dest-user",
+        "--dest-quay-password",
+        "dest-token",
     ]
     with requests_mock.Mocker() as m:
         m.get(

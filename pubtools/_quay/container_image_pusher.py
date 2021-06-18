@@ -40,30 +40,30 @@ class ContainerImagePusher:
         self.target_settings = target_settings
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-        self._quay_client = None
-        self._quay_client_osbs = None
+        self._src_quay_client = None
+        self._dest_quay_client = None
 
     @property
-    def quay_client(self):
-        """Create and access QuayClient."""
-        if self._quay_client is None:
-            self._quay_client = QuayClient(
-                self.target_settings["quay_user"],
-                self.target_settings["quay_password"],
+    def src_quay_client(self):
+        """Create and access QuayClient for source image."""
+        if self._src_quay_client is None:
+            self._src_quay_client = QuayClient(
+                self.target_settings["source_quay_user"],
+                self.target_settings["source_quay_password"],
                 self.quay_host,
             )
-        return self._quay_client
+        return self._src_quay_client
 
     @property
-    def quay_client_osbs(self):
-        """Create and access QuayClient for osbs organization."""
-        if self._quay_client_osbs is None:
-            self._quay_client_osbs = QuayClient(
-                self.target_settings["quay_user_osbs"],
-                self.target_settings["quay_password_osbs"],
+    def dest_quay_client(self):
+        """Create and access QuayClient for dest image."""
+        if self._dest_quay_client is None:
+            self._dest_quay_client = QuayClient(
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
                 self.quay_host,
             )
-        return self._quay_client_osbs
+        return self._dest_quay_client
 
     @classmethod
     def run_tag_images(cls, source_ref, dest_refs, all_arch, target_settings):
@@ -87,8 +87,8 @@ class ContainerImagePusher:
             source_ref,
             dest_refs,
             all_arch=all_arch,
-            quay_user=target_settings["quay_user"],
-            quay_password=target_settings["quay_password"],
+            quay_user=target_settings["dest_quay_user"],
+            quay_password=target_settings["dest_quay_password"],
             remote_exec=True,
             send_umb_msg=True,
             ssh_remote_host=target_settings["ssh_remote_host"],
@@ -152,7 +152,7 @@ class ContainerImagePusher:
 
         # get unique destination repositories
         dest_repos = sorted(list(set([ref.split(":")[0] for ref in dest_refs])))
-        source_ml = self.quay_client_osbs.get_manifest(source_ref, manifest_list=True)
+        source_ml = self.src_quay_client.get_manifest(source_ref, manifest_list=True)
 
         # copy each arch source image to all destination repos
         for manifest in source_ml["manifests"]:
@@ -170,7 +170,7 @@ class ContainerImagePusher:
                 )
             )
             merger = ManifestListMerger(source_ref, dest_ref, host=self.quay_host)
-            merger.set_quay_client(self.quay_client)
+            merger.set_quay_client(self.src_quay_client, self.dest_quay_client)
             merger.merge_manifest_lists()
 
     def copy_multiarch_push_item(self, push_item, source_ml):
@@ -204,7 +204,7 @@ class ContainerImagePusher:
                     tag=tag,
                 )
                 try:
-                    dest_ml = self.quay_client.get_manifest(dest_ref, manifest_list=True)
+                    dest_ml = self.dest_quay_client.get_manifest(dest_ref, manifest_list=True)
                     LOG.info(
                         "Getting missing archs between images '{0}' and '{1}'".format(
                             source_ref, dest_ref
@@ -250,7 +250,7 @@ class ContainerImagePusher:
         """
         for item in self.push_items:
             try:
-                source_ml = self.quay_client_osbs.get_manifest(
+                source_ml = self.src_quay_client.get_manifest(
                     item.metadata["pull_url"], manifest_list=True
                 )
             except ManifestTypeError:

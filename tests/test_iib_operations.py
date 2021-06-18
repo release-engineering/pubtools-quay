@@ -10,8 +10,10 @@ def test_verify_target_settings_success(target_settings):
 
 
 def test_verify_target_settings_missing_setting(target_settings):
-    target_settings.pop("quay_user")
-    with pytest.raises(exceptions.InvalidTargetSettings, match="'quay_user' must be present.*"):
+    target_settings.pop("dest_quay_user")
+    with pytest.raises(
+        exceptions.InvalidTargetSettings, match="'dest_quay_user' must be present.*"
+    ):
         iib_operations.verify_target_settings(target_settings)
 
 

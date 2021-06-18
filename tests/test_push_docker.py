@@ -39,10 +39,10 @@ def test_init_verify_target_settings_ok(
     mock_quay_client.assert_not_called()
     mock_quay_api_client.assert_not_called()
 
-    assert push_docker_instance.quay_client == mock_quay_client.return_value
-    assert push_docker_instance.quay_api_client == mock_quay_api_client.return_value
-    mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
-    mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
+    assert push_docker_instance.dest_quay_client == mock_quay_client.return_value
+    assert push_docker_instance.dest_quay_api_client == mock_quay_api_client.return_value
+    mock_quay_client.assert_called_once_with("dest-quay-user", "dest-quay-pass", "quay.io")
+    mock_quay_api_client.assert_called_once_with("dest-quay-token", "quay.io")
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
@@ -55,8 +55,10 @@ def test_init_verify_target_settings_missing_item(
     operator_push_item_ok,
 ):
     hub = mock.MagicMock()
-    target_settings.pop("quay_user", None)
-    with pytest.raises(exceptions.InvalidTargetSettings, match="'quay_user' must be present.*"):
+    target_settings.pop("source_quay_user", None)
+    with pytest.raises(
+        exceptions.InvalidTargetSettings, match="'source_quay_user' must be present.*"
+    ):
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
             hub,
@@ -326,7 +328,12 @@ def test_check_repos_validity_success(
     container_push_item_external_repos,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -334,7 +341,7 @@ def test_check_repos_validity_success(
 
     mock_get_repository_data = mock.MagicMock()
     mock_get_repository_data.side_effect = ["repo_data1", "repo_data2", "repo_data3"]
-    mock_quay_api_client.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value2"},
@@ -357,7 +364,6 @@ def test_check_repos_validity_success(
         ],
         hub,
         target_settings,
-        mock_quay_api_client,
     )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -382,7 +388,12 @@ def test_check_repos_validity_missing_repo(
     container_signing_push_item,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -407,7 +418,6 @@ def test_check_repos_validity_missing_repo(
             [container_push_item_ok, container_signing_push_item],
             hub,
             target_settings,
-            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -428,7 +438,12 @@ def test_check_repos_validity_get_repo_server_error(
     container_signing_push_item,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -453,7 +468,6 @@ def test_check_repos_validity_get_repo_server_error(
             [container_push_item_ok, container_signing_push_item],
             hub,
             target_settings,
-            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -474,7 +488,12 @@ def test_check_repos_validity_deprecated_repo(
     container_signing_push_item,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -497,7 +516,6 @@ def test_check_repos_validity_deprecated_repo(
             [container_push_item_ok, container_signing_push_item],
             hub,
             target_settings,
-            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -518,7 +536,12 @@ def test_check_repos_validity_missing_stage_repo(
     container_signing_push_item,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -531,7 +554,7 @@ def test_check_repos_validity_missing_stage_repo(
         "repo_data1",
         requests.exceptions.HTTPError("missing", response=response),
     ]
-    mock_quay_api_client.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -550,7 +573,6 @@ def test_check_repos_validity_missing_stage_repo(
             [container_push_item_ok, container_signing_push_item],
             hub,
             target_settings,
-            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -574,7 +596,12 @@ def test_check_repos_validity_get_stage_repo_server_error(
     container_signing_push_item,
 ):
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage_namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_api_token": "stage-token",
+        }
+    }
     mock_worker = mock.MagicMock()
     mock_worker.get_target_info = mock_get_target_info
     hub = mock.MagicMock()
@@ -587,7 +614,7 @@ def test_check_repos_validity_get_stage_repo_server_error(
         "repo_data1",
         requests.exceptions.HTTPError("server error", response=response),
     ]
-    mock_quay_api_client.get_repository_data = mock_get_repository_data
+    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -606,7 +633,6 @@ def test_check_repos_validity_get_stage_repo_server_error(
             [container_push_item_ok, container_signing_push_item],
             hub,
             target_settings,
-            mock_quay_api_client,
         )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
@@ -851,9 +877,8 @@ def test_push_docker_full_success(
     repos = push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
-    mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+        [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
     mock_container_image_pusher.assert_called_once_with(
@@ -968,7 +993,6 @@ def test_push_docker_full_success_repush(
         [container_multiarch_push_item, container_push_item_external_repos],
         hub,
         target_settings,
-        mock_quay_api_client.return_value,
     )
     mock_generate_backup_mapping.assert_called_once_with(
         [container_multiarch_push_item, container_push_item_external_repos]
@@ -1055,7 +1079,7 @@ def test_push_docker_no_operator_push_items(
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+        [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
     mock_container_image_pusher.assert_called_once_with(
@@ -1138,7 +1162,7 @@ def test_push_docker_failure_rollback(
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
-        [container_multiarch_push_item], hub, target_settings, mock_quay_api_client.return_value
+        [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
     mock_container_image_pusher.assert_called_once_with(

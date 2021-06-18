@@ -51,28 +51,28 @@ class SignatureHandler:
         )
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-        self._quay_client_osbs = None
-        self._quay_api_client_osbs = None
+        self._src_quay_client = None
+        self._src_quay_api_client = None
 
     @property
-    def quay_client_osbs(self):
-        """Create and access QuayClient for osbs organization."""
-        if self._quay_client_osbs is None:
-            self._quay_client_osbs = QuayClient(
-                self.target_settings["quay_user_osbs"],
-                self.target_settings["quay_password_osbs"],
+    def src_quay_client(self):
+        """Create and access QuayClient for source image."""
+        if self._src_quay_client is None:
+            self._src_quay_client = QuayClient(
+                self.target_settings["source_quay_user"],
+                self.target_settings["source_quay_password"],
                 self.quay_host,
             )
-        return self._quay_client_osbs
+        return self._src_quay_client
 
     @property
-    def quay_api_client_osbs(self):
-        """Create and access QuayApiClient for osbs organization."""
-        if self._quay_api_client_osbs is None:
-            self._quay_api_client_osbs = QuayApiClient(
-                self.target_settings["quay_api_token_osbs"], self.quay_host
+    def src_quay_api_client(self):
+        """Create and access QuayApiClient for source image."""
+        if self._src_quay_api_client is None:
+            self._src_quay_api_client = QuayApiClient(
+                self.target_settings["source_quay_api_token"], self.quay_host
             )
-        return self._quay_api_client_osbs
+        return self._src_quay_api_client
 
     @classmethod
     def create_manifest_claim_message(
@@ -144,14 +144,14 @@ class SignatureHandler:
         repo_path, tag = image_ref.split(":")
         repo = "/".join(repo_path.split("/")[-2:])
 
-        repo_data = self.quay_api_client_osbs.get_repository_data(repo)
+        repo_data = self.src_quay_api_client.get_repository_data(repo)
 
         # if 'image_id' is specified, the tag doesn't reference a ML and digest should be included
         if repo_data["tags"][tag]["image_id"]:
             digests.append(repo_data["tags"][tag]["manifest_digest"])
         # if manifest list, we want to sign only arch digests, not ML digest
         else:
-            manifest_list = self.quay_client_osbs.get_manifest(image_ref, manifest_list=True)
+            manifest_list = self.src_quay_client.get_manifest(image_ref, manifest_list=True)
             for manifest in manifest_list["manifests"]:
                 digests.append(manifest["digest"])
 
@@ -538,7 +538,7 @@ class OperatorSignatureHandler(SignatureHandler):
         internal_repo_schema = self.target_settings["quay_namespace"] + "/{internal_repo}"
 
         # Get digests of all archs this index image was build for
-        manifest_list = self.quay_client_osbs.get_manifest(index_image, manifest_list=True)
+        manifest_list = self.src_quay_client.get_manifest(index_image, manifest_list=True)
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
             for signing_key in signing_keys:

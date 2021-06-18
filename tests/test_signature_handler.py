@@ -28,10 +28,10 @@ def test_init(mock_quay_api_client, mock_quay_client, target_settings):
     mock_quay_client.assert_not_called()
     mock_quay_api_client.assert_not_called()
 
-    assert sig_handler.quay_client_osbs == mock_quay_client.return_value
-    assert sig_handler.quay_api_client_osbs == mock_quay_api_client.return_value
-    mock_quay_client.assert_called_once_with("quay-user-osbs", "quay-pass-osbs", "quay.io")
-    mock_quay_api_client.assert_called_once_with("quay-token-osbs", "quay.io")
+    assert sig_handler.src_quay_client == mock_quay_client.return_value
+    assert sig_handler.src_quay_api_client == mock_quay_api_client.return_value
+    mock_quay_client.assert_called_once_with("src-quay-user", "src-quay-pass", "quay.io")
+    mock_quay_api_client.assert_called_once_with("src-quay-token", "quay.io")
 
 
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
@@ -723,10 +723,10 @@ def test_basic_signature_handler_init(mock_quay_api_client, mock_quay_client, ta
     mock_quay_client.assert_not_called()
     mock_quay_api_client.assert_not_called()
 
-    assert sig_handler.quay_client_osbs == mock_quay_client.return_value
-    assert sig_handler.quay_api_client_osbs == mock_quay_api_client.return_value
-    mock_quay_client.assert_called_once_with("quay-user-osbs", "quay-pass-osbs", "quay.io")
-    mock_quay_api_client.assert_called_once_with("quay-token-osbs", "quay.io")
+    assert sig_handler.src_quay_client == mock_quay_client.return_value
+    assert sig_handler.src_quay_api_client == mock_quay_api_client.return_value
+    mock_quay_client.assert_called_once_with("src-quay-user", "src-quay-pass", "quay.io")
+    mock_quay_api_client.assert_called_once_with("src-quay-token", "quay.io")
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")

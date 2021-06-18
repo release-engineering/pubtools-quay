@@ -23,11 +23,11 @@ def test_init(mock_quay_client, target_settings, container_multiarch_push_item):
     assert pusher.quay_host == "quay.io"
     mock_quay_client.assert_not_called()
 
-    assert pusher.quay_client == mock_quay_client.return_value
-    assert pusher.quay_client_osbs == mock_quay_client.return_value
+    assert pusher.src_quay_client == mock_quay_client.return_value
+    assert pusher.dest_quay_client == mock_quay_client.return_value
     assert mock_quay_client.call_args_list == [
-        mock.call("quay-user", "quay-pass", "quay.io"),
-        mock.call("quay-user-osbs", "quay-pass-osbs", "quay.io"),
+        mock.call("src-quay-user", "src-quay-pass", "quay.io"),
+        mock.call("dest-quay-user", "dest-quay-pass", "quay.io"),
     ]
 
 
@@ -50,8 +50,8 @@ def test_tag_images(
         "source-ref:1",
         ["dest-ref:1", "dest-ref:2"],
         all_arch=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
         remote_exec=True,
         send_umb_msg=True,
         ssh_remote_host="127.0.0.1",
@@ -83,8 +83,8 @@ def test_copy_src_item(
             "quay.io/some-namespace/target----repo:1.0",
         ],
         all_arch=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
         remote_exec=True,
         send_umb_msg=True,
         ssh_remote_host="127.0.0.1",

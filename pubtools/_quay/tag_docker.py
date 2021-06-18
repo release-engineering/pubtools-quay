@@ -58,7 +58,6 @@ class TagDocker:
         self.target_name = target_name
         self.target_settings = target_settings
 
-        # TODO: will our robot credentials be able to read from brew's build repos?
         self._quay_client = None
         self._quay_api_client = None
         self._executor = None
@@ -70,21 +69,21 @@ class TagDocker:
 
     @property
     def quay_client(self):
-        """Create and access QuayClient."""
+        """Create and access QuayClient for source and dest images."""
         if self._quay_client is None:
             self._quay_client = QuayClient(
-                self.target_settings["quay_user"],
-                self.target_settings["quay_password"],
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
                 self.quay_host,
             )
         return self._quay_client
 
     @property
     def quay_api_client(self):
-        """Create and access QuayApiClient."""
+        """Create and access QuayApiClient for source and dest images."""
         if self._quay_api_client is None:
             self._quay_api_client = QuayApiClient(
-                self.target_settings["quay_api_token"], self.quay_host
+                self.target_settings["dest_quay_api_token"], self.quay_host
             )
         return self._quay_api_client
 
@@ -100,8 +99,8 @@ class TagDocker:
             )
             # also login when creating an executor
             self._executor.skopeo_login(
-                username=self.target_settings["quay_user"],
-                password=self.target_settings["quay_password"],
+                username=self.target_settings["dest_quay_user"],
+                password=self.target_settings["dest_quay_password"],
             )
         return self._executor
 
@@ -109,9 +108,12 @@ class TagDocker:
         """Verify that target settings contains all the necessary data."""
         LOG.info("Verifying the necessary target settings")
         required_settings = [
-            "quay_user",
-            "quay_password",
-            "quay_api_token",
+            "source_quay_user",
+            "source_quay_password",
+            "dest_quay_user",
+            "dest_quay_password",
+            "source_quay_api_token",
+            "dest_quay_api_token",
             "pyxis_server",
             "quay_namespace",
             "iib_index_image",
@@ -163,6 +165,11 @@ class TagDocker:
                 self.target_settings["propagated_from"]
             )
             stage_namespace = stage_target_info["settings"]["quay_namespace"]
+            stage_quay_client = QuayClient(
+                stage_target_info["settings"]["dest_quay_user"],
+                stage_target_info["settings"]["dest_quay_password"],
+                self.quay_host,
+            )
 
             for item in self.push_items:
                 internal_repo = get_internal_container_repo_name(list(item.repos.keys())[0])
@@ -174,7 +181,7 @@ class TagDocker:
                 for tag in item.metadata["add_tags"]:
                     stage_image = "{0}:{1}".format(stage_repo, tag)
                     try:
-                        self.quay_client.get_manifest(stage_image)
+                        stage_quay_client.get_manifest(stage_image)
                     except requests.exceptions.HTTPError as e:
                         if e.response.status_code == 404:
                             raise BadPushItem(
@@ -187,7 +194,7 @@ class TagDocker:
                 for tag in item.metadata["remove_tags"]:
                     stage_image = "{0}:{1}".format(stage_repo, tag)
                     try:
-                        self.quay_client.get_manifest(stage_image)
+                        stage_quay_client.get_manifest(stage_image)
                     except requests.exceptions.HTTPError as e:
                         if e.response.status_code == 404:
                             # 404 -> all good
@@ -560,7 +567,7 @@ class TagDocker:
 
         # NOTE: Arch images don't need to be copied, since they already exist in the same repo
         merger = ManifestListMerger(source_image, dest_image)
-        merger.set_quay_client(self.quay_client)
+        merger.set_quay_client(self.quay_client, self.quay_client)
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
 
         if push_item.claims_signing_key:
@@ -610,10 +617,10 @@ class TagDocker:
         """
         untag_images(
             references=references,
-            quay_api_token=target_settings["quay_api_token"],
+            quay_api_token=target_settings["dest_quay_api_token"],
             remove_last=remove_last,
-            quay_user=target_settings["quay_user"],
-            quay_password=target_settings["quay_password"],
+            quay_user=target_settings["dest_quay_user"],
+            quay_password=target_settings["dest_quay_password"],
             send_umb_msg=True,
             umb_urls=target_settings["docker_settings"]["umb_urls"],
             umb_cert=target_settings["docker_settings"].get(
@@ -681,7 +688,7 @@ class TagDocker:
         new_manifest_list = deepcopy(manifest_list)
         new_manifest_list["manifests"] = keep_manifests
 
-        self._quay_client.upload_manifest(new_manifest_list, dest_image)
+        self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
     def run(self):
         """
@@ -703,9 +710,7 @@ class TagDocker:
         - Perform the appropriate add/remove/merge operation
         """
         # Validate repos, same as in PushDocker
-        PushDocker.check_repos_validity(
-            self.push_items, self.hub, self.target_settings, self.quay_api_client
-        )
+        PushDocker.check_repos_validity(self.push_items, self.hub, self.target_settings)
         # perform tag-docker-specific checks
         self.check_input_validity()
         signature_handler = BasicSignatureHandler(self.hub, self.target_settings, self.target_name)
