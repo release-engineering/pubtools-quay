@@ -126,8 +126,8 @@ setup(
             "pubtools-quay-merge-manifest-list = "
             "pubtools._quay.merge_manifest_list:merge_manifest_list_main",
             "pubtools-quay-untag = pubtools._quay.untag_images:untag_images_main",
-            "pubtools-quay-remove-repo = pubtools._quay.remove_repo:remove_repository_main",
-            "pubtools-quay-clear-repo = pubtools._quay.clear_repo:clear_repository_main",
+            "pubtools-quay-remove-repo = pubtools._quay.remove_repo:remove_repositories_main",
+            "pubtools-quay-clear-repo = pubtools._quay.clear_repo:clear_repositories_main",
         ],
         "target": [
             "push-docker = pubtools._quay.push_docker:mod_entry_point",
