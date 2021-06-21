@@ -175,34 +175,44 @@ def test_init():
     merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
     assert merger.src_image == "quay.io/src/image:1"
     assert merger.dest_image == "quay.io/dest/image:1"
-    assert merger._quay_client is None
+    assert merger._src_quay_client is None
+    assert merger._dest_quay_client is None
 
 
 def test_init_create_client():
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
-        "user",
-        "pass",
+        "src-user",
+        "src-pass",
+        "dest-user",
+        "dest-pass",
         host="stage.quay.io",
     )
     assert merger.src_image == "quay.io/src/image:1"
     assert merger.dest_image == "quay.io/dest/image:1"
-    assert isinstance(merger._quay_client, quay_client.QuayClient)
-    assert merger._quay_client.username == "user"
-    assert merger._quay_client.password == "pass"
-    assert merger._quay_client.session.hostname == "stage.quay.io"
+    assert isinstance(merger._src_quay_client, quay_client.QuayClient)
+    assert isinstance(merger._dest_quay_client, quay_client.QuayClient)
+    assert merger._src_quay_client.username == "src-user"
+    assert merger._src_quay_client.password == "src-pass"
+    assert merger._src_quay_client.session.hostname == "stage.quay.io"
+    assert merger._dest_quay_client.username == "dest-user"
+    assert merger._dest_quay_client.password == "dest-pass"
+    assert merger._dest_quay_client.session.hostname == "stage.quay.io"
 
 
 def test_set_client():
     merger = manifest_list_merger.ManifestListMerger("quay.io/src/image:1", "quay.io/dest/image:1")
     assert merger.src_image == "quay.io/src/image:1"
     assert merger.dest_image == "quay.io/dest/image:1"
-    assert merger._quay_client is None
+    assert merger._src_quay_client is None
+    assert merger._dest_quay_client is None
 
-    client = quay_client.QuayClient("user", "pass")
-    merger.set_quay_client(client)
-    assert client == merger._quay_client
+    src_client = quay_client.QuayClient("src-user", "src-pass")
+    dest_client = quay_client.QuayClient("dest-user", "dest-pass")
+    merger.set_quay_clients(src_client, dest_client)
+    assert src_client == merger._src_quay_client
+    assert dest_client == merger._dest_quay_client
 
 
 def test_get_missing_architectures():
@@ -223,7 +233,12 @@ def test_add_missing_architectures():
 
 def test_merge_manifest_lists_success():
     merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+        "quay.io/src/image:1",
+        "quay.io/dest/image:1",
+        "src-user",
+        "src-pass",
+        "dest-user",
+        "dest-pass",
     )
 
     with requests_mock.Mocker() as m:
@@ -258,7 +273,12 @@ def test_merge_manifest_lists_missing_client():
 
 def test_merge_selected_architectures():
     merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+        "quay.io/src/image:1",
+        "quay.io/dest/image:1",
+        "src-user",
+        "src-pass",
+        "dest-user",
+        "dest-pass",
     )
 
     with requests_mock.Mocker() as m:
@@ -284,7 +304,12 @@ def test_merge_selected_architectures():
 
 def test_merge_selected_architectures_no_dest_manifest():
     merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+        "quay.io/src/image:1",
+        "quay.io/dest/image:1",
+        "src-user",
+        "src-pass",
+        "dest-user",
+        "dest-pass",
     )
 
     with requests_mock.Mocker() as m:
@@ -309,7 +334,12 @@ def test_merge_selected_architectures_no_dest_manifest():
 
 def test_merge_selected_architectures_raises_unrelated_error():
     merger = manifest_list_merger.ManifestListMerger(
-        "quay.io/src/image:1", "quay.io/dest/image:1", "user", "pass"
+        "quay.io/src/image:1",
+        "quay.io/dest/image:1",
+        "src-user",
+        "src-pass",
+        "dest-user",
+        "dest-pass",
     )
 
     with requests_mock.Mocker() as m:

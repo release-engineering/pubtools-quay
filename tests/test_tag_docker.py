@@ -53,12 +53,12 @@ def test_init_verify_target_settings_ok(
     assert tag_docker_instance.quay_client == mock_quay_client.return_value
     assert tag_docker_instance.quay_api_client == mock_quay_api_client.return_value
     assert tag_docker_instance.executor == mock_remote_executor.return_value
-    mock_quay_client.assert_called_once_with("quay-user", "quay-pass", "quay.io")
-    mock_quay_api_client.assert_called_once_with("quay-token", "quay.io")
+    mock_quay_client.assert_called_once_with("dest-quay-user", "dest-quay-pass", "quay.io")
+    mock_quay_api_client.assert_called_once_with("dest-quay-token", "quay.io")
     mock_remote_executor.assert_called_once_with(
         hostname="127.0.0.1", username="ssh-user", password="ssh-password"
     )
-    mock_skopeo_login.assert_called_once_with(username="quay-user", password="quay-pass")
+    mock_skopeo_login.assert_called_once_with(username="dest-quay-user", password="dest-quay-pass")
 
 
 @mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
@@ -72,8 +72,10 @@ def test_init_missing_target_setting(
     tag_docker_push_item_add,
 ):
     hub = mock.MagicMock()
-    target_settings.pop("quay_user")
-    with pytest.raises(exceptions.InvalidTargetSettings, match="'quay_user' must be present.*"):
+    target_settings.pop("dest_quay_user")
+    with pytest.raises(
+        exceptions.InvalidTargetSettings, match="'dest_quay_user' must be present.*"
+    ):
         tag_docker_instance = tag_docker.TagDocker(
             [tag_docker_push_item_add],
             hub,
@@ -231,7 +233,13 @@ def test_check_input_validity_new_tag_not_in_stage(
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage-namespace",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-pass",
+        }
+    }
     mock_worker.get_target_info = mock_get_target_info
     hub.worker = mock_worker
 
@@ -280,7 +288,13 @@ def test_check_input_validity_new_tag_server_error(
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage-namespace",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-pass",
+        }
+    }
     mock_worker.get_target_info = mock_get_target_info
     hub.worker = mock_worker
 
@@ -320,7 +334,13 @@ def test_check_input_validity_remove_tag_still_in_stage(
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage-namespace",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-pass",
+        }
+    }
     mock_worker.get_target_info = mock_get_target_info
     hub.worker = mock_worker
 
@@ -369,7 +389,13 @@ def test_check_input_validity_remove_tag_server_error(
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {"settings": {"quay_namespace": "stage-namespace"}}
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage-namespace",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-pass",
+        }
+    }
     mock_worker.get_target_info = mock_get_target_info
     hub.worker = mock_worker
 
@@ -1855,10 +1881,10 @@ def test_run_untag_images_remove_last(mock_untag_images, target_settings):
 
     mock_untag_images.assert_called_once_with(
         references=["quay.io/some-namespace/namespace----test_repo:v1.5"],
-        quay_api_token="quay-token",
+        quay_api_token="dest-quay-token",
         remove_last=True,
-        quay_user="quay-user",
-        quay_password="quay-pass",
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
         send_umb_msg=True,
         umb_urls=["some-url1", "some-url2"],
         umb_cert="/etc/pub/umb-pub-cert-key.pem",
@@ -1875,10 +1901,10 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
 
     mock_untag_images.assert_called_once_with(
         references=["quay.io/some-namespace/namespace----test_repo:v1.5"],
-        quay_api_token="quay-token",
+        quay_api_token="dest-quay-token",
         remove_last=False,
-        quay_user="quay-user",
-        quay_password="quay-pass",
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
         send_umb_msg=True,
         umb_urls=["some-url1", "some-url2"],
         umb_cert="/etc/pub/umb-pub-cert-key.pem",
@@ -1994,7 +2020,7 @@ def test_run_add_noop(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_add], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
@@ -2054,7 +2080,7 @@ def test_run_add_tag_images(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_add], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
@@ -2120,7 +2146,7 @@ def test_run_add_merge_manifest_lists(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_add], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_add], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
@@ -2192,7 +2218,7 @@ def test_run_remove_noop(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_remove_src], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
@@ -2252,7 +2278,7 @@ def test_run_remove_untag_image(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_remove_src], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
@@ -2317,7 +2343,7 @@ def test_run_remove_manifest_list_remove_archs(
     tag_docker_instance.run()
 
     mock_check_repos_validity.assert_called_once_with(
-        [tag_docker_push_item_remove_src], hub, target_settings, mock_quay_api_client.return_value
+        [tag_docker_push_item_remove_src], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")

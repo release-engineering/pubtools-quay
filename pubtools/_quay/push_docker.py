@@ -54,37 +54,39 @@ class PushDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        # TODO: will our robot credentials be able to read from brew's build repos?
-        self._quay_client = None
-        self._quay_api_client = None
+        self._dest_quay_client = None
+        self._dest_quay_api_client = None
 
     @property
-    def quay_client(self):
-        """Create and access QuayClient."""
-        if self._quay_client is None:
-            self._quay_client = QuayClient(
-                self.target_settings["quay_user"],
-                self.target_settings["quay_password"],
+    def dest_quay_client(self):
+        """Create and access QuayClient for dest image."""
+        if self._dest_quay_client is None:
+            self._dest_quay_client = QuayClient(
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
                 self.quay_host,
             )
-        return self._quay_client
+        return self._dest_quay_client
 
     @property
-    def quay_api_client(self):
-        """Create and access QuayApiClient."""
-        if self._quay_api_client is None:
-            self._quay_api_client = QuayApiClient(
-                self.target_settings["quay_api_token"], self.quay_host
+    def dest_quay_api_client(self):
+        """Create and access QuayApiClient for dest image."""
+        if self._dest_quay_api_client is None:
+            self._dest_quay_api_client = QuayApiClient(
+                self.target_settings["dest_quay_api_token"], self.quay_host
             )
-        return self._quay_api_client
+        return self._dest_quay_api_client
 
     def verify_target_settings(self):
         """Verify that target settings contains all the necessary data."""
         LOG.info("Verifying the necessary target settings")
         required_settings = [
-            "quay_user",
-            "quay_password",
-            "quay_api_token",
+            "source_quay_user",
+            "source_quay_password",
+            "dest_quay_user",
+            "dest_quay_password",
+            "source_quay_api_token",
+            "dest_quay_api_token",
             "pyxis_server",
             "quay_namespace",
             "iib_krb_principal",
@@ -213,7 +215,7 @@ class PushDocker:
         return metadata
 
     @classmethod
-    def check_repos_validity(cls, push_items, hub, target_settings, quay_api_client):
+    def check_repos_validity(cls, push_items, hub, target_settings):
         """
         Check if specified repos are valid and pushing to them is allowed.
 
@@ -227,8 +229,6 @@ class PushDocker:
                 Instance of XMLRPC pub-hub proxy.
             target_settings (dict):
                 Target settings.
-            quay_api_client (QuayApiClient):
-                Instance of QuayApiClient.
         """
         repos = []
         for item in push_items:
@@ -244,6 +244,10 @@ class PushDocker:
         if "propagated_from" in target_settings:
             stage_target_info = hub.worker.get_target_info(target_settings["propagated_from"])
             stage_namespace = stage_target_info["settings"]["quay_namespace"]
+            stage_quay_api_client = QuayApiClient(
+                stage_target_info["settings"]["dest_quay_api_token"],
+                stage_target_info["settings"].get("quay_host", "quay.io").rstrip("/"),
+            )
 
         for repo in repos:
             LOG.info("Checking validity of Comet repository '{0}'".format(repo))
@@ -266,7 +270,7 @@ class PushDocker:
                 internal_repo = get_internal_container_repo_name(repo)
                 full_repo = repo_schema.format(namespace=stage_namespace, repo=internal_repo)
                 try:
-                    quay_api_client.get_repository_data(full_repo)
+                    stage_quay_api_client.get_repository_data(full_repo)
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
                         raise InvalidRepository(
@@ -308,7 +312,7 @@ class PushDocker:
                 LOG.info("Generating backup mapping for repository '{0}'".format(repo))
                 # try to get repo data
                 try:
-                    repo_data = self.quay_api_client.get_repository_data(full_repo)
+                    repo_data = self.dest_quay_api_client.get_repository_data(full_repo)
                 except requests.exceptions.HTTPError as e:
                     if e.response.status_code == 404:
                         repo_data = None
@@ -332,7 +336,7 @@ class PushDocker:
                             repo=full_repo,
                             digest=repo_data["tags"][tag]["manifest_digest"],
                         )
-                        manifest = self.quay_client.get_manifest(image)
+                        manifest = self.dest_quay_client.get_manifest(image)
                         backup_tags[image_data] = manifest
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
@@ -360,14 +364,14 @@ class PushDocker:
         for image_data, manifest in sorted(backup_tags.items()):
             image_ref = schema.format(host=self.quay_host, repo=image_data.repo, tag=image_data.tag)
             LOG.info("Restoring tag '{0}'".format(image_ref))
-            self.quay_client.upload_manifest(manifest, image_ref)
+            self.dest_quay_client.upload_manifest(manifest, image_ref)
 
         # delete tags that didn't previously exist
         LOG.info("Removing newly introduced tags")
         for image_data in rollback_tags:
             image_ref = schema.format(host=self.quay_host, repo=image_data.repo, tag=image_data.tag)
             LOG.info("Removing tag '{0}'".format(image_ref))
-            self.quay_api_client.delete_tag(image_data.repo, image_data.tag)
+            self.dest_quay_api_client.delete_tag(image_data.repo, image_data.tag)
 
     def remove_old_signatures(
         self,
@@ -513,9 +517,7 @@ class PushDocker:
         # Get operator push items (done early so that possible issues are detected)
         operator_push_items = self.get_operator_push_items()
         # Check if we may push to destination repos
-        self.check_repos_validity(
-            docker_push_items, self.hub, self.target_settings, self.quay_api_client
-        )
+        self.check_repos_validity(docker_push_items, self.hub, self.target_settings)
         # Generate resources for rollback in case there are errors during the push
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
         existing_index_images = []
@@ -530,8 +532,8 @@ class PushDocker:
                 self.hub, self.task_id, self.target_settings, self.target_name
             )
             sig_remover = SignatureRemover()
-            sig_remover.set_quay_client(self.quay_client)
-            sig_remover.set_quay_api_client(self.quay_api_client)
+            sig_remover.set_quay_client(self.dest_quay_client)
+            sig_remover.set_quay_api_client(self.dest_quay_api_client)
 
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
@@ -541,7 +543,9 @@ class PushDocker:
             if operator_push_items:
                 # Build index images
                 operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
-                existing_index_images = operator_pusher.get_existing_index_images(self.quay_client)
+                existing_index_images = operator_pusher.get_existing_index_images(
+                    self.dest_quay_client
+                )
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
                 operator_signature_handler.sign_operator_images(iib_results)

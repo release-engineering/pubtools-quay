@@ -13,7 +13,16 @@ LOG.setLevel(logging.INFO)
 class ManifestListMerger:
     """Class containing logic for merging manifest lists of two images."""
 
-    def __init__(self, src_image, dest_image, quay_username=None, quay_password=None, host=None):
+    def __init__(
+        self,
+        src_image,
+        dest_image,
+        src_quay_username=None,
+        src_quay_password=None,
+        dest_quay_username=None,
+        dest_quay_password=None,
+        host=None,
+    ):
         """
         Initialize.
 
@@ -22,48 +31,61 @@ class ManifestListMerger:
                 Address to a new image whose manifest list contains the newer data.
             dest_image (str):
                 Address to an older image whose data will be overwritten.
-            quay_username (str):
-                Username to login to quay. If ommited, external client instance should be set.
-            quay_password (str):
-                Password to login to quay. If ommited, external client instance should be set.
+            src_quay_username (str):
+                Quay username to get src_image. If ommited, external client instance should be set.
+            src_quay_password (str):
+                Quay password to get src_image. If ommited, external client instance should be set.
+            dest_quay_username (str):
+                Quay username to get dest_image. If ommited, external client instance should be set.
+            dest_quay_password (str):
+                Quay password to get dest_image. If ommited, external client instance should be set.
             host (str):
                 Custom hostname to connect to. If ommited, standard quay.io will be used.
         """
         self.src_image = src_image
         self.dest_image = dest_image
-        if quay_username and quay_password:
-            self._quay_client = QuayClient(quay_username, quay_password, host)
+        if src_quay_username and src_quay_password:
+            self._src_quay_client = QuayClient(src_quay_username, src_quay_password, host)
         else:
-            self._quay_client = None
+            self._src_quay_client = None
+        if dest_quay_username and dest_quay_password:
+            self._dest_quay_client = QuayClient(dest_quay_username, dest_quay_password, host)
+        else:
+            self._dest_quay_client = None
 
-    def set_quay_client(self, quay_client):
+    def set_quay_clients(self, src_quay_client, dest_quay_client):
         """
-        Set client instance to be used for the HTTP API operations.
+        Set client instances to be used for the HTTP API operations.
 
         Args:
-            quay_client (QuayClient):
+            src_quay_client (QuayClient):
+                Instance of QuayClient.
+            dest_quay_client (QuayClient):
                 Instance of QuayClient.
         """
-        self._quay_client = quay_client
+        self._src_quay_client = src_quay_client
+        self._dest_quay_client = dest_quay_client
 
     def merge_manifest_lists(self):
         """Merge manifest lists and upload to Quay. Main entrypoint method."""
-        if not self._quay_client:
-            raise RuntimeError("QuayClient instance must be set")
+        if not self._src_quay_client or not self._dest_quay_client:
+            raise RuntimeError("QuayClient instance must be set for both source and dest images")
 
         LOG.info(
             "Merging manifest lists of images '{0}' and '{1}'".format(
                 self.src_image, self.dest_image
             )
         )
-        src_manifest_list = self._quay_client.get_manifest(self.src_image, manifest_list=True)
-        dest_manifest_list = self._quay_client.get_manifest(self.dest_image, manifest_list=True)
+        src_manifest_list = self._src_quay_client.get_manifest(self.src_image, manifest_list=True)
+        dest_manifest_list = self._dest_quay_client.get_manifest(
+            self.dest_image, manifest_list=True
+        )
 
         missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)
         new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)
 
         LOG.info("Uploading the new manifest list to '{0}'".format(self.dest_image))
-        self._quay_client.upload_manifest(new_manifest_list, self.dest_image)
+        self._dest_quay_client.upload_manifest(new_manifest_list, self.dest_image)
         LOG.info("Merging manifests lists: complete.")
 
     @staticmethod
@@ -125,14 +147,16 @@ class ManifestListMerger:
         Returns (dict):
             New manifest list.
         """
-        if not self._quay_client:
-            raise RuntimeError("QuayClient instance must be set")
+        if not self._src_quay_client or not self._dest_quay_client:
+            raise RuntimeError("QuayClient instance must be set for both source and dest images")
 
-        src_manifest_list = self._quay_client.get_manifest(self.src_image, manifest_list=True)
+        src_manifest_list = self._src_quay_client.get_manifest(self.src_image, manifest_list=True)
         # It's possible that destination doesn't exist in this workflow. ML merging logic is still
         # necessary due to only some archs being eligible
         try:
-            dest_manifest_list = self._quay_client.get_manifest(self.dest_image, manifest_list=True)
+            dest_manifest_list = self._dest_quay_client.get_manifest(
+                self.dest_image, manifest_list=True
+            )
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404:
                 dest_manifest_list = None
