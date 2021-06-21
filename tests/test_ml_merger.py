@@ -210,7 +210,7 @@ def test_set_client():
 
     src_client = quay_client.QuayClient("src-user", "src-pass")
     dest_client = quay_client.QuayClient("dest-user", "dest-pass")
-    merger.set_quay_client(src_client, dest_client)
+    merger.set_quay_clients(src_client, dest_client)
     assert src_client == merger._src_quay_client
     assert dest_client == merger._dest_quay_client
 

@@ -53,9 +53,9 @@ class ManifestListMerger:
         else:
             self._dest_quay_client = None
 
-    def set_quay_client(self, src_quay_client, dest_quay_client):
+    def set_quay_clients(self, src_quay_client, dest_quay_client):
         """
-        Set client instance to be used for the HTTP API operations.
+        Set client instances to be used for the HTTP API operations.
 
         Args:
             src_quay_client (QuayClient):

@@ -567,7 +567,7 @@ class TagDocker:
 
         # NOTE: Arch images don't need to be copied, since they already exist in the same repo
         merger = ManifestListMerger(source_image, dest_image)
-        merger.set_quay_client(self.quay_client, self.quay_client)
+        merger.set_quay_clients(self.quay_client, self.quay_client)
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
 
         if push_item.claims_signing_key:

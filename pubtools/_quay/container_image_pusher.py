@@ -170,7 +170,7 @@ class ContainerImagePusher:
                 )
             )
             merger = ManifestListMerger(source_ref, dest_ref, host=self.quay_host)
-            merger.set_quay_client(self.src_quay_client, self.dest_quay_client)
+            merger.set_quay_clients(self.src_quay_client, self.dest_quay_client)
             merger.merge_manifest_lists()
 
     def copy_multiarch_push_item(self, push_item, source_ml):
