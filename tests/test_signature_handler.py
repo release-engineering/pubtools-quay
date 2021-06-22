@@ -864,3 +864,77 @@ def test_construct_operator_item_claim_messages_none_signing_key(
     )
 
     assert claim_messages == []
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch(
+    "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
+)
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_operator_images_no_signatures(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_construct_index_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+):
+    class IIBRes:
+        def __init__(self, index_image_resolved):
+            self.index_image_resolved = index_image_resolved
+
+    hub = mock.MagicMock()
+    mock_construct_index_claim_msgs.return_value = []
+    iib_results = {
+        "v4.5": {
+            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:a1a1a1"),
+            "signing_keys": [None],
+        },
+    }
+
+    sig_handler = signature_handler.OperatorSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
+    sig_handler.sign_operator_images(iib_results)
+    mock_construct_index_claim_msgs.assert_called_once_with(
+        "quay.io/iib-namespace/iib@sha256:a1a1a1", "v4.5", [None]
+    )
+    mock_get_radas_signatures.assert_not_called()
+    mock_validate_radas_msgs.assert_not_called()
+    mock_upload_signatures_to_pyxis.assert_not_called()
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch(
+    "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
+)
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
+def test_sign_task_index_image_no_signatures(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_construct_index_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+):
+    hub = mock.MagicMock()
+    mock_construct_index_claim_msgs.return_value = []
+
+    sig_handler = signature_handler.OperatorSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
+    sig_handler.sign_task_index_image([None], "registry1/namespace/image:1", "3")
+    mock_construct_index_claim_msgs.assert_called_once_with(
+        "registry1/namespace/image:1", "3", [None]
+    )
+    mock_get_radas_signatures.assert_not_called()
+    mock_validate_radas_msgs.assert_not_called()
+    mock_upload_signatures_to_pyxis.assert_not_called()
