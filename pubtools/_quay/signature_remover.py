@@ -294,8 +294,11 @@ class SignatureRemover:
         external_repo = get_external_container_repo_name(full_repo.split("/")[-1])
         image_digests = []
         repo_data = self.quay_api_client.get_repository_data(full_repo.split("/", 1)[-1])
+        # if specified tag doesn't exist in a repo, no-op
+        if tag not in repo_data["tags"]:
+            return
         # if image_id of the tag is specified, the image is V2S2 AKA source image
-        if repo_data["tags"][tag]["image_id"]:
+        elif repo_data["tags"][tag]["image_id"]:
             image_digests.append(repo_data["tags"][tag]["manifest_digest"])
 
         # if multiarch, we need digests of all archs
