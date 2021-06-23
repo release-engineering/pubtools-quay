@@ -58,14 +58,19 @@ def test_get_internal_repo_name():
     assert internal_name == "namespace----repo"
 
 
+def test_get_internal_repo_name_no_delimeter():
+    internal_name = misc.get_internal_container_repo_name("namespace-repo")
+    assert internal_name == "namespace-repo"
+
+
 def test_get_internal_repo_name_errors():
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_internal_container_repo_name("/namespacerepo")
 
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_internal_container_repo_name("namespacerepo/")
 
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_internal_container_repo_name("name/space/repo")
 
 
@@ -74,12 +79,17 @@ def test_get_external_repo_name():
     assert internal_name == "namespace/repo"
 
 
+def test_get_external_repo_name_no_delimeter():
+    internal_name = misc.get_external_container_repo_name("namespace-repo")
+    assert internal_name == "namespace-repo"
+
+
 def test_get_external_repo_name_errors():
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_external_container_repo_name("----namespacerepo")
 
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_external_container_repo_name("namespacerepo----")
 
-    with pytest.raises(ValueError, match="Input repository should have the format.*"):
+    with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_external_container_repo_name("name----space----repo")

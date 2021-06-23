@@ -200,14 +200,24 @@ def get_internal_container_repo_name(external_name):
     Expected input format: <namespace>/<product>
     Generated output format: <namespace>----<product>
 
+    NOTE: Repositories without a delimeter "/" may actually exist. In that case, the function
+    simply returns the repo without any alterations.
+
     Args:
         external_name (str):
             External repository name.
     Returns:
         Internal repository name.
     """
-    if external_name.count("/") != 1 or external_name[0] == "/" or external_name[-1] == "/":
-        raise ValueError("Input repository should have the format '<namespace>/<product>'")
+    if external_name.count("/") == 0:
+        return external_name
+
+    if external_name.count("/") > 1 or external_name[0] == "/" or external_name[-1] == "/":
+        raise ValueError(
+            "Input repository containing a delimeter should "
+            "have the format '<namespace>/<product>'",
+            external_name,
+        )
 
     return external_name.replace("/", INTERNAL_DELIMITER)
 
@@ -219,19 +229,27 @@ def get_external_container_repo_name(internal_name):
     Expected input format: <namespace>----<product>
     Generated output format: <namespace>/<product>
 
+    NOTE: Repositories without a delimeter "----" may actually exist. In that case, the function
+    simply returns the repo without any alterations.
+
     Args:
         internal_name (str):
             Internal repository name.
     Returns:
         External repository name.
     """
+    if internal_name.count(INTERNAL_DELIMITER) == 0:
+        return internal_name
+
     if (
-        internal_name.count(INTERNAL_DELIMITER) != 1
+        internal_name.count(INTERNAL_DELIMITER) > 1
         or internal_name.find(INTERNAL_DELIMITER) == 0
         or internal_name.find(INTERNAL_DELIMITER) == len(internal_name) - 4
     ):
         raise ValueError(
-            "Input repository should have the format '<namespace>----<product>'", internal_name
+            "Input repository containing a delimeter should "
+            "have the format '<namespace>----<product>'",
+            internal_name,
         )
 
     return internal_name.replace(INTERNAL_DELIMITER, "/")

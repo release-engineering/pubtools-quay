@@ -16,7 +16,7 @@ LOG.setLevel(logging.INFO)
 
 CLEAR_REPO_ARGS = {
     ("--repositories",): {
-        "help": "External repositories to clear as CSV. Must be in format <namespace>/<repo>.",
+        "help": "External repositories to clear as CSV.",
         "required": True,
         "type": str,
     },
