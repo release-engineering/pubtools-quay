@@ -2,7 +2,11 @@ import logging
 import json
 import tempfile
 
-from .utils.misc import get_internal_container_repo_name, run_entrypoint
+from .utils.misc import (
+    get_internal_container_repo_name,
+    run_entrypoint,
+    get_external_container_repo_name,
+)
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 
@@ -240,6 +244,88 @@ class SignatureRemover:
         ):
             if signature["repository"] == repository:
                 remove_signature_ids.append(signature["_id"])
+
+        if len(remove_signature_ids) > 0:
+            LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
+
+            self.remove_signatures_from_pyxis(
+                remove_signature_ids, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            )
+        else:
+            LOG.info("No signatures need to be removed")
+
+    def remove_tag_signatures(
+        self,
+        reference,
+        pyxis_server,
+        pyxis_krb_principal,
+        pyxis_krb_ktfile=None,
+        exclude_by_claims=None,
+        remove_archs=None,
+    ):
+        """
+        Remove signatures of an image specified by a tag.
+
+        Source and multiarch images are supported. Signatures may be excluded from removal by
+        specifying a list of claim messages. If existing signature and a claim messages matches,
+        it is not removed, as the same exact signature would be recreated afterwards. Additionally,
+        it's also possible to only specify certain architectures whose signatures will be removed.
+        This option only has an effect when the image is a manifest list.
+
+        Args:
+            reference (str):
+                Image reference whose signatures are to be removed.
+            pyxis_server (str):
+                URL of the Pyxis service.
+            pyxis_krb_principal (str):
+                Kerberos principal to use for Pyxis authentication.
+            pyxis_krb_ktfile (str|None):
+                Path to Kerberos keytab file. Optional
+            exclude_by_claims ([dict]|None):
+                List of claim messages whose existing signature matches will not be removed.
+            remove_archs ([str]|None):
+                If specified and the reference is a multiarch image, only signatures of given
+                architectures will be eligible for removal.
+        """
+        if "@" in reference:
+            raise ValueError("Image, whose signatures are being removed must be specified by tag.")
+
+        full_repo, tag = reference.split(":", 1)
+        external_repo = get_external_container_repo_name(full_repo.split("/")[-1])
+        image_digests = []
+        repo_data = self.quay_api_client.get_repository_data(full_repo.split("/", 1)[-1])
+        # if specified tag doesn't exist in a repo, no-op
+        if tag not in repo_data["tags"]:
+            return
+        # if image_id of the tag is specified, the image is V2S2 AKA source image
+        elif repo_data["tags"][tag]["image_id"]:
+            image_digests.append(repo_data["tags"][tag]["manifest_digest"])
+
+        # if multiarch, we need digests of all archs
+        else:
+            manifest_list = self.quay_client.get_manifest(reference, manifest_list=True)
+            for manifest in manifest_list["manifests"]:
+                if remove_archs is None or manifest["platform"]["architecture"] in remove_archs:
+                    image_digests.append(manifest["digest"])
+
+        new_claims_signatures = (
+            list(set([(c["manifest_digest"], c["docker_reference"]) for c in exclude_by_claims]))
+            if isinstance(exclude_by_claims, list)
+            else []
+        )
+
+        remove_signature_ids = []
+        for sig in self.get_signatures_from_pyxis(
+            image_digests, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        ):
+            # if signature corresponds to to-be-removed digest+reference and isn't among new sigs
+            if (
+                sig["manifest_digest"] in image_digests
+                and sig["repository"] == external_repo
+                and sig["reference"].split(":")[-1] == tag
+                and (sig["manifest_digest"], sig["reference"]) not in new_claims_signatures
+            ):
+                remove_signature_ids.append(sig["_id"])
 
         if len(remove_signature_ids) > 0:
             LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
