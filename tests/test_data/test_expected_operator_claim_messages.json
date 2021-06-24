@@ -1,90 +1,90 @@
 [
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry1.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "0", 
-       "sig_key_id": "key1"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry1.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "1", 
-       "sig_key_id": "key1"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry1.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "2", 
-       "sig_key_id": "key2"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry1.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "3", 
-       "sig_key_id": "key2"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry2.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "4", 
-       "sig_key_id": "key1"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry2.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "5", 
-       "sig_key_id": "key1"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry2.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "6", 
-       "sig_key_id": "key2"
-   }, 
-   {
-       "claim_file": "some-encode", 
-       "created": "2021-03-19T14:45:23.128632Z", 
-       "docker_reference": "some-registry2.com/operators/index-image:v4.5", 
-       "image_name": "operators/index-image", 
-       "manifest_digest": "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9", 
-       "pub_task_id": "1", 
-       "repo": "some-namespace/operators----index-image", 
-       "request_id": "7", 
-       "sig_key_id": "key2"
-   }
-]
+    {
+       "sig_key_id":"key1",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"0",
+       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key1",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"1",
+       "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key2",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"2",
+       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key2",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"3",
+       "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key1",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"4",
+       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key1",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"5",
+       "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key2",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"6",
+       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    },
+    {
+       "sig_key_id":"key2",
+       "claim_file":"some-encode",
+       "pub_task_id":"1",
+       "request_id":"7",
+       "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+       "repo":"operators/index-image",
+       "image_name":"operators/index-image",
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
+       "created":"2021-03-19T14:45:23.128632Z"
+    }
+ ]

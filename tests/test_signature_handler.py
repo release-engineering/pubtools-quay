@@ -577,6 +577,7 @@ def test_construct_operator_item_claim_messages(
     claim_messages = sig_handler.construct_index_image_claim_messages(
         operator_signing_push_item, "v4.5", ["key1", "key2"]
     )
+    print(json.dumps(claim_messages))
     with open("tests/test_data/test_expected_operator_claim_messages.json", "r") as f:
         expected_claim_messages = json.loads(f.read())
 
