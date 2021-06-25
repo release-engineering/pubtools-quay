@@ -158,8 +158,8 @@ def test_args_missing_quay_password(mock_clear_repositories):
 
 
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.QuayApiClient")
-def test_args_missing_umb_url(mock_quay_api_client, mock_send_umb_message):
+@mock.patch("pubtools._quay.clear_repo.QuayClient")
+def test_args_missing_umb_url(mock_quay_client, mock_send_umb_message):
     wrong_args = [
         "dummy",
         "--repositories",
@@ -184,13 +184,13 @@ def test_args_missing_umb_url(mock_quay_api_client, mock_send_umb_message):
     with pytest.raises(ValueError, match="UMB URL must be specified.*"):
         clear_repo.clear_repositories_main(wrong_args)
 
-    mock_quay_api_client.assert_not_called()
+    mock_quay_client.assert_not_called()
     mock_send_umb_message.assert_not_called()
 
 
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.QuayApiClient")
-def test_args_missing_umb_cert(mock_quay_api_client, mock_send_umb_message):
+@mock.patch("pubtools._quay.clear_repo.QuayClient")
+def test_args_missing_umb_cert(mock_quay_client, mock_send_umb_message):
     wrong_args = [
         "dummy",
         "--repositories",
@@ -215,17 +215,15 @@ def test_args_missing_umb_cert(mock_quay_api_client, mock_send_umb_message):
     with pytest.raises(ValueError, match="A path to a client certificate.*"):
         clear_repo.clear_repositories_main(wrong_args)
 
-    mock_quay_api_client.assert_not_called()
+    mock_quay_client.assert_not_called()
     mock_send_umb_message.assert_not_called()
 
 
 @mock.patch("pubtools._quay.clear_repo.untag_images")
 @mock.patch("pubtools._quay.clear_repo.SignatureRemover")
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.QuayApiClient")
-def test_run(
-    mock_quay_api_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
-):
+@mock.patch("pubtools._quay.clear_repo.QuayClient")
+def test_run(mock_quay_client, mock_send_umb_message, mock_signature_remover, mock_untag_images):
     args = [
         "dummy",
         "--repositories",
@@ -243,27 +241,25 @@ def test_run(
         "--pyxis-krb-principal",
         "some-principal",
     ]
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = {"tags": {"1": {"some": " data"}, "2": {"some": "data"}}}
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
-    mock_set_quay_api_client = mock.MagicMock()
+    mock_get_repo_tags = mock.MagicMock()
+    mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
+    mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
+    mock_set_quay_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
+    mock_signature_remover.return_value.set_quay_client = mock_set_quay_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
 
     clear_repo.clear_repositories_main(args)
 
-    mock_quay_api_client.assert_called_once_with("some-token")
-    mock_signature_remover.assert_called_once_with(
-        quay_user="some-user", quay_password="some-password"
-    )
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
+    mock_quay_client.assert_called_once_with("some-user", "some-password")
+    mock_signature_remover.assert_called_once_with(quay_api_token="some-token")
+    mock_set_quay_client.assert_called_once_with(mock_quay_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )
-    mock_get_repo_data.assert_called_once_with("quay-organization/namespace----image")
+    mock_get_repo_tags.assert_called_once_with("quay-organization/namespace----image")
     mock_untag_images.assert_called_once_with(
         [
             "quay.io/quay-organization/namespace----image:1",
@@ -285,9 +281,9 @@ def test_run(
 @mock.patch("pubtools._quay.clear_repo.untag_images")
 @mock.patch("pubtools._quay.clear_repo.SignatureRemover")
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.QuayApiClient")
+@mock.patch("pubtools._quay.clear_repo.QuayClient")
 def test_run_multiple_repos(
-    mock_quay_api_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
+    mock_quay_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
 ):
     args = [
         "dummy",
@@ -306,26 +302,24 @@ def test_run_multiple_repos(
         "--pyxis-krb-principal",
         "some-principal",
     ]
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.side_effect = [
-        {"tags": {"1": {"some": " data"}, "2": {"some": "data"}}},
-        {"tags": {"3": {"some": " data"}, "4": {"some": "data"}}},
+    mock_get_repo_tags = mock.MagicMock()
+    mock_get_repo_tags.side_effect = [
+        {"tags": ["1", "2"]},
+        {"tags": ["3", "4"]},
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
-    mock_set_quay_api_client = mock.MagicMock()
+    mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
+    mock_set_quay_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
+    mock_signature_remover.return_value.set_quay_client = mock_set_quay_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
 
     clear_repo.clear_repositories_main(args)
 
-    mock_quay_api_client.assert_called_once_with("some-token")
-    mock_signature_remover.assert_called_once_with(
-        quay_user="some-user", quay_password="some-password"
-    )
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
+    mock_quay_client.assert_called_once_with("some-user", "some-password")
+    mock_signature_remover.assert_called_once_with(quay_api_token="some-token")
+    mock_set_quay_client.assert_called_once_with(mock_quay_client.return_value)
     assert mock_remove_repository_signatures.call_count == 2
     assert mock_remove_repository_signatures.call_args_list[0] == mock.call(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
@@ -334,9 +328,9 @@ def test_run_multiple_repos(
         "namespace/image2", "quay-organization", "pyxis-url.com", "some-principal", None
     )
 
-    assert mock_get_repo_data.call_count == 2
-    assert mock_get_repo_data.call_args_list[0] == mock.call("quay-organization/namespace----image")
-    assert mock_get_repo_data.call_args_list[1] == mock.call(
+    assert mock_get_repo_tags.call_count == 2
+    assert mock_get_repo_tags.call_args_list[0] == mock.call("quay-organization/namespace----image")
+    assert mock_get_repo_tags.call_args_list[1] == mock.call(
         "quay-organization/namespace----image2"
     )
 
@@ -363,9 +357,9 @@ def test_run_multiple_repos(
 @mock.patch("pubtools._quay.clear_repo.untag_images")
 @mock.patch("pubtools._quay.clear_repo.SignatureRemover")
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.QuayApiClient")
+@mock.patch("pubtools._quay.clear_repo.QuayClient")
 def test_send_umb_message(
-    mock_quay_api_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
+    mock_quay_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
 ):
     args = [
         "dummy",
@@ -395,22 +389,22 @@ def test_send_umb_message(
         "--umb-topic",
         "VirtualTopic.eng.pub.clear_repo_new",
     ]
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = {"tags": {"1": {"some": " data"}, "2": {"some": "data"}}}
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
-    mock_set_quay_api_client = mock.MagicMock()
+    mock_get_repo_tags = mock.MagicMock()
+    mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
+    mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
+    mock_set_quay_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
+    mock_signature_remover.return_value.set_quay_client = mock_set_quay_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
     clear_repo.clear_repositories_main(args)
 
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
+    mock_set_quay_client.assert_called_once_with(mock_quay_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )
-    mock_get_repo_data.assert_called_once_with("quay-organization/namespace----image")
+    mock_get_repo_tags.assert_called_once_with("quay-organization/namespace----image")
     mock_untag_images.assert_called_once_with(
         [
             "quay.io/quay-organization/namespace----image:1",

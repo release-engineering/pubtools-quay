@@ -1,7 +1,7 @@
 import logging
 
 from .signature_remover import SignatureRemover
-from .quay_api_client import QuayApiClient
+from .quay_client import QuayClient
 from .untag_images import untag_images
 from .utils.misc import (
     setup_arg_parser,
@@ -191,10 +191,10 @@ def clear_repositories(
     verify_clear_repo_args(send_umb_msg, umb_urls, umb_cert)
 
     LOG.info("Clearing repositories '{0}'".format(repositories))
-    quay_api_client = QuayApiClient(quay_api_token)
+    quay_client = QuayClient(quay_user, quay_password)
 
-    sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
-    sig_remover.set_quay_api_client(quay_api_client)
+    sig_remover = SignatureRemover(quay_api_token=quay_api_token)
+    sig_remover.set_quay_client(quay_client)
 
     refrences_to_remove = []
     for repository in parsed_repositories:
@@ -203,7 +203,7 @@ def clear_repositories(
         )
 
         internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
-        repo_data = quay_api_client.get_repository_data(internal_repo)
+        repo_data = quay_client.get_repository_tags(internal_repo)
 
         for tag in repo_data["tags"]:
             refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
