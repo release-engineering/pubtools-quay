@@ -421,3 +421,29 @@ def test_upload_manifest_list_failure():
         with pytest.raises(requests.HTTPError, match="400 Client Error.*"):
             client.upload_manifest(ml, "quay.io/namespace/image:1")
         assert m.call_count == 1
+
+
+def test_get_repository_tags():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        data = client.get_repository_tags("namespace/image")
+        assert data == {"name": "namespace/image", "tags": ["1", "2", "3"]}
+        assert m.call_count == 1
+
+
+def test_get_repository_tags_raw():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        data = client.get_repository_tags("namespace/image", "raw")
+        assert data == json.dumps({"name": "namespace/image", "tags": ["1", "2", "3"]})
+        assert m.call_count == 1

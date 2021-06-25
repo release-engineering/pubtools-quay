@@ -112,6 +112,26 @@ class QuayClient:
             }
         self._request_quay("PUT", endpoint, kwargs)
 
+    def get_repository_tags(self, repository, raw=False):
+        """
+        Get tags of a provided repository.
+
+        Args:
+            repository (str):
+                Repository whose tags should be gathered (expected format namespce/repo).
+            raw (bool):
+                Whether the given manifest is a string (raw) or a Python dictionary
+        Returns (list):
+            Tags which the repository contains.
+        """
+        endpoint = "{0}/tags/list".format(repository)
+        response = self._request_quay("GET", endpoint)
+
+        if raw:
+            return response.text
+        else:
+            return response.json()
+
     def _request_quay(self, method, endpoint, kwargs={}):
         """
         Perform a Docker HTTP API request on Quay registry. Handle authentication.

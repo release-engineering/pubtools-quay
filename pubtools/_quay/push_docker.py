@@ -242,9 +242,9 @@ class PushDocker:
         if "propagated_from" in target_settings:
             stage_target_info = hub.worker.get_target_info(target_settings["propagated_from"])
             stage_namespace = stage_target_info["settings"]["quay_namespace"]
-            stage_quay_api_client = QuayApiClient(
-                stage_target_info["settings"]["dest_quay_api_token"],
-                stage_target_info["settings"].get("quay_host", "quay.io").rstrip("/"),
+            stage_quay_client = QuayClient(
+                stage_target_info["settings"]["dest_quay_user"],
+                stage_target_info["settings"]["dest_quay_password"],
             )
 
         for repo in repos:
@@ -268,9 +268,10 @@ class PushDocker:
                 internal_repo = get_internal_container_repo_name(repo)
                 full_repo = repo_schema.format(namespace=stage_namespace, repo=internal_repo)
                 try:
-                    stage_quay_api_client.get_repository_data(full_repo)
+                    stage_quay_client.get_repository_tags(full_repo)
                 except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 404:
+                    # strangely, if repo doesn't exist, 401 is returned if a robot account is used
+                    if e.response.status_code == 404 or e.response.status_code == 401:
                         raise InvalidRepository(
                             "Repository {0} doesn't exist on stage".format(repo)
                         )
