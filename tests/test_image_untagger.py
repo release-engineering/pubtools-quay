@@ -1,3 +1,4 @@
+import json
 import logging
 import mock
 import pytest
@@ -41,16 +42,16 @@ def setup_untagger(
 def register_manifest_url(mocker, repo, manifest, data, mlist=False):
     mocker.get(
         "https://stage.quay.io/v2/name/%s/manifests/%s" % (repo, manifest),
-        json=data,
+        text=json.dumps(data, sort_keys=True),
         headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"}
         if mlist
-        else {},
+        else {"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
     )
 
 
-def register_repo_api(mocker, repo, data):
+def register_tags_api(mocker, repo, data):
     mocker.get(
-        "https://stage.quay.io/api/v1/repository/name/%s" % repo,
+        "https://stage.quay.io/v2/name/%s/tags/list" % repo,
         json=data,
     )
 
@@ -123,8 +124,8 @@ def test_repo_tag_mapping(mock_quay_api_client, mock_quay_client):
 
 
 def test_tag_digest_mappings(
-    repo_api_data,
     manifest_list_data,
+    v2s2_manifest_data,
     common_tag_digest_mapping,
     common_digest_tag_mapping,
 ):
@@ -134,11 +135,14 @@ def test_tag_digest_mappings(
         "stage.quay.io/name/repo1:3",
         "stage.quay.io/name/repo1:4",
     ]
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
+        register_tags_api(m, "repo1", repo_tags)
+        register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "2", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "3", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "4", v2s2_manifest_data)
         tag_digest_mapping, digest_tag_mapping = untagger.construct_tag_digest_mappings(
             "name/repo1"
         )
@@ -152,7 +156,7 @@ def test_tag_digest_mappings(
 
         assert tag_digest_mapping == expected_tag_digest_mapping
         assert digest_tag_mapping == expected_digest_tag_mapping
-        assert m.call_count == 3
+        assert m.call_count == 9
 
 
 @mock.patch("pubtools._quay.image_untagger.QuayClient")
@@ -192,28 +196,33 @@ def test_get_lost_digests_some(
         ["1", "2"], common_tag_digest_mapping, common_digest_tag_mapping
     )
     assert lost_digests == [
-        u"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-        u"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
-        u"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
-        u"sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+        "sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
+        "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+        "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
     ]
 
 
-def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog):
+def test_untag_images_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
     ]
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
+        register_tags_api(m, "repo1", repo_tags)
+        register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "2", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "3", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "4", v2s2_manifest_data)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         lost_images = untagger.untag_images()
 
         assert lost_images == []
-        assert m.call_count == 4
+        assert m.call_count == 10
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
@@ -223,70 +232,82 @@ def test_untag_images_no_lost_digests(repo_api_data, manifest_list_data, caplog)
         compare_logs(caplog, expected_logs)
 
 
-def test_untag_images_lost_digests_error(repo_api_data, manifest_list_data, caplog):
+def test_untag_images_lost_digests_error(manifest_list_data, v2s2_manifest_data, caplog):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
-        register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
+        register_tags_api(m, "repo1", repo_tags)
+        register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "2", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "3", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "4", v2s2_manifest_data)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
 
         expected_err_msg = (
             "Following images .*"
-            ".*stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
+            ".*stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
             ".*stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
             ".*stage.quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9.*"
             ".*stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*"
+            ".*stage.quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb.*"
+            ".*stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*"
         )
 
         with pytest.raises(ValueError, match=expected_err_msg):
             untagger.untag_images()
 
 
-def test_untag_images_lost_digests_remove_anyway(repo_api_data, manifest_list_data, caplog):
+def test_untag_images_lost_digests_remove_anyway(manifest_list_data, v2s2_manifest_data, caplog):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
     untagger = setup_untagger(references, remove_last=True)
     with requests_mock.Mocker() as m:
-        register_repo_api(m, "repo1", repo_api_data)
-        DIGEST = "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
-        register_manifest_url(m, "repo1", DIGEST, manifest_list_data, mlist=True)
+        register_tags_api(m, "repo1", repo_tags)
+        register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "2", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "3", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "4", v2s2_manifest_data)
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
         m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/2")
         lost_images = untagger.untag_images()
 
         expected_lost_images = [
-            "stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
+            "stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
             "stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
             "stage.quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             "stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "stage.quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         ]
 
         assert lost_images == expected_lost_images
-        assert m.call_count == 5
+        assert m.call_count == 11
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
             "Following images won't be referencable by tag: "
-            ".*stage.quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
+            ".*stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
             ".*stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
             ".*stage.quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9.*"
-            ".*stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*",
+            ".*stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*"
+            ".*stage.quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb.*"
+            ".*stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*",
             "Removing tag '1' from repository 'name/repo1'",
             "Removing tag '2' from repository 'name/repo1'",
         ]
         compare_logs(caplog, expected_logs)
 
 
-def test_untag_images_missing_client(repo_api_data, manifest_list_data, caplog):
+def test_untag_images_missing_client(manifest_list_data, caplog):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
