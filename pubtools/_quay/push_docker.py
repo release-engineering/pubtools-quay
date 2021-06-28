@@ -302,6 +302,7 @@ class PushDocker:
         rollback_tags = []
         repo_schema = "{namespace}/{repo}"
         image_schema = "{host}/{repo}@{digest}"
+        image_schema_tag = "{host}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
 
         for item in push_items:
@@ -311,29 +312,32 @@ class PushDocker:
                 LOG.info("Generating backup mapping for repository '{0}'".format(repo))
                 # try to get repo data
                 try:
-                    repo_data = self.dest_quay_api_client.get_repository_data(full_repo)
+                    repo_tags = self.dest_quay_client.get_repository_tags(full_repo)
                 except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 404:
-                        repo_data = None
+                    # When robot account is used, 401 is returned instead of 404
+                    if e.response.status_code == 404 or e.response.status_code == 401:
+                        repo_tags = None
                     else:
                         raise
 
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
-                    if not repo_data:
+                    if not repo_tags:
                         # for rollback tags digest is not known
                         rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
                         continue
                     # tag exists in the repo, add to backup tags
-                    if tag in repo_data.get("tags", {}):
-                        # for backup tags store also digest
-                        image_data = PushDocker.ImageData(
-                            full_repo, tag, repo_data["tags"][tag]["manifest_digest"]
+                    if tag in repo_tags.get("tags", {}):
+                        image_tag = image_schema_tag.format(
+                            host=self.quay_host, repo=full_repo, tag=tag
                         )
+                        digest = self.dest_quay_client.get_manifest_digest(image_tag)
+                        # for backup tags store also digest
+                        image_data = PushDocker.ImageData(full_repo, tag, digest)
                         image = image_schema.format(
                             host=self.quay_host,
                             repo=full_repo,
-                            digest=repo_data["tags"][tag]["manifest_digest"],
+                            digest=digest,
                         )
                         manifest = self.dest_quay_client.get_manifest(image)
                         backup_tags[image_data] = manifest
