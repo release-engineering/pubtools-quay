@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import requests
@@ -80,6 +81,24 @@ class QuayClient:
             return response.text
         else:
             return response.json()
+
+    def get_manifest_digest(self, image):
+        """
+        Get manifest of the specified image and calculate its digest by hashing it.
+
+        Args:
+            image (str):
+                Image address for which to calculate the digest.
+        Returns (str):
+            Manifest digest of the image.
+        """
+        manifest = self.get_manifest(image, raw=True)
+        # SHA 256 is pretty much the standard for container images
+        hasher = hashlib.sha256()
+        hasher.update(manifest.encode("utf-8"))
+        digest = hasher.hexdigest()
+
+        return "sha256:{0}".format(digest)
 
     def upload_manifest(self, manifest, image, raw=False):
         """
