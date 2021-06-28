@@ -3,9 +3,7 @@ import logging
 from .utils.misc import setup_arg_parser, add_args_env_variables
 from .manifest_list_merger import ManifestListMerger
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 MERGE_MANIFEST_LIST_ARGS = {
     ("--source-ref",): {
@@ -58,6 +56,8 @@ def verify_merge_manifest_list_args(args):
 
 def merge_manifest_list_main(sysargs=None):
     """Entrypoint for manifest list merging."""
+    logging.basicConfig(level=logging.INFO)
+
     parser = setup_arg_parser(MERGE_MANIFEST_LIST_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])

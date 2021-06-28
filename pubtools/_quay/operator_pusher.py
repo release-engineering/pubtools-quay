@@ -9,9 +9,7 @@ from requests.packages.urllib3.util.retry import Retry
 from .container_image_pusher import ContainerImagePusher
 from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class OperatorPusher:

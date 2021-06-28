@@ -5,9 +5,7 @@ import requests
 
 from .quay_client import QuayClient
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class ManifestListMerger:

@@ -3,9 +3,7 @@ import logging
 from .image_untagger import ImageUntagger
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 
-LOG = logging.getLogger()
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 UNTAG_IMAGES_ARGS = {
     ("--reference",): {
@@ -196,6 +194,8 @@ def untag_images(
 
 def untag_images_main(sysargs=None):
     """Entrypoint for untagging images."""
+    logging.basicConfig(level=logging.INFO)
+
     parser = setup_arg_parser(UNTAG_IMAGES_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])

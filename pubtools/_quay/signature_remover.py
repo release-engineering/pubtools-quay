@@ -10,9 +10,7 @@ from .utils.misc import (
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class SignatureRemover:

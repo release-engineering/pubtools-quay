@@ -10,9 +10,7 @@ from .utils.misc import (
     get_internal_container_repo_name,
 )
 
-LOG = logging.getLogger()
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 CLEAR_REPO_ARGS = {
     ("--repositories",): {
@@ -239,6 +237,8 @@ def clear_repositories(
 
 def clear_repositories_main(sysargs=None):
     """Entrypoint for clearing repositories."""
+    logging.basicConfig(level=logging.INFO)
+
     parser = setup_arg_parser(CLEAR_REPO_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])

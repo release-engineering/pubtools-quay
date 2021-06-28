@@ -446,7 +446,7 @@ def test_on_message_not_last_one(mock_ssl_domain, mock_send_message, caplog):
 @mock.patch("pubtools._quay.manifest_claims_handler.ManifestClaimsHandler._send_message")
 @mock.patch("pubtools._quay.manifest_claims_handler.proton.SSLDomain")
 def test_on_message_unknown_message(mock_ssl_domain, mock_send_message, caplog):
-    caplog.set_level(logging.DEBUG, logger="PubLogger")
+    caplog.set_level(logging.DEBUG, logger="pubtools.quay")
     hub = mock.MagicMock()
     message_sender_callback = lambda messages: hub.worker.umb_send_manifest_claim_messages(
         "1", messages
@@ -534,7 +534,7 @@ def test_send_message(mock_ssl_domain, mock_monotonic):
 
 @mock.patch("pubtools._quay.manifest_claims_handler.proton.SSLDomain")
 def test_events_logs(mock_ssl_domain, caplog):
-    caplog.set_level(logging.DEBUG, logger="PubLogger")
+    caplog.set_level(logging.DEBUG, logger="pubtools.quay")
     hub = mock.MagicMock()
     event = mock.MagicMock()
 

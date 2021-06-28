@@ -2,8 +2,7 @@ import logging
 
 from .quay_session import QuaySession
 
-LOG = logging.getLogger()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class QuayApiClient:
