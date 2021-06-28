@@ -139,19 +139,15 @@ class SignatureHandler:
             List of manifest digests referenced by the tag.
         """
         digests = []
-        repo_path, tag = image_ref.split(":")
-        repo = "/".join(repo_path.split("/")[-2:])
 
-        repo_data = self.src_quay_api_client.get_repository_data(repo)
-
-        # if 'image_id' is specified, the tag doesn't reference a ML and digest should be included
-        if repo_data["tags"][tag]["image_id"]:
-            digests.append(repo_data["tags"][tag]["manifest_digest"])
-        # if manifest list, we want to sign only arch digests, not ML digest
+        manifest = self.src_quay_client.get_manifest(image_ref)
+        # If V2S2 manifest, we only want its digest
+        if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
+            digests.append(self.src_quay_client.get_manifest_digest(image_ref))
+        # If manifest list, we want digests of all its arch images
         else:
-            manifest_list = self.src_quay_client.get_manifest(image_ref, manifest_list=True)
-            for manifest in manifest_list["manifests"]:
-                digests.append(manifest["digest"])
+            for arch_manifest in manifest["manifests"]:
+                digests.append(arch_manifest["digest"])
 
         return digests
 

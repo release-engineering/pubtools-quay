@@ -79,18 +79,25 @@ def test_create_claim_message(
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 @mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_get_tagged_image_digests_no_manifest_list(
-    mock_quay_api_client, mock_quay_client, target_settings, repo_api_data
+    mock_quay_api_client, mock_quay_client, target_settings, repo_api_data, v2s2_manifest_data
 ):
     hub = mock.MagicMock()
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
+    mock_get_manifest = mock.MagicMock()
+    mock_get_manifest.return_value = v2s2_manifest_data
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     digests = sig_handler.get_tagged_image_digests("registry.com/namespace/image:3")
 
     assert digests == ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"]
-    mock_get_repo_data.assert_called_once_with("namespace/image")
+    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:3")
+    mock_get_manifest_digest.assert_called_once_with("registry.com/namespace/image:3")
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -99,11 +106,8 @@ def test_get_tagged_image_digests_manifest_list(
     mock_quay_api_client, mock_quay_client, target_settings, repo_api_data, manifest_list_data
 ):
     hub = mock.MagicMock()
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = repo_api_data
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
@@ -116,8 +120,7 @@ def test_get_tagged_image_digests_manifest_list(
         "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
     ]
-    mock_get_repo_data.assert_called_once_with("namespace/image")
-    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1", manifest_list=True)
+    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1")
 
 
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
