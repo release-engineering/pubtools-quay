@@ -12,8 +12,7 @@ except ImportError:  # pragma: no cover
 from .exceptions import ManifestTypeError, RegistryAuthError
 from .quay_session import QuaySession
 
-LOG = logging.getLogger("PubLogger")
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class QuayClient:

@@ -6,7 +6,7 @@ class Logger(object):
 
     def __init__(self):
         """Init the logger instance."""
-        self.logger = logging.getLogger("PubLogger")
+        self.logger = logging.getLogger("pubtools.quay")
 
     def log_info(self, *args, **kwargs):
         """Log message with info level."""
@@ -41,7 +41,7 @@ def log_jsonl(step_name):
     :param step_name: Name of the task step, e.g., "Tag images".
     """
     event_name = step_name.lower().replace(" ", "-")
-    logger = logging.getLogger("PubLogger")
+    logger = logging.getLogger("pubtools.quay")
 
     def decorate(fn):
         def fn_wrapper(*args, **kwargs):

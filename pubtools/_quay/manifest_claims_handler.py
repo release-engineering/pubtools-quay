@@ -8,7 +8,7 @@ import proton
 
 import monotonic
 
-LOG = logging.getLogger("PubLogger")
+LOG = logging.getLogger("pubtools.quay")
 
 # There are some linting errors since this was copied from rcm-pub
 # flake8: noqa: D101, D107, D102, D205, D400, D403

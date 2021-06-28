@@ -7,8 +7,7 @@ from six.moves import shlex_quote
 
 import paramiko
 
-LOG = logging.getLogger("PubLogger")
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 # Python 2.6 version of paramiko doesn't support the usage

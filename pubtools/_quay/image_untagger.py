@@ -3,9 +3,7 @@ import logging
 from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class ImageUntagger:

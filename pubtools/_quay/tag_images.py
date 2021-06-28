@@ -3,8 +3,7 @@ import logging
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 from .command_executor import LocalExecutor, RemoteExecutor
 
-LOG = logging.getLogger("PubLogger")
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 TAG_IMAGES_ARGS = {
     ("--source-ref",): {
@@ -259,6 +258,8 @@ def verify_tag_images_args(
 
 def tag_images_main(sysargs=None):
     """Entrypoint for image tagging."""
+    logging.basicConfig(level=logging.INFO)
+
     parser = setup_arg_parser(TAG_IMAGES_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])

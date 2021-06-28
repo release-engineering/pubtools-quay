@@ -9,9 +9,7 @@ from .utils.misc import (
     get_internal_container_repo_name,
 )
 
-LOG = logging.getLogger()
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 REMOVE_REPO_ARGS = {
     ("--repositories",): {
@@ -221,6 +219,8 @@ def remove_repositories(
 
 def remove_repositories_main(sysargs=None):
     """Entrypoint for removing repositories."""
+    logging.basicConfig(level=logging.INFO)
+
     parser = setup_arg_parser(REMOVE_REPO_ARGS)
     if sysargs:
         args = parser.parse_args(sysargs[1:])

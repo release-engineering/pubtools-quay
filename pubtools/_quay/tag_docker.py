@@ -25,9 +25,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class TagDocker:

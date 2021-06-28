@@ -9,9 +9,7 @@ import textwrap
 
 from six import StringIO
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 INTERNAL_DELIMITER = "----"
 

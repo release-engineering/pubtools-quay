@@ -14,9 +14,7 @@ from .quay_client import QuayClient
 from .tag_images import tag_images
 from .manifest_list_merger import ManifestListMerger
 
-LOG = logging.getLogger("PubLogger")
-logging.basicConfig()
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 class ContainerImagePusher:

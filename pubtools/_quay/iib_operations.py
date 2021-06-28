@@ -6,8 +6,7 @@ from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
 from .utils.misc import get_internal_container_repo_name
 
-LOG = logging.getLogger("PubLogger")
-LOG.setLevel(logging.INFO)
+LOG = logging.getLogger("pubtools.quay")
 
 
 def verify_target_settings(target_settings):
