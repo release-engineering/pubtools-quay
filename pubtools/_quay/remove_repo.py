@@ -193,7 +193,6 @@ def remove_repositories(
     quay_api_client = QuayApiClient(quay_api_token)
 
     sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
-    sig_remover.set_quay_api_client(quay_api_client)
 
     for repository in parsed_repositories:
         sig_remover.remove_repository_signatures(

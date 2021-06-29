@@ -15,24 +15,6 @@ def test_init(mock_session):
     mock_session.return_value.set_auth_token.assert_called_once_with("some-token")
 
 
-def test_get_repo_data():
-    client = quay_api_client.QuayApiClient("some-token", "stage.quay.io")
-
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://stage.quay.io/api/v1/repository/some-repo",
-            json={"some-data": "value"},
-        )
-
-        data = client.get_repository_data("some-repo")
-        assert data == {"some-data": "value"}
-
-        data = client.get_repository_data("some-repo", raw=True)
-        assert data == '{"some-data": "value"}'
-
-        assert m.call_count == 2
-
-
 def test_delete_client():
     client = quay_api_client.QuayApiClient("some-token", "stage.quay.io")
 

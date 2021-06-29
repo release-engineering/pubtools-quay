@@ -254,7 +254,7 @@ def test_run(mock_quay_client, mock_send_umb_message, mock_signature_remover, mo
     clear_repo.clear_repositories_main(args)
 
     mock_quay_client.assert_called_once_with("some-user", "some-password")
-    mock_signature_remover.assert_called_once_with(quay_api_token="some-token")
+    mock_signature_remover.assert_called_once_with()
     mock_set_quay_client.assert_called_once_with(mock_quay_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
@@ -318,7 +318,7 @@ def test_run_multiple_repos(
     clear_repo.clear_repositories_main(args)
 
     mock_quay_client.assert_called_once_with("some-user", "some-password")
-    mock_signature_remover.assert_called_once_with(quay_api_token="some-token")
+    mock_signature_remover.assert_called_once_with()
     mock_set_quay_client.assert_called_once_with(mock_quay_client.return_value)
     assert mock_remove_repository_signatures.call_count == 2
     assert mock_remove_repository_signatures.call_args_list[0] == mock.call(

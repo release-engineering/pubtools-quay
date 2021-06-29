@@ -24,7 +24,6 @@ def verify_target_settings(target_settings):
         "source_quay_password",
         "dest_quay_user",
         "dest_quay_password",
-        "source_quay_api_token",
         "dest_quay_api_token",
         "pyxis_server",
         "quay_namespace",

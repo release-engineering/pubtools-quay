@@ -8,7 +8,6 @@ import proton
 
 from .exceptions import SigningError
 from .utils.misc import run_entrypoint, log_step
-from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
 
@@ -50,7 +49,6 @@ class SignatureHandler:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
         self._src_quay_client = None
-        self._src_quay_api_client = None
 
     @property
     def src_quay_client(self):
@@ -62,15 +60,6 @@ class SignatureHandler:
                 self.quay_host,
             )
         return self._src_quay_client
-
-    @property
-    def src_quay_api_client(self):
-        """Create and access QuayApiClient for source image."""
-        if self._src_quay_api_client is None:
-            self._src_quay_api_client = QuayApiClient(
-                self.target_settings["source_quay_api_token"], self.quay_host
-            )
-        return self._src_quay_api_client
 
     @classmethod
     def create_manifest_claim_message(

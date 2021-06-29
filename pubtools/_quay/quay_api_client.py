@@ -22,29 +22,6 @@ class QuayApiClient:
         self.session = QuaySession(hostname=host, api="quay")
         self.session.set_auth_token(self.token)
 
-    def get_repository_data(self, repository, raw=False):
-        """
-        Get repository data including its tags.
-
-        Args:
-            repository (str):
-                Full repository path including the namespace.
-            raw (bool):
-                Whether to return the data as raw JSON.
-
-        Returns (dict|str):
-            Returned repository data.
-        """
-        endpoint = "repository/{0}".format(repository)
-        kwargs = {"params": {"includeTags": True}}
-        response = self.session.get(endpoint, **kwargs)
-        response.raise_for_status()
-
-        if raw:
-            return response.text
-        else:
-            return response.json()
-
     def delete_tag(self, repository, tag):
         """
         Delete a tag from a repository.

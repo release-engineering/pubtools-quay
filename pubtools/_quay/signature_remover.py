@@ -7,7 +7,6 @@ from .utils.misc import (
     run_entrypoint,
     get_external_container_repo_name,
 )
-from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 
 LOG = logging.getLogger("pubtools.quay")
@@ -23,8 +22,6 @@ class SignatureRemover:
         Initialize.
 
         Args:
-            quay_api_token (str):
-                Authentication token for Quay REST API.
             quay_user (str):
                 User name for Quay Docker registry API.
             quay_password (str):
@@ -33,35 +30,10 @@ class SignatureRemover:
                 Quay base host URL. Defaults to 'quay.io'.
         """
         self.quay_host = quay_host.rstrip("/") if quay_host else "quay.io"
-        self.quay_api_token = quay_api_token
         self.quay_user = quay_user
         self.quay_password = quay_password
 
         self._quay_client = None
-        self._quay_api_client = None
-
-    @property
-    def quay_api_client(self):
-        """Create and access QuayApiClient."""
-        if self._quay_api_client is None:
-            if not self.quay_api_token:
-                raise ValueError(
-                    "No instance of QuayApiClient is available. Please provide "
-                    "'quay_api_token' or set the instance via 'set_quay_api_client'"
-                )
-
-            self._quay_api_client = QuayApiClient(self.quay_api_token, self.quay_host)
-        return self._quay_api_client
-
-    def set_quay_api_client(self, quay_api_client):
-        """
-        Set a QuayApiClient instance.
-
-        Args:
-            quay_api_client (QuayApiClient):
-                QuayApiClient instance.
-        """
-        self._quay_api_client = quay_api_client
 
     @property
     def quay_client(self):

@@ -15,8 +15,7 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
-def test_init(mock_quay_api_client, mock_quay_client, target_settings):
+def test_init(mock_quay_client, target_settings):
     hub = mock.MagicMock()
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
 
@@ -26,21 +25,17 @@ def test_init(mock_quay_api_client, mock_quay_client, target_settings):
     assert sig_handler.target_settings == target_settings
     assert sig_handler.quay_host == "quay.io"
     mock_quay_client.assert_not_called()
-    mock_quay_api_client.assert_not_called()
 
     assert sig_handler.src_quay_client == mock_quay_client.return_value
-    assert sig_handler.src_quay_api_client == mock_quay_api_client.return_value
     mock_quay_client.assert_called_once_with("src-quay-user", "src-quay-pass", "quay.io")
-    mock_quay_api_client.assert_called_once_with("src-quay-token", "quay.io")
 
 
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_create_claim_message(
-    mock_quay_api_client, mock_quay_client, mock_encode, mock_datetime, mock_uuid, target_settings
+    mock_quay_client, mock_encode, mock_datetime, mock_uuid, target_settings
 ):
     hub = mock.MagicMock()
     mock_encode.return_value = b"some-encode"
@@ -77,9 +72,8 @@ def test_create_claim_message(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_get_tagged_image_digests_no_manifest_list(
-    mock_quay_api_client, mock_quay_client, target_settings, repo_api_data, v2s2_manifest_data
+    mock_quay_client, target_settings, repo_api_data, v2s2_manifest_data
 ):
     hub = mock.MagicMock()
     mock_get_manifest = mock.MagicMock()
@@ -101,9 +95,8 @@ def test_get_tagged_image_digests_no_manifest_list(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_get_tagged_image_digests_manifest_list(
-    mock_quay_api_client, mock_quay_client, target_settings, repo_api_data, manifest_list_data
+    mock_quay_client, target_settings, repo_api_data, manifest_list_data
 ):
     hub = mock.MagicMock()
     mock_get_manifest = mock.MagicMock()
@@ -125,10 +118,7 @@ def test_get_tagged_image_digests_manifest_list(
 
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
-def test_get_pyxis_signature(
-    mock_quay_api_client, mock_quay_client, mock_run_entrypoint, target_settings
-):
+def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_settings):
     hub = mock.MagicMock()
     expected_data1 = [{"some": "data"}, {"other": "data"}]
     expected_data2 = [{"some-other": "data"}]
@@ -177,9 +167,7 @@ def test_get_pyxis_signature(
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_filter_claim_messages(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     target_settings,
@@ -213,9 +201,7 @@ def test_filter_claim_messages(
 @mock.patch("pubtools._quay.signature_handler.proton")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_get_signatures_from_radas(
-    mock_quay_api_client,
     mock_quay_client,
     mock_claim_handler,
     mock_proton,
@@ -276,9 +262,7 @@ def test_get_signatures_from_radas(
 
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_upload_signatures_pyxis(
-    mock_quay_api_client,
     mock_quay_client,
     mock_run_entrypoint,
     target_settings,
@@ -348,9 +332,8 @@ def test_upload_signatures_pyxis(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_validate_radas_msgs(
-    mock_quay_api_client, mock_quay_client, target_settings, claim_messages, error_signed_messages
+    mock_quay_client, target_settings, claim_messages, error_signed_messages
 ):
     hub = mock.MagicMock()
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
@@ -364,9 +347,7 @@ def test_validate_radas_msgs(
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_construct_item_claim_messages(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_tagged_digests,
     mock_uuid,
@@ -398,9 +379,8 @@ def test_construct_item_claim_messages(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_remove_duplicate_claim_messages(
-    mock_quay_api_client, mock_quay_client, target_settings, container_signing_push_item
+    mock_quay_client, target_settings, container_signing_push_item
 ):
     hub = mock.MagicMock()
     sig_handler = signature_handler.ContainerSignatureHandler(
@@ -445,9 +425,7 @@ def test_remove_duplicate_claim_messages(
     "pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_container_images(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_claim_msgs,
     mock_remove_duplicate_claim_msgs,
@@ -486,9 +464,7 @@ def test_sign_container_images(
     "pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_container_images_no_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_claim_msgs,
     mock_remove_duplicate_claim_msgs,
@@ -525,9 +501,7 @@ def test_sign_container_images_no_signatures(
     "pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_container_images_not_allowed(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_claim_msgs,
     mock_filter_claim_msgs,
@@ -554,9 +528,7 @@ def test_sign_container_images_not_allowed(
 @mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_construct_operator_item_claim_messages(
-    mock_quay_api_client,
     mock_quay_client,
     mock_uuid,
     mock_datetime,
@@ -596,9 +568,7 @@ def test_construct_operator_item_claim_messages(
     "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_operator_images(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_index_claim_msgs,
     mock_get_radas_signatures,
@@ -651,9 +621,7 @@ def test_sign_operator_images(
     "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_operator_images_not_allowed(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_index_claim_msgs,
     mock_get_radas_signatures,
@@ -682,9 +650,7 @@ def test_sign_operator_images_not_allowed(
     "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_task_index_image(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_index_claim_msgs,
     mock_get_radas_signatures,
@@ -714,8 +680,7 @@ def test_sign_task_index_image(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
-def test_basic_signature_handler_init(mock_quay_api_client, mock_quay_client, target_settings):
+def test_basic_signature_handler_init(mock_quay_client, target_settings):
     hub = mock.MagicMock()
     sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
 
@@ -725,12 +690,9 @@ def test_basic_signature_handler_init(mock_quay_api_client, mock_quay_client, ta
     assert sig_handler.target_settings == target_settings
     assert sig_handler.quay_host == "quay.io"
     mock_quay_client.assert_not_called()
-    mock_quay_api_client.assert_not_called()
 
     assert sig_handler.src_quay_client == mock_quay_client.return_value
-    assert sig_handler.src_quay_api_client == mock_quay_api_client.return_value
     mock_quay_client.assert_called_once_with("src-quay-user", "src-quay-pass", "quay.io")
-    mock_quay_api_client.assert_called_once_with("src-quay-token", "quay.io")
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
@@ -739,9 +701,7 @@ def test_basic_signature_handler_init(mock_quay_api_client, mock_quay_client, ta
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_claim_messages(
-    mock_quay_api_client,
     mock_quay_client,
     mock_remove_duplicate_claim_msgs,
     mock_filter_claim_msgs,
@@ -771,9 +731,7 @@ def test_sign_claim_messages(
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_claim_messages_not_allowed(
-    mock_quay_api_client,
     mock_quay_client,
     mock_filter_claim_msgs,
     mock_get_radas_signatures,
@@ -798,9 +756,7 @@ def test_sign_claim_messages_not_allowed(
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_claim_messages_no_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_remove_duplicate_claim_msgs,
     mock_filter_claim_msgs,
@@ -825,9 +781,7 @@ def test_sign_claim_messages_no_signatures(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_construct_item_claim_messages_none_signing_key(
-    mock_quay_api_client,
     mock_quay_client,
     target_settings,
     container_signing_push_item,
@@ -846,9 +800,7 @@ def test_construct_item_claim_messages_none_signing_key(
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_construct_operator_item_claim_messages_none_signing_key(
-    mock_quay_api_client,
     mock_quay_client,
     target_settings,
     operator_signing_push_item,
@@ -877,9 +829,7 @@ def test_construct_operator_item_claim_messages_none_signing_key(
     "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_operator_images_no_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_index_claim_msgs,
     mock_get_radas_signatures,
@@ -919,9 +869,7 @@ def test_sign_operator_images_no_signatures(
     "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
 )
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-@mock.patch("pubtools._quay.signature_handler.QuayApiClient")
 def test_sign_task_index_image_no_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_construct_index_claim_msgs,
     mock_get_radas_signatures,

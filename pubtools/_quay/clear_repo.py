@@ -193,7 +193,7 @@ def clear_repositories(
     LOG.info("Clearing repositories '{0}'".format(repositories))
     quay_client = QuayClient(quay_user, quay_password)
 
-    sig_remover = SignatureRemover(quay_api_token=quay_api_token)
+    sig_remover = SignatureRemover()
     sig_remover.set_quay_client(quay_client)
 
     refrences_to_remove = []

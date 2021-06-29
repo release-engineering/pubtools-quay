@@ -551,7 +551,6 @@ def target_settings():
         "iib_deprecation_list_url": "https://git-server.com",
         "max_concurrent": 2,
         "pyxis_server": "pyxis-url.com",
-        "source_quay_api_token": "src-quay-token",
         "dest_quay_api_token": "dest-quay-token",
         "quay_namespace": "some-namespace",
         "quay_operator_repository": "operators/index-image",

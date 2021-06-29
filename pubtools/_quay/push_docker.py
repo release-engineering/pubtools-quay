@@ -83,7 +83,6 @@ class PushDocker:
             "source_quay_password",
             "dest_quay_user",
             "dest_quay_password",
-            "source_quay_api_token",
             "dest_quay_api_token",
             "pyxis_server",
             "quay_namespace",
@@ -536,7 +535,6 @@ class PushDocker:
             )
             sig_remover = SignatureRemover()
             sig_remover.set_quay_client(self.dest_quay_client)
-            sig_remover.set_quay_api_client(self.dest_quay_api_client)
 
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images
