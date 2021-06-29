@@ -422,15 +422,16 @@ def test_get_image_details_multiarch(
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
-    repo_api_data,
 ):
     hub = mock.MagicMock()
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],
@@ -442,7 +443,7 @@ def test_get_image_details_multiarch(
     result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:2")
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:2")
-    mock_get_repo_data.assert_called_once_with("namespace/image")
+    mock_get_manifest_digest.assert_called_once_with("some-registry.com/namespace/image:2")
 
     assert result == tag_docker.TagDocker.ImageDetails(
         "some-registry.com/namespace/image:2",
@@ -468,9 +469,11 @@ def test_get_image_details_source(
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = v2s2_manifest_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
-    mock_get_repo_data = mock.MagicMock()
-    mock_get_repo_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repo_data
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
     mock_skopeo_inspect = mock.MagicMock()
     mock_skopeo_inspect.return_value = {"Architecture": "amd64"}
     mock_remote_executor.return_value.skopeo_inspect = mock_skopeo_inspect
@@ -485,7 +488,7 @@ def test_get_image_details_source(
     result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:1")
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:1")
-    mock_get_repo_data.assert_called_once_with("namespace/image")
+    mock_get_manifest_digest.assert_called_once_with("some-registry.com/namespace/image:1")
     mock_skopeo_inspect.assert_called_once_with("some-registry.com/namespace/image:1")
 
     assert result == tag_docker.TagDocker.ImageDetails(

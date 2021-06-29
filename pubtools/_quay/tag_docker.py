@@ -247,9 +247,7 @@ class TagDocker:
                     "images are supported, which have arch 'amd64'.".format(reference, arch)
                 )
 
-        repo, tag = reference.split(":", 1)
-        repo_data = self.quay_api_client.get_repository_data("/".join(repo.split("/")[1:]))
-        digest = repo_data["tags"][tag]["manifest_digest"]
+        digest = self.quay_client.get_manifest_digest(reference)
 
         return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)
 
