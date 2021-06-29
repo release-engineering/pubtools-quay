@@ -13,7 +13,7 @@ LOG = logging.getLogger("pubtools.quay")
 
 REMOVE_REPO_ARGS = {
     ("--repositories",): {
-        "help": "External repositories to remove as CSV. Must be in format <namespace>/<repo>.",
+        "help": "External repositories to remove as CSV.",
         "required": True,
         "type": str,
     },
