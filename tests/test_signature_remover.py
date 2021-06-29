@@ -154,13 +154,23 @@ def test_remove_signatures_from_pyxis(mock_run_entrypoint, mock_temp_file):
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
 @mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_get_repository_digests(
-    mock_quay_api_client, mock_quay_client, repo_api_data, manifest_list_data
+    mock_quay_api_client, mock_quay_client, repo_api_data, manifest_list_data, v2s2_manifest_data
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {"name": "namespace/repo", "tags": ["1", "2", "3", "4"]}
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
     mock_get_manifest = mock.MagicMock()
-    mock_get_manifest.return_value = manifest_list_data
+    mock_get_manifest.side_effect = [
+        manifest_list_data,
+        manifest_list_data,
+        v2s2_manifest_data,
+        v2s2_manifest_data,
+    ]
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     sig_remover = signature_remover.SignatureRemover(
@@ -168,14 +178,15 @@ def test_get_repository_digests(
     )
     digests = sig_remover.get_repository_digests("namespace/repo")
 
-    mock_get_repository_data.assert_called_once_with("namespace/repo")
-    assert mock_get_manifest.call_count == 2
-    assert mock_get_manifest.call_args_list[0] == mock.call(
-        "quay.io/namespace/repo:1", manifest_list=True
-    )
-    assert mock_get_manifest.call_args_list[1] == mock.call(
-        "quay.io/namespace/repo:2", manifest_list=True
-    )
+    mock_get_repository_tags.assert_called_once_with("namespace/repo")
+    assert mock_get_manifest_digest.call_count == 2
+    assert mock_get_manifest_digest.call_args_list[0] == mock.call("quay.io/namespace/repo:3")
+    assert mock_get_manifest_digest.call_args_list[1] == mock.call("quay.io/namespace/repo:4")
+    assert mock_get_manifest.call_count == 4
+    assert mock_get_manifest.call_args_list[0] == mock.call("quay.io/namespace/repo:1")
+    assert mock_get_manifest.call_args_list[1] == mock.call("quay.io/namespace/repo:2")
+    assert mock_get_manifest.call_args_list[2] == mock.call("quay.io/namespace/repo:3")
+    assert mock_get_manifest.call_args_list[3] == mock.call("quay.io/namespace/repo:4")
 
     assert digests == [
         "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
@@ -261,12 +272,14 @@ def test_remove_tag_signatures_multiarch(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -308,11 +321,11 @@ def test_remove_tag_signatures_multiarch(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -340,12 +353,14 @@ def test_remove_tag_signatures_non_existent_tag(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -360,7 +375,7 @@ def test_remove_tag_signatures_non_existent_tag(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_not_called()
@@ -377,15 +392,22 @@ def test_remove_tag_signatures_source(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
-    manifest_list_data,
+    v2s2_manifest_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
-    mock_get_manifest.return_value = manifest_list_data
+    mock_get_manifest.return_value = v2s2_manifest_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     mock_get_signatures.return_value = [
         {
@@ -424,10 +446,12 @@ def test_remove_tag_signatures_source(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
-    mock_get_manifest.assert_not_called()
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/internal-namespace/external-repo----external-image:3"
+    )
     mock_get_signatures.assert_called_once_with(
         ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"],
         "pyxis-server.com",
@@ -448,7 +472,6 @@ def test_remove_tag_signatures_digest(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
     sig_remover = signature_remover.SignatureRemover(
@@ -475,12 +498,14 @@ def test_remove_tag_signatures_no_signatures(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -528,12 +553,14 @@ def test_remove_tag_signatures_exclude_by_claims(
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -581,11 +608,11 @@ def test_remove_tag_signatures_exclude_by_claims(
         exclude_by_claims=claim_messages,
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -616,9 +643,12 @@ def test_remove_tag_signatures_selected_archs(
     repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -657,11 +687,11 @@ def test_remove_tag_signatures_selected_archs(
         remove_archs=selected_archs,
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [
