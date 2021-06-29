@@ -1635,7 +1635,7 @@ def test_copy_all_archs_sign_images_source(
 
     assert mock_create_claim_message.call_count == 2
     assert mock_create_claim_message.call_args_list[0] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         docker_reference="some-registry1.com/namespace/test_repo:v1.6",
@@ -1643,7 +1643,7 @@ def test_copy_all_archs_sign_images_source(
         task_id="1",
     )
     assert mock_create_claim_message.call_args_list[1] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         docker_reference="some-registry2.com/namespace/test_repo:v1.6",
@@ -1774,7 +1774,7 @@ def test_merge_manifest_lists_sign_images(
 
     assert mock_create_claim_message.call_count == 4
     assert mock_create_claim_message.call_args_list[0] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         docker_reference="some-registry1.com/namespace/test_repo:v1.6",
@@ -1782,7 +1782,7 @@ def test_merge_manifest_lists_sign_images(
         task_id="1",
     )
     assert mock_create_claim_message.call_args_list[1] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
         docker_reference="some-registry2.com/namespace/test_repo:v1.6",
@@ -1790,7 +1790,7 @@ def test_merge_manifest_lists_sign_images(
         task_id="1",
     )
     assert mock_create_claim_message.call_args_list[2] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
         docker_reference="some-registry1.com/namespace/test_repo:v1.6",
@@ -1798,7 +1798,7 @@ def test_merge_manifest_lists_sign_images(
         task_id="1",
     )
     assert mock_create_claim_message.call_args_list[3] == mock.call(
-        destination_repo="some-namespace/namespace----test_repo",
+        destination_repo="namespace/test_repo",
         signature_key="some-key",
         manifest_digest="sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
         docker_reference="some-registry2.com/namespace/test_repo:v1.6",

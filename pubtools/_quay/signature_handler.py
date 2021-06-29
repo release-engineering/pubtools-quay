@@ -7,7 +7,7 @@ import uuid
 import proton
 
 from .exceptions import SigningError
-from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
+from .utils.misc import run_entrypoint, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
@@ -451,16 +451,13 @@ class ContainerSignatureHandler(SignatureHandler):
         """
         claim_messages = []
         image_schema = "{host}/{repository}:{tag}"
-        internal_repo_schema = self.target_settings["quay_namespace"] + "/{internal_repo}"
-        internal_repo = get_internal_container_repo_name(repo)
-        dest_repo = internal_repo_schema.format(internal_repo=internal_repo)
 
         for registry in self.dest_registries:
             reference = image_schema.format(host=registry, repository=repo, tag=tag)
 
             for signing_key in signing_keys:
                 claim_message = self.create_manifest_claim_message(
-                    destination_repo=dest_repo,
+                    destination_repo=repo,
                     signature_key=signing_key,
                     manifest_digest=digest,
                     docker_reference=reference,
@@ -533,7 +530,6 @@ class OperatorSignatureHandler(SignatureHandler):
         LOG.info("Constructing claim messages for index image '{0}'".format(index_image))
         claim_messages = []
         image_schema = "{host}/{repository}:{tag}"
-        internal_repo_schema = self.target_settings["quay_namespace"] + "/{internal_repo}"
 
         # Get digests of all archs this index image was build for
         manifest_list = self.src_quay_client.get_manifest(index_image, manifest_list=True)
@@ -544,15 +540,13 @@ class OperatorSignatureHandler(SignatureHandler):
                     continue
                 for digest in digests:
                     repo = self.target_settings["quay_operator_repository"]
-                    internal_repo = get_internal_container_repo_name(repo)
-                    dest_repo = internal_repo_schema.format(internal_repo=internal_repo)
                     reference = image_schema.format(host=registry, repository=repo, tag=tag)
                     claim_message = self.create_manifest_claim_message(
-                        destination_repo=dest_repo,
+                        destination_repo=repo,
                         signature_key=signing_key,
                         manifest_digest=digest,
                         docker_reference=reference,
-                        image_name=self.target_settings["quay_operator_repository"],
+                        image_name=repo,
                         task_id=self.task_id,
                     )
                     claim_messages.append(claim_message)

@@ -511,7 +511,6 @@ class TagDocker:
 
         claim_messages = []
         details = self.get_image_details(source_image)
-        dest_repo = "{0}/{1}".format(self.target_settings["quay_namespace"], internal_repo)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
         if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:
@@ -520,7 +519,7 @@ class TagDocker:
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                 )
                 message = SignatureHandler.create_manifest_claim_message(
-                    destination_repo=dest_repo,
+                    destination_repo=list(push_item.repos.keys())[0],
                     signature_key=push_item.claims_signing_key,
                     manifest_digest=details.digest,
                     docker_reference=reference,
@@ -574,7 +573,6 @@ class TagDocker:
         dest_image = "{0}:{1}".format(full_repo, tag)
 
         claim_messages = []
-        dest_repo = "{0}/{1}".format(self.target_settings["quay_namespace"], internal_repo)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
         # NOTE: Arch images don't need to be copied, since they already exist in the same repo
@@ -589,7 +587,7 @@ class TagDocker:
                         host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                     )
                     message = SignatureHandler.create_manifest_claim_message(
-                        destination_repo=dest_repo,
+                        destination_repo=list(push_item.repos.keys())[0],
                         signature_key=push_item.claims_signing_key,
                         manifest_digest=manifest["digest"],
                         docker_reference=reference,
