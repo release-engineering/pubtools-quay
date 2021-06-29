@@ -203,7 +203,7 @@ def test_remote_executor_run_error(mock_sshclient):
 def test_skopeo_login_already_logged(mock_run_cmd):
     executor = command_executor.LocalExecutor()
 
-    mock_run_cmd.return_value = ("Already logged in!", "")
+    mock_run_cmd.return_value = ("quay_user", "")
     executor.skopeo_login("quay_user", "quay_token")
     mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
 
