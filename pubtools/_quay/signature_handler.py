@@ -494,7 +494,7 @@ class ContainerSignatureHandler(SignatureHandler):
             claim_messages += self.construct_item_claim_messages(item)
         claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         claim_messages = self.filter_claim_messages(claim_messages)
-        if len(claim_messages) == 0:
+        if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
             return
 
@@ -590,6 +590,10 @@ class OperatorSignatureHandler(SignatureHandler):
                 intermediate_index_image, version, signing_keys
             )
 
+        if not claim_messages:
+            LOG.info("No new claim messages will be uploaded")
+            return
+
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
@@ -618,6 +622,10 @@ class OperatorSignatureHandler(SignatureHandler):
                 Tag of the result index image.
         """
         claim_messages = self.construct_index_image_claim_messages(index_image, tag, signing_keys)
+        if not claim_messages:
+            LOG.info("No new claim messages will be uploaded")
+            return
+
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
@@ -672,7 +680,7 @@ class BasicSignatureHandler(SignatureHandler):
             claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         if filter_existing:
             claim_messages = self.filter_claim_messages(claim_messages)
-        if len(claim_messages) == 0:
+        if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
             return
 
