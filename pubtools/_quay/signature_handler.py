@@ -620,6 +620,8 @@ class OperatorSignatureHandler(SignatureHandler):
                 Index image pointing to the new manifest list.
             tag (str):
                 Tag of the result index image.
+        Returns ([dict]):
+            Constructed claim messages.
         """
         claim_messages = self.construct_index_image_claim_messages(index_image, tag, signing_keys)
         if not claim_messages:
@@ -636,6 +638,8 @@ class OperatorSignatureHandler(SignatureHandler):
                 "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
             ),
         )
+
+        return claim_messages
 
 
 class BasicSignatureHandler(SignatureHandler):

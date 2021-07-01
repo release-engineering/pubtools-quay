@@ -4,6 +4,7 @@ from .container_image_pusher import ContainerImagePusher
 from .exceptions import InvalidTargetSettings
 from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
+from .signature_remover import SignatureRemover
 from .utils.misc import get_internal_container_repo_name
 
 LOG = logging.getLogger("pubtools.quay")
@@ -130,13 +131,34 @@ def task_iib_add_bundles(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
-    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+    claim_messages = sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+
+    sig_remover = SignatureRemover(
+        quay_api_token=target_settings["dest_quay_api_token"],
+        quay_user=target_settings["dest_quay_user"],
+        quay_password=target_settings["dest_quay_password"],
+    )
+    old_signatures = sig_remover.get_index_image_signatures(
+        dest_image,
+        claim_messages,
+        target_settings["pyxis_server"],
+        target_settings["iib_krb_principal"],
+        target_settings.get("iib_krb_ktfile", None),
+    )
 
     # Push image to Quay
     # NOTE: tagging doesn't use intermediate index image, because we want the most up-to-date
     #       image to be copied to the destination
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
+    )
+
+    signature_ids = [s["_id"] for s in old_signatures]
+    sig_remover.remove_signatures_from_pyxis(
+        signature_ids,
+        target_settings["pyxis_server"],
+        target_settings["iib_krb_principal"],
+        target_settings.get("iib_krb_ktfile", None),
     )
 
 
@@ -196,11 +218,32 @@ def task_iib_remove_operators(
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
-    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+    claim_messages = sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+
+    sig_remover = SignatureRemover(
+        quay_api_token=target_settings["dest_quay_api_token"],
+        quay_user=target_settings["dest_quay_user"],
+        quay_password=target_settings["dest_quay_password"],
+    )
+    old_signatures = sig_remover.get_index_image_signatures(
+        dest_image,
+        claim_messages,
+        target_settings["pyxis_server"],
+        target_settings["iib_krb_principal"],
+        target_settings.get("iib_krb_ktfile", None),
+    )
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
+    )
+
+    signature_ids = [s["_id"] for s in old_signatures]
+    sig_remover.remove_signatures_from_pyxis(
+        signature_ids,
+        target_settings["pyxis_server"],
+        target_settings["iib_krb_principal"],
+        target_settings.get("iib_krb_ktfile", None),
     )
 
 

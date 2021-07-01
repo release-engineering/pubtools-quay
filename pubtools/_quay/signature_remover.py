@@ -2,6 +2,8 @@ import logging
 import json
 import tempfile
 
+import requests
+
 from .utils.misc import (
     get_internal_container_repo_name,
     run_entrypoint,
@@ -333,3 +335,67 @@ class SignatureRemover:
             )
         else:
             LOG.info("No signatures need to be removed")
+
+    def get_index_image_signatures(
+        self, image, claim_messages, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile=None
+    ):
+        """
+        Get existing signatures of an index image.
+
+        NOTE: Image is expected to be in an internal format.
+
+        Args:
+            image (str):
+                Image, whose signatures should be gathered.
+            claim_messages (str):
+                Newly constructed claim messages used for excluding matching signatures. Although,
+                digests should never match for a new index image, it's added just in case.
+            pyxis_server (str):
+                URL of the Pyxis service.
+            pyxis_krb_principal (str):
+                Kerberos principal to use for Pyxis authentication.
+            pyxis_krb_ktfile (str|None):
+                Path to Kerberos keytab file. Optional
+        Returns ([dict]):
+            Existing signatures of the index image.
+        """
+        if "@" in image:
+            raise ValueError("Please specify the index image via tag")
+
+        # We'll assume manifest list, since it's an index image
+        try:
+            manifest = self.quay_client.get_manifest(image, manifest_list=True)
+        except requests.exceptions.HTTPError as e:
+            # Perhaps destination index image doesn't exist, tolerate 404
+            if e.response.status_code == 404:
+                return []
+            else:
+                raise
+
+        digests = [m["digest"] for m in manifest["manifests"]]
+        matched_signatures = []
+        repo, tag = image.split(":", 1)
+        external_repo = get_external_container_repo_name(repo.split("/")[-1])
+        claims_by_key = [
+            (c["manifest_digest"], c["repo"], c["docker_reference"].split(":", 1)[-1])
+            for c in claim_messages
+        ]
+
+        for signature in self.get_signatures_from_pyxis(
+            digests, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        ):
+            # if signature matches the old index image and isn't among new claims, it can be removed
+            if (
+                signature["manifest_digest"] in digests
+                and signature["reference"].split(":", 1)[-1] == tag
+                and signature["repository"] == external_repo
+                and (
+                    signature["manifest_digest"],
+                    signature["repository"],
+                    signature["reference"].split(":", 1)[-1],
+                )
+                not in claims_by_key
+            ):
+                matched_signatures.append(signature)
+
+        return matched_signatures

@@ -32,6 +32,7 @@ def test_verify_target_settings_overwrite_index_mismatch(target_settings):
         iib_operations.verify_target_settings(target_settings)
 
 
+@mock.patch("pubtools._quay.iib_operations.SignatureRemover")
 @mock.patch("pubtools._quay.iib_operations.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
@@ -41,6 +42,7 @@ def test_task_iib_add_bundles(
     mock_iib_add_bundles,
     mock_run_tag_images,
     mock_operator_signature_handler,
+    mock_signature_remover,
     target_settings,
 ):
     class IIBRes:
@@ -55,7 +57,20 @@ def test_task_iib_add_bundles(
     mock_iib_add_bundles.return_value = build_details
 
     mock_sign_task_index_image = mock.MagicMock()
+    mock_sign_task_index_image.return_value = [{"claim": "value1"}, {"claim": "value2"}]
     mock_operator_signature_handler.return_value.sign_task_index_image = mock_sign_task_index_image
+
+    mock_get_index_image_signatures = mock.MagicMock()
+    mock_get_index_image_signatures.return_value = [
+        {"signature": "value1", "_id": "1"},
+        {"signature": "value2", "_id": "2"},
+    ]
+    mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
+
+    mock_remove_signatures_from_pyxis = mock.MagicMock()
+    mock_signature_remover.return_value.remove_signatures_from_pyxis = (
+        mock_remove_signatures_from_pyxis
+    )
 
     mock_hub = mock.MagicMock()
     iib_operations.task_iib_add_bundles(
@@ -91,7 +106,22 @@ def test_task_iib_add_bundles(
         ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
     )
 
+    mock_signature_remover.assert_called_once_with(
+        quay_api_token="dest-quay-token", quay_user="dest-quay-user", quay_password="dest-quay-pass"
+    )
+    mock_get_index_image_signatures.assert_called_once_with(
+        "quay.io/some-namespace/operators----index-image:8",
+        [{"claim": "value1"}, {"claim": "value2"}],
+        "pyxis-url.com",
+        "some-principal@REDHAT.COM",
+        "/etc/pub/some.keytab",
+    )
+    mock_remove_signatures_from_pyxis.assert_called_once_with(
+        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
+    )
 
+
+@mock.patch("pubtools._quay.iib_operations.SignatureRemover")
 @mock.patch("pubtools._quay.iib_operations.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_remove_operators")
@@ -101,6 +131,7 @@ def test_task_iib_remove_operators(
     mock_iib_remove_operators,
     mock_run_tag_images,
     mock_operator_signature_handler,
+    mock_signature_remover,
     target_settings,
 ):
     class IIBRes:
@@ -115,7 +146,20 @@ def test_task_iib_remove_operators(
     mock_iib_remove_operators.return_value = build_details
 
     mock_sign_task_index_image = mock.MagicMock()
+    mock_sign_task_index_image.return_value = [{"claim": "value1"}, {"claim": "value2"}]
     mock_operator_signature_handler.return_value.sign_task_index_image = mock_sign_task_index_image
+
+    mock_get_index_image_signatures = mock.MagicMock()
+    mock_get_index_image_signatures.return_value = [
+        {"signature": "value1", "_id": "1"},
+        {"signature": "value2", "_id": "2"},
+    ]
+    mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
+
+    mock_remove_signatures_from_pyxis = mock.MagicMock()
+    mock_signature_remover.return_value.remove_signatures_from_pyxis = (
+        mock_remove_signatures_from_pyxis
+    )
 
     mock_hub = mock.MagicMock()
     iib_operations.task_iib_remove_operators(
@@ -147,6 +191,20 @@ def test_task_iib_remove_operators(
     )
     mock_sign_task_index_image.assert_called_once_with(
         ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
+    )
+
+    mock_signature_remover.assert_called_once_with(
+        quay_api_token="dest-quay-token", quay_user="dest-quay-user", quay_password="dest-quay-pass"
+    )
+    mock_get_index_image_signatures.assert_called_once_with(
+        "quay.io/some-namespace/operators----index-image:8",
+        [{"claim": "value1"}, {"claim": "value2"}],
+        "pyxis-url.com",
+        "some-principal@REDHAT.COM",
+        "/etc/pub/some.keytab",
+    )
+    mock_remove_signatures_from_pyxis.assert_called_once_with(
+        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
     )
 
 
