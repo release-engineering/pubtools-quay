@@ -47,7 +47,7 @@ class Executor(object):
         """
         cmd_check = "skopeo login --get-login quay.io"
         out, err = self._run_cmd(cmd_check, tolerate_err=True)
-        if "not logged into" not in err and "not logged into" not in out:
+        if username and username in out:
             LOG.info("Already logged in to Quay.io")
             return
 
