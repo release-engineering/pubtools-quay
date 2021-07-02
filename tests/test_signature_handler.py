@@ -116,10 +116,21 @@ def test_get_tagged_image_digests_manifest_list(
     mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1")
 
 
+@mock.patch("json.dump")
+@mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_settings):
+def test_get_pyxis_signature(
+    mock_quay_client,
+    mock_run_entrypoint,
+    mock_tempfile,
+    mock_json_dump,
+    target_settings,
+):
     hub = mock.MagicMock()
+    temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
+    mock_tempfile.return_value.__enter__.return_value.name = temp_filename
+
     expected_data1 = [{"some": "data"}, {"other": "data"}]
     expected_data2 = [{"some-other": "data"}]
     mock_run_entrypoint.side_effect = [iter(expected_data1), iter(expected_data2)]
@@ -144,7 +155,7 @@ def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_setti
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--manifest-digest",
-            "sha256:a1a1a1a1a,sha256:b2b2b2b2",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -159,10 +170,14 @@ def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_setti
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--manifest-digest",
-            "sha256:c3c3c3c3",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
+
+    assert mock_json_dump.call_count == 2
+    assert mock_json_dump.mock_calls[0][1][0] == ["sha256:a1a1a1a1a", "sha256:b2b2b2b2"]
+    assert mock_json_dump.mock_calls[1][1][0] == ["sha256:c3c3c3c3"]
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_pyxis")

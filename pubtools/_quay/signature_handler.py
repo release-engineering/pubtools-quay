@@ -170,16 +170,23 @@ class SignatureHandler:
             ]
             if "iib_krb_ktfile" in self.target_settings:
                 args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-            if manifest_digests:
-                args += ["--manifest-digest", ",".join(chunk)]
 
-            env_vars = {}
-            chunk_results = run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
-                "pubtools-pyxis-get-signatures",
-                args,
-                env_vars,
-            )
+            with tempfile.NamedTemporaryFile(
+                mode="w", prefix="pubtools_quay_get_signatures_"
+            ) as signature_fetch_file:
+                if manifest_digests:
+                    json.dump(chunk, signature_fetch_file)
+                    signature_fetch_file.flush()
+                    args += ["--manifest-digest", "@{0}".format(signature_fetch_file.name)]
+
+                env_vars = {}
+                chunk_results = run_entrypoint(
+                    ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                    "pubtools-pyxis-get-signatures",
+                    args,
+                    env_vars,
+                )
+
             for result in chunk_results:
                 yield result
 
