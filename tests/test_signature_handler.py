@@ -260,16 +260,22 @@ def test_get_signatures_from_radas(
     assert len(mock_proton.mock_calls) == 2
 
 
+@mock.patch("json.dump")
+@mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 def test_upload_signatures_pyxis(
     mock_quay_client,
     mock_run_entrypoint,
+    mock_tempfile,
+    mock_json_dump,
     target_settings,
     claim_messages,
     signed_messages,
 ):
     hub = mock.MagicMock()
+    temp_filename = "/tmp/pubtools_quay_upload_signatures_ABC123"
+    mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.upload_signatures_to_pyxis(claim_messages, signed_messages, 2)
@@ -310,7 +316,7 @@ def test_upload_signatures_pyxis(
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--signatures",
-            json.dumps(signatures[:2]),
+            "@/tmp/pubtools_quay_upload_signatures_ABC123",
         ],
         {},
     )
@@ -325,10 +331,14 @@ def test_upload_signatures_pyxis(
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--signatures",
-            json.dumps(signatures[2:]),
+            "@/tmp/pubtools_quay_upload_signatures_ABC123",
         ],
         {},
     )
+
+    assert mock_json_dump.call_count == 2
+    assert mock_json_dump.mock_calls[0][1][0] == signatures[:2]
+    assert mock_json_dump.mock_calls[1][1][0] == signatures[2:]
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")

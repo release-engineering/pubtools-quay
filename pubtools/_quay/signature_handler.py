@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import logging
 import uuid
+import tempfile
 
 import proton
 
@@ -342,17 +343,23 @@ class SignatureHandler:
             ]
             if "iib_krb_ktfile" in self.target_settings:
                 args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
-            args += ["--signatures", json.dumps(batch)]
 
-            LOG.info("Uploading signature batch #{0}/{1}".format(i + 1, len(signature_batches)))
+            with tempfile.NamedTemporaryFile(
+                mode="w", prefix="pubtools_quay_upload_signatures_"
+            ) as signature_batch_file:
+                json.dump(batch, signature_batch_file)
+                signature_batch_file.flush()
+                args += ["--signatures", "@{0}".format(signature_batch_file.name)]
 
-            env_vars = {}
-            run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                "pubtools-pyxis-upload-signature",
-                args,
-                env_vars,
-            )
+                LOG.info("Uploading signature batch #{0}/{1}".format(i + 1, len(signature_batches)))
+
+                env_vars = {}
+                run_entrypoint(
+                    ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                    "pubtools-pyxis-upload-signature",
+                    args,
+                    env_vars,
+                )
 
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
