@@ -723,7 +723,7 @@ def operator_push_item_different_version():
 def claim_messages():
     return [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id1",
@@ -734,7 +734,7 @@ def claim_messages():
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id2",
@@ -745,7 +745,7 @@ def claim_messages():
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -755,6 +755,17 @@ def claim_messages():
             "docker_reference": "registry.com/image:2",
             "created": "2021-03-19T14:45:23.128632Z",
         },
+        {
+            "sig_key_id": "1234567800000003",
+            "claim_file": "some-encode",
+            "pub_task_id": "1",
+            "request_id": "id4",
+            "manifest_digest": "sha256:d5d5d5d5",
+            "repo": "some-dest-repo",
+            "image_name": "image",
+            "docker_reference": "registry.com/image:1",
+            "created": "2021-03-19T14:45:23.128632Z",
+        },
     ]
 
 
@@ -762,7 +773,7 @@ def claim_messages():
 def existing_signatures():
     return [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id1",
@@ -773,7 +784,7 @@ def existing_signatures():
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id2",
@@ -784,7 +795,7 @@ def existing_signatures():
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -792,6 +803,17 @@ def existing_signatures():
             "repo": "some-dest-repo",
             "image_name": "image",
             "reference": "registry.com/image:2",
+            "created": "2021-03-19T14:45:23.128632Z",
+        },
+        {
+            "sig_key_id": "00000003",
+            "claim_file": "some-encode",
+            "pub_task_id": "1",
+            "request_id": "id4",
+            "manifest_digest": "sha256:d5d5d5d5",
+            "repo": "some-dest-repo",
+            "image_name": "image",
+            "reference": "registry.com/image:1",
             "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
@@ -845,6 +867,21 @@ def signed_messages():
             "signing_server_responded": "2021-03-19T15:25:38.135038",
             "signing_status": "success",
         },
+        {
+            "errors": [],
+            "manifest_digest": "sha256:d5d5d5d5",
+            "pub_task_id": 1,
+            "repo": "some-dest-repo",
+            "request_id": "id4",
+            "request_received_time": "2021-03-19T15:25:37.545759",
+            "requested_by": "amcnamar",
+            "sig_key_id": "key1",
+            "sig_keyname": "some-keyname",
+            "signed_claim": "binary-data4",
+            "signing_server_requested": "2021-03-19T15:25:37.756325",
+            "signing_server_responded": "2021-03-19T15:25:38.135038",
+            "signing_status": "success",
+        },
     ]
 
 
@@ -892,6 +929,21 @@ def error_signed_messages():
             "sig_key_id": "key1",
             "sig_keyname": "some-keyname",
             "signed_claim": "binary-data3",
+            "signing_server_requested": "2021-03-19T15:25:37.756325",
+            "signing_server_responded": "2021-03-19T15:25:38.135038",
+            "signing_status": "success",
+        },
+        {
+            "errors": [],
+            "manifest_digest": "sha256:d5d5d5d5",
+            "pub_task_id": 1,
+            "repo": "some-dest-repo",
+            "request_id": "id4",
+            "request_received_time": "2021-03-19T15:25:37.545759",
+            "requested_by": "amcnamar",
+            "sig_key_id": "key1",
+            "sig_keyname": "some-keyname",
+            "signed_claim": "binary-data4",
             "signing_server_requested": "2021-03-19T15:25:37.756325",
             "signing_server_responded": "2021-03-19T15:25:38.135038",
             "signing_status": "success",

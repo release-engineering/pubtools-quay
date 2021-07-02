@@ -244,7 +244,18 @@ class SignatureHandler:
         filtered_claim_messages = []
         for message in claim_messages:
             key = (message["docker_reference"], message["manifest_digest"], message["sig_key_id"])
-            if key not in signatures_by_key:
+            # New signatures have switched to using long (16B) keys, while old signatures may still
+            # contain short (8B) keys. If claim is matched with a shorter key format, it's
+            # still considered a duplicate and shouldn't be uploaded again.
+            old_key = None
+            if len(message["sig_key_id"]) > 8:
+                old_key = (
+                    message["docker_reference"],
+                    message["manifest_digest"],
+                    message["sig_key_id"][-8:],
+                )
+
+            if key not in signatures_by_key and old_key not in signatures_by_key:
                 filtered_claim_messages.append(message)
 
         LOG.info(

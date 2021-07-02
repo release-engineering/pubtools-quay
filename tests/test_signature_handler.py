@@ -195,12 +195,12 @@ def test_filter_claim_messages(
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     filtered_msgs = sig_handler.filter_claim_messages(claim_messages)
     mock_get_signatures.assert_called_once_with(
-        manifest_digests=["sha256:a2a2a2a", "sha256:b3b3b3b", "sha256:f4f4f4f"]
+        manifest_digests=["sha256:a2a2a2a", "sha256:b3b3b3b", "sha256:d5d5d5d5", "sha256:f4f4f4f"]
     )
 
     assert filtered_msgs == [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -233,7 +233,7 @@ def test_get_signatures_from_radas(
     assert mock_claim_handler.call_args[1]["radas_address"] == radas_addr
     assert mock_claim_handler.call_args[1]["claim_messages"] == [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id1",
@@ -244,7 +244,7 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id2",
@@ -255,7 +255,7 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -263,6 +263,17 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:2",
+            "created": "2021-03-19T14:45:23.128632Z",
+        },
+        {
+            "sig_key_id": "1234567800000003",
+            "claim_file": "some-encode",
+            "pub_task_id": "1",
+            "request_id": "id4",
+            "manifest_digest": "sha256:d5d5d5d5",
+            "repo": "some-dest-repo",
+            "image_name": "image",
+            "docker_reference": "registry.com/image:1",
             "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
@@ -300,22 +311,29 @@ def test_upload_signatures_pyxis(
             "manifest_digest": "sha256:f4f4f4f",
             "reference": "registry.com/image:1",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "signature_data": "binary-data1",
         },
         {
             "manifest_digest": "sha256:a2a2a2a",
             "reference": "registry.com/image:1",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "signature_data": "binary-data2",
         },
         {
             "manifest_digest": "sha256:b3b3b3b",
             "reference": "registry.com/image:2",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "signature_data": "binary-data3",
+        },
+        {
+            "manifest_digest": "sha256:d5d5d5d5",
+            "reference": "registry.com/image:1",
+            "repository": "image",
+            "sig_key_id": "1234567800000003",
+            "signature_data": "binary-data4",
         },
     ]
 
@@ -363,7 +381,7 @@ def test_validate_radas_msgs(
     hub = mock.MagicMock()
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
 
-    with pytest.raises(exceptions.SigningError, match="Signing of 2/3 messages has failed"):
+    with pytest.raises(exceptions.SigningError, match="Signing of 2/4 messages has failed"):
         sig_handler.validate_radas_messages(claim_messages, error_signed_messages)
 
 
