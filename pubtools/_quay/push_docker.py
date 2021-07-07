@@ -147,7 +147,7 @@ class PushDocker:
         return docker_push_items
 
     @log_step("Get operator push items")
-    def get_operator_push_items(self):
+    def get_operator_push_items(self, docker_push_items):
         """
         Filter out push items to only include operator ones.
 
@@ -178,6 +178,8 @@ class PushDocker:
             if not item.metadata.get("com.redhat.openshift.versions"):
                 msg = "Push item {0} doesn't specify 'com.redhat.openshift.versions'".format(item)
                 raise BadPushItem(msg)
+            if not item.claims_signing_key and docker_push_items:
+                item.claims_signing_key = docker_push_items[0].claims_signing_key
             LOG.info("Operator push item found: {0}".format(item))
             operator_push_items.append(item)
 
@@ -513,7 +515,7 @@ class PushDocker:
         # Filter out non-docker push items
         docker_push_items = self.get_docker_push_items()
         # Get operator push items (done early so that possible issues are detected)
-        operator_push_items = self.get_operator_push_items()
+        operator_push_items = self.get_operator_push_items(docker_push_items)
         # Check if we may push to destination repos
         self.check_repos_validity(docker_push_items, self.hub, self.target_settings)
         # Generate resources for rollback in case there are errors during the push

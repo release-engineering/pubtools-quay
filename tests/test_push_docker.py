@@ -176,29 +176,7 @@ def test_get_operator_push_items_ok(
         "some-target",
         target_settings,
     )
-    items = push_docker_instance.get_operator_push_items()
-    assert items == [operator_push_item_ok, operator_push_item_ok2]
-
-
-@mock.patch("pubtools._quay.push_docker.QuayClient")
-@mock.patch("pubtools._quay.push_docker.QuayApiClient")
-def test_get_operator_push_items_ok(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    operator_push_item_ok,
-    operator_push_item_ok2,
-    container_push_item_ok,
-):
-    hub = mock.MagicMock()
-    push_docker_instance = push_docker.PushDocker(
-        [operator_push_item_ok, operator_push_item_ok2, container_push_item_ok],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
-    )
-    items = push_docker_instance.get_operator_push_items()
+    items = push_docker_instance.get_operator_push_items([container_push_item_ok])
     assert items == [operator_push_item_ok, operator_push_item_ok2]
 
 
@@ -212,7 +190,7 @@ def test_get_operator_push_item_errors(
         [operator_push_item_errors], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*contains errors.*"):
-        items = push_docker_instance.get_operator_push_items()
+        items = push_docker_instance.get_operator_push_items([])
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
@@ -225,7 +203,7 @@ def test_get_operator_push_item_no_op_type(
         [operator_push_item_no_op_type], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*doesn't contain 'op_type'.*"):
-        items = push_docker_instance.get_operator_push_items()
+        items = push_docker_instance.get_operator_push_items([])
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
@@ -245,7 +223,7 @@ def test_get_operator_push_item_op_appregistry(
         "some-target",
         target_settings,
     )
-    items = push_docker_instance.get_operator_push_items()
+    items = push_docker_instance.get_operator_push_items([])
     assert items == [operator_push_item_ok2]
 
 
@@ -259,7 +237,7 @@ def test_get_operator_push_item_unknown_op_type(
         [operator_push_item_unknown_op_type], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*has unknown op_type.*"):
-        items = push_docker_instance.get_operator_push_items()
+        items = push_docker_instance.get_operator_push_items([])
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
@@ -272,7 +250,30 @@ def test_get_operator_push_item_no_ocp_versions(
         [operator_push_item_no_ocp], hub, "1", "some-target", target_settings
     )
     with pytest.raises(exceptions.BadPushItem, match=".*specify 'com.redhat.openshift.versions'.*"):
-        items = push_docker_instance.get_operator_push_items()
+        items = push_docker_instance.get_operator_push_items([])
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_get_operator_push_item_none_signing_key(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_push_item_ok,
+    operator_push_item_ok,
+):
+    hub = mock.MagicMock()
+    push_item_none_key = operator_push_item_ok
+    push_item_none_key.claims_signing_key = None
+    push_docker_instance = push_docker.PushDocker(
+        [container_push_item_ok, push_item_none_key],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    items = push_docker_instance.get_operator_push_items([container_push_item_ok])
+    assert items[0].claims_signing_key == container_push_item_ok.claims_signing_key
 
 
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
