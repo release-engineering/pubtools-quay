@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import requests
@@ -81,6 +82,24 @@ class QuayClient:
         else:
             return response.json()
 
+    def get_manifest_digest(self, image):
+        """
+        Get manifest of the specified image and calculate its digest by hashing it.
+
+        Args:
+            image (str):
+                Image address for which to calculate the digest.
+        Returns (str):
+            Manifest digest of the image.
+        """
+        manifest = self.get_manifest(image, raw=True)
+        # SHA 256 is pretty much the standard for container images
+        hasher = hashlib.sha256()
+        hasher.update(manifest.encode("utf-8"))
+        digest = hasher.hexdigest()
+
+        return "sha256:{0}".format(digest)
+
     def upload_manifest(self, manifest, image, raw=False):
         """
         Upload manifest to a specified image.
@@ -111,6 +130,26 @@ class QuayClient:
                 "data": json.dumps(manifest, sort_keys=True, indent=4),
             }
         self._request_quay("PUT", endpoint, kwargs)
+
+    def get_repository_tags(self, repository, raw=False):
+        """
+        Get tags of a provided repository.
+
+        Args:
+            repository (str):
+                Repository whose tags should be gathered (expected format namespce/repo).
+            raw (bool):
+                Whether the given manifest is a string (raw) or a Python dictionary
+        Returns (list):
+            Tags which the repository contains.
+        """
+        endpoint = "{0}/tags/list".format(repository)
+        response = self._request_quay("GET", endpoint)
+
+        if raw:
+            return response.text
+        else:
+            return response.json()
 
     def _request_quay(self, method, endpoint, kwargs={}):
         """

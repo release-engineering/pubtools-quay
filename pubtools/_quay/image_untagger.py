@@ -97,27 +97,29 @@ class ImageUntagger:
             Tuple of dictionaries mapping tags->digests and digests->tags.
         """
         LOG.info("Gathering tags and digests of repository '{0}'".format(repository))
-        repo_data = self._quay_api_client.get_repository_data(repository)
         tag_digest_mapping = {}
         digest_tag_mapping = {}
-        image_schema = "{0}/{1}@{2}"
+        image_schema = "{0}/{1}:{2}"
+        repo_tags = self._quay_client.get_repository_tags(repository)
 
-        for tag, attributes in sorted(repo_data["tags"].items()):
-            # image_id is undefined if tag references a manifest list
+        for tag in repo_tags["tags"]:
+            image = image_schema.format(self.host, repository, tag)
+            manifest = self._quay_client.get_manifest(image)
+            digest = self._quay_client.get_manifest_digest(image)
+
             # Option 1: No manifest list, only manifest
-            if attributes["image_id"]:
-                tag_digest_mapping[tag] = [attributes["manifest_digest"]]
-                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(tag)
+            if manifest["mediaType"] == QuayClient.MANIFEST_V2S2_TYPE:
+                tag_digest_mapping[tag] = [digest]
+                digest_tag_mapping.setdefault(digest, []).append(tag)
+
             # Option 2: We need to get digests of all architectures
             else:
-                image = image_schema.format(self.host, repository, attributes["manifest_digest"])
-                manifest_list = self._quay_client.get_manifest(image, manifest_list=True)
-                tag_digest_mapping[tag] = [attributes["manifest_digest"]]
-                digest_tag_mapping.setdefault(attributes["manifest_digest"], []).append(tag)
+                tag_digest_mapping[tag] = [digest]
+                digest_tag_mapping.setdefault(digest, []).append(tag)
 
-                for manifest in manifest_list["manifests"]:
-                    tag_digest_mapping[tag].append(manifest["digest"])
-                    digest_tag_mapping.setdefault(manifest["digest"], []).append(tag)
+                for arch_manifest in manifest["manifests"]:
+                    tag_digest_mapping[tag].append(arch_manifest["digest"])
+                    digest_tag_mapping.setdefault(arch_manifest["digest"], []).append(tag)
 
         return (tag_digest_mapping, digest_tag_mapping)
 

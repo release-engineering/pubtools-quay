@@ -242,9 +242,7 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
-    mock_set_quay_api_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
@@ -255,7 +253,6 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
     mock_signature_remover.assert_called_once_with(
         quay_user="some-user", quay_password="some-password"
     )
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )
@@ -286,9 +283,7 @@ def test_run_multiple_repos(mock_quay_api_client, mock_send_umb_message, mock_si
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
-    mock_set_quay_api_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
@@ -299,7 +294,6 @@ def test_run_multiple_repos(mock_quay_api_client, mock_send_umb_message, mock_si
     mock_signature_remover.assert_called_once_with(
         quay_user="some-user", quay_password="some-password"
     )
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     assert mock_remove_repository_signatures.call_count == 2
     assert mock_remove_repository_signatures.call_args_list[0] == mock.call(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
@@ -348,15 +342,12 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
-    mock_set_quay_api_client = mock.MagicMock()
     mock_remove_repository_signatures = mock.MagicMock()
-    mock_signature_remover.return_value.set_quay_api_client = mock_set_quay_api_client
     mock_signature_remover.return_value.remove_repository_signatures = (
         mock_remove_repository_signatures
     )
     remove_repo.remove_repositories_main(args)
 
-    mock_set_quay_api_client.assert_called_once_with(mock_quay_api_client.return_value)
     mock_remove_repository_signatures.assert_called_once_with(
         "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
     )

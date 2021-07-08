@@ -11,7 +11,6 @@ from .exceptions import (
     InvalidTargetSettings,
 )
 from .utils.misc import get_internal_container_repo_name
-from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import SignatureHandler, BasicSignatureHandler
@@ -58,13 +57,11 @@ class TagDocker:
         self.target_settings = target_settings
 
         self._quay_client = None
-        self._quay_api_client = None
         self._executor = None
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         self.signature_remover = SignatureRemover()
-        self.signature_remover.set_quay_api_client(self.quay_api_client)
         self.signature_remover.set_quay_client(self.quay_client)
 
         self.verify_target_settings()
@@ -80,15 +77,6 @@ class TagDocker:
                 self.quay_host,
             )
         return self._quay_client
-
-    @property
-    def quay_api_client(self):
-        """Create and access QuayApiClient for source and dest images."""
-        if self._quay_api_client is None:
-            self._quay_api_client = QuayApiClient(
-                self.target_settings["dest_quay_api_token"], self.quay_host
-            )
-        return self._quay_api_client
 
     @property
     def executor(self):
@@ -115,7 +103,6 @@ class TagDocker:
             "source_quay_password",
             "dest_quay_user",
             "dest_quay_password",
-            "source_quay_api_token",
             "dest_quay_api_token",
             "pyxis_server",
             "quay_namespace",
@@ -247,9 +234,7 @@ class TagDocker:
                     "images are supported, which have arch 'amd64'.".format(reference, arch)
                 )
 
-        repo, tag = reference.split(":", 1)
-        repo_data = self.quay_api_client.get_repository_data("/".join(repo.split("/")[1:]))
-        digest = repo_data["tags"][tag]["manifest_digest"]
+        digest = self.quay_client.get_manifest_digest(reference)
 
         return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)
 

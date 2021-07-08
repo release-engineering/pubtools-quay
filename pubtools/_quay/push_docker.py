@@ -83,7 +83,6 @@ class PushDocker:
             "source_quay_password",
             "dest_quay_user",
             "dest_quay_password",
-            "source_quay_api_token",
             "dest_quay_api_token",
             "pyxis_server",
             "quay_namespace",
@@ -242,9 +241,9 @@ class PushDocker:
         if "propagated_from" in target_settings:
             stage_target_info = hub.worker.get_target_info(target_settings["propagated_from"])
             stage_namespace = stage_target_info["settings"]["quay_namespace"]
-            stage_quay_api_client = QuayApiClient(
-                stage_target_info["settings"]["dest_quay_api_token"],
-                stage_target_info["settings"].get("quay_host", "quay.io").rstrip("/"),
+            stage_quay_client = QuayClient(
+                stage_target_info["settings"]["dest_quay_user"],
+                stage_target_info["settings"]["dest_quay_password"],
             )
 
         for repo in repos:
@@ -268,9 +267,10 @@ class PushDocker:
                 internal_repo = get_internal_container_repo_name(repo)
                 full_repo = repo_schema.format(namespace=stage_namespace, repo=internal_repo)
                 try:
-                    stage_quay_api_client.get_repository_data(full_repo)
+                    stage_quay_client.get_repository_tags(full_repo)
                 except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 404:
+                    # strangely, if repo doesn't exist, 401 is returned if a robot account is used
+                    if e.response.status_code == 404 or e.response.status_code == 401:
                         raise InvalidRepository(
                             "Repository {0} doesn't exist on stage".format(repo)
                         )
@@ -301,6 +301,7 @@ class PushDocker:
         rollback_tags = []
         repo_schema = "{namespace}/{repo}"
         image_schema = "{host}/{repo}@{digest}"
+        image_schema_tag = "{host}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
 
         for item in push_items:
@@ -310,29 +311,32 @@ class PushDocker:
                 LOG.info("Generating backup mapping for repository '{0}'".format(repo))
                 # try to get repo data
                 try:
-                    repo_data = self.dest_quay_api_client.get_repository_data(full_repo)
+                    repo_tags = self.dest_quay_client.get_repository_tags(full_repo)
                 except requests.exceptions.HTTPError as e:
-                    if e.response.status_code == 404:
-                        repo_data = None
+                    # When robot account is used, 401 is returned instead of 404
+                    if e.response.status_code == 404 or e.response.status_code == 401:
+                        repo_tags = None
                     else:
                         raise
 
                 for tag in tags:
                     # repo doesn't exist, add to rollback tags
-                    if not repo_data:
+                    if not repo_tags:
                         # for rollback tags digest is not known
                         rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
                         continue
                     # tag exists in the repo, add to backup tags
-                    if tag in repo_data.get("tags", {}):
-                        # for backup tags store also digest
-                        image_data = PushDocker.ImageData(
-                            full_repo, tag, repo_data["tags"][tag]["manifest_digest"]
+                    if tag in repo_tags.get("tags", {}):
+                        image_tag = image_schema_tag.format(
+                            host=self.quay_host, repo=full_repo, tag=tag
                         )
+                        digest = self.dest_quay_client.get_manifest_digest(image_tag)
+                        # for backup tags store also digest
+                        image_data = PushDocker.ImageData(full_repo, tag, digest)
                         image = image_schema.format(
                             host=self.quay_host,
                             repo=full_repo,
-                            digest=repo_data["tags"][tag]["manifest_digest"],
+                            digest=digest,
                         )
                         manifest = self.dest_quay_client.get_manifest(image)
                         backup_tags[image_data] = manifest
@@ -531,7 +535,6 @@ class PushDocker:
             )
             sig_remover = SignatureRemover()
             sig_remover.set_quay_client(self.dest_quay_client)
-            sig_remover.set_quay_api_client(self.dest_quay_api_client)
 
             container_signature_handler.sign_container_images(docker_push_items)
             # Push container images

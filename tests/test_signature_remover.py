@@ -10,22 +10,9 @@ def test_init():
     sig_remover = signature_remover.SignatureRemover()
 
     assert sig_remover.quay_host == "quay.io"
-    assert sig_remover.quay_api_token is None
     assert sig_remover.quay_user is None
     assert sig_remover.quay_password is None
     assert sig_remover._quay_client is None
-    assert sig_remover._quay_api_client is None
-
-
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
-def test_initialize_api_client(mock_quay_api_client):
-    sig_remover = signature_remover.SignatureRemover(quay_api_token="some-token")
-
-    assert sig_remover.quay_host == "quay.io"
-    assert sig_remover.quay_api_token == "some-token"
-    assert sig_remover._quay_api_client is None
-    assert sig_remover.quay_api_client == mock_quay_api_client.return_value
-    assert sig_remover._quay_api_client == mock_quay_api_client.return_value
 
 
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
@@ -42,16 +29,6 @@ def test_initialize_quay_client(mock_quay_client):
     assert sig_remover._quay_client == mock_quay_client.return_value
 
 
-def test_set_quay_api_client():
-    mock_quay_api_client = mock.MagicMock()
-    sig_remover = signature_remover.SignatureRemover()
-
-    assert sig_remover._quay_api_client is None
-    sig_remover.set_quay_api_client(mock_quay_api_client)
-    assert sig_remover._quay_api_client == mock_quay_api_client
-    assert sig_remover.quay_api_client == mock_quay_api_client
-
-
 def test_set_quay_client():
     mock_quay_client = mock.MagicMock()
     sig_remover = signature_remover.SignatureRemover()
@@ -60,13 +37,6 @@ def test_set_quay_client():
     sig_remover.set_quay_client(mock_quay_client)
     assert sig_remover._quay_client == mock_quay_client
     assert sig_remover.quay_client == mock_quay_client
-
-
-def test_quay_api_client_error():
-    sig_remover = signature_remover.SignatureRemover()
-
-    with pytest.raises(ValueError, match="No instance of QuayApiClient.*"):
-        sig_remover.quay_api_client
 
 
 def test_quay_client_error():
@@ -152,30 +122,40 @@ def test_remove_signatures_from_pyxis(mock_run_entrypoint, mock_temp_file):
 
 
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_get_repository_digests(
-    mock_quay_api_client, mock_quay_client, repo_api_data, manifest_list_data
+    mock_quay_client, repo_api_data, manifest_list_data, v2s2_manifest_data
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {"name": "namespace/repo", "tags": ["1", "2", "3", "4"]}
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
     mock_get_manifest = mock.MagicMock()
-    mock_get_manifest.return_value = manifest_list_data
+    mock_get_manifest.side_effect = [
+        manifest_list_data,
+        manifest_list_data,
+        v2s2_manifest_data,
+        v2s2_manifest_data,
+    ]
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     digests = sig_remover.get_repository_digests("namespace/repo")
 
-    mock_get_repository_data.assert_called_once_with("namespace/repo")
-    assert mock_get_manifest.call_count == 2
-    assert mock_get_manifest.call_args_list[0] == mock.call(
-        "quay.io/namespace/repo:1", manifest_list=True
-    )
-    assert mock_get_manifest.call_args_list[1] == mock.call(
-        "quay.io/namespace/repo:2", manifest_list=True
-    )
+    mock_get_repository_tags.assert_called_once_with("namespace/repo")
+    assert mock_get_manifest_digest.call_count == 2
+    assert mock_get_manifest_digest.call_args_list[0] == mock.call("quay.io/namespace/repo:3")
+    assert mock_get_manifest_digest.call_args_list[1] == mock.call("quay.io/namespace/repo:4")
+    assert mock_get_manifest.call_count == 4
+    assert mock_get_manifest.call_args_list[0] == mock.call("quay.io/namespace/repo:1")
+    assert mock_get_manifest.call_args_list[1] == mock.call("quay.io/namespace/repo:2")
+    assert mock_get_manifest.call_args_list[2] == mock.call("quay.io/namespace/repo:3")
+    assert mock_get_manifest.call_args_list[3] == mock.call("quay.io/namespace/repo:4")
 
     assert digests == [
         "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
@@ -190,9 +170,7 @@ def test_get_repository_digests(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_repository_digests")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_repository_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_repo_digests,
     mock_get_signatures,
@@ -206,7 +184,7 @@ def test_remove_repository_signatures(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_repository_signatures(
         "namespace/repo", "internal-namespace", "pyxis-server.com", "some-principal", "some-keytab"
@@ -225,9 +203,7 @@ def test_remove_repository_signatures(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_repository_digests")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_repository_signatures_none_to_remove(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_repo_digests,
     mock_get_signatures,
@@ -239,7 +215,7 @@ def test_remove_repository_signatures_none_to_remove(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_repository_signatures(
         "namespace/repo", "internal-namespace", "pyxis-server.com", "some-principal", "some-keytab"
@@ -255,18 +231,18 @@ def test_remove_repository_signatures_none_to_remove(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_multiarch(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -299,7 +275,7 @@ def test_remove_tag_signatures_multiarch(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:1",
@@ -308,11 +284,11 @@ def test_remove_tag_signatures_multiarch(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -334,24 +310,24 @@ def test_remove_tag_signatures_multiarch(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_non_existent_tag(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:5",
@@ -360,7 +336,7 @@ def test_remove_tag_signatures_non_existent_tag(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_not_called()
@@ -371,21 +347,26 @@ def test_remove_tag_signatures_non_existent_tag(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_source(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
-    manifest_list_data,
+    v2s2_manifest_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
-    mock_get_manifest.return_value = manifest_list_data
+    mock_get_manifest.return_value = v2s2_manifest_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.return_value = (
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"
+    )
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     mock_get_signatures.return_value = [
         {
@@ -415,7 +396,7 @@ def test_remove_tag_signatures_source(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:3",
@@ -424,10 +405,12 @@ def test_remove_tag_signatures_source(
         "some-keytab",
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
-    mock_get_manifest.assert_not_called()
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/internal-namespace/external-repo----external-image:3"
+    )
     mock_get_signatures.assert_called_once_with(
         ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"],
         "pyxis-server.com",
@@ -442,17 +425,14 @@ def test_remove_tag_signatures_source(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_digest(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     with pytest.raises(ValueError, match=".*removed must be specified by tag."):
         sig_remover.remove_tag_signatures(
@@ -469,18 +449,18 @@ def test_remove_tag_signatures_digest(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_no_signatures(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -507,7 +487,7 @@ def test_remove_tag_signatures_no_signatures(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:1",
@@ -522,18 +502,18 @@ def test_remove_tag_signatures_no_signatures(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_exclude_by_claims(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
-    repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -571,7 +551,7 @@ def test_remove_tag_signatures_exclude_by_claims(
     ]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:1",
@@ -581,11 +561,11 @@ def test_remove_tag_signatures_exclude_by_claims(
         exclude_by_claims=claim_messages,
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -607,18 +587,19 @@ def test_remove_tag_signatures_exclude_by_claims(
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.SignatureRemover.get_signatures_from_pyxis")
 @mock.patch("pubtools._quay.signature_remover.QuayClient")
-@mock.patch("pubtools._quay.signature_remover.QuayApiClient")
 def test_remove_tag_signatures_selected_archs(
-    mock_quay_api_client,
     mock_quay_client,
     mock_get_signatures,
     mock_remove_signatures,
     repo_api_data,
     manifest_list_data,
 ):
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.return_value = repo_api_data
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.return_value = {
+        "name": "external-repo/other-image",
+        "tags": ["1", "2", "3", "4"],
+    }
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
@@ -647,7 +628,7 @@ def test_remove_tag_signatures_selected_archs(
     selected_archs = ["ppc64le", "arm64"]
 
     sig_remover = signature_remover.SignatureRemover(
-        quay_user="some-user", quay_password="some-password", quay_api_token="some-token"
+        quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_tag_signatures(
         "quay.io/internal-namespace/external-repo----external-image:1",
@@ -657,11 +638,11 @@ def test_remove_tag_signatures_selected_archs(
         remove_archs=selected_archs,
     )
 
-    mock_get_repository_data.assert_called_once_with(
+    mock_get_repository_tags.assert_called_once_with(
         "internal-namespace/external-repo----external-image"
     )
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/external-repo----external-image:1", manifest_list=True
+        "quay.io/internal-namespace/external-repo----external-image:1"
     )
     mock_get_signatures.assert_called_once_with(
         [

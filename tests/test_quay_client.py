@@ -421,3 +421,50 @@ def test_upload_manifest_list_failure():
         with pytest.raises(requests.HTTPError, match="400 Client Error.*"):
             client.upload_manifest(ml, "quay.io/namespace/image:1")
         assert m.call_count == 1
+
+
+def test_get_repository_tags():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        data = client.get_repository_tags("namespace/image")
+        assert data == {"name": "namespace/image", "tags": ["1", "2", "3"]}
+        assert m.call_count == 1
+
+
+def test_get_repository_tags_raw():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        data = client.get_repository_tags("namespace/image", "raw")
+        assert data == json.dumps({"name": "namespace/image", "tags": ["1", "2", "3"]})
+        assert m.call_count == 1
+
+
+def test_get_manifest_digest():
+    manifest = (
+        '{"mediaType": "application/vnd.docker.distribution.manifest.v2+json",'
+        ' "size": 429, "digest": "sha256:6d5f4d65fg4d6f54g",'
+        ' "platform": {"architecture": "arm64", "os": "linux"}}'
+    )
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            text=manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        digest = client.get_manifest_digest("quay.io/namespace/image:1")
+        assert m.call_count == 1
+
+        assert digest == "sha256:b9742c91f353022604e8ed4cf4ab1d688114fc4b133f0e11cbf7dd6272753ac8"

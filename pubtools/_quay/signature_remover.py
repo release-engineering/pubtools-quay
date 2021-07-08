@@ -7,7 +7,6 @@ from .utils.misc import (
     run_entrypoint,
     get_external_container_repo_name,
 )
-from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 
 LOG = logging.getLogger("pubtools.quay")
@@ -23,8 +22,6 @@ class SignatureRemover:
         Initialize.
 
         Args:
-            quay_api_token (str):
-                Authentication token for Quay REST API.
             quay_user (str):
                 User name for Quay Docker registry API.
             quay_password (str):
@@ -33,35 +30,10 @@ class SignatureRemover:
                 Quay base host URL. Defaults to 'quay.io'.
         """
         self.quay_host = quay_host.rstrip("/") if quay_host else "quay.io"
-        self.quay_api_token = quay_api_token
         self.quay_user = quay_user
         self.quay_password = quay_password
 
         self._quay_client = None
-        self._quay_api_client = None
-
-    @property
-    def quay_api_client(self):
-        """Create and access QuayApiClient."""
-        if self._quay_api_client is None:
-            if not self.quay_api_token:
-                raise ValueError(
-                    "No instance of QuayApiClient is available. Please provide "
-                    "'quay_api_token' or set the instance via 'set_quay_api_client'"
-                )
-
-            self._quay_api_client = QuayApiClient(self.quay_api_token, self.quay_host)
-        return self._quay_api_client
-
-    def set_quay_api_client(self, quay_api_client):
-        """
-        Set a QuayApiClient instance.
-
-        Args:
-            quay_api_client (QuayApiClient):
-                QuayApiClient instance.
-        """
-        self._quay_api_client = quay_api_client
 
     @property
     def quay_client(self):
@@ -195,21 +167,19 @@ class SignatureRemover:
         Returns ([str]):
             Digests of all images in a given repo.
         """
-        full_repo = "{0}/{1}".format(self.quay_host, repository)
+        image_schema = "{host}/{repo}:{tag}"
         digests = []
-        repo_data = self.quay_api_client.get_repository_data(repository)
+        repo_tags = self.quay_client.get_repository_tags(repository)
 
-        for tag, tag_data in sorted(repo_data["tags"].items()):
-            # if 'image_id' is set, the image is NOT a multiarch manifest list
-            # we want to include the digest in this case
-            if tag_data["image_id"] is not None:
-                digests.append(tag_data["manifest_digest"])
-            # If manifest list, we need to get digests of all archs
+        for tag in repo_tags["tags"]:
+            image = image_schema.format(host=self.quay_host, repo=repository, tag=tag)
+            manifest = self.quay_client.get_manifest(image)
+            # if V2S2, we want to include its digest
+            if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
+                digests.append(self.quay_client.get_manifest_digest(image))
             else:
-                image = "{0}:{1}".format(full_repo, tag)
-                manifest_list = self.quay_client.get_manifest(image, manifest_list=True)
-                for manifest in manifest_list["manifests"]:
-                    digests.append(manifest["digest"])
+                for arch_manifest in manifest["manifests"]:
+                    digests.append(arch_manifest["digest"])
 
         return sorted(list(set(digests)))
 
@@ -291,20 +261,24 @@ class SignatureRemover:
         full_repo, tag = reference.split(":", 1)
         external_repo = get_external_container_repo_name(full_repo.split("/")[-1])
         image_digests = []
-        repo_data = self.quay_api_client.get_repository_data(full_repo.split("/", 1)[-1])
-        # if specified tag doesn't exist in a repo, no-op
-        if tag not in repo_data["tags"]:
-            return
-        # if image_id of the tag is specified, the image is V2S2 AKA source image
-        elif repo_data["tags"][tag]["image_id"]:
-            image_digests.append(repo_data["tags"][tag]["manifest_digest"])
 
-        # if multiarch, we need digests of all archs
+        repo_tags = self.quay_client.get_repository_tags(full_repo.split("/", 1)[-1])
+        # if specified tag doesn't exist in a repo, no-op
+        if tag not in repo_tags["tags"]:
+            return
+
+        manifest = self.quay_client.get_manifest(reference)
+        # V2S2 image, we need only manifest digest
+        if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
+            image_digests.append(self.quay_client.get_manifest_digest(reference))
+        # V2S2 image, we need digests of arch images
         else:
-            manifest_list = self.quay_client.get_manifest(reference, manifest_list=True)
-            for manifest in manifest_list["manifests"]:
-                if remove_archs is None or manifest["platform"]["architecture"] in remove_archs:
-                    image_digests.append(manifest["digest"])
+            for arch_manifest in manifest["manifests"]:
+                if (
+                    remove_archs is None
+                    or arch_manifest["platform"]["architecture"] in remove_archs
+                ):
+                    image_digests.append(arch_manifest["digest"])
 
         new_claims_signatures = (
             list(set([(c["manifest_digest"], c["docker_reference"]) for c in exclude_by_claims]))

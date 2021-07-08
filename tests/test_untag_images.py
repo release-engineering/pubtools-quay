@@ -1,3 +1,4 @@
+import json
 import logging
 import mock
 import pytest
@@ -225,7 +226,9 @@ def test_send_umb_message(mock_send_umb_message, mock_image_untagger):
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_remove_last(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
+def test_full_run_remove_last(
+    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog
+):
     args = [
         "dummy",
         "--reference",
@@ -252,38 +255,58 @@ def test_full_run_remove_last(mock_send_umb_message, repo_api_data, manifest_lis
         "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+            "https://quay.io/v2/name/repo1/tags/list",
+            json=repo_tags,
         )
         m.get(
-            "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
+            "https://quay.io/v2/name/repo1/manifests/1",
+            text=json.dumps(manifest_list_data, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/2",
+            text=json.dumps(manifest_list_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/3",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/4",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/2")
         untag_images.untag_images_main(args)
 
         expected_lost_images = [
-            "quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
+            "quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
             "quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
             "quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             "quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         ]
 
-        assert m.call_count == 5
+        assert m.call_count == 11
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
             "Following images won't be referencable by tag: "
-            ".*quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
+            ".*quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
             ".*quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
             ".*quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9.*"
-            ".*quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*",
+            ".*quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*"
+            ".*quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb.*"
+            ".*quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*",
             "Removing tag '1' from repository 'name/repo1'",
             "Removing tag '2' from repository 'name/repo1'",
             "Untagging operation succeeded",
@@ -305,7 +328,9 @@ def test_full_run_remove_last(mock_send_umb_message, repo_api_data, manifest_lis
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_no_lost_digests(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
+def test_full_run_no_lost_digests(
+    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog
+):
     args = [
         "dummy",
         "--reference",
@@ -329,21 +354,37 @@ def test_full_run_no_lost_digests(mock_send_umb_message, repo_api_data, manifest
         "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+            "https://quay.io/v2/name/repo1/tags/list",
+            json=repo_tags,
         )
         m.get(
-            "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
+            "https://quay.io/v2/name/repo1/manifests/1",
+            text=json.dumps(manifest_list_data, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/2",
+            text=json.dumps(manifest_list_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/3",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/4",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         untag_images.untag_images_main(args)
 
-        assert m.call_count == 4
+        assert m.call_count == 10
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*",
@@ -369,7 +410,7 @@ def test_full_run_no_lost_digests(mock_send_umb_message, repo_api_data, manifest
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_last_error(mock_send_umb_message, repo_api_data, manifest_list_data, caplog):
+def test_full_run_last_error(mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -395,30 +436,48 @@ def test_full_run_last_error(mock_send_umb_message, repo_api_data, manifest_list
         "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/api/v1/repository/name/repo1",
-            json=repo_api_data,
+            "https://quay.io/v2/name/repo1/tags/list",
+            json=repo_tags,
         )
         m.get(
-            "https://quay.io/v2/name/repo1/manifests/sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-            json=manifest_list_data,
+            "https://quay.io/v2/name/repo1/manifests/1",
+            text=json.dumps(manifest_list_data, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/2",
+            text=json.dumps(manifest_list_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/3",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/name/repo1/manifests/4",
+            text=json.dumps(v2s2_manifest_data, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
 
         expected_err_msg = (
             "Following images .*"
-            ".*quay.io/name/repo1@sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36.*"
+            ".*quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
             ".*quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
             ".*quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9.*"
             ".*quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*"
+            ".*quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb.*"
+            ".*quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*"
         )
 
         with pytest.raises(ValueError, match=expected_err_msg):
             untag_images.untag_images_main(args)
 
-        assert m.call_count == 3
+        assert m.call_count == 9
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",

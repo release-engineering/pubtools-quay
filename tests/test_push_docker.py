@@ -331,7 +331,8 @@ def test_check_repos_validity_success(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -339,9 +340,9 @@ def test_check_repos_validity_success(
     hub = mock.MagicMock()
     hub.worker = mock_worker
 
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = ["repo_data1", "repo_data2", "repo_data3"]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = ["repo_data1", "repo_data2", "repo_data3"]
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value2"},
@@ -371,9 +372,9 @@ def test_check_repos_validity_success(
     mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
     mock_get_repo_metadata.call_args_list[2] == mock.call("namespace/repo3")
-    assert mock_get_repository_data.call_count == 3
-    mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
-    mock_get_repository_data.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
+    assert mock_get_repository_tags.call_count == 3
+    mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
+    mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
@@ -391,7 +392,8 @@ def test_check_repos_validity_missing_repo(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -441,7 +443,8 @@ def test_check_repos_validity_get_repo_server_error(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -491,7 +494,8 @@ def test_check_repos_validity_deprecated_repo(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -539,7 +543,8 @@ def test_check_repos_validity_missing_stage_repo(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -549,12 +554,12 @@ def test_check_repos_validity_missing_stage_repo(
 
     response = mock.MagicMock()
     response.status_code = 404
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = [
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = [
         "repo_data1",
         requests.exceptions.HTTPError("missing", response=response),
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -579,9 +584,9 @@ def test_check_repos_validity_missing_stage_repo(
     assert mock_get_repo_metadata.call_count == 2
     mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
-    assert mock_get_repository_data.call_count == 2
-    mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
-    mock_get_repository_data.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
+    assert mock_get_repository_tags.call_count == 2
+    mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
+    mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
@@ -599,7 +604,8 @@ def test_check_repos_validity_get_stage_repo_server_error(
     mock_get_target_info.return_value = {
         "settings": {
             "quay_namespace": "stage_namespace",
-            "dest_quay_api_token": "stage-token",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
         }
     }
     mock_worker = mock.MagicMock()
@@ -609,12 +615,12 @@ def test_check_repos_validity_get_stage_repo_server_error(
 
     response = mock.MagicMock()
     response.status_code = 500
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = [
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = [
         "repo_data1",
         requests.exceptions.HTTPError("server error", response=response),
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
 
     mock_get_repo_metadata.side_effect = [
         {"release_categories": "value1"},
@@ -639,9 +645,9 @@ def test_check_repos_validity_get_stage_repo_server_error(
     assert mock_get_repo_metadata.call_count == 2
     mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
-    assert mock_get_repository_data.call_count == 2
-    mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
-    mock_get_repository_data.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
+    assert mock_get_repository_tags.call_count == 2
+    mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
+    mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
@@ -656,14 +662,20 @@ def test_generate_backup_mapping(
     hub = mock.MagicMock()
 
     response = mock.MagicMock()
-    response.status_code = 404
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = [
-        {"tags": {"latest-test-tag": {"manifest_digest": "sha256:a1a1a1a1a1a1"}}},
+    response.status_code = 401
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = [
+        {"name": "target----repo", "tags": ["latest-test-tag"]},
         requests.exceptions.HTTPError("missing", response=response),
-        {"tags": {"some-other-tag": {"manifest_digest": "sha256:b2b2b2b2b2b2"}}},
+        {"name": "target----repo", "tags": ["some-other-tag"]},
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.side_effect = [
+        "sha256:a1a1a1a1a1a1",
+        "sha256:b2b2b2b2b2b2",
+    ]
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = "some-manifest-list"
@@ -698,10 +710,10 @@ def test_generate_backup_mapping(
             repo="some-namespace/target----repo2", tag="tag3", digest=None
         ),
     ]
-    assert mock_get_repository_data.call_count == 3
-    assert mock_get_repository_data.call_args_list[0] == mock.call("some-namespace/target----repo")
-    assert mock_get_repository_data.call_args_list[1] == mock.call("some-namespace/target----repo1")
-    assert mock_get_repository_data.call_args_list[2] == mock.call("some-namespace/target----repo2")
+    assert mock_get_repository_tags.call_count == 3
+    assert mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/target----repo")
+    assert mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/target----repo1")
+    assert mock_get_repository_tags.call_args_list[2] == mock.call("some-namespace/target----repo2")
 
     mock_get_manifest.assert_called_once_with(
         "quay.io/some-namespace/target----repo@sha256:a1a1a1a1a1a1"
@@ -721,13 +733,19 @@ def test_generate_backup_mapping_server_error(
 
     response = mock.MagicMock()
     response.status_code = 500
-    mock_get_repository_data = mock.MagicMock()
-    mock_get_repository_data.side_effect = [
-        {"tags": {"latest-test-tag": {"manifest_digest": "sha256:a1a1a1a1a1a1"}}},
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = [
+        {"name": "target----repo", "tags": ["latest-test-tag"]},
         requests.exceptions.HTTPError("server error", response=response),
-        {"tags": {"some-other-tag": {"manifest_digest": "sha256:b2b2b2b2b2b2"}}},
+        {"name": "target----repo", "tags": ["some-other-tag"]},
     ]
-    mock_quay_api_client.return_value.get_repository_data = mock_get_repository_data
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
+    mock_get_manifest_digest = mock.MagicMock()
+    mock_get_manifest_digest.side_effect = [
+        "sha256:a1a1a1a1a1a1",
+        "sha256:b2b2b2b2b2b2",
+    ]
+    mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, container_signing_push_item],
@@ -741,7 +759,7 @@ def test_generate_backup_mapping_server_error(
             [container_multiarch_push_item, container_signing_push_item]
         )
 
-    assert mock_get_repository_data.call_count == 2
+    assert mock_get_repository_tags.call_count == 2
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
