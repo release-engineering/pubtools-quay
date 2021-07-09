@@ -116,10 +116,21 @@ def test_get_tagged_image_digests_manifest_list(
     mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1")
 
 
+@mock.patch("json.dump")
+@mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_settings):
+def test_get_pyxis_signature(
+    mock_quay_client,
+    mock_run_entrypoint,
+    mock_tempfile,
+    mock_json_dump,
+    target_settings,
+):
     hub = mock.MagicMock()
+    temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
+    mock_tempfile.return_value.__enter__.return_value.name = temp_filename
+
     expected_data1 = [{"some": "data"}, {"other": "data"}]
     expected_data2 = [{"some-other": "data"}]
     mock_run_entrypoint.side_effect = [iter(expected_data1), iter(expected_data2)]
@@ -144,7 +155,7 @@ def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_setti
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--manifest-digest",
-            "sha256:a1a1a1a1a,sha256:b2b2b2b2",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -159,10 +170,14 @@ def test_get_pyxis_signature(mock_quay_client, mock_run_entrypoint, target_setti
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--manifest-digest",
-            "sha256:c3c3c3c3",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
+
+    assert mock_json_dump.call_count == 2
+    assert mock_json_dump.mock_calls[0][1][0] == ["sha256:a1a1a1a1a", "sha256:b2b2b2b2"]
+    assert mock_json_dump.mock_calls[1][1][0] == ["sha256:c3c3c3c3"]
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_pyxis")
@@ -180,12 +195,12 @@ def test_filter_claim_messages(
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     filtered_msgs = sig_handler.filter_claim_messages(claim_messages)
     mock_get_signatures.assert_called_once_with(
-        manifest_digests=["sha256:a2a2a2a", "sha256:b3b3b3b", "sha256:f4f4f4f"]
+        manifest_digests=["sha256:a2a2a2a", "sha256:b3b3b3b", "sha256:d5d5d5d5", "sha256:f4f4f4f"]
     )
 
     assert filtered_msgs == [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -218,7 +233,7 @@ def test_get_signatures_from_radas(
     assert mock_claim_handler.call_args[1]["radas_address"] == radas_addr
     assert mock_claim_handler.call_args[1]["claim_messages"] == [
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id1",
@@ -229,7 +244,7 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id2",
@@ -240,7 +255,7 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
         {
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "claim_file": "some-encode",
             "pub_task_id": "1",
             "request_id": "id3",
@@ -248,6 +263,17 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:2",
+            "created": "2021-03-19T14:45:23.128632Z",
+        },
+        {
+            "sig_key_id": "1234567800000003",
+            "claim_file": "some-encode",
+            "pub_task_id": "1",
+            "request_id": "id4",
+            "manifest_digest": "sha256:d5d5d5d5",
+            "repo": "some-dest-repo",
+            "image_name": "image",
+            "docker_reference": "registry.com/image:1",
             "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
@@ -260,16 +286,22 @@ def test_get_signatures_from_radas(
     assert len(mock_proton.mock_calls) == 2
 
 
+@mock.patch("json.dump")
+@mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 def test_upload_signatures_pyxis(
     mock_quay_client,
     mock_run_entrypoint,
+    mock_tempfile,
+    mock_json_dump,
     target_settings,
     claim_messages,
     signed_messages,
 ):
     hub = mock.MagicMock()
+    temp_filename = "/tmp/pubtools_quay_upload_signatures_ABC123"
+    mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.upload_signatures_to_pyxis(claim_messages, signed_messages, 2)
@@ -279,22 +311,29 @@ def test_upload_signatures_pyxis(
             "manifest_digest": "sha256:f4f4f4f",
             "reference": "registry.com/image:1",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000000",
             "signature_data": "binary-data1",
         },
         {
             "manifest_digest": "sha256:a2a2a2a",
             "reference": "registry.com/image:1",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000001",
             "signature_data": "binary-data2",
         },
         {
             "manifest_digest": "sha256:b3b3b3b",
             "reference": "registry.com/image:2",
             "repository": "image",
-            "sig_key_id": "key1",
+            "sig_key_id": "00000002",
             "signature_data": "binary-data3",
+        },
+        {
+            "manifest_digest": "sha256:d5d5d5d5",
+            "reference": "registry.com/image:1",
+            "repository": "image",
+            "sig_key_id": "1234567800000003",
+            "signature_data": "binary-data4",
         },
     ]
 
@@ -310,7 +349,7 @@ def test_upload_signatures_pyxis(
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--signatures",
-            json.dumps(signatures[:2]),
+            "@/tmp/pubtools_quay_upload_signatures_ABC123",
         ],
         {},
     )
@@ -325,10 +364,14 @@ def test_upload_signatures_pyxis(
             "--pyxis-krb-ktfile",
             "/etc/pub/some.keytab",
             "--signatures",
-            json.dumps(signatures[2:]),
+            "@/tmp/pubtools_quay_upload_signatures_ABC123",
         ],
         {},
     )
+
+    assert mock_json_dump.call_count == 2
+    assert mock_json_dump.mock_calls[0][1][0] == signatures[:2]
+    assert mock_json_dump.mock_calls[1][1][0] == signatures[2:]
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -338,7 +381,7 @@ def test_validate_radas_msgs(
     hub = mock.MagicMock()
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
 
-    with pytest.raises(exceptions.SigningError, match="Signing of 2/3 messages has failed"):
+    with pytest.raises(exceptions.SigningError, match="Signing of 2/4 messages has failed"):
         sig_handler.validate_radas_messages(claim_messages, error_signed_messages)
 
 
