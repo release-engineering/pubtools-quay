@@ -269,6 +269,14 @@ def remove_images(
         references_to_remove += get_repo_images_to_remove(references, quay_client)
 
     references_to_remove = sorted(list(set(references_to_remove)))
+
+    sig_remover = SignatureRemover()
+    sig_remover.set_quay_client(quay_client)
+    for reference in references_to_remove:
+        sig_remover.remove_tag_signatures(
+            reference, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+        )
+
     untag_images(
         references_to_remove,
         quay_api_token=quay_api_token,
@@ -281,13 +289,6 @@ def remove_images(
         umb_client_key=umb_client_key,
         umb_ca_cert=umb_ca_cert,
     )
-
-    sig_remover = SignatureRemover()
-    sig_remover.set_quay_client(quay_client)
-    for reference in references_to_remove:
-        sig_remover.remove_tag_signatures(
-            reference, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
-        )
 
     LOG.info("Images have been removed")
     if send_umb_msg:
