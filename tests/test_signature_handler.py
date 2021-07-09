@@ -713,13 +713,15 @@ def test_sign_task_index_image(
     sig_handler = signature_handler.OperatorSignatureHandler(
         hub, "1", target_settings, "some-target"
     )
-    sig_handler.sign_task_index_image(["some-key"], "registry1/namespace/image:1", "3")
+    claims = sig_handler.sign_task_index_image(["some-key"], "registry1/namespace/image:1", "3")
     mock_construct_index_claim_msgs.assert_called_once_with(
         "registry1/namespace/image:1", "3", ["some-key"]
     )
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
     mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
     mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"], 100)
+
+    assert claims == ["msg1", "msg2"]
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
