@@ -156,7 +156,7 @@ class ManifestListMerger:
                 self.dest_image, manifest_list=True
             )
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
+            if e.response.status_code == 404 or e.response.status_code == 401:
                 dest_manifest_list = None
             else:
                 raise

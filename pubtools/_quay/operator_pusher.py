@@ -345,7 +345,7 @@ class OperatorPusher:
             try:
                 manifest_list = quay_client.get_manifest(image_ref, manifest_list=True)
             except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
+                if e.response.status_code == 404 or e.response.status_code == 401:
                     continue
                 else:
                     raise

@@ -217,7 +217,7 @@ class ContainerImagePusher:
                         merge_mls_dest_refs.append(dest_ref)
                 except requests.exceptions.HTTPError as e:
                     # Option 3: Destination tag doesn't exist, no ML merging
-                    if e.response.status_code == 404:
+                    if e.response.status_code == 404 or e.response.status_code == 401:
                         simple_dest_refs.append(dest_ref)
                     else:
                         raise

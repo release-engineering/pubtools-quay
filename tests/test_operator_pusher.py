@@ -444,7 +444,7 @@ def test_get_existing_index_images(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_get_existing_index_images_raises_404(
+def test_get_existing_index_images_raises_401(
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
@@ -454,7 +454,7 @@ def test_get_existing_index_images_raises_404(
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.side_effect = [
-        requests.exceptions.HTTPError(response=mock.Mock(status_code=404)),
+        requests.exceptions.HTTPError(response=mock.Mock(status_code=401)),
         manifest_list_data,
     ]
 

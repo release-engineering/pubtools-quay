@@ -174,7 +174,7 @@ class TagDocker:
                     try:
                         stage_quay_client.get_manifest(stage_image)
                     except requests.exceptions.HTTPError as e:
-                        if e.response.status_code == 404:
+                        if e.response.status_code == 404 or e.response.status_code == 401:
                             raise BadPushItem(
                                 "To-be-added tag {0} must already exist in stage repo".format(tag)
                             )
@@ -187,8 +187,8 @@ class TagDocker:
                     try:
                         stage_quay_client.get_manifest(stage_image)
                     except requests.exceptions.HTTPError as e:
-                        if e.response.status_code == 404:
-                            # 404 -> all good
+                        if e.response.status_code == 404 or e.response.status_code == 401:
+                            # 404/401 -> all good
                             pass
                         else:
                             raise
@@ -213,7 +213,7 @@ class TagDocker:
         try:
             manifest = self.quay_client.get_manifest(reference)
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 404:
+            if e.response.status_code == 404 or e.response.status_code == 401:
                 LOG.info("Image '{0}' doesn't exist".format(reference))
                 return None
             else:

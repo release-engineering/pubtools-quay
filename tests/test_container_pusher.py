@@ -183,7 +183,7 @@ def test_copy_multiarch_item_no_dest_ml(
     mock_get_manifest = mock.MagicMock()
 
     response = mock.MagicMock()
-    response.status_code = 404
+    response.status_code = 401
     mock_get_manifest.side_effect = requests.exceptions.HTTPError("some error", response=response)
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_get_missing_archs.return_value = []

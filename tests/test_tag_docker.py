@@ -221,7 +221,7 @@ def test_check_input_validity_new_tag_not_in_stage(
 
     mock_get_manifest = mock.MagicMock()
     response = mock.MagicMock()
-    response.status_code = 404
+    response.status_code = 401
     mock_get_manifest.side_effect = [
         {"some": "manifest"},
         requests.exceptions.HTTPError("not found", response=response),
@@ -318,7 +318,7 @@ def test_check_input_validity_remove_tag_still_in_stage(
 
     mock_get_manifest = mock.MagicMock()
     response = mock.MagicMock()
-    response.status_code = 404
+    response.status_code = 401
     mock_get_manifest.side_effect = [
         requests.exceptions.HTTPError("not found", response=response),
         {"some": "manifest"},
@@ -509,7 +509,7 @@ def test_get_image_details_doesnt_exist(
 ):
     hub = mock.MagicMock()
     response = mock.MagicMock()
-    response.status_code = 404
+    response.status_code = 401
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.side_effect = requests.exceptions.HTTPError("missing", response=response)
     mock_quay_client.return_value.get_manifest = mock_get_manifest

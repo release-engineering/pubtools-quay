@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+import mock
 import pytest
 import requests
 import requests_mock
@@ -302,7 +303,8 @@ def test_merge_selected_architectures():
         assert created_ml == expected_ml
 
 
-def test_merge_selected_architectures_no_dest_manifest():
+@mock.patch("pubtools._quay.quay_client.QuayClient._authenticate_quay")
+def test_merge_selected_architectures_no_dest_manifest(mock_authenticate):
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
@@ -320,11 +322,14 @@ def test_merge_selected_architectures_no_dest_manifest():
         )
         m.get(
             "https://quay.io/v2/dest/image/manifests/1",
-            status_code=404,
+            [
+                {"headers": {"some-header": "value"}, "status_code": 401},
+                {"status_code": 401},
+            ],
         )
 
         created_ml = merger.merge_manifest_lists_selected_architectures(["arm64", "s390x"])
-        assert m.call_count == 2
+        assert m.call_count == 3
         created_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
         expected_ml = deepcopy(merged_ml3)
         expected_ml["manifests"].sort(key=lambda manifest: manifest["digest"])
