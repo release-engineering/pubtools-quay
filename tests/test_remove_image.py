@@ -331,7 +331,7 @@ def test_run(
         remove_last=True,
         quay_user="some-user",
         quay_password="some-password",
-        send_umb_msg=True,
+        send_umb_msg=False,
         umb_urls=None,
         umb_cert=None,
         umb_client_key=None,
@@ -357,7 +357,7 @@ def test_run(
 @mock.patch("pubtools._quay.remove_image.group_images_by_repo")
 @mock.patch("pubtools._quay.remove_image.get_repo_images_to_remove")
 @mock.patch("pubtools._quay.remove_image.untag_images")
-def test_run(
+def test_run_send_umb_message(
     mock_untag_images,
     mock_get_repo_images_to_remove,
     mock_group_images_by_repo,

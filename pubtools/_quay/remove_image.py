@@ -283,7 +283,7 @@ def remove_images(
         remove_last=True,
         quay_user=quay_user,
         quay_password=quay_password,
-        send_umb_msg=True,
+        send_umb_msg=send_umb_msg,
         umb_urls=umb_urls,
         umb_cert=umb_cert,
         umb_client_key=umb_client_key,
