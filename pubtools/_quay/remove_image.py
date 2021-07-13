@@ -94,7 +94,7 @@ def construct_kwargs(args):
             Parsed command line arguments.
 
     Returns (dict):
-        Keyword arguments for the 'remove_repository' function.
+        Keyword arguments for the 'remove_images' function.
     """
     kwargs = args.__dict__
 
@@ -241,7 +241,7 @@ def remove_images(
         quay_password (str):
             Quay password for Docker HTTP API.
         pyxis_server (str):
-            Pyxis service hostname:
+            Pyxis service hostname.
         pyxis_krb_principal (str):
             Pyxis kerberos principal in form: name@REALM.
         pyxis_krb_ktfile (str):
