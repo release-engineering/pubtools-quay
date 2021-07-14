@@ -1,6 +1,25 @@
 ChangeLog
 =========
 
+0.6.0 (2021-7-14)
+------------------
+
+* Create entrypoint for removing a Quay repo
+* Create entrypoint for clearing a Quay repo
+* Add signature removal to tag-docker operations
+* Drop unnecessary 'external_repos'
+* Add using extra Quay tokens for OSBS organizations
+* Allow specifying multiple repos in remove-repo and clear-repo tasks
+* Skip signing when no operator claim messages are constructed
+* Add support for delimeter-less repositories
+* Change "repo" parameter of claim messages to have external representation
+* Fix loggers per pubtools conventions
+* Check username in output of skopeo --get-login
+* Remove the usage of Quay API reading repo data
+* Add signature removal for IIB operations
+* Update sigstore to be up-to-date with current implementation
+* Allow pushing to non-existent repo
+
 0.5.0 (2021-6-2)
 ------------------
 
