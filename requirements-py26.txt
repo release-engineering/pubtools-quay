@@ -10,5 +10,6 @@ paramiko==2.3.1
 PyYAML < 5.1
 jsonschema == 2.3.0
 pyrsistent==0.13.0
+pluggy==0.5.2
 
 # -e git+https://code.engineering.redhat.com/gerrit/rhmsg#egg=rhmsg-0.9

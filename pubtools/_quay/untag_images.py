@@ -1,5 +1,7 @@
 import logging
 
+from pubtools.pluggy import pm, task_context
+
 from .image_untagger import ImageUntagger
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 
@@ -179,6 +181,8 @@ def untag_images(
     lost_images = untagger.untag_images()
 
     LOG.info("Untagging operation succeeded")
+    pm.hook.quay_images_untagged(untag_refs=sorted(references), lost_refs=sorted(lost_images))
+
     if send_umb_msg:
         LOG.info("Sending a UMB message")
         props = {"untag_refs": references, "lost_refs": lost_images}
@@ -207,4 +211,6 @@ def untag_images_main(sysargs=None):
         raise ValueError("--quay-api-token must be specified")
 
     kwargs = construct_kwargs(args)
-    untag_images(**kwargs)
+
+    with task_context():
+        untag_images(**kwargs)

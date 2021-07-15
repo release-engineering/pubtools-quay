@@ -8,10 +8,29 @@ except ImportError:
 import pytest
 from six import PY3
 
+from pubtools.pluggy import pm
+
 from pubtools._quay.utils.logger import Logger
 from .utils.caplog_compat import CapturelogWrapper
 
 # flake8: noqa: E501
+
+
+@pytest.fixture
+def hookspy():
+    # Yields a list which receives a (name, kwargs) tuple
+    # every time a pubtools hook is invoked.
+    hooks = []
+
+    def record_hook(hook_name, _hook_impls, kwargs):
+        hooks.append((hook_name, kwargs))
+
+    def do_nothing(*args, **kwargs):
+        pass
+
+    undo = pm.add_hookcall_monitoring(before=record_hook, after=do_nothing)
+    yield hooks
+    undo()
 
 
 @pytest.fixture

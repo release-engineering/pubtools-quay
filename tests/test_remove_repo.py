@@ -222,7 +222,7 @@ def test_args_missing_umb_cert(mock_quay_api_client, mock_send_umb_message):
 @mock.patch("pubtools._quay.remove_repo.SignatureRemover")
 @mock.patch("pubtools._quay.remove_repo.send_umb_message")
 @mock.patch("pubtools._quay.remove_repo.QuayApiClient")
-def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover):
+def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover, hookspy):
     args = [
         "dummy",
         "--repositories",
@@ -258,6 +258,12 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
     )
     mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
     mock_send_umb_message.assert_not_called()
+
+    assert hookspy == [
+        ("task_start", {}),
+        ("quay_repositories_removed", {"repository_ids": ["namespace/image"]}),
+        ("task_stop", {"failed": False}),
+    ]
 
 
 @mock.patch("pubtools._quay.remove_repo.SignatureRemover")

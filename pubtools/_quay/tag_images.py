@@ -1,5 +1,7 @@
 import logging
 
+from pubtools.pluggy import pm, task_context
+
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
 from .command_executor import LocalExecutor, RemoteExecutor
 
@@ -218,6 +220,8 @@ def tag_images(
     executor.skopeo_login(quay_user, quay_password)
     executor.tag_images(source_ref, dest_refs, all_arch)
 
+    pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
+
     if send_umb_msg:
         props = {"source_ref": source_ref, "dest_refs": dest_refs}
         send_umb_message(
@@ -268,4 +272,5 @@ def tag_images_main(sysargs=None):
     args = add_args_env_variables(args, TAG_IMAGES_ARGS)
 
     kwargs = construct_kwargs(args)
-    tag_images(**kwargs)
+    with task_context():
+        tag_images(**kwargs)
