@@ -216,11 +216,16 @@ def remove_repositories(
         )
 
 
+def setup_args():
+    """Set up argparser without extra parameters, this method is used for auto doc generation."""
+    return setup_arg_parser(REMOVE_REPO_ARGS)
+
+
 def remove_repositories_main(sysargs=None):
     """Entrypoint for removing repositories."""
     logging.basicConfig(level=logging.INFO)
 
-    parser = setup_arg_parser(REMOVE_REPO_ARGS)
+    parser = setup_args()
     if sysargs:
         args = parser.parse_args(sysargs[1:])
     else:

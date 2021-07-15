@@ -1,5 +1,5 @@
 pubtools-quay's documentation
-============================
+=============================
 
 Contents:
 
@@ -7,6 +7,8 @@ Contents:
    :maxdepth: 2
 
    README
+   entrypoints_reference
+   modules_reference
    
 .. ##### ToDo: Rewrite about documentation indexes. #####
 

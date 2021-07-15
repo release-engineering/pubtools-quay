@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import functools
 import json
 import logging
 import os
@@ -269,6 +270,7 @@ def log_step(step_name):
     event_name = step_name.lower().replace(" ", "-")
 
     def decorate(fn):
+        @functools.wraps(fn)
         def fn_wrapper(*args, **kwargs):
             try:
                 LOG.info("%s: Started", step_name, extra=task_status("%s-start" % event_name))

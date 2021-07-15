@@ -256,11 +256,16 @@ def verify_tag_images_args(
             )
 
 
+def setup_args():
+    """Set up argparser without extra parameters, this method is used for auto doc generation."""
+    return setup_arg_parser(TAG_IMAGES_ARGS)
+
+
 def tag_images_main(sysargs=None):
     """Entrypoint for image tagging."""
     logging.basicConfig(level=logging.INFO)
 
-    parser = setup_arg_parser(TAG_IMAGES_ARGS)
+    parser = setup_args()
     if sysargs:
         args = parser.parse_args(sysargs[1:])
     else:

@@ -192,11 +192,16 @@ def untag_images(
         )
 
 
+def setup_args():
+    """Set up argparser without extra parameters, this method is used for auto doc generation."""
+    return setup_arg_parser(UNTAG_IMAGES_ARGS)
+
+
 def untag_images_main(sysargs=None):
     """Entrypoint for untagging images."""
     logging.basicConfig(level=logging.INFO)
 
-    parser = setup_arg_parser(UNTAG_IMAGES_ARGS)
+    parser = setup_args()
     if sysargs:
         args = parser.parse_args(sysargs[1:])
     else:

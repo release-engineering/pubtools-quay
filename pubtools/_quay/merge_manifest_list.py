@@ -54,11 +54,16 @@ def verify_merge_manifest_list_args(args):
         raise ValueError("Quay password must be set for both source and dest images")
 
 
+def setup_args():
+    """Set up argparser without extra parameters, this method is used for auto doc generation."""
+    return setup_arg_parser(MERGE_MANIFEST_LIST_ARGS)
+
+
 def merge_manifest_list_main(sysargs=None):
     """Entrypoint for manifest list merging."""
     logging.basicConfig(level=logging.INFO)
 
-    parser = setup_arg_parser(MERGE_MANIFEST_LIST_ARGS)
+    parser = setup_args()
     if sysargs:
         args = parser.parse_args(sysargs[1:])
     else:
