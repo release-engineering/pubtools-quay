@@ -1,5 +1,7 @@
 import logging
 
+from pubtools.pluggy import task_context, pm
+
 from .signature_remover import SignatureRemover
 from .quay_client import QuayClient
 from .untag_images import untag_images
@@ -222,6 +224,8 @@ def clear_repositories(
     )
 
     LOG.info("Repositories have been cleared")
+    pm.hook.quay_repositories_cleared(repository_ids=sorted(parsed_repositories))
+
     if send_umb_msg:
         LOG.info("Sending a UMB message")
         props = {"cleared_repositories": parsed_repositories}
@@ -252,4 +256,6 @@ def clear_repositories_main(sysargs=None):
         raise ValueError("--quay-password must be specified")
 
     kwargs = construct_kwargs(args)
-    clear_repositories(**kwargs)
+
+    with task_context():
+        clear_repositories(**kwargs)

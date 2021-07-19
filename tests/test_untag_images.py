@@ -227,7 +227,7 @@ def test_send_umb_message(mock_send_umb_message, mock_image_untagger):
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
 def test_full_run_remove_last(
-    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog
+    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog, hookspy
 ):
     args = [
         "dummy",
@@ -325,6 +325,25 @@ def test_full_run_remove_last(
             ca_cert="/path/to/ca_cert.crt",
             client_key="/path/to/umb.key",
         )
+
+    assert hookspy == [
+        ("task_start", {}),
+        (
+            "quay_images_untagged",
+            {
+                "lost_refs": [
+                    "quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+                    "quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+                    "quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+                    "quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
+                    "quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+                    "quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+                ],
+                "untag_refs": ["quay.io/name/repo1:1", "quay.io/name/repo1:2"],
+            },
+        ),
+        ("task_stop", {"failed": False}),
+    ]
 
 
 @mock.patch("pubtools._quay.untag_images.send_umb_message")

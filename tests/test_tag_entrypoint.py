@@ -12,7 +12,7 @@ sys.modules["rhmsg.activemq.producer"] = module_mock
 
 
 @mock.patch("pubtools._quay.tag_images.LocalExecutor")
-def test_run_tag_entrypoint_local_success(mock_local_executor):
+def test_run_tag_entrypoint_local_success(mock_local_executor, hookspy):
     args = [
         "dummy",
         "--source-ref",
@@ -32,6 +32,18 @@ def test_run_tag_entrypoint_local_success(mock_local_executor):
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
+
+    assert hookspy == [
+        ("task_start", {}),
+        (
+            "quay_images_tagged",
+            {
+                "dest_refs": ["quay.io/repo/target-image:1"],
+                "source_ref": "quay.io/repo/souce-image:1",
+            },
+        ),
+        ("task_stop", {"failed": False}),
+    ]
 
 
 @mock.patch("pubtools._quay.tag_images.LocalExecutor")

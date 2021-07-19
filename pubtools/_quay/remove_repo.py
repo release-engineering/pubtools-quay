@@ -1,5 +1,7 @@
 import logging
 
+from pubtools.pluggy import pm, task_context
+
 from .signature_remover import SignatureRemover
 from .quay_api_client import QuayApiClient
 from .utils.misc import (
@@ -203,6 +205,8 @@ def remove_repositories(
         quay_api_client.delete_repository(internal_repo)
 
     LOG.info("Repositories have been removed")
+    pm.hook.quay_repositories_removed(repository_ids=sorted(parsed_repositories))
+
     if send_umb_msg:
         LOG.info("Sending a UMB message")
         props = {"removed_repositories": parsed_repositories}
@@ -233,4 +237,6 @@ def remove_repositories_main(sysargs=None):
         raise ValueError("--quay-password must be specified")
 
     kwargs = construct_kwargs(args)
-    remove_repositories(**kwargs)
+
+    with task_context():
+        remove_repositories(**kwargs)

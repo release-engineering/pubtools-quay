@@ -283,7 +283,7 @@ def test_run(mock_quay_client, mock_send_umb_message, mock_signature_remover, mo
 @mock.patch("pubtools._quay.clear_repo.send_umb_message")
 @mock.patch("pubtools._quay.clear_repo.QuayClient")
 def test_run_multiple_repos(
-    mock_quay_client, mock_send_umb_message, mock_signature_remover, mock_untag_images
+    mock_quay_client, mock_send_umb_message, mock_signature_remover, mock_untag_images, hookspy
 ):
     args = [
         "dummy",
@@ -352,6 +352,16 @@ def test_run_multiple_repos(
         umb_ca_cert=None,
     )
     mock_send_umb_message.assert_not_called()
+
+    # Should have activated these hooks.
+    assert hookspy == [
+        ("task_start", {}),
+        (
+            "quay_repositories_cleared",
+            {"repository_ids": ["namespace/image", "namespace/image2"]},
+        ),
+        ("task_stop", {"failed": False}),
+    ]
 
 
 @mock.patch("pubtools._quay.clear_repo.untag_images")

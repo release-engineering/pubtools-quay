@@ -1,5 +1,7 @@
 import logging
 
+from pubtools.pluggy import task_context
+
 from .utils.misc import setup_arg_parser, add_args_env_variables
 from .manifest_list_merger import ManifestListMerger
 
@@ -74,4 +76,6 @@ def merge_manifest_list_main(sysargs=None):
         args.dest_quay_user,
         args.dest_quay_password,
     )
-    merger.merge_manifest_lists()
+
+    with task_context():
+        merger.merge_manifest_lists()

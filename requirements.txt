@@ -7,6 +7,7 @@ pubtools-pyxis
 six
 python-qpid-proton==0.34.0
 monotonic
+pubtools>=0.3.0
 iiblib
 pubtools-iib
 
