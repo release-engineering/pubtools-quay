@@ -25,9 +25,9 @@ copyright = u"2021, Red Hat"
 author = u"Red Hat"
 
 # The short X.Y version
-version = u"0.1"
+version = u"0.6.0"
 # The full version, including alpha/beta/rc tags
-release = u"0.1.0"
+release = u"0.6.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,7 +39,7 @@ release = u"0.1.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinxarg.ext"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinxarg.ext", "sphinx_rtd_theme"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -74,7 +74,7 @@ pygments_style = "sphinx"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -161,7 +161,3 @@ texinfo_documents = [
     )
 ]
 
-
-# -- Extension configuration -------------------------------------------------
-
-html_theme = "sphinx_rtd_theme"
