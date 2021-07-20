@@ -1,0 +1,404 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Quay Client &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quay Session" href="quay_session.html" />
+    <link rel="prev" title="Quay API Client" href="quay_api_client.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_reference.html">Modules reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command_executor.html">Command Executor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="container_image_pusher.html">Container image pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iib_operations.html">IIB operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_untagger.html">Image untagger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quay Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tag_docker.html">Tag Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules_reference.html">Modules reference</a> &raquo;</li>
+        
+      <li>Quay Client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/quay_client.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="quay-client">
+<h1>Quay Client<a class="headerlink" href="#quay-client" title="Permalink to this headline">¶</a></h1>
+<p>Class used for performing Docker HTTP API queries on Quay. Only necessary queries have been implemented, though more may be added, as required. Standard authentication procedure is also handled by this class.</p>
+<p>Authentication details can be found at <a class="reference external" href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a></p>
+<p>Full Docker HTTP API reference can be found at <a class="reference external" href="https://docs.docker.com/registry/spec/api/">https://docs.docker.com/registry/spec/api/</a></p>
+<span class="target" id="module-pubtools._quay.quay_client"></span><dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.quay_client.</span></span><span class="sig-name descname"><span class="pre">QuayClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for performing Docker HTTP API operations with the Quay registry.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>username (str):</dt><dd><p>Quay username.</p>
+</dd>
+<dt>password (str):</dt><dd><p>Quay password.</p>
+</dd>
+<dt>host (str):</dt><dd><p>Quay registry URL.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient.get_manifest">
+<span class="sig-name descname"><span class="pre">get_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">manifest_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient.get_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient.get_manifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get manifest of a given image along with its type.</p>
+<p>Manifest type order of preference is:
+1. manifest list
+2. V2S2 manifest
+3. anything else</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>image (str):</dt><dd><p>Image for which to get the manifest list.</p>
+</dd>
+<dt>raw (bool):</dt><dd><p>Whether to return the manifest as raw JSON.</p>
+</dd>
+<dt>manifest_list (bool):</dt><dd><p>Whether to only return a manifest list and raise an exception otherwise.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (dict|str):</dt><dd><dl class="simple">
+<dt>Image manifest</dt><dd><p>Raises:</p>
+</dd>
+<dt>ManifestTypeError:</dt><dd><p>When the image doesn’t have a manifest list.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient.get_manifest_digest">
+<span class="sig-name descname"><span class="pre">get_manifest_digest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient.get_manifest_digest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient.get_manifest_digest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get manifest of the specified image and calculate its digest by hashing it.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>image (str):</dt><dd><p>Image address for which to calculate the digest.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (str):</dt><dd><p>Manifest digest of the image.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient.upload_manifest">
+<span class="sig-name descname"><span class="pre">upload_manifest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">manifest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient.upload_manifest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient.upload_manifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload manifest to a specified image.</p>
+<p>All manifest types are supported (manifest, manifest list).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>manifest (dict):</dt><dd><p>Manifest to be uploaded.</p>
+</dd>
+<dt>image (str):</dt><dd><p>Image address to upload the manifest to.</p>
+</dd>
+<dt>raw (bool):</dt><dd><p>Whether the given manifest is a string (raw) or a Python dictionary</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient.get_repository_tags">
+<span class="sig-name descname"><span class="pre">get_repository_tags</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repository</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient.get_repository_tags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient.get_repository_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tags of a provided repository.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>repository (str):</dt><dd><p>Repository whose tags should be gathered (expected format namespce/repo).</p>
+</dd>
+<dt>raw (bool):</dt><dd><p>Whether the given manifest is a string (raw) or a Python dictionary</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (list):</dt><dd><p>Tags which the repository contains.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient._request_quay">
+<span class="sig-name descname"><span class="pre">_request_quay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endpoint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient._request_quay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient._request_quay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a Docker HTTP API request on Quay registry. Handle authentication.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>method (str):</dt><dd><p>REST API method of the request (GET, POST, PUT, DELETE).</p>
+</dd>
+<dt>endpoint (str):</dt><dd><p>Endpoint of the request.</p>
+</dd>
+<dt>kwargs (dict):</dt><dd><p>Optional arguments to add to the Request object.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (Response):</dt><dd><p>Request library’s Response object.</p>
+</dd>
+<dt>Raises:</dt><dd><p>HTTPError: When the request returned an error status.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient._authenticate_quay">
+<span class="sig-name descname"><span class="pre">_authenticate_quay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">headers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient._authenticate_quay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient._authenticate_quay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to perform an authentication with registry’s authentication server.</p>
+<p>Once authentication is complete, add the token to the Session object.
+Specifics can be found at <a class="reference external" href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a></p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>headers (dict):</dt><dd><p>Headers of the 401 response received from the registry.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>RegistryAuthError:</dt><dd><p>When there’s an issue with the authentication procedure.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url">
+<span class="sig-name descname"><span class="pre">_parse_and_validate_image_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/quay_client.html#QuayClient._parse_and_validate_image_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract image repository + reference from an image and validate its data.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>image (str):</dt><dd><p>A quay.io image.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (str, str):</dt><dd><p>Tuple containing image repository (without base URL) and reference.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError:</dt><dd><p>If image doesn’t contain the expected data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="quay_session.html" class="btn btn-neutral float-right" title="Quay Session" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="quay_api_client.html" class="btn btn-neutral float-left" title="Quay API Client" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

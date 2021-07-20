@@ -1,0 +1,356 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Untag images &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Modules reference" href="modules_reference.html" />
+    <link rel="prev" title="Tag images" href="tag_images.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="clear_repo.html">Clear repo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remove_repo.html">Remove repo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="merge_manifest_list.html">Merge manifest lists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tag_images.html">Tag images</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Untag images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cli-reference">CLI reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Named Arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api-reference">API reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="entrypoints_reference.html">Entrypoints reference</a> &raquo;</li>
+        
+      <li>Untag images</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/untag_images.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-pubtools._quay.untag_images">
+<span id="untag-images"></span><h1>Untag images<a class="headerlink" href="#module-pubtools._quay.untag_images" title="Permalink to this headline">¶</a></h1>
+<p>Entrypoint used for removing tags (images) from Quay. The script will refuse to perform the removal if a last reference of an image is to be removed. This may be overruled by specifying the –remove-last flag. Optionally, an UMB message may be send notifying of the removed image tags.</p>
+<div class="section" id="cli-reference">
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">untag</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">reference</span> <span class="n">REFERENCE</span> <span class="p">[</span><span class="o">--</span><span class="n">remove</span><span class="o">-</span><span class="n">last</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">token</span> <span class="n">QUAY_API_TOKEN</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">password</span> <span class="n">QUAY_PASSWORD</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">send</span><span class="o">-</span><span class="n">umb</span><span class="o">-</span><span class="n">msg</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">url</span> <span class="n">UMB_URL</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CERT</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">client</span><span class="o">-</span><span class="n">key</span> <span class="n">UMB_CLIENT_KEY</span><span class="p">]</span>
+                           <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">ca</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CA_CERT</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">topic</span> <span class="n">UMB_TOPIC</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments">
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd>--reference</kbd></dt>
+<dd><p>Image reference to untag. Must be specified by tag. Multiple can be specified.</p>
+</dd>
+<dt><kbd>--remove-last</kbd></dt>
+<dd><p>Whether to remove a tag even if it’s the last reference of some image.</p>
+</dd>
+<dt><kbd>--quay-api-token</kbd></dt>
+<dd><p>OAuth token for Quay REST API.</p>
+</dd>
+<dt><kbd>--quay-user</kbd></dt>
+<dd><p>Username for Quay login.</p>
+</dd>
+<dt><kbd>--quay-password</kbd></dt>
+<dd><p>Password for Quay. Can be specified by env variable QUAY_PASSWORD.</p>
+</dd>
+<dt><kbd>--send-umb-msg</kbd></dt>
+<dd><p>Flag of whether to send a UMB message</p>
+</dd>
+<dt><kbd>--umb-url</kbd></dt>
+<dd><p>UMB URL. More than one can be specified.</p>
+</dd>
+<dt><kbd>--umb-cert</kbd></dt>
+<dd><p>Path to the UMB certificate for SSL authentication.</p>
+</dd>
+<dt><kbd>--umb-client-key</kbd></dt>
+<dd><p>Path to the UMB private key for accessing the certificate.</p>
+</dd>
+<dt><kbd>--umb-ca-cert</kbd></dt>
+<dd><p>Path to the UMB CA certificate.</p>
+</dd>
+<dt><kbd>--umb-topic</kbd></dt>
+<dd><p>UMB topic to send the message to.</p>
+<p>Default: “VirtualTopic.eng.pub.quay_untag_image”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="api-reference">
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.untag_images.untag_images">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.untag_images.</span></span><span class="sig-name descname"><span class="pre">untag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">references</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_last</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_umb_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_client_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_ca_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VirtualTopic.eng.pub.quay_untag_image'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/untag_images.html#untag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.untag_images.untag_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Untag images from Quay.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>references ([str]):</dt><dd><p>List of image references to untag.</p>
+</dd>
+<dt>quay_api_token (str):</dt><dd><p>OAuth token for authentication of Quay REST API.</p>
+</dd>
+<dt>remove_last (bool):</dt><dd><p>Whether to remove a tag when it’s the last reference of an image (in that repo).</p>
+</dd>
+<dt>quay_user (str):</dt><dd><p>Quay username for Docker HTTP API.</p>
+</dd>
+<dt>quay_password (str):</dt><dd><p>Quay password for Docker HTTP API.</p>
+</dd>
+<dt>send_umb_msg (bool):</dt><dd><p>Whether to send UMB messages about the untagged images.</p>
+</dd>
+<dt>umb_urls ([str]):</dt><dd><p>AMQP broker URLs to connect to.</p>
+</dd>
+<dt>umb_cert (str):</dt><dd><p>Path to a certificate used for UMB authentication.</p>
+</dd>
+<dt>umb_client_key (str):</dt><dd><p>Path to a client key to decrypt the certificate (if necessary).</p>
+</dd>
+<dt>umb_ca_cert (str):</dt><dd><p>Path to a CA certificate (for mutual authentication).</p>
+</dd>
+<dt>umb_topic (str):</dt><dd><p>Topic to send the UMB messages to.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Untag multiple images and send a UMB message.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ export QUAY_API_TOKEN=oauth_token
+$ pubtools-quay-tag-image \
+  --reference quay.io/src/image:1 \
+  --reference quay.io/src/image:2 \
+  --quay-user quay+username \
+  --remote-exec \
+  --ssh-remote-host 127.0.0.1 \
+  --ssh-remote-host-port 2222 \
+  --ssh-username user \
+  --ssh-key-filename /path/to/file.key \
+  --send-umb-msg \
+  --umb-url amqps://url:5671 \
+  --umb-url amqps://url2:5671 \
+  --umb-cert /path/to/file.crt \
+  --umb-topic VirtualTopic.eng.pub.some_topic
+</pre></div>
+</div>
+<p>Untag an image and force the operation in case the tag is a last reference of some digest.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ export QUAY_API_TOKEN=oauth_token
+$ pubtools-quay-tag-image \
+  --reference quay.io/src/image:1 \
+  --remove-last \
+  --quay-user quay+username
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="modules_reference.html" class="btn btn-neutral float-right" title="Modules reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="tag_images.html" class="btn btn-neutral float-left" title="Tag images" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

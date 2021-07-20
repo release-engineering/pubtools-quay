@@ -1,0 +1,517 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Tag Docker &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities" href="utilities.html" />
+    <link rel="prev" title="Signature Remover" href="signature_remover.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_reference.html">Modules reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command_executor.html">Command Executor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="container_image_pusher.html">Container image pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iib_operations.html">IIB operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_untagger.html">Image untagger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_client.html">Quay Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tag Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules_reference.html">Modules reference</a> &raquo;</li>
+        
+      <li>Tag Docker</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/tag_docker.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tag-docker">
+<h1>Tag Docker<a class="headerlink" href="#tag-docker" title="Permalink to this headline">¶</a></h1>
+<p>This is the main class for the Tag Docker workflow, which is used for adding and deleting tags and architectures.</p>
+<span class="target" id="module-pubtools._quay.tag_docker"></span><dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.tag_docker.</span></span><span class="sig-name descname"><span class="pre">TagDocker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle full tag-docker workflow.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_items ([_PushItem]):</dt><dd><p>List of push items.</p>
+</dd>
+<dt>hub (HubProxy):</dt><dd><p>Instance of XMLRPC pub-hub proxy.</p>
+</dd>
+<dt>task_id (str):</dt><dd><p>task id</p>
+</dd>
+<dt>target_name (str):</dt><dd><p>Name of the target.</p>
+</dd>
+<dt>target_settings (dict):</dt><dd><p>Target settings.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform the full tag-docker workflow.</p>
+<p>The workflow adds or removes images to/from given tags. It’s possible to specify only
+certain architectures to be added or removed. Based on the task arguments, five different
+scenarios may occur:
+- Copying whole image to tag (if tag is unused, or all its archs will be overwritten)
+- Copying only certain archs and adding them to the destination manifest list
+- Removing certain archs from a tag
+- Removing a tag (if all archs are to be removed from it)
+- No operation (to-be-removed tag already doesn’t exist, or all archs are restricted)</p>
+<p>The workflow may be summarized as:
+- Verify that all repos may be worked with (same conditions are in PushDocker)
+- Evaluate which archs are to be added/removed from a given tag
+- If new images were created, perform signing workflow on them
+- Perform the appropriate add/remove/merge operation</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.quay_client">
+<span class="sig-name descname"><span class="pre">quay_client</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.quay_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and access QuayClient for source and dest images.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.executor">
+<span class="sig-name descname"><span class="pre">executor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.executor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and access command executor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.verify_target_settings">
+<span class="sig-name descname"><span class="pre">verify_target_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.verify_target_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.verify_target_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that target settings contains all the necessary data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.verify_input_data">
+<span class="sig-name descname"><span class="pre">verify_input_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.verify_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.verify_input_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verify that the data specified for the TagDocker operation are correct.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.check_input_validity">
+<span class="sig-name descname"><span class="pre">check_input_validity</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.check_input_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.check_input_validity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if input data satisfies tag-docker specific constraints.</p>
+<p>The constraints are following:
+1. If adding tags to prod target, these tags must already exist in stage target.
+2. If removing tags from prod target, these tags must already not exist in stage target.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.get_image_details">
+<span class="sig-name descname"><span class="pre">get_image_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.get_image_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.get_image_details" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an ImageDetails namedtuple for the given image reference.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>reference (str):</dt><dd><p>Image reference.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (ImageDetails|None):</dt><dd><p>Namedtuple filled with images data, or None if image doesn’t exist.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.is_arch_relevant">
+<span class="sig-name descname"><span class="pre">is_arch_relevant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">arch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.is_arch_relevant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.is_arch_relevant" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out if an operation should be performed on a given architecture.</p>
+<p>Uses values of ‘archs’ and ‘exclude_archs’ in push item’s metadata.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>arch (str):</dt><dd><p>Arch to investigate.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (bool):</dt><dd><p>True if an operation should be performed on a given arch, False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs">
+<span class="sig-name descname"><span class="pre">tag_remove_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_remove_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate which architectures would be removed, and which would remain from a given tag.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag, for which a ‘remove’ operation will be performed.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns ([str], [str]):</dt><dd><p>Tuple where first element contains archs that will be removed, and second element
+contains archs that will remain.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image">
+<span class="sig-name descname"><span class="pre">tag_remove_calculate_archs_source_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_details</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_details</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_remove_calculate_archs_source_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate which archs would be removed if the specified images were source images.</p>
+<p>This method is a sub-step of the ‘tag_remove_calculate_archs’ method.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>source_details (ImageDetails|None):</dt><dd><p>ImageDetails of source image, or None if it wasn’t specified.</p>
+</dd>
+<dt>dest_details (ImageDetails):</dt><dd><p>ImageDetails of destination image.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns ([str], [str]):</dt><dd><p>Tuple where first element contains archs that will be removed, and second element
+contains archs that will remain.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_multiarch_image">
+<span class="sig-name descname"><span class="pre">tag_remove_calculate_archs_multiarch_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_details</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_details</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_remove_calculate_archs_multiarch_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_multiarch_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate which archs would be removed if the specified images were multiarch images.</p>
+<p>This method is a sub-step of the ‘tag_remove_calculate_archs’ method.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>source_details (ImageDetails|None):</dt><dd><p>ImageDetails of source image, or None if it wasn’t specified.</p>
+</dd>
+<dt>dest_details (ImageDetails):</dt><dd><p>ImageDetails of destination image.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns ([str], [str]):</dt><dd><p>Tuple where first element contains archs that will be removed, and second element
+contains archs that will remain.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs">
+<span class="sig-name descname"><span class="pre">tag_add_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_add_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate which architectures are present in a given tag, and which ones would be added.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag, for which an ‘add’ operation will be performed.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns ([str]|None):</dt><dd><p>In case of multiarch image, arches which would be copied to the destination. In case
+of a source image, None if the copy operation is relevant or [] otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images">
+<span class="sig-name descname"><span class="pre">copy_tag_sign_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_handler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.copy_tag_sign_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy image from source to the destination tag and sign new manifest claims.</p>
+<p>If destination tag already contains a manifest, it will be overwritten.
+This workflow is expected to use on single-arch source images.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag, which acts as a destination to the copy operation.</p>
+</dd>
+<dt>signature_handler (BasicSignatureHandler):</dt><dd><p>Instance of signature handler which will perform the signing.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images">
+<span class="sig-name descname"><span class="pre">merge_manifest_lists_sign_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_archs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_handler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.merge_manifest_lists_sign_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge manifest lists between source and destination tag and sign manifest claims.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag, which acts as a destination to the merge operation.</p>
+</dd>
+<dt>add_archs ([str]):</dt><dd><p>Architectures which should be copied to the existing manifest list.</p>
+</dd>
+<dt>signature_handler (BasicSignatureHandler):</dt><dd><p>Instance of signature handler which will perform the signing.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.run_untag_images">
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">run_untag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">references</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.run_untag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.run_untag_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare the “untag images” entrypoint with all the necessary arguments and run it.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>references ([str]):</dt><dd><p>Image references which should be untagged.</p>
+</dd>
+<dt>remove_last (bool):</dt><dd><p>Whether to remove a tag when it’s the last reference of an image (in that repo).</p>
+</dd>
+<dt>target_settings (dict):</dt><dd><p>Settings used for setting the value of untag parameters.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.untag_image">
+<span class="sig-name descname"><span class="pre">untag_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.untag_image"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.untag_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Untag image specified by tag.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag which should be removed.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs">
+<span class="sig-name descname"><span class="pre">manifest_list_remove_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_archs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.manifest_list_remove_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove specified archs from a manifest list and upload a new manifest list to Quay.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag whose manifest’s archs will be removed.</p>
+</dd>
+<dt>remove_archs ([str]):</dt><dd><p>Architectures to remove from the manifest list.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="utilities.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="signature_remover.html" class="btn btn-neutral float-left" title="Signature Remover" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

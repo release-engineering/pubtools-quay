@@ -1,0 +1,412 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Tag images &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Untag images" href="untag_images.html" />
+    <link rel="prev" title="Merge manifest lists" href="merge_manifest_list.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="clear_repo.html">Clear repo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="remove_repo.html">Remove repo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="merge_manifest_list.html">Merge manifest lists</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tag images</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cli-reference">CLI reference</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#Named Arguments">Named Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api-reference">API reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="untag_images.html">Untag images</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="entrypoints_reference.html">Entrypoints reference</a> &raquo;</li>
+        
+      <li>Tag images</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/tag_images.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-pubtools._quay.tag_images">
+<span id="tag-images"></span><h1>Tag images<a class="headerlink" href="#module-pubtools._quay.tag_images" title="Permalink to this headline">¶</a></h1>
+<p>Entrypoint used for copying an image to a destination/multiple destinations. If specified, copying operation may be performed on a remote machine via SSH. Optionally, a UMB message may be sent containing the information of tagged images.</p>
+<div class="section" id="cli-reference">
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">tag</span><span class="o">-</span><span class="n">image</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">ref</span> <span class="n">SOURCE_REF</span> <span class="o">--</span><span class="n">dest</span><span class="o">-</span><span class="n">ref</span>
+                               <span class="n">DEST_REF</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span><span class="o">-</span><span class="n">arch</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">password</span> <span class="n">QUAY_PASSWORD</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">remote</span><span class="o">-</span><span class="n">exec</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">remote</span><span class="o">-</span><span class="n">host</span> <span class="n">SSH_REMOTE_HOST</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">remote</span><span class="o">-</span><span class="n">host</span><span class="o">-</span><span class="n">port</span> <span class="n">SSH_REMOTE_HOST_PORT</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">reject</span><span class="o">-</span><span class="n">unknown</span><span class="o">-</span><span class="n">host</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">username</span> <span class="n">SSH_USERNAME</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">password</span> <span class="n">SSH_PASSWORD</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">filename</span> <span class="n">SSH_KEY_FILENAME</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">send</span><span class="o">-</span><span class="n">umb</span><span class="o">-</span><span class="n">msg</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">url</span> <span class="n">UMB_URL</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CERT</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">client</span><span class="o">-</span><span class="n">key</span> <span class="n">UMB_CLIENT_KEY</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">ca</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CA_CERT</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">topic</span> <span class="n">UMB_TOPIC</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="section" id="Named Arguments">
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd>--source-ref</kbd></dt>
+<dd><p>Source image reference.</p>
+</dd>
+<dt><kbd>--dest-ref</kbd></dt>
+<dd><p>Destination image reference. Multiple can be specified.</p>
+</dd>
+<dt><kbd>--all-arch</kbd></dt>
+<dd><p>Flag of whether to copy all architectures of an image (if multiatch image)</p>
+</dd>
+<dt><kbd>--quay-user</kbd></dt>
+<dd><p>Username for Quay login.</p>
+</dd>
+<dt><kbd>--quay-password</kbd></dt>
+<dd><p>Password for Quay. Can be specified by env variable QUAY_PASSWORD.</p>
+</dd>
+<dt><kbd>--remote-exec</kbd></dt>
+<dd><p>Flag of whether the commands should be executed on a remote server.</p>
+</dd>
+<dt><kbd>--ssh-remote-host</kbd></dt>
+<dd><p>Hostname for remote execution.</p>
+</dd>
+<dt><kbd>--ssh-remote-host-port</kbd></dt>
+<dd><p>Port of the remote host</p>
+</dd>
+<dt><kbd>--ssh-reject-unknown-host</kbd></dt>
+<dd><p>Flag of whether to reject an SSH host when it’s not found among known hosts.</p>
+</dd>
+<dt><kbd>--ssh-username</kbd></dt>
+<dd><p>Username for SSH connection. Defaults to local username.</p>
+</dd>
+<dt><kbd>--ssh-password</kbd></dt>
+<dd><p>Password for SSH. Will only be used if key-based validation is not available. Can be specified by env variable SSH_PASSWORD</p>
+</dd>
+<dt><kbd>--ssh-key-filename</kbd></dt>
+<dd><p>Path to the private key file for SSH authentication.</p>
+</dd>
+<dt><kbd>--send-umb-msg</kbd></dt>
+<dd><p>Flag of whether to send a UMB message</p>
+</dd>
+<dt><kbd>--umb-url</kbd></dt>
+<dd><p>UMB URL. More than one can be specified.</p>
+</dd>
+<dt><kbd>--umb-cert</kbd></dt>
+<dd><p>Path to the UMB certificate for SSL authentication.</p>
+</dd>
+<dt><kbd>--umb-client-key</kbd></dt>
+<dd><p>Path to the UMB private key for accessing the certificate.</p>
+</dd>
+<dt><kbd>--umb-ca-cert</kbd></dt>
+<dd><p>Path to the UMB CA certificate.</p>
+</dd>
+<dt><kbd>--umb-topic</kbd></dt>
+<dd><p>UMB topic to send the message to.</p>
+<p>Default: “VirtualTopic.eng.pub.quay_tag_image”</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="api-reference">
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.tag_images.tag_images">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.tag_images.</span></span><span class="sig-name descname"><span class="pre">tag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_reject_unknown_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_key_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_umb_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_client_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_ca_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VirtualTopic.eng.pub.quay_tag_image'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_images.html#tag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_images.tag_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tag images in Quay.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>source_ref (str):</dt><dd><p>Source image reference.</p>
+</dd>
+<dt>dest_refs ([str]):</dt><dd><p>List of destination image references.</p>
+</dd>
+<dt>all_arch (bool):</dt><dd><p>Whether to copy all architectures.</p>
+</dd>
+<dt>quay_user (str):</dt><dd><p>Quay username for Docker HTTP API.</p>
+</dd>
+<dt>quay_password (str):</dt><dd><p>Quay password for Docker HTTP API.</p>
+</dd>
+<dt>remote_exec (bool):</dt><dd><p>Whether to execute the command remotely.</p>
+</dd>
+<dt>ssh_remote_host (str):</dt><dd><p>Hostname for remote execution.</p>
+</dd>
+<dt>ssh_remote_host_port (str):</dt><dd><p>Port of the remote host.</p>
+</dd>
+<dt>ssh_reject_unknown_host (bool):</dt><dd><p>whether to reject an SSH host when it’s not found among known hosts.</p>
+</dd>
+<dt>ssh_username (str):</dt><dd><p>Username for SSH connection. Defaults to local username.</p>
+</dd>
+<dt>ssh_password (str):</dt><dd><p>Password for SSH. Will only be used if key-based validation is not available.</p>
+</dd>
+<dt>ssh_key_filename (str):</dt><dd><p>Path to the private key file for SSH authentication.</p>
+</dd>
+<dt>send_umb_msg (bool):</dt><dd><p>Whether to send UMB messages about the untagged images.</p>
+</dd>
+<dt>umb_urls ([str]):</dt><dd><p>AMQP broker URLs to connect to.</p>
+</dd>
+<dt>umb_cert (str):</dt><dd><p>Path to a certificate used for UMB authentication.</p>
+</dd>
+<dt>umb_client_key (str):</dt><dd><p>Path to a client key to decrypt the certificate (if necessary).</p>
+</dd>
+<dt>umb_ca_cert (str):</dt><dd><p>Path to a CA certificate (for mutual authentication).</p>
+</dd>
+<dt>umb_topic (str):</dt><dd><p>Topic to send the UMB messages to.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p>Locally copy an image from source to destination. Quay password is injected
+from the environment variable.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ pubtools-quay-tag-image \
+  --source-ref quay.io/source/image:34 \
+  --dest-ref quay.io/target/image:34 \
+  --quay-user quay+username \
+</pre></div>
+</div>
+<p>Connect to a remote host via ssh (using password) and perform the copying to multiple destinations.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ export SSH_PASSWORD=123456
+$ pubtools-quay-tag-image \
+  --source-ref quay.io/source/image:34 \
+  --dest-ref quay.io/target/image:34 \
+  --dest-ref quay.io/target/image2:34 \
+  --quay-user quay+username \
+  --remote-exec \
+  --ssh-remote-host 127.0.0.1 \
+  --ssh-remote-host-port 2222 \
+  --ssh-username user
+</pre></div>
+</div>
+<p>Connect to a remote host via ssh (using private key), perform the copying, and send a UMB message.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ export SSH_PASSWORD=123456
+$ pubtools-quay-tag-image \
+  --source-ref quay.io/source/image:34 \
+  --dest-ref quay.io/target/image:34 \
+  --quay-user quay+username \
+  --remote-exec \
+  --ssh-remote-host 127.0.0.1 \
+  --ssh-remote-host-port 2222 \
+  --ssh-username user \
+  --ssh-key-filename /path/to/file.key \
+  --send-umb-msg \
+  --umb-url amqps://url:5671 \
+  --umb-url amqps://url2:5671 \
+  --umb-cert /path/to/file.crt \
+  --umb-topic VirtualTopic.eng.pub.some_topic
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="untag_images.html" class="btn btn-neutral float-right" title="Untag images" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="merge_manifest_list.html" class="btn btn-neutral float-left" title="Merge manifest lists" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

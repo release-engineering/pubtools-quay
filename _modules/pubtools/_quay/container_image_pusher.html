@@ -1,0 +1,484 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pubtools._quay.container_image_pusher &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pubtools._quay.container_image_pusher</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pubtools._quay.container_image_pusher</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BadPushItem</span><span class="p">,</span>
+    <span class="n">ManifestTypeError</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
+    <span class="n">log_step</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span> <span class="nn">.tag_images</span> <span class="kn">import</span> <span class="n">tag_images</span>
+<span class="kn">from</span> <span class="nn">.manifest_list_merger</span> <span class="kn">import</span> <span class="n">ManifestListMerger</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ContainerImagePusher"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher">[docs]</a><span class="k">class</span> <span class="nc">ContainerImagePusher</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Push container images to Quay.</span>
+
+<span class="sd">    No validation is performed, push items are expected to be correct.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ContainerImagePusher.__init__"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_items ([ContainerPushItem]):</span>
+<span class="sd">                List of push items.</span>
+<span class="sd">            target_settings (dict):</span>
+<span class="sd">                Target settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span> <span class="o">=</span> <span class="n">push_items</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span> <span class="o">=</span> <span class="n">target_settings</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_user&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_password&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
+
+<div class="viewcode-block" id="ContainerImagePusher.run_tag_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_tag_images">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run_tag_images</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the &quot;tag images&quot; entrypoint with all the necessary arguments and run it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_ref (str):</span>
+<span class="sd">                Source image reference.</span>
+<span class="sd">            dest_refs ([str]):</span>
+<span class="sd">                List of destination references.</span>
+<span class="sd">            all_arch (bool):</span>
+<span class="sd">                Whether all architectures should be copied.</span>
+<span class="sd">            target_settings (dict):</span>
+<span class="sd">                Settings used for setting the values of the function parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: do we want to do some registry-proxy -&gt; quay transformation?</span>
+        <span class="c1"># TODO: tag-images only supports quay.io hostname, should we extend the functionality?</span>
+        <span class="c1"># TODO: should this command always be performed remotely?</span>
+        <span class="n">tag_images</span><span class="p">(</span>
+            <span class="n">source_ref</span><span class="p">,</span>
+            <span class="n">dest_refs</span><span class="p">,</span>
+            <span class="n">all_arch</span><span class="o">=</span><span class="n">all_arch</span><span class="p">,</span>
+            <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+            <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+            <span class="n">remote_exec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">ssh_remote_host</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_remote_host&quot;</span><span class="p">],</span>
+            <span class="n">ssh_username</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_user&quot;</span><span class="p">],</span>
+            <span class="n">ssh_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_password&quot;</span><span class="p">],</span>
+            <span class="n">umb_urls</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">],</span>
+            <span class="n">umb_cert</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;umb_pub_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pub/umb-pub-cert-key.pem&quot;</span>
+            <span class="p">),</span>
+            <span class="c1"># assumption that we&#39;ll continue using .pem format</span>
+            <span class="n">umb_client_key</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;umb_pub_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pub/umb-pub-cert-key.pem&quot;</span>
+            <span class="p">),</span>
+            <span class="n">umb_ca_cert</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;umb_ca_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pki/tls/certs/ca-bundle.crt&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Source container push item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a source image&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+                <span class="n">dest_ref</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+                    <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span>
+                    <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform Docker push and manifest list merge workflow.</span>
+
+<span class="sd">        The difference in this workflow is that all single arch images are first copied via</span>
+<span class="sd">        digest, and then their respective manifest lists are merged.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_ref (str):</span>
+<span class="sd">                Source image reference.</span>
+<span class="sd">            dest_refs ([str]):</span>
+<span class="sd">                List of destination references which need manifest merging.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{repo}</span><span class="s2">@</span><span class="si">{digest}</span><span class="s2">&quot;</span>
+        <span class="n">source_repo</span> <span class="o">=</span> <span class="n">source_ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># get unique destination repositories</span>
+        <span class="n">dest_repos</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">])))</span>
+        <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># copy each arch source image to all destination repos</span>
+        <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">source_ml</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
+            <span class="n">source_image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="o">=</span><span class="n">source_repo</span><span class="p">,</span> <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">])</span>
+            <span class="n">dest_images</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="o">=</span><span class="n">dest_repo</span><span class="p">,</span> <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">dest_repo</span> <span class="ow">in</span> <span class="n">dest_repos</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">dest_images</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Merging manifest lists of source &#39;</span><span class="si">{0}</span><span class="s2">&#39; and destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">merger</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">)</span>
+            <span class="n">merger</span><span class="o">.</span><span class="n">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
+            <span class="n">merger</span><span class="o">.</span><span class="n">merge_manifest_lists</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the correct tagging and manifest list merging strategy of multiarch push item.</span>
+
+<span class="sd">        There are two workflows of multiarch images: Simple copying, or manifest list merging.</span>
+<span class="sd">        Destination tags are sorted, and correct workflow is performed on them.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_items (ContainerPushItem):</span>
+<span class="sd">                Multiarch container push item.</span>
+<span class="sd">            source_ml (dict):</span>
+<span class="sd">                Manifest list of the source image.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a multiarch image.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">simple_dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">merge_mls_dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+                <span class="n">dest_ref</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+                    <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span>
+                    <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;Getting missing archs between images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">missing_archs</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span><span class="n">source_ml</span><span class="p">,</span> <span class="n">dest_ml</span><span class="p">)</span>
+                    <span class="c1"># Option 1: Destination doesn&#39;t contain extra archs, ML merging is unnecessary</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_archs</span><span class="p">:</span>
+                        <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                    <span class="c1"># Option 2: Destination has extra archs, MLs will be merged</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">merge_mls_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="c1"># Option 3: Destination tag doesn&#39;t exist, no ML merging</span>
+                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                        <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span>
+
+        <span class="k">if</span> <span class="n">simple_dest_refs</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations without merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">simple_dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">merge_mls_dest_refs</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations and merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">merge_mls_dest_refs</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_merge_workflow</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">merge_mls_dest_refs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push images to Quay&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Push container images to Quay.</span>
+
+<span class="sd">        Two image types are supported: source images and multiarch images. Non-source, single arch</span>
+<span class="sd">        images are not supported. In case of multiarch images, manifest list merging is performed if</span>
+<span class="sd">        destination image contains more architectures than source.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">],</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">ManifestTypeError</span><span class="p">:</span>
+                <span class="n">source_ml</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="c1"># this metadata field indicates a source image</span>
+            <span class="n">sources_for_nvr</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;build&quot;</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;extra&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sources_for_nvr&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">sources_for_nvr</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">source_ml</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                    <span class="s2">&quot;Push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; contains a single-arch image that&#39;s not a &quot;</span>
+                    <span class="s2">&quot;source image. This use-case is not supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="c1"># Source image</span>
+            <span class="k">if</span> <span class="n">sources_for_nvr</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_source_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="c1"># Multiarch images</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_multiarch_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

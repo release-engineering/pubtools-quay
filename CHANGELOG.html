@@ -1,0 +1,285 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>ChangeLog &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Exceptions" href="exceptions.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules_reference.html">Modules reference</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ChangeLog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.6.0 (2021-7-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.5.0 (2021-6-2)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">0.4.0 (2021-5-4)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">0.3.0 (2021-2-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.2.0 (2021-2-9)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">0.1.0 (2021-2-9)</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>ChangeLog</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/CHANGELOG.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="changelog">
+<h1>ChangeLog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>0.6.0 (2021-7-14)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Create entrypoint for removing a Quay repo</p></li>
+<li><p>Create entrypoint for clearing a Quay repo</p></li>
+<li><p>Add signature removal to tag-docker operations</p></li>
+<li><p>Drop unnecessary ‘external_repos’</p></li>
+<li><p>Add using extra Quay tokens for OSBS organizations</p></li>
+<li><p>Allow specifying multiple repos in remove-repo and clear-repo tasks</p></li>
+<li><p>Skip signing when no operator claim messages are constructed</p></li>
+<li><p>Add support for delimeter-less repositories</p></li>
+<li><p>Change “repo” parameter of claim messages to have external representation</p></li>
+<li><p>Fix loggers per pubtools conventions</p></li>
+<li><p>Check username in output of skopeo –get-login</p></li>
+<li><p>Remove the usage of Quay API reading repo data</p></li>
+<li><p>Add signature removal for IIB operations</p></li>
+<li><p>Update sigstore to be up-to-date with current implementation</p></li>
+<li><p>Allow pushing to non-existent repo</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>0.5.0 (2021-6-2)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Fix intermediate index image</p></li>
+<li><p>Implement tag docker</p></li>
+<li><p>Add skip to signing if signing key is None</p></li>
+<li><p>Fix pub XMLRPC call</p></li>
+<li><p>Implement entrypoints for IIB methods</p></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>0.4.0 (2021-5-4)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Implement push-docker prototype</p></li>
+<li><p>Change signing order to happen before pushing</p></li>
+<li><p>Use intermediate index image for signing</p></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>0.3.0 (2021-2-11)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Fix the versioning constraint of pyrsistent dependency</p></li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h2>0.2.0 (2021-2-9)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Fix the definition of requirements.txt, allowing installation on Python 2.6</p></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h2>0.1.0 (2021-2-9)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Initial release.</p></li>
+<li><p>Added tag image entrypoint</p></li>
+<li><p>Added merge manifest list entrypoint</p></li>
+<li><p>Added push docker code skeleton</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="exceptions.html" class="btn btn-neutral float-left" title="Exceptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

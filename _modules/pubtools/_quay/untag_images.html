@@ -1,0 +1,431 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pubtools._quay.untag_images &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pubtools._quay.untag_images</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pubtools._quay.untag_images</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
+
+<span class="kn">from</span> <span class="nn">.image_untagger</span> <span class="kn">import</span> <span class="n">ImageUntagger</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">setup_arg_parser</span><span class="p">,</span> <span class="n">add_args_env_variables</span><span class="p">,</span> <span class="n">send_umb_message</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+<span class="n">UNTAG_IMAGES_ARGS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;--reference&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Image reference to untag. Must be specified by tag. Multiple can be specified.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--remove-last&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Whether to remove a tag even if it&#39;s the last reference of some image.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--quay-api-token&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;OAuth token for Quay REST API.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;QUAY_API_TOKEN&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--quay-user&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username for Quay login.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--quay-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password for Quay. Can be specified by env variable QUAY_PASSWORD.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;QUAY_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--send-umb-msg&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to send a UMB message&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--umb-url&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB URL. More than one can be specified.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--umb-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB certificate for SSL authentication.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--umb-client-key&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB private key for accessing the certificate.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--umb-ca-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB CA certificate.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--umb-topic&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB topic to send the message to.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;VirtualTopic.eng.pub.quay_untag_image&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Construct a kwargs dictionary based on the entered command line arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        args (argparse.Namespace):</span>
+<span class="sd">            Parsed command line arguments.</span>
+
+<span class="sd">    Returns (dict):</span>
+<span class="sd">        Keyword arguments for the &#39;untag_images&#39; function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="vm">__dict__</span>
+
+    <span class="c1"># in args.__dict__ unspecified bool values have &#39;None&#39; instead of &#39;False&#39;</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attributes</span> <span class="ow">in</span> <span class="n">UNTAG_IMAGES_ARGS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">bool_var</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># some exceptions have to be remapped</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;references&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;reference&quot;</span><span class="p">)</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;umb_url&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">kwargs</span>
+
+
+<span class="k">def</span> <span class="nf">verify_untag_images_args</span><span class="p">(</span>
+    <span class="n">references</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">,</span> <span class="n">send_umb_msg</span><span class="p">,</span> <span class="n">umb_urls</span><span class="p">,</span> <span class="n">umb_cert</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Verify the presence and correctness of input parameters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        references ([str]):</span>
+<span class="sd">            List of image references to untag.</span>
+<span class="sd">        quay_user (str):</span>
+<span class="sd">            Quay username for Docker HTTP API.</span>
+<span class="sd">        quay_password (str):</span>
+<span class="sd">            Quay password for Docker HTTP API.</span>
+<span class="sd">        send_umb_msg (bool):</span>
+<span class="sd">            Whether to send UMB messages about the untagged images.</span>
+<span class="sd">        umb_urls ([str]):</span>
+<span class="sd">            AMQP broker URLs to connect to.</span>
+<span class="sd">        umb_cert (str):</span>
+<span class="sd">            Path to a certificate used for UMB authentication.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">reference</span> <span class="ow">in</span> <span class="n">references</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;@&quot;</span> <span class="ow">in</span> <span class="n">reference</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All references must be specified via tag, not digest&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">quay_user</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_password</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">quay_password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_user</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Both user and password must be present when attempting to log in.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_urls</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;UMB URL must be specified if sending a UMB message was requested.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_cert</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;A path to a client certificate must be provided when sending a UMB message.&quot;</span>
+            <span class="p">)</span>
+
+
+<div class="viewcode-block" id="untag_images"><a class="viewcode-back" href="../../../untag_images.html#pubtools._quay.untag_images.untag_images">[docs]</a><span class="k">def</span> <span class="nf">untag_images</span><span class="p">(</span>
+    <span class="n">references</span><span class="p">,</span>
+    <span class="n">quay_api_token</span><span class="p">,</span>
+    <span class="n">remove_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">quay_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">umb_client_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">umb_ca_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">umb_topic</span><span class="o">=</span><span class="s2">&quot;VirtualTopic.eng.pub.quay_untag_image&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Untag images from Quay.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        references ([str]):</span>
+<span class="sd">            List of image references to untag.</span>
+<span class="sd">        quay_api_token (str):</span>
+<span class="sd">            OAuth token for authentication of Quay REST API.</span>
+<span class="sd">        remove_last (bool):</span>
+<span class="sd">            Whether to remove a tag when it&#39;s the last reference of an image (in that repo).</span>
+<span class="sd">        quay_user (str):</span>
+<span class="sd">            Quay username for Docker HTTP API.</span>
+<span class="sd">        quay_password (str):</span>
+<span class="sd">            Quay password for Docker HTTP API.</span>
+<span class="sd">        send_umb_msg (bool):</span>
+<span class="sd">            Whether to send UMB messages about the untagged images.</span>
+<span class="sd">        umb_urls ([str]):</span>
+<span class="sd">            AMQP broker URLs to connect to.</span>
+<span class="sd">        umb_cert (str):</span>
+<span class="sd">            Path to a certificate used for UMB authentication.</span>
+<span class="sd">        umb_client_key (str):</span>
+<span class="sd">            Path to a client key to decrypt the certificate (if necessary).</span>
+<span class="sd">        umb_ca_cert (str):</span>
+<span class="sd">            Path to a CA certificate (for mutual authentication).</span>
+<span class="sd">        umb_topic (str):</span>
+<span class="sd">            Topic to send the UMB messages to.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">verify_untag_images_args</span><span class="p">(</span><span class="n">references</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">,</span> <span class="n">send_umb_msg</span><span class="p">,</span> <span class="n">umb_urls</span><span class="p">,</span> <span class="n">umb_cert</span><span class="p">)</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Started untagging operation with the following references: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">references</span><span class="p">))</span>
+    <span class="n">untagger</span> <span class="o">=</span> <span class="n">ImageUntagger</span><span class="p">(</span><span class="n">references</span><span class="p">,</span> <span class="n">quay_api_token</span><span class="p">,</span> <span class="n">remove_last</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">)</span>
+    <span class="n">lost_images</span> <span class="o">=</span> <span class="n">untagger</span><span class="o">.</span><span class="n">untag_images</span><span class="p">()</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Untagging operation succeeded&quot;</span><span class="p">)</span>
+    <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_images_untagged</span><span class="p">(</span><span class="n">untag_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">references</span><span class="p">),</span> <span class="n">lost_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lost_images</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending a UMB message&quot;</span><span class="p">)</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;untag_refs&quot;</span><span class="p">:</span> <span class="n">references</span><span class="p">,</span> <span class="s2">&quot;lost_refs&quot;</span><span class="p">:</span> <span class="n">lost_images</span><span class="p">}</span>
+        <span class="n">send_umb_message</span><span class="p">(</span>
+            <span class="n">umb_urls</span><span class="p">,</span>
+            <span class="n">props</span><span class="p">,</span>
+            <span class="n">umb_cert</span><span class="p">,</span>
+            <span class="n">umb_topic</span><span class="p">,</span>
+            <span class="n">client_key</span><span class="o">=</span><span class="n">umb_client_key</span><span class="p">,</span>
+            <span class="n">ca_cert</span><span class="o">=</span><span class="n">umb_ca_cert</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">UNTAG_IMAGES_ARGS</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">untag_images_main</span><span class="p">(</span><span class="n">sysargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Entrypoint for untagging images.&quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">setup_args</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">sysargs</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sysargs</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># pragma: no cover&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">add_args_env_variables</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">UNTAG_IMAGES_ARGS</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">quay_api_token</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;--quay-api-token must be specified&quot;</span><span class="p">)</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">task_context</span><span class="p">():</span>
+        <span class="n">untag_images</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

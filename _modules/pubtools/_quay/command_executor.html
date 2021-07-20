@@ -1,0 +1,457 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pubtools._quay.command_executor &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pubtools._quay.command_executor</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pubtools._quay.command_executor</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">shlex_quote</span>
+
+<span class="kn">import</span> <span class="nn">paramiko</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># Python 2.6 version of paramiko doesn&#39;t support the usage</span>
+<span class="c1"># of SSHClient as a context manager. This wrapper adds the functionality</span>
+<span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">open_ssh_client</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Use SSHClient as a context manager.&quot;&quot;&quot;</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">SSHClient</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">client</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Executor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor">[docs]</a><span class="k">class</span> <span class="nc">Executor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base executor class.</span>
+
+<span class="sd">    Implementation of command execution should be done in</span>
+<span class="sd">    descendant classes. Common pre- and post-processing should be</span>
+<span class="sd">    implemented in this class.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_run_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">err_msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run a bash command.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>  <span class="c1"># pragma: no cover&quot;</span>
+
+<div class="viewcode-block" id="Executor.skopeo_login"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.skopeo_login">[docs]</a>    <span class="k">def</span> <span class="nf">skopeo_login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Attempt to login to Quay if no login credentials are present.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            username (str):</span>
+<span class="sd">                Username for login.</span>
+<span class="sd">            password (str):</span>
+<span class="sd">                Password for login.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">&quot;skopeo login --get-login quay.io&quot;</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_check</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">username</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Already logged in to Quay.io&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">password</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Skopeo login credentials are not present. Quay user and token must be provided.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Logging in to Quay with provided credentials&quot;</span><span class="p">)</span>
+
+        <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;skopeo login --authfile $HOME/.docker/config.json -u </span><span class="si">{0}</span><span class="s2"> --password-stdin quay.io&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">username</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Login successful&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Login command didn&#39;t generate expected output. &quot;</span>
+                <span class="s2">&quot;STDOUT: &#39;</span><span class="si">{0}</span><span class="s2">&#39;, STDERR: &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Executor.tag_images"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.tag_images">[docs]</a>    <span class="k">def</span> <span class="nf">tag_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copy image from source to destination(s) using skopeo.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_ref (str):</span>
+<span class="sd">                Reference of the source image.</span>
+<span class="sd">            dest_refs ([str]):</span>
+<span class="sd">                List of target references to copy the image to.</span>
+<span class="sd">            all_arch (bool):</span>
+<span class="sd">                Whether to copy all architectures (if multiarch image)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">all_arch</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy --all docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
+
+        <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging source &#39;</span><span class="si">{0}</span><span class="s2">&#39; to destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">source_ref</span><span class="p">),</span> <span class="n">shlex_quote</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)))</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Destination image </span><span class="si">{0}</span><span class="s2"> has been tagged.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">))</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging complete.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Executor.skopeo_inspect"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.skopeo_inspect">[docs]</a>    <span class="k">def</span> <span class="nf">skopeo_inspect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run skopeo inspect and return the result.</span>
+
+<span class="sd">        NOTE: inspect command will not be run with the --raw argument. This option only returns an</span>
+<span class="sd">        image manifest, which can be gathered by QuayClient. &#39;raw&#39; argument in this function</span>
+<span class="sd">        denotes if the result should be parsed or returned raw.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image_ref (str):</span>
+<span class="sd">                Image reference to inspect.</span>
+<span class="sd">            raw (bool):</span>
+<span class="sd">                Whether to parse the returned JSON, or return raw.</span>
+<span class="sd">        Returns (dict|str):</span>
+<span class="sd">            Result of skopeo inspect.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo inspect docker://</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_ref</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">out</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">out</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="LocalExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor">[docs]</a><span class="k">class</span> <span class="nc">LocalExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run commands locally.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LocalExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            params (dict):</span>
+<span class="sd">                Custom parameters to be applied when running the shell commands.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;universal_newlines&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stderr&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stdout&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stdin&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LocalExecutor._run_cmd"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor._run_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">_run_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">err_msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a command locally.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cmd (str):</span>
+<span class="sd">                Shell command to be executed.</span>
+<span class="sd">            error_msg (str):</span>
+<span class="sd">                Error message written when the command fails.</span>
+<span class="sd">            tolerate_err (bool):</span>
+<span class="sd">                Whether to tolerate a failed command.</span>
+<span class="sd">            stdin (str):</span>
+<span class="sd">                String to send to standard input for a command.</span>
+
+<span class="sd">        Returns (str, str):</span>
+<span class="sd">            Tuple of stdout and stderr generated by the command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
+
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">stdin</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span></div></div>
+
+
+<div class="viewcode-block" id="RemoteExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.RemoteExecutor">[docs]</a><span class="k">class</span> <span class="nc">RemoteExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run commands remotely via SSH.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RemoteExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.RemoteExecutor.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">hostname</span><span class="p">,</span>
+        <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">key_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">port</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">accept_unknown_host</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            hostname (str):</span>
+<span class="sd">                Host to connect to.</span>
+<span class="sd">            username (str):</span>
+<span class="sd">                Username to authenticate as. Defaults to local username.</span>
+<span class="sd">            key_filename (str):</span>
+<span class="sd">                Path to a private key for authentication. Default location will be used if omitted.</span>
+<span class="sd">            password (str):</span>
+<span class="sd">                Password for ssh authentication. Has lower precedence than private key.</span>
+<span class="sd">            port (int):</span>
+<span class="sd">                Optional port of the host.</span>
+<span class="sd">            accept_unknown_host (bool):</span>
+<span class="sd">                Whether to accept an unknown host key. Defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">hostname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span> <span class="o">=</span> <span class="n">key_filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+        <span class="k">if</span> <span class="n">accept_unknown_host</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">missing_host_policy</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">WarningPolicy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">missing_host_policy</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">RejectPolicy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span> <span class="k">if</span> <span class="n">port</span> <span class="k">else</span> <span class="mi">22</span></div>
+
+<div class="viewcode-block" id="RemoteExecutor._run_cmd"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.RemoteExecutor._run_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">_run_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">err_msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a command remotely via SSH.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cmd (str):</span>
+<span class="sd">                Shell command to be executed.</span>
+<span class="sd">            error_msg (str):</span>
+<span class="sd">                Error message written when the command fails.</span>
+<span class="sd">            tolerate_err (bool):</span>
+<span class="sd">                Whether to tolerate a failed command.</span>
+<span class="sd">            stdin (str):</span>
+<span class="sd">                String to send to standard input for a command.</span>
+
+<span class="sd">        Returns (str, str):</span>
+<span class="sd">            Tuple of stdout and stderr generated by the command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
+        <span class="k">with</span> <span class="n">open_ssh_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">load_system_host_keys</span><span class="p">()</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">set_missing_host_key_policy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_host_policy</span><span class="p">)</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="p">,</span>
+                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span>
+                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">,</span>
+                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+                <span class="n">key_filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stdin</span><span class="p">:</span>
+                <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">stdin</span><span class="p">)</span>
+                <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">shutdown_write</span><span class="p">()</span>
+
+            <span class="n">out_text</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">err_text</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">recv_exit_status</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">err_text</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out_text</span><span class="p">,</span> <span class="n">err_text</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

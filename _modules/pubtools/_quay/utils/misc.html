@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>pubtools._quay.utils.misc &mdash; pubtools-quay 0.6.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> pubtools-quay
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.6.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">pubtools-quay</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>pubtools._quay.utils.misc</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pubtools._quay.utils.misc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+
+<span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">StringIO</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+<span class="n">INTERNAL_DELIMITER</span> <span class="o">=</span> <span class="s2">&quot;----&quot;</span>
+
+
+<div class="viewcode-block" id="setup_arg_parser"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.setup_arg_parser">[docs]</a><span class="k">def</span> <span class="nf">setup_arg_parser</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up ArgumentParser with the provided arguments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        args (dict)</span>
+<span class="sd">            Dictionary of argument aliases and options to be consumed by ArgumentParser.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        (ArgumentParser) Configured instance of ArgumentParser.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_groups</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">aliases</span><span class="p">,</span> <span class="n">arg_data</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">holder</span> <span class="o">=</span> <span class="n">parser</span>
+        <span class="k">if</span> <span class="s2">&quot;group&quot;</span> <span class="ow">in</span> <span class="n">arg_data</span><span class="p">:</span>
+            <span class="n">arg_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">],</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]))</span>
+            <span class="n">holder</span> <span class="o">=</span> <span class="n">arg_groups</span><span class="p">[</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;action&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span> <span class="ow">and</span> <span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;store_true&quot;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;help&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;str&quot;</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;nargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)</span>
+
+        <span class="n">holder</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="o">*</span><span class="n">aliases</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">parser</span></div>
+
+
+<div class="viewcode-block" id="add_args_env_variables"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.add_args_env_variables">[docs]</a><span class="k">def</span> <span class="nf">add_args_env_variables</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Add argument values from environment variables.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        parsed_args ():</span>
+<span class="sd">            Parsed arguments object.</span>
+<span class="sd">        args (dict):</span>
+<span class="sd">            Argument definition.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Modified parsed arguments object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">aliases</span><span class="p">,</span> <span class="n">arg_data</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">named_alias</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">aliases</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_variable&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;env_variable&quot;</span><span class="p">]):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;env_variable&quot;</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">parsed_args</span></div>
+
+
+<div class="viewcode-block" id="send_umb_message"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.send_umb_message">[docs]</a><span class="k">def</span> <span class="nf">send_umb_message</span><span class="p">(</span><span class="n">urls</span><span class="p">,</span> <span class="n">props</span><span class="p">,</span> <span class="n">cert</span><span class="p">,</span> <span class="n">topic</span><span class="p">,</span> <span class="n">body</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">client_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ca_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Send a UMB message.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        urls ([str]):</span>
+<span class="sd">            URLs to send the message to.</span>
+<span class="sd">        props (dict):</span>
+<span class="sd">            Message properties dictionary.</span>
+<span class="sd">        cert (str):</span>
+<span class="sd">            Path to certificate for SSL authentication.</span>
+<span class="sd">        topic (str):</span>
+<span class="sd">            Topic to send the message to.</span>
+<span class="sd">        body (str):</span>
+<span class="sd">            Body of the message.</span>
+<span class="sd">        client_key (str):</span>
+<span class="sd">            Path to a private key for accessing the certificate.</span>
+<span class="sd">        ca_cert (str):</span>
+<span class="sd">            Path to CA certificate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">rhmsg.activemq.producer</span> <span class="kn">import</span> <span class="n">AMQProducer</span>
+
+    <span class="n">producer</span> <span class="o">=</span> <span class="n">AMQProducer</span><span class="p">(</span>
+        <span class="n">urls</span><span class="o">=</span><span class="n">urls</span><span class="p">,</span>
+        <span class="n">certificate</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+        <span class="n">private_key</span><span class="o">=</span><span class="n">client_key</span><span class="p">,</span>
+        <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
+        <span class="n">trusted_certificates</span><span class="o">=</span><span class="n">ca_cert</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">body</span><span class="p">:</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">props</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">producer</span><span class="o">.</span><span class="n">send_msg</span><span class="p">(</span><span class="n">props</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="capture_stdout"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.capture_stdout">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">capture_stdout</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Capture sys.stdout to stream buffer.&quot;&quot;&quot;</span>
+    <span class="n">old_stdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">new_stdout</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">new_stdout</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">old_stdout</span></div>
+
+
+<div class="viewcode-block" id="setup_entry_point_cli"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.setup_entry_point_cli">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
+<span class="k">def</span> <span class="nf">setup_entry_point_cli</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Set up an entrypoint as a context manager.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entry_tuple ((str, str, str)):</span>
+<span class="sd">            Tuple consisting of dependency, category, and entrypoint.</span>
+<span class="sd">        name: (str):</span>
+<span class="sd">            Entrypoint name.</span>
+<span class="sd">        args ([str]):</span>
+<span class="sd">            Entrypoint arguments.</span>
+<span class="sd">        environ_vars (dict):</span>
+<span class="sd">            Env variable names and values to set for the entrypoint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">orig_argv</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[:]</span>
+    <span class="n">orig_environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># First argv element is always the entry point name.</span>
+        <span class="c1"># For a console_scripts entry point, this will be the same value</span>
+        <span class="c1"># as if the script was invoked directly. For any other kind of entry point,</span>
+        <span class="c1"># this value is probably meaningless.</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">environ_vars</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">environ_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">entry_point_func</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="n">entry_tuple</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">entry_point_func</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="n">orig_argv</span><span class="p">[:]</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">orig_environ</span><span class="p">)</span>
+
+        <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orig_environ</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="run_entrypoint"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.run_entrypoint">[docs]</a><span class="k">def</span> <span class="nf">run_entrypoint</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run an entrypoint function and return its return value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entry_tuple ((str, str, str)):</span>
+<span class="sd">            Tuple consisting of dependency, category, and entrypoint.</span>
+<span class="sd">        name: (str):</span>
+<span class="sd">            Entrypoint name.</span>
+<span class="sd">        args ([str]):</span>
+<span class="sd">            Entrypoint arguments.</span>
+<span class="sd">        environ_vars (dict):</span>
+<span class="sd">            Env variable names and values to set for the entrypoint.</span>
+
+<span class="sd">    Returns (str):</span>
+<span class="sd">        Data returned by the entrypoint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
+    <span class="n">wrapped_lines</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span>
+        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running task with arguments:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">):</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># shell-style backslash to indicate continuation</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot; </span><span class="se">\\</span><span class="s2">&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">setup_entry_point_cli</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">)</span> <span class="k">as</span> <span class="n">entry_func</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">capture_stdout</span><span class="p">():</span>
+            <span class="n">pyret</span> <span class="o">=</span> <span class="n">entry_func</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">pyret</span></div>
+
+
+<div class="viewcode-block" id="get_internal_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_internal_container_repo_name">[docs]</a><span class="k">def</span> <span class="nf">get_internal_container_repo_name</span><span class="p">(</span><span class="n">external_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform a repository name to an internal form in which it exists on Quay.io.</span>
+
+<span class="sd">    Expected input format: &lt;namespace&gt;/&lt;product&gt;</span>
+<span class="sd">    Generated output format: &lt;namespace&gt;----&lt;product&gt;</span>
+
+<span class="sd">    NOTE: Repositories without a delimeter &quot;/&quot; may actually exist. In that case, the function</span>
+<span class="sd">    simply returns the repo without any alterations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        external_name (str):</span>
+<span class="sd">            External repository name.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Internal repository name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">external_name</span>
+
+    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Input repository containing a delimeter should &quot;</span>
+            <span class="s2">&quot;have the format &#39;&lt;namespace&gt;/&lt;product&gt;&#39;&quot;</span><span class="p">,</span>
+            <span class="n">external_name</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">external_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">INTERNAL_DELIMITER</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_external_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_external_container_repo_name">[docs]</a><span class="k">def</span> <span class="nf">get_external_container_repo_name</span><span class="p">(</span><span class="n">internal_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform a repository name to an external form in which it&#39;s visible to customers.</span>
+
+<span class="sd">    Expected input format: &lt;namespace&gt;----&lt;product&gt;</span>
+<span class="sd">    Generated output format: &lt;namespace&gt;/&lt;product&gt;</span>
+
+<span class="sd">    NOTE: Repositories without a delimeter &quot;----&quot; may actually exist. In that case, the function</span>
+<span class="sd">    simply returns the repo without any alterations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        internal_name (str):</span>
+<span class="sd">            Internal repository name.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        External repository name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">internal_name</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">internal_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="ow">or</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="ow">or</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">internal_name</span><span class="p">)</span> <span class="o">-</span> <span class="mi">4</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Input repository containing a delimeter should &quot;</span>
+            <span class="s2">&quot;have the format &#39;&lt;namespace&gt;----&lt;product&gt;&#39;&quot;</span><span class="p">,</span>
+            <span class="n">internal_name</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="task_status"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.task_status">[docs]</a><span class="k">def</span> <span class="nf">task_status</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function. Expand as necessary.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">event</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="log_step"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.log_step">[docs]</a><span class="k">def</span> <span class="nf">log_step</span><span class="p">(</span><span class="n">step_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Log status for methods which constitute an entire task step.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        step_name (str):</span>
+<span class="sd">            Name of the task step, e.g., &quot;Tag images&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">event_name</span> <span class="o">=</span> <span class="n">step_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">fn_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Started&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-start&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Finished&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-end&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">ret</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Failed&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-error&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="n">fn_wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorate</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Red Hat.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
