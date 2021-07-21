@@ -1243,3 +1243,175 @@ def tag_docker_push_item_mixed():
             "new_method": True,
         },
     )
+
+
+@pytest.fixture
+def container_multiarch_push_item_integration():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"test_namespace/test_repo": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo": ["latest-test-tag"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:1",
+            "build": {},
+        },
+    )
+
+
+@pytest.fixture
+def container_source_push_item_integration():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"test_namespace/test_repo": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:1",
+            "build": {"extra": {"image": {"sources_for_nvr": "some-src"}}},
+        },
+    )
+
+
+@pytest.fixture
+def src_manifest_list():
+    return {
+        "schemaVersion": 2,
+        "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+        "manifests": [
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:1111111111",
+                "platform": {"architecture": "arm64", "os": "linux"},
+            },
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:2222222222",
+                "platform": {"architecture": "armhfp", "os": "linux"},
+            },
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:3333333333",
+                "platform": {"architecture": "ppc64le", "os": "linux"},
+            },
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:5555555555",
+                "platform": {"architecture": "amd64", "os": "linux"},
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def dest_manifest_list():
+    return {
+        "schemaVersion": 2,
+        "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+        "manifests": [
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:6666666666",
+                "platform": {"architecture": "arm64", "os": "linux"},
+            },
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:7777777777",
+                "platform": {"architecture": "ppc64le", "os": "linux"},
+            },
+            {
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "size": 429,
+                "digest": "sha256:8888888888",
+                "platform": {"architecture": "s390x", "os": "linux"},
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def tag_docker_push_item_add_integration():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="v1.5",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="metadata",
+        repos={"namespace/test_repo": ["v1.6"]},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "destination": {"tags": ["v1.6"]},
+            "tag_source": "v1.5",
+            "add_tags": ["v1.6"],
+            "remove_tags": [],
+            "archs": ["arm64", "amd64"],
+            "exclude_archs": False,
+            "new_method": True,
+        },
+    )
+
+
+@pytest.fixture
+def tag_docker_push_item_remove_no_src_integration():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="v1.8,v1.9",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="metadata",
+        repos={"namespace/test_repo2": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "destination": {"tags": []},
+            "tag_source": "",
+            "add_tags": [],
+            "remove_tags": ["v1.8"],
+            "archs": ["arm64", "amd64"],
+            "exclude_archs": False,
+            "new_method": True,
+        },
+    )

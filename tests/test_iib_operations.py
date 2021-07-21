@@ -3,6 +3,7 @@ import pytest
 
 from pubtools._quay import exceptions
 from pubtools._quay import iib_operations
+from .utils.misc import IIBRes
 
 
 def test_verify_target_settings_success(target_settings):
@@ -45,11 +46,6 @@ def test_task_iib_add_bundles(
     mock_signature_remover,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -134,11 +130,6 @@ def test_task_iib_remove_operators(
     mock_signature_remover,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -219,11 +210,6 @@ def test_task_iib_build_from_scratch(
     mock_operator_signature_handler,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",

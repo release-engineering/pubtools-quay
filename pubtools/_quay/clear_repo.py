@@ -139,7 +139,6 @@ def verify_clear_repo_args(send_umb_msg, umb_urls, umb_cert):
             )
 
 
-# TODO: integration tests
 def clear_repositories(
     repositories,
     quay_org,

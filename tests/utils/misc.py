@@ -102,3 +102,9 @@ def mock_entry_point(dist, group, name):
         yield new_mock
     finally:
         override.stop()
+
+
+class IIBRes:
+    def __init__(self, index_image, index_image_resolved):
+        self.index_image = index_image
+        self.index_image_resolved = index_image_resolved
