@@ -87,11 +87,13 @@ class ContainerImagePusher:
             all_arch=all_arch,
             quay_user=target_settings["dest_quay_user"],
             quay_password=target_settings["dest_quay_password"],
-            remote_exec=True,
+            container_exec=True,
+            container_image=target_settings["skopeo_image"],
+            docker_url=target_settings.get("docker_host") or "unix://var/run/docker.sock",
+            docker_timeout=target_settings.get("docker_timeout"),
+            docker_verify_tls=target_settings.get("docker_tls_verify") or False,
+            docker_cert_path=target_settings.get("docker_cert_path") or None,
             send_umb_msg=True,
-            ssh_remote_host=target_settings["ssh_remote_host"],
-            ssh_username=target_settings["ssh_user"],
-            ssh_password=target_settings["ssh_password"],
             umb_urls=target_settings["docker_settings"]["umb_urls"],
             umb_cert=target_settings["docker_settings"].get(
                 "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"

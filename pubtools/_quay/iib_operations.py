@@ -31,9 +31,7 @@ def verify_target_settings(target_settings):
         "iib_krb_principal",
         "iib_index_image",
         "quay_operator_repository",
-        "ssh_remote_host",
-        "ssh_user",
-        "ssh_password",
+        "skopeo_image",
         "docker_settings",
     ]
 
