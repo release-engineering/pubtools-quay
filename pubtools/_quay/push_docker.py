@@ -2,6 +2,7 @@ from collections import namedtuple
 import logging
 
 import requests
+from pubtools.pluggy import pm
 
 from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
 from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
@@ -194,10 +195,11 @@ class PushDocker:
         Returns (dict):
             Parsed response from Pyxis.
         """
+        cert, key = pm.hook.get_cert_key_paths_plugin(server_url=target_settings["pyxis_server"])
+
         args = ["--pyxis-server", target_settings["pyxis_server"]]
-        args += ["--pyxis-krb-principal", target_settings["iib_krb_principal"]]
-        if "iib_krb_ktfile" in target_settings:
-            args += ["--pyxis-krb-ktfile", target_settings["iib_krb_ktfile"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
         args += ["--repo-name", repo]
 
         env_vars = {}

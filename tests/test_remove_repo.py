@@ -20,8 +20,10 @@ def test_arg_constructor_required_args(mock_remove_repositories):
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
     remove_repo.remove_repositories_main(required_args)
     _, called_args = mock_remove_repositories.call_args
@@ -32,7 +34,8 @@ def test_arg_constructor_required_args(mock_remove_repositories):
     assert called_args["quay_password"] == "some-password"
     assert called_args["quay_api_token"] == "some-token"
     assert called_args["pyxis_server"] == "pyxis-url.com"
-    assert called_args["pyxis_krb_principal"] == "some-principal"
+    assert called_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
+    assert called_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
     assert called_args["umb_topic"] == "VirtualTopic.eng.pub.quay_remove_repositories"
 
 
@@ -49,8 +52,10 @@ def test_arg_constructor_all_args(mock_remove_repositories):
         "some-user",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
         "--send-umb-msg",
         "--umb-url",
         "amqps://url:5671",
@@ -73,7 +78,8 @@ def test_arg_constructor_all_args(mock_remove_repositories):
     assert called_args["quay_user"] == "some-user"
     assert called_args["quay_password"] == "some-password"
     assert called_args["pyxis_server"] == "pyxis-url.com"
-    assert called_args["pyxis_krb_principal"] == "some-principal"
+    assert called_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
+    assert called_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
     assert called_args["send_umb_msg"] is True
     assert called_args["umb_urls"] == ["amqps://url:5671", "amqps://url:5672"]
     assert called_args["umb_cert"] == "/path/to/file.crt"
@@ -97,8 +103,10 @@ def test_args_missing_repository(mock_remove_repositories):
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
 
     with pytest.raises(SystemExit) as system_error:
@@ -123,8 +131,10 @@ def test_args_missing_api_token(mock_remove_repositories):
         "some-password",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
 
     with pytest.raises(ValueError, match="--quay-api-token must be specified"):
@@ -147,8 +157,10 @@ def test_args_missing_quay_password(mock_remove_repositories):
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
 
     with pytest.raises(ValueError, match="--quay-password must be specified"):
@@ -174,8 +186,10 @@ def test_args_missing_umb_url(mock_quay_api_client, mock_send_umb_message):
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
         "--send-umb-msg",
         "--umb-cert",
         "/path/to/file.crt",
@@ -205,8 +219,10 @@ def test_args_missing_umb_cert(mock_quay_api_client, mock_send_umb_message):
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
         "--send-umb-msg",
         "--umb-url",
         "amqps://url:5671",
@@ -237,8 +253,10 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
@@ -254,7 +272,11 @@ def test_run(mock_quay_api_client, mock_send_umb_message, mock_signature_remover
         quay_user="some-user", quay_password="some-password"
     )
     mock_remove_repository_signatures.assert_called_once_with(
-        "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
+        "namespace/image",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
     mock_send_umb_message.assert_not_called()
@@ -284,8 +306,10 @@ def test_run_multiple_repos(mock_quay_api_client, mock_send_umb_message, mock_si
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
@@ -302,10 +326,18 @@ def test_run_multiple_repos(mock_quay_api_client, mock_send_umb_message, mock_si
     )
     assert mock_remove_repository_signatures.call_count == 2
     assert mock_remove_repository_signatures.call_args_list[0] == mock.call(
-        "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
+        "namespace/image",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     assert mock_remove_repository_signatures.call_args_list[1] == mock.call(
-        "namespace/image2", "quay-organization", "pyxis-url.com", "some-principal", None
+        "namespace/image2",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
 
     assert mock_delete_repo.call_count == 2
@@ -332,8 +364,10 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
         "some-token",
         "--pyxis-server",
         "pyxis-url.com",
-        "--pyxis-krb-principal",
-        "some-principal",
+        "--pyxis-ssl-crtfile",
+        "/path/to/file.crt",
+        "--pyxis-ssl-keyfile",
+        "/path/to/file.key",
         "--send-umb-msg",
         "--umb-url",
         "amqps://url:5671",
@@ -355,7 +389,11 @@ def test_send_umb_message(mock_quay_api_client, mock_send_umb_message, mock_sign
     remove_repo.remove_repositories_main(args)
 
     mock_remove_repository_signatures.assert_called_once_with(
-        "namespace/image", "quay-organization", "pyxis-url.com", "some-principal", None
+        "namespace/image",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
     mock_send_umb_message.assert_called_once_with(

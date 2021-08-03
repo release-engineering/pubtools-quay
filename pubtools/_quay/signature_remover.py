@@ -64,8 +64,8 @@ class SignatureRemover:
         self,
         manifest_digests,
         pyxis_server,
-        pyxis_krb_principal,
-        pyxis_krb_ktfile=None,
+        pyxis_ssl_crtfile,
+        pyxis_ssl_keyfile,
     ):
         """
         Get existing signatures from Pyxis based on the specified criteria (currently only digests).
@@ -82,10 +82,10 @@ class SignatureRemover:
                 Digests for which to return signatures.
             pyxis_server (str):
                 URL of the Pyxis service.
-            pyxis_krb_principal (str):
-                Kerberos principal to use for Pyxis authentication.
-            pyxis_krb_ktfile (str|None):
-                Path to Kerberos keytab file. Optional
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
 
             Yields (dict):
                 Existing signatures as returned by Pyxis based on specified criteria. The returned
@@ -96,14 +96,9 @@ class SignatureRemover:
         for chunk_start in range(0, len(manifest_digests), chunk_size):
             chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
 
-            args = [
-                "--pyxis-server",
-                pyxis_server,
-                "--pyxis-krb-principal",
-                pyxis_krb_principal,
-            ]
-            if pyxis_krb_ktfile:
-                args += ["--pyxis-krb-ktfile", pyxis_krb_ktfile]
+            args = ["--pyxis-server", pyxis_server]
+            args += ["--pyxis-ssl-crtfile", pyxis_ssl_crtfile]
+            args += ["--pyxis-ssl-keyfile", pyxis_ssl_keyfile]
             if manifest_digests:
                 args += ["--manifest-digest", ",".join(chunk)]
 
@@ -118,7 +113,11 @@ class SignatureRemover:
                 yield result
 
     def remove_signatures_from_pyxis(
-        self, signatures_to_remove, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile=None
+        self,
+        signatures_to_remove,
+        pyxis_server,
+        pyxis_ssl_crtfile,
+        pyxis_ssl_keyfile,
     ):
         """
         Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
@@ -128,21 +127,17 @@ class SignatureRemover:
                 List of signature ids to be removed.
             pyxis_server (str):
                 URL of the Pyxis service.
-            pyxis_krb_principal (str):
-                Kerberos principal to use for Pyxis authentication.
-            pyxis_krb_ktfile (str|None):
-                Path to Kerberos keytab file. Optional
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
         """
         LOG.info("Removing outdated signatures from pyxis")
 
-        args = [
-            "--pyxis-server",
-            pyxis_server,
-            "--pyxis-krb-principal",
-            pyxis_krb_principal,
-        ]
-        if pyxis_krb_ktfile:
-            args += ["--pyxis-krb-ktfile", pyxis_krb_ktfile]
+        args = ["--pyxis-server", pyxis_server]
+        args += ["--pyxis-ssl-crtfile", pyxis_ssl_crtfile]
+        args += ["--pyxis-ssl-keyfile", pyxis_ssl_keyfile]
+
         with tempfile.NamedTemporaryFile(mode="w") as temp:
             json.dump(signatures_to_remove, temp)
             temp.flush()
@@ -186,7 +181,12 @@ class SignatureRemover:
         return sorted(list(set(digests)))
 
     def remove_repository_signatures(
-        self, repository, namespace, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile=None
+        self,
+        repository,
+        namespace,
+        pyxis_server,
+        pyxis_ssl_crtfile,
+        pyxis_ssl_keyfile,
     ):
         """
         Remove all signatures of all images in a given Quay repository.
@@ -198,10 +198,10 @@ class SignatureRemover:
                 Quay namespace in which the repository resides.
             pyxis_server (str):
                 URL of the Pyxis service.
-            pyxis_krb_principal (str):
-                Kerberos principal to use for Pyxis authentication.
-            pyxis_krb_ktfile (str|None):
-                Path to Kerberos keytab file. Optional
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
         """
         LOG.info("Removing signatures of all images of repository '{0}'".format(repository))
 
@@ -210,7 +210,10 @@ class SignatureRemover:
         digests = self.get_repository_digests(internal_repo)
 
         for signature in self.get_signatures_from_pyxis(
-            digests, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            digests,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
         ):
             if signature["repository"] == repository:
                 remove_signature_ids.append(signature["_id"])
@@ -219,7 +222,10 @@ class SignatureRemover:
             LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
 
             self.remove_signatures_from_pyxis(
-                remove_signature_ids, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+                remove_signature_ids,
+                pyxis_server,
+                pyxis_ssl_crtfile,
+                pyxis_ssl_keyfile,
             )
         else:
             LOG.info("No signatures need to be removed")
@@ -228,8 +234,8 @@ class SignatureRemover:
         self,
         reference,
         pyxis_server,
-        pyxis_krb_principal,
-        pyxis_krb_ktfile=None,
+        pyxis_ssl_crtfile,
+        pyxis_ssl_keyfile,
         exclude_by_claims=None,
         remove_archs=None,
     ):
@@ -247,10 +253,10 @@ class SignatureRemover:
                 Image reference whose signatures are to be removed.
             pyxis_server (str):
                 URL of the Pyxis service.
-            pyxis_krb_principal (str):
-                Kerberos principal to use for Pyxis authentication.
-            pyxis_krb_ktfile (str|None):
-                Path to Kerberos keytab file. Optional
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
             exclude_by_claims ([dict]|None):
                 List of claim messages whose existing signature matches will not be removed.
             remove_archs ([str]|None):
@@ -290,7 +296,10 @@ class SignatureRemover:
 
         remove_signature_ids = []
         for sig in self.get_signatures_from_pyxis(
-            image_digests, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            image_digests,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
         ):
             # if signature corresponds to to-be-removed digest+reference and isn't among new sigs
             if (
@@ -305,13 +314,21 @@ class SignatureRemover:
             LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
 
             self.remove_signatures_from_pyxis(
-                remove_signature_ids, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+                remove_signature_ids,
+                pyxis_server,
+                pyxis_ssl_crtfile,
+                pyxis_ssl_keyfile,
             )
         else:
             LOG.info("No signatures need to be removed")
 
     def get_index_image_signatures(
-        self, image, claim_messages, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile=None
+        self,
+        image,
+        claim_messages,
+        pyxis_server,
+        pyxis_ssl_crtfile,
+        pyxis_ssl_keyfile,
     ):
         """
         Get existing signatures of an index image.
@@ -326,10 +343,10 @@ class SignatureRemover:
                 digests should never match for a new index image, it's added just in case.
             pyxis_server (str):
                 URL of the Pyxis service.
-            pyxis_krb_principal (str):
-                Kerberos principal to use for Pyxis authentication.
-            pyxis_krb_ktfile (str|None):
-                Path to Kerberos keytab file. Optional
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
         Returns ([dict]):
             Existing signatures of the index image.
         """
@@ -356,7 +373,10 @@ class SignatureRemover:
         ]
 
         for signature in self.get_signatures_from_pyxis(
-            digests, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            digests,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
         ):
             # if signature matches the old index image and isn't among new claims, it can be removed
             if (

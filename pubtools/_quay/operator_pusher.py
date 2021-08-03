@@ -5,6 +5,7 @@ import yaml
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
+from pubtools.pluggy import pm
 
 from .container_image_pusher import ContainerImagePusher
 from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
@@ -91,15 +92,18 @@ class OperatorPusher:
         Returns ([str]):
             Supported OCP versions as returned by Pyxis.
         """
+        cert, key = pm.hook.get_cert_key_paths_plugin(
+            server_url=self.target_settings["pyxis_server"]
+        )
+
         ocp_versions = push_item.metadata["com.redhat.openshift.versions"]
         LOG.info("Getting OCP versions of '{0}' from Pyxis.".format(ocp_versions))
 
         args = ["--pyxis-server", self.target_settings["pyxis_server"]]
-        args += ["--pyxis-krb-principal", self.target_settings["iib_krb_principal"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
         args += ["--organization", self.target_settings["iib_organization"]]
         args += ["--ocp-versions-range", ocp_versions]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
         env_vars = {}
 
         data = run_entrypoint(

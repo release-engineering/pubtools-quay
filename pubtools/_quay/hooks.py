@@ -47,4 +47,13 @@ def quay_images_untagged(untag_refs, lost_refs):
     """
 
 
+@hookspec
+def get_cert_key_paths_plugin(server_url):
+    """Get location of SSL certificates. Method expected to be implemented by pub.
+
+    :param server_url: Pyxis hostname
+    :type server_url: str
+    """
+
+
 pm.add_hookspecs(sys.modules[__name__])

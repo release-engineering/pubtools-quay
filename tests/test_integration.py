@@ -16,6 +16,9 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.operator_pusher.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
@@ -34,6 +37,10 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_run_entrypoint_operator_pusher,
     run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
+    mock_pm_push_docker,
+    mock_pm_signature_handler,
+    mock_pm_operator_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     operator_push_item_ok,
@@ -52,6 +59,19 @@ def test_push_docker_multiarch_merge_ml_operator(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_operator_pusher.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -213,6 +233,9 @@ def test_push_docker_multiarch_merge_ml_operator(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.operator_pusher.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -229,6 +252,10 @@ def test_push_docker_multiarch_simple_workflow(
     mock_send_umb_message,
     run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
+    mock_pm_push_docker,
+    mock_pm_signature_handler,
+    mock_pm_operator_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
@@ -245,6 +272,19 @@ def test_push_docker_multiarch_simple_workflow(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_operator_pusher.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -345,6 +385,9 @@ def test_push_docker_multiarch_simple_workflow(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.operator_pusher.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -361,6 +404,10 @@ def test_push_docker_source(
     mock_send_umb_message,
     run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
+    mock_pm_push_docker,
+    mock_pm_signature_handler,
+    mock_pm_operator_pusher,
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
@@ -377,6 +424,19 @@ def test_push_docker_source(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_operator_pusher.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -476,6 +536,9 @@ def test_push_docker_source(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.operator_pusher.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -490,7 +553,10 @@ def test_push_docker_multiarch_rollback(
     mock_proton,
     mock_run_cmd,
     mock_send_umb_message,
-    run_entrypoint_signature_remover,
+    mock_run_entrypoint_signature_remover,
+    mock_pm_push_docker,
+    mock_pm_signature_handler,
+    mock_pm_operator_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
@@ -507,6 +573,19 @@ def test_push_docker_multiarch_rollback(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_operator_pusher.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -589,6 +668,9 @@ def test_push_docker_multiarch_rollback(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.tag_docker.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -599,6 +681,9 @@ def test_tag_docker_multiarch_merge_ml(
     mock_run_entrypoint_sig_remover,
     mock_claims_handler,
     mock_api_client,
+    mock_pm_push_docker,
+    mock_pm_tag_docker,
+    mock_pm_signature_handler,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -615,6 +700,19 @@ def test_tag_docker_multiarch_merge_ml(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_tag_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -761,6 +859,9 @@ def test_tag_docker_multiarch_merge_ml(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.signature_handler.pm")
+@mock.patch("pubtools._quay.tag_docker.pm")
+@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -777,6 +878,9 @@ def test_tag_docker_source_copy_untag(
     mock_send_umb_message_tag,
     mock_send_umb_message_untag,
     mock_api_client,
+    mock_pm_push_docker,
+    mock_pm_tag_docker,
+    mock_pm_signature_handler,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -793,6 +897,19 @@ def test_tag_docker_source_copy_untag(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
+
+    mock_pm_push_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_tag_docker.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_push_docker.side_effect = [
         # pubtools-pyxis-get-repo-metadata
@@ -937,6 +1054,8 @@ def test_tag_docker_source_copy_untag(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.iib_operations.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -951,6 +1070,8 @@ def test_task_iib_add_bundles(
     mock_run_cmd,
     mock_send_umb_message,
     mock_api_client,
+    mock_pm_signature_handler,
+    mock_pm_iib_operations,
     target_settings,
     src_manifest_list,
 ):
@@ -967,6 +1088,15 @@ def test_task_iib_add_bundles(
     mock_run_cmd.return_value = ("Login Succeeded", "err")
     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_iib_operations.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_signature_remover.return_value = [
         {
@@ -1013,6 +1143,8 @@ def test_task_iib_add_bundles(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.iib_operations.pm")
+@mock.patch("pubtools._quay.signature_handler.pm")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -1027,6 +1159,8 @@ def test_task_iib_remove_operators(
     mock_run_cmd,
     mock_send_umb_message,
     mock_api_client,
+    mock_pm_signature_handler,
+    mock_pm_iib_operations,
     target_settings,
     src_manifest_list,
 ):
@@ -1038,6 +1172,15 @@ def test_task_iib_remove_operators(
     mock_run_cmd.return_value = ("Login Succeeded", "err")
     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
+    mock_pm_iib_operations.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_run_entrypoint_signature_remover.return_value = [
         {
@@ -1084,6 +1227,7 @@ def test_task_iib_remove_operators(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.signature_handler.pm")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -1096,6 +1240,7 @@ def test_task_iib_build_from_scratch(
     mock_run_cmd,
     mock_send_umb_message,
     mock_api_client,
+    mock_pm_signature_handler,
     target_settings,
     src_manifest_list,
 ):
@@ -1107,6 +1252,11 @@ def test_task_iib_build_from_scratch(
     mock_run_cmd.return_value = ("Login Succeeded", "err")
     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+
+    mock_pm_signature_handler.hook.get_cert_key_paths_plugin.return_value = (
+        "/path/to/file.crt",
+        "/path/to/file.key",
+    )
 
     mock_hub = mock.MagicMock()
 
@@ -1208,8 +1358,8 @@ def test_clear_repo(
             quay_user="some-user",
             quay_password="some-password",
             pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
+            pyxis_ssl_crtfile="/path/to/file.crt",
+            pyxis_ssl_keyfile="/path/to/file.key",
             send_umb_msg=True,
             umb_urls=["url1.com", "url2.com"],
             umb_cert="some/path.crt",
@@ -1292,8 +1442,8 @@ def test_remove_repo(
             quay_user="some-user",
             quay_password="some-password",
             pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
+            pyxis_ssl_crtfile="/path/to/file.crt",
+            pyxis_ssl_keyfile="/path/to/file.key",
             send_umb_msg=True,
             umb_urls=["url1.com", "url2.com"],
             umb_cert="some/path.crt",

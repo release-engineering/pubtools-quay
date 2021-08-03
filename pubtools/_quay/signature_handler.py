@@ -6,6 +6,7 @@ import uuid
 import tempfile
 
 import proton
+from pubtools.pluggy import pm
 
 from .exceptions import SigningError
 from .utils.misc import run_entrypoint, log_step
@@ -156,19 +157,17 @@ class SignatureHandler:
                 Existing signatures as returned by Pyxis based on specified criteria. The returned
                 sturcture is an iterator to reduce memory requirements.
         """
+        cert, key = pm.hook.get_cert_key_paths_plugin(
+            server_url=self.target_settings["pyxis_server"]
+        )
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
 
         for chunk_start in range(0, len(manifest_digests), chunk_size):
             chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
 
-            args = [
-                "--pyxis-server",
-                self.target_settings["pyxis_server"],
-                "--pyxis-krb-principal",
-                self.target_settings["iib_krb_principal"],
-            ]
-            if "iib_krb_ktfile" in self.target_settings:
-                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+            args = ["--pyxis-server", self.target_settings["pyxis_server"]]
+            args += ["--pyxis-ssl-crtfile", cert]
+            args += ["--pyxis-ssl-keyfile", key]
 
             with tempfile.NamedTemporaryFile(
                 mode="w", prefix="pubtools_quay_get_signatures_"
@@ -329,6 +328,11 @@ class SignatureHandler:
                 Messages from RADAS containing image signatures.
         """
         LOG.info("Sending new signatures to Pyxis")
+
+        cert, key = pm.hook.get_cert_key_paths_plugin(
+            server_url=self.target_settings["pyxis_server"]
+        )
+
         signatures = []
         claim_messages_by_id = dict((m["request_id"], m) for m in claim_mesages)
         sorted_signature_messages = sorted(signature_messages, key=lambda msg: msg["request_id"])

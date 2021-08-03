@@ -33,6 +33,7 @@ def test_verify_target_settings_overwrite_index_mismatch(target_settings):
         iib_operations.verify_target_settings(target_settings)
 
 
+@mock.patch("pubtools._quay.iib_operations.pm")
 @mock.patch("pubtools._quay.iib_operations.SignatureRemover")
 @mock.patch("pubtools._quay.iib_operations.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -44,6 +45,7 @@ def test_task_iib_add_bundles(
     mock_run_tag_images,
     mock_operator_signature_handler,
     mock_signature_remover,
+    mock_pm,
     target_settings,
 ):
     build_details = IIBRes(
@@ -51,6 +53,8 @@ def test_task_iib_add_bundles(
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
     )
     mock_iib_add_bundles.return_value = build_details
+
+    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     mock_sign_task_index_image = mock.MagicMock()
     mock_sign_task_index_image.return_value = [{"claim": "value1"}, {"claim": "value2"}]
@@ -109,14 +113,15 @@ def test_task_iib_add_bundles(
         "quay.io/some-namespace/operators----index-image:8",
         [{"claim": "value1"}, {"claim": "value2"}],
         "pyxis-url.com",
-        "some-principal@REDHAT.COM",
-        "/etc/pub/some.keytab",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
     )
 
 
+@mock.patch("pubtools._quay.iib_operations.pm")
 @mock.patch("pubtools._quay.iib_operations.SignatureRemover")
 @mock.patch("pubtools._quay.iib_operations.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -128,6 +133,7 @@ def test_task_iib_remove_operators(
     mock_run_tag_images,
     mock_operator_signature_handler,
     mock_signature_remover,
+    mock_pm,
     target_settings,
 ):
     build_details = IIBRes(
@@ -135,6 +141,8 @@ def test_task_iib_remove_operators(
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
     )
     mock_iib_remove_operators.return_value = build_details
+
+    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     mock_sign_task_index_image = mock.MagicMock()
     mock_sign_task_index_image.return_value = [{"claim": "value1"}, {"claim": "value2"}]
@@ -191,11 +199,11 @@ def test_task_iib_remove_operators(
         "quay.io/some-namespace/operators----index-image:8",
         [{"claim": "value1"}, {"claim": "value2"}],
         "pyxis-url.com",
-        "some-principal@REDHAT.COM",
-        "/etc/pub/some.keytab",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
     )
 
 
