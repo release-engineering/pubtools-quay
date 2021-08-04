@@ -285,7 +285,7 @@ class ContainerExecutor(Executor):
             verify_tls (bool):
                 Whether to use TLS verification.
             cert_path (str|None):
-                Custom path to TLS cettificates.
+                Custom path to TLS certificates. If not specified, '~/.docker' is used.
         """
         self.image = image
 
@@ -306,6 +306,8 @@ class ContainerExecutor(Executor):
                 )
 
         self.client = docker.APIClient(**kwargs)
+        repo, tag = self.image.split(":", 1)
+        self.client.pull(repo, tag=tag)
         self.container = self.client.create_container(self.image, detach=True, tty=True)
         self.client.start(self.container["Id"])
 

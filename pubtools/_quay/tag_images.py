@@ -284,7 +284,6 @@ def tag_images(
         executor_class = functools.partial(LocalExecutor)
 
     with executor_class() as executor:
-        print(executor)
         executor.skopeo_login(quay_user, quay_password)
         executor.tag_images(source_ref, dest_refs, all_arch)
 
