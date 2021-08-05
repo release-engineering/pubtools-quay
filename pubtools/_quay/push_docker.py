@@ -2,7 +2,6 @@ from collections import namedtuple
 import logging
 
 import requests
-from pubtools.pluggy import pm
 
 from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
 from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
@@ -12,7 +11,7 @@ from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
-from .utils.misc import get_external_container_repo_name
+from .utils.misc import get_external_container_repo_name, get_pyxis_ssl_paths
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -195,7 +194,7 @@ class PushDocker:
         Returns (dict):
             Parsed response from Pyxis.
         """
-        cert, key = pm.hook.get_cert_key_paths_plugin(server_url=target_settings["pyxis_server"])
+        cert, key = get_pyxis_ssl_paths(target_settings)
 
         args = ["--pyxis-server", target_settings["pyxis_server"]]
         args += ["--pyxis-ssl-crtfile", cert]

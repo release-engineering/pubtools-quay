@@ -275,7 +275,6 @@ def test_get_operator_push_item_no_ocp_versions(
         items = push_docker_instance.get_operator_push_items()
 
 
-@mock.patch("pubtools._quay.push_docker.pm")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
@@ -283,14 +282,13 @@ def test_get_repo_metadata(
     mock_quay_api_client,
     mock_quay_client,
     mock_run_entrypoint,
-    mock_pm,
     target_settings,
     container_multiarch_push_item,
     operator_push_item_ok,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_run_entrypoint.return_value = {"key": "value"}
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item, operator_push_item_ok],
         hub,

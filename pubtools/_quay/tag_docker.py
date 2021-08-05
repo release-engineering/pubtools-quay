@@ -10,7 +10,7 @@ from .exceptions import (
     BadPushItem,
     InvalidTargetSettings,
 )
-from .utils.misc import get_internal_container_repo_name
+from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import SignatureHandler, BasicSignatureHandler
@@ -21,7 +21,6 @@ from .signature_remover import SignatureRemover
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-from pubtools.pluggy import pm
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
@@ -504,9 +503,7 @@ class TagDocker:
         elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
@@ -574,9 +571,7 @@ class TagDocker:
                     )
                     claim_messages.append(message)
 
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         # claim messages ensure that signatures of non-modified archs won't get removed
         self.signature_remover.remove_tag_signatures(
@@ -656,9 +651,7 @@ class TagDocker:
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
 
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
@@ -700,9 +693,7 @@ class TagDocker:
         new_manifest_list = deepcopy(manifest_list)
         new_manifest_list["manifests"] = keep_manifests
 
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,

@@ -41,15 +41,13 @@ def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
     assert ref == "some-registry1.com/repo1:1.0000000"
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions(
-    mock_run_entrypoint, mock_pm, target_settings, operator_push_item_ok
+    mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
 
     mock_run_entrypoint.assert_called_once_with(
@@ -72,34 +70,30 @@ def test_pyxis_get_ocp_versions(
     assert versions == ["v4.5", "v4.6"]
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions_no_data(
-    mock_run_entrypoint, mock_pm, target_settings, operator_push_item_ok
+    mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     mock_run_entrypoint.return_value = []
     with pytest.raises(ValueError, match="Pyxis has returned no OCP.*"):
         versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_generate_mapping(
     mock_run_entrypoint,
-    mock_pm,
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
+    fake_cert_key_paths,
 ):
 
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
         [{"ocp_version": "4.7"}],
     ]
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     pusher = operator_pusher.OperatorPusher(
         [operator_push_item_ok, operator_push_item_different_version], target_settings
     )
@@ -271,7 +265,6 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
     )
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -281,17 +274,16 @@ def test_push_operators(
     mock_run_entrypoint,
     mock_add_bundles,
     mock_run_tag_images,
-    mock_pm,
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
+    fake_cert_key_paths,
 ):
     class IIBRes:
         def __init__(self, index_image):
             self.index_image = index_image
 
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
@@ -377,7 +369,6 @@ def test_push_operators(
     )
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -385,14 +376,13 @@ def test_get_existing_index_images(
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
-    mock_pm,
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.return_value = manifest_list_data
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
     existing_index_images = pusher.get_existing_index_images(mock_quay_client)
@@ -456,7 +446,6 @@ def test_get_existing_index_images(
     ]
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -464,13 +453,12 @@ def test_get_existing_index_images_raises_401(
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
-    mock_pm,
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_quay_client.get_manifest.side_effect = [
         requests.exceptions.HTTPError(response=mock.Mock(status_code=401)),
         manifest_list_data,
@@ -513,7 +501,6 @@ def test_get_existing_index_images_raises_401(
     ]
 
 
-@mock.patch("pubtools._quay.operator_pusher.pm")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -521,13 +508,12 @@ def test_get_existing_index_images_raises_500(
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
-    mock_pm,
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_quay_client.get_manifest.side_effect = [
         requests.exceptions.HTTPError("500", response=mock.Mock(status_code=500)),
         manifest_list_data,

@@ -9,6 +9,7 @@ import sys
 import textwrap
 
 from six import StringIO
+from pubtools.pluggy import pm
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -284,3 +285,35 @@ def log_step(step_name):
         return fn_wrapper
 
     return decorate
+
+
+def get_pyxis_ssl_paths(target_settings):
+    """
+    Get certificate and key paths for Pyxis SSL authentication.
+
+    First attempt is made by invoking the hook implementation 'get_cert_key_paths_plugin'.
+    If nothing is returned (no hook implementation is registered), fallback on target settings
+    values of 'pyxis_ssl_cert' and 'pyxis_ssl_key'. If multiple values are returned (multiple
+    hook implementations are registered), take the first response (from the implementation which
+    was registered last). Otherwise, raise an error.
+
+    Args:
+        target_settings (dict):
+            Dictionary containing various task-related settings.
+    Returns ((str, str)):
+        Paths to Pyxis SSL certificate and key.
+    """
+    result = pm.hook.get_cert_key_paths_plugin(server_url=target_settings["pyxis_server"])
+    if result:
+        cert, key = result[0]
+    elif "pyxis_ssl_cert" not in target_settings or "pyxis_ssl_key" not in target_settings:
+        raise ValueError(
+            "No key and certificate paths were provided for Pyxis SSL authentication. "
+            "Please, either provide hook implementation for 'get_cert_key_paths_plugin' or "
+            "specify 'pyxis_ssl_cert' and 'pyxis_ssl_key' in the target settings."
+        )
+    else:
+        cert = target_settings["pyxis_ssl_cert"]
+        key = target_settings["pyxis_ssl_key"]
+
+    return (cert, key)

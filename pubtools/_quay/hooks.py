@@ -49,10 +49,18 @@ def quay_images_untagged(untag_refs, lost_refs):
 
 @hookspec
 def get_cert_key_paths_plugin(server_url):
-    """Get location of SSL certificates. Method expected to be implemented by pub.
+    """Get location of SSL certificates for a given service.
 
-    :param server_url: Pyxis hostname
+    If there are multiple hook implementations and multiple values are returned, the first answer
+    is considered canonical. The first answer is returned by the hook implementation which was
+    registered last. If there are no hook implementations, the fallback strategy is to use
+    target settings. The setting names are service dependent, for example for Pyxis
+    they are 'pyxis_ssl_cert' and 'pyxis_ssl_key'.
+
+    :param server_url: Service URL.
     :type server_url: str
+    :return: Paths to SSL certificate and key.
+    :rtype: (str, str)
     """
 
 

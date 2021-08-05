@@ -5,10 +5,14 @@ import yaml
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-from pubtools.pluggy import pm
 
 from .container_image_pusher import ContainerImagePusher
-from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
+from .utils.misc import (
+    run_entrypoint,
+    get_internal_container_repo_name,
+    log_step,
+    get_pyxis_ssl_paths,
+)
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -92,9 +96,7 @@ class OperatorPusher:
         Returns ([str]):
             Supported OCP versions as returned by Pyxis.
         """
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         ocp_versions = push_item.metadata["com.redhat.openshift.versions"]
         LOG.info("Getting OCP versions of '{0}' from Pyxis.".format(ocp_versions))

@@ -93,3 +93,26 @@ def test_get_external_repo_name_errors():
 
     with pytest.raises(ValueError, match="Input repository containing a delimeter.*"):
         misc.get_external_container_repo_name("name----space----repo")
+
+
+def test_get_pyxis_ssl_paths_hook(fake_cert_key_paths):
+    cert, key = misc.get_pyxis_ssl_paths({"pyxis_server": "some-url"})
+    assert cert == "/path/to/file.crt"
+    assert key == "/path/to/file.key"
+
+
+def test_get_pyxis_ssl_paths_target_settings():
+    cert, key = misc.get_pyxis_ssl_paths(
+        {
+            "pyxis_server": "some-url",
+            "pyxis_ssl_cert": "/some/file.crt",
+            "pyxis_ssl_key": "/some/file.key",
+        }
+    )
+    assert cert == "/some/file.crt"
+    assert key == "/some/file.key"
+
+
+def test_get_pyxis_ssl_paths_error():
+    with pytest.raises(ValueError, match="No key and certificate paths were.*"):
+        cert, key = misc.get_pyxis_ssl_paths({"pyxis_server": "some-url"})

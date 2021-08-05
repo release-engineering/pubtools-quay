@@ -6,10 +6,9 @@ import uuid
 import tempfile
 
 import proton
-from pubtools.pluggy import pm
 
 from .exceptions import SigningError
-from .utils.misc import run_entrypoint, log_step
+from .utils.misc import run_entrypoint, log_step, get_pyxis_ssl_paths
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
 
@@ -157,9 +156,7 @@ class SignatureHandler:
                 Existing signatures as returned by Pyxis based on specified criteria. The returned
                 sturcture is an iterator to reduce memory requirements.
         """
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
 
         for chunk_start in range(0, len(manifest_digests), chunk_size):
@@ -329,9 +326,7 @@ class SignatureHandler:
         """
         LOG.info("Sending new signatures to Pyxis")
 
-        cert, key = pm.hook.get_cert_key_paths_plugin(
-            server_url=self.target_settings["pyxis_server"]
-        )
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
 
         signatures = []
         claim_messages_by_id = dict((m["request_id"], m) for m in claim_mesages)

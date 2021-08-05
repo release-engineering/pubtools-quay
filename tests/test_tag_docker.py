@@ -1538,7 +1538,6 @@ def test_tag_add_calculate_archs_different_manifest_types(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
@@ -1552,16 +1551,15 @@ def test_copy_all_archs_sign_images_source(
     mock_quay_client,
     mock_container_executor,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
     # shorten the ML to have less claim messages
     source_details = tag_docker.TagDocker.ImageDetails(
@@ -1665,7 +1663,6 @@ def test_tag_sign_images_multiarch_error(
     mock_run_tag_images.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
@@ -1681,16 +1678,15 @@ def test_merge_manifest_lists_sign_images(
     mock_quay_client,
     mock_container_executor,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
@@ -1777,7 +1773,6 @@ def test_merge_manifest_lists_sign_images(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
@@ -1793,16 +1788,15 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     mock_quay_client,
     mock_container_executor,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_create_claim_message.side_effect = ["msg{0}".format(i) for i in range(50)]
     mock_remove_tag_signatures = mock.MagicMock()
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
@@ -1902,7 +1896,6 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
@@ -1912,13 +1905,12 @@ def test_untag_image(
     mock_quay_client,
     mock_container_executor,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_remove_src,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_remove_tag_signatures = mock.MagicMock()
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_remove_src],
@@ -1940,7 +1932,6 @@ def test_untag_image(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
@@ -1948,14 +1939,13 @@ def test_manifest_list_remove_archs(
     mock_quay_client,
     mock_container_executor,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_get_manifest = mock.MagicMock()
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_get_manifest.return_value = manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_upload_manifest = mock.MagicMock()
@@ -2399,7 +2389,6 @@ def test_mod_entrypoint(
     mock_run.assert_called_once_with()
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -2409,15 +2398,14 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     mock_create_claim_message,
     mock_get_image_details,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
+    fake_cert_key_paths,
 ):
     executor = mock.MagicMock()
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
     source_details = tag_docker.TagDocker.ImageDetails(
@@ -2458,7 +2446,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.pm")
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -2470,14 +2457,13 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
     mock_create_claim_message,
     mock_quay_client,
     mock_signature_remover,
-    mock_pm,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
     mock_sign_claim_messages = mock.MagicMock()
     sig_handler.sign_claim_messages = mock_sign_claim_messages
 

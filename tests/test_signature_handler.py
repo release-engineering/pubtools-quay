@@ -116,7 +116,6 @@ def test_get_tagged_image_digests_manifest_list(
     mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1")
 
 
-@mock.patch("pubtools._quay.signature_handler.pm")
 @mock.patch("json.dump")
 @mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -126,14 +125,12 @@ def test_get_pyxis_signature(
     mock_run_entrypoint,
     mock_tempfile,
     mock_json_dump,
-    mock_pm,
     target_settings,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
-
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     expected_data1 = [{"some": "data"}, {"other": "data"}]
     expected_data2 = [{"some-other": "data"}]
@@ -290,7 +287,6 @@ def test_get_signatures_from_radas(
     assert len(mock_proton.mock_calls) == 2
 
 
-@mock.patch("pubtools._quay.signature_handler.pm")
 @mock.patch("json.dump")
 @mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -300,16 +296,14 @@ def test_upload_signatures_pyxis(
     mock_run_entrypoint,
     mock_tempfile,
     mock_json_dump,
-    mock_pm,
     target_settings,
     claim_messages,
     signed_messages,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     temp_filename = "/tmp/pubtools_quay_upload_signatures_ABC123"
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
-
-    mock_pm.hook.get_cert_key_paths_plugin.return_value = ("/path/to/file.crt", "/path/to/file.key")
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.upload_signatures_to_pyxis(claim_messages, signed_messages)
