@@ -423,7 +423,7 @@ def test_upload_manifest_list_failure():
         assert m.call_count == 1
 
 
-def test_get_repository_tags():
+def test_get_repository_tags_no_pagination():
     with requests_mock.Mocker() as m:
         m.get(
             "https://quay.io/v2/namespace/image/tags/list",
@@ -447,6 +447,32 @@ def test_get_repository_tags_raw():
         data = client.get_repository_tags("namespace/image", "raw")
         assert data == json.dumps({"name": "namespace/image", "tags": ["1", "2", "3"]})
         assert m.call_count == 1
+
+
+def test_get_repository_tags_pagination():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+            headers={"Link": '</v2/namespace/image/tags/list/next-page-2>; rel="next"'},
+        )
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list/next-page-2",
+            json={"name": "namespace/image", "tags": ["4", "5", "6"]},
+            headers={"Link": '</v2/namespace/image/tags/list/next-page-3>; rel="next"'},
+        )
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list/next-page-3",
+            json={"name": "namespace/image", "tags": ["7", "8", "9"]},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        data = client.get_repository_tags("namespace/image")
+        assert data == {
+            "name": "namespace/image",
+            "tags": ["1", "2", "3", "4", "5", "6", "7", "8", "9"],
+        }
+        assert m.call_count == 3
 
 
 def test_get_manifest_digest():

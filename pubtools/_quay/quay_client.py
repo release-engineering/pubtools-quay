@@ -145,11 +145,19 @@ class QuayClient:
         """
         endpoint = "{0}/tags/list".format(repository)
         response = self._request_quay("GET", endpoint)
+        tags = response.json()
+
+        while "Link" in response.headers:
+            # next page response has format '</v2/....>; rel="next"'
+            # so, split by ; -> remove <> from url -> remove v2 prefix from url
+            new_url = "/".join(response.headers["Link"].split(";")[0][1:-1].split("/")[2:])
+            response = self._request_quay("GET", new_url)
+            tags["tags"].extend(response.json()["tags"])
 
         if raw:
-            return response.text
+            return json.dumps(tags)
         else:
-            return response.json()
+            return tags
 
     def _request_quay(self, method, endpoint, kwargs={}):
         """
