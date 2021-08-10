@@ -5,14 +5,22 @@ import logging
 import os
 import shlex
 import subprocess
-from six.moves import shlex_quote
 import tarfile
 import time
 
 import docker
 import paramiko
+from six.moves import shlex_quote
 
 LOG = logging.getLogger("pubtools.quay")
+
+
+# Docker client is called differently based on the version used. Unify the calls.
+# Only use old call if version 1.X.X is used
+class APIClient(docker.APIClient if int(docker.__version__[0]) > 1 else docker.client.Client):
+    """Unify the call of Docker client for old and new version."""
+
+    pass
 
 
 # Python 2.6 version of paramiko doesn't support the usage
@@ -291,6 +299,7 @@ class ContainerExecutor(Executor):
 
         kwargs = {}
         kwargs["base_url"] = base_url
+        kwargs["version"] = "auto"
         if timeout:
             kwargs["timeout"] = timeout
         if verify_tls:
@@ -305,7 +314,7 @@ class ContainerExecutor(Executor):
                     verify=os.path.join(cert_path, "ca.pem"),
                 )
 
-        self.client = docker.APIClient(**kwargs)
+        self.client = APIClient(**kwargs)
         repo, tag = self.image.split(":", 1)
         self.client.pull(repo, tag=tag)
         self.container = self.client.create_container(self.image, detach=True, tty=True)
@@ -318,6 +327,11 @@ class ContainerExecutor(Executor):
     def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
         """
         Run a command locally.
+
+        NOTE: Older versions of Docker API don't suppoer demuxing of stdout and stderr.
+        This means that data from both streams will be mixed together. To maintain compatibility
+        with the other classes, same output will be returned twice as a tuple. Each string
+        will contain the same mix of stdout and stderr messages.
 
         Args:
             cmd (str):
@@ -335,20 +349,18 @@ class ContainerExecutor(Executor):
         """
         err_msg = err_msg or "An error has occured when executing a command."
         cmd_exec = self.client.exec_create(self.container["Id"], cmd)
-        stdout, stderr = self.client.exec_start(cmd_exec["Id"], demux=True)
+        # Unfortunately, older versions of Docker API don't support demuxing stdout and stderr
+        stdout = self.client.exec_start(cmd_exec["Id"])
 
         if self.client.exec_inspect(cmd_exec["Id"]).get("ExitCode") != 0 and not tolerate_err:
-            LOG.error("Command {0} failed with {1}".format(cmd, stderr))
+            LOG.error("Command {0} failed with {1}".format(cmd, stdout))
             raise RuntimeError(err_msg)
 
         if stdout is None:
             stdout = b""
-        if stderr is None:
-            stderr = b""
         out_str = stdout.decode("utf-8")
-        err_str = stderr.decode("utf-8")
 
-        return (out_str, err_str)
+        return (out_str, out_str)
 
     def _add_file(self, data, file_name):
         """

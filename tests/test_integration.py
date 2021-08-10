@@ -15,7 +15,7 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 # flake8: noqa: E501
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
@@ -127,7 +127,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
@@ -212,7 +212,7 @@ def test_push_docker_multiarch_merge_ml_operator(
         push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -281,7 +281,7 @@ def test_push_docker_multiarch_simple_workflow(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
@@ -344,7 +344,7 @@ def test_push_docker_multiarch_simple_workflow(
         push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -413,7 +413,7 @@ def test_push_docker_source(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
@@ -588,7 +588,7 @@ def test_push_docker_multiarch_rollback(
             push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -657,7 +657,7 @@ def test_tag_docker_multiarch_merge_ml(
         [],
     ]
 
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     src_manifest_list_missing = deepcopy(src_manifest_list)
@@ -760,7 +760,7 @@ def test_tag_docker_multiarch_merge_ml(
         tag_docker_instance.run()
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -815,14 +815,14 @@ def test_tag_docker_source_copy_untag(
     ]
 
     mock_api_client.return_value.exec_start.side_effect = [
-        (b"something", b"err"),
-        (b"Login Succeeded", b"err"),
-        (b'{"Architecture": "amd64"}', b"err"),
-        (b'{"Architecture": "amd64"}', b"err"),
-        (b'{"Architecture": "amd64"}', b"err"),
-        (b"dest-quay-user", b"err"),
-        (b"finished tagging", b"err"),
-        (b'{"Architecture": "amd64"}', b"err"),
+        b"something",
+        b"Login Succeeded",
+        b'{"Architecture": "amd64"}',
+        b'{"Architecture": "amd64"}',
+        b'{"Architecture": "amd64"}',
+        b"dest-quay-user",
+        b"finished tagging",
+        b'{"Architecture": "amd64"}',
     ]
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
@@ -936,7 +936,7 @@ def test_tag_docker_source_copy_untag(
         tag_docker_instance.run()
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -965,7 +965,7 @@ def test_task_iib_add_bundles(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_run_entrypoint_signature_remover.return_value = [
@@ -1012,7 +1012,7 @@ def test_task_iib_add_bundles(
         )
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -1036,7 +1036,7 @@ def test_task_iib_remove_operators(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_run_entrypoint_signature_remover.return_value = [
@@ -1083,7 +1083,7 @@ def test_task_iib_remove_operators(
         )
 
 
-@mock.patch("pubtools._quay.command_executor.docker.APIClient")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -1105,7 +1105,7 @@ def test_task_iib_build_from_scratch(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-    mock_api_client.return_value.exec_start.return_value = (b"Login Succeeded", b"err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_hub = mock.MagicMock()
