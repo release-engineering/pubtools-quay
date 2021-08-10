@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import requests
+import re
 from requests.packages.urllib3.util.retry import Retry
 
 # Unfortunately, version of 'six' available on RHEL 6 doesn't cover this redirect
@@ -149,9 +150,14 @@ class QuayClient:
 
         while "Link" in response.headers:
             # next page response has format '</v2/....>; rel="next"'
-            # so, split by ; -> remove <> from url -> remove v2 prefix from url
-            new_url = "/".join(response.headers["Link"].split(";")[0][1:-1].split("/")[2:])
-            response = self._request_quay("GET", new_url)
+            matches = re.findall('</v2/(.+?)>; rel="next"', response.headers["Link"])
+            if len(matches) != 1:
+                raise ValueError(
+                    "Could not extract next page URL from response '{0}'".format(
+                        response.headers["Link"]
+                    )
+                )
+            response = self._request_quay("GET", matches[0])
             tags["tags"].extend(response.json()["tags"])
 
         if raw:

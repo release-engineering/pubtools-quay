@@ -475,6 +475,21 @@ def test_get_repository_tags_pagination():
         assert m.call_count == 3
 
 
+def test_get_repository_tags_pagination_cannot_parse_url():
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/tags/list",
+            json={"name": "namespace/image", "tags": ["1", "2", "3"]},
+            headers={"Link": '/v2/namespace/image/tags/list/next-page-2; rel="next"'},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        with pytest.raises(ValueError, match="Could not extract next page URL.*"):
+            client.get_repository_tags("namespace/image")
+
+        assert m.call_count == 1
+
+
 def test_get_manifest_digest():
     manifest = (
         '{"mediaType": "application/vnd.docker.distribution.manifest.v2+json",'
