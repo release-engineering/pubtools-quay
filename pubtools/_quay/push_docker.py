@@ -550,7 +550,7 @@ class PushDocker:
                 operator_signature_handler.sign_operator_images(iib_results)
                 # Push index images to Quay
                 operator_pusher.push_index_images(iib_results)
-        except Exception:
+        except (Exception, SystemExit):
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
             raise
