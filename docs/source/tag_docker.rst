@@ -10,7 +10,6 @@ This is the main class for the Tag Docker workflow, which is used for adding and
    .. automethod:: __init__
    .. automethod:: run
    .. automethod:: quay_client
-   .. automethod:: executor
    .. automethod:: verify_target_settings
    .. automethod:: verify_input_data
    .. automethod:: check_input_validity

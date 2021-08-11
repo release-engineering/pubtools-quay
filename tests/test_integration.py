@@ -15,6 +15,7 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 # flake8: noqa: E501
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
@@ -32,6 +33,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_send_umb_message,
     mock_run_entrypoint_operator_pusher,
     run_entrypoint_signature_remover,
+    mock_api_client,
     target_settings,
     container_multiarch_push_item_integration,
     operator_push_item_ok,
@@ -125,6 +127,8 @@ def test_push_docker_multiarch_merge_ml_operator(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
         m.get(
@@ -208,6 +212,7 @@ def test_push_docker_multiarch_merge_ml_operator(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -223,6 +228,7 @@ def test_push_docker_multiarch_simple_workflow(
     mock_run_cmd,
     mock_send_umb_message,
     run_entrypoint_signature_remover,
+    mock_api_client,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
@@ -275,6 +281,8 @@ def test_push_docker_multiarch_simple_workflow(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
         m.get(
@@ -336,6 +344,7 @@ def test_push_docker_multiarch_simple_workflow(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -351,6 +360,7 @@ def test_push_docker_source(
     mock_run_cmd,
     mock_send_umb_message,
     run_entrypoint_signature_remover,
+    mock_api_client,
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
@@ -403,6 +413,8 @@ def test_push_docker_source(
     ]
 
     mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
         m.get(
@@ -576,6 +588,7 @@ def test_push_docker_multiarch_rollback(
             push_docker.run()
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -585,6 +598,7 @@ def test_tag_docker_multiarch_merge_ml(
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
     mock_claims_handler,
+    mock_api_client,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -642,6 +656,9 @@ def test_tag_docker_multiarch_merge_ml(
         # pubtools-pyxis-delete-signatures
         [],
     ]
+
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     src_manifest_list_missing = deepcopy(src_manifest_list)
     src_manifest_list_missing["manifests"] = src_manifest_list_missing["manifests"][:2]
@@ -743,6 +760,7 @@ def test_tag_docker_multiarch_merge_ml(
         tag_docker_instance.run()
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.untag_images.send_umb_message")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -758,6 +776,7 @@ def test_tag_docker_source_copy_untag(
     mock_run_cmd,
     mock_send_umb_message_tag,
     mock_send_umb_message_untag,
+    mock_api_client,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -795,17 +814,17 @@ def test_tag_docker_source_copy_untag(
         [],
     ]
 
-    mock_run_cmd.side_effect = [
-        ("Login Succeeded", "err"),
-        ("Login Succeeded", "err"),
-        ('{"Architecture": "amd64"}', "err"),
-        ('{"Architecture": "amd64"}', "err"),
-        ('{"Architecture": "amd64"}', "err"),
-        ("Login Succeeded", "err"),
-        ("Login Succeeded", "err"),
-        None,
-        ('{"Architecture": "amd64"}', "err"),
+    mock_api_client.return_value.exec_start.side_effect = [
+        b"something",
+        b"Login Succeeded",
+        b'{"Architecture": "amd64"}',
+        b'{"Architecture": "amd64"}',
+        b'{"Architecture": "amd64"}',
+        b"dest-quay-user",
+        b"finished tagging",
+        b'{"Architecture": "amd64"}',
     ]
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
 
@@ -917,6 +936,7 @@ def test_tag_docker_source_copy_untag(
         tag_docker_instance.run()
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -930,6 +950,7 @@ def test_task_iib_add_bundles(
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
     mock_send_umb_message,
+    mock_api_client,
     target_settings,
     src_manifest_list,
 ):
@@ -944,6 +965,8 @@ def test_task_iib_add_bundles(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_run_entrypoint_signature_remover.return_value = [
         {
@@ -989,6 +1012,7 @@ def test_task_iib_add_bundles(
         )
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -1002,6 +1026,7 @@ def test_task_iib_remove_operators(
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
     mock_send_umb_message,
+    mock_api_client,
     target_settings,
     src_manifest_list,
 ):
@@ -1011,6 +1036,8 @@ def test_task_iib_remove_operators(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_run_entrypoint_signature_remover.return_value = [
         {
@@ -1056,6 +1083,7 @@ def test_task_iib_remove_operators(
         )
 
 
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -1067,6 +1095,7 @@ def test_task_iib_build_from_scratch(
     mock_run_entrypoint_signature_handler,
     mock_run_cmd,
     mock_send_umb_message,
+    mock_api_client,
     target_settings,
     src_manifest_list,
 ):
@@ -1076,226 +1105,8 @@ def test_task_iib_build_from_scratch(
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
-
-    mock_hub = mock.MagicMock()
-
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-
-        iib_operations.task_iib_build_from_scratch(
-            ["bundle1", "bundle2"],
-            ["arch1", "arch2"],
-            "12",
-            ["some-key"],
-            mock_hub,
-            "1",
-            target_settings,
-            "some-target",
-        )
-
-
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.signature_remover.run_entrypoint")
-def test_clear_repo(
-    mock_run_entrypoint_signature_remover,
-    mock_send_umb_message_clear_repo,
-    mock_send_umb_message_untag_images,
-    src_manifest_list,
-):
-
-    mock_run_entrypoint_signature_remover.return_value = [
-        {
-            "reference": "registry.com/namespace/namespace----repo1:1",
-            "manifest_digest": "sha256:1111111111",
-            "sig_key_id": "some-key",
-            "repository": "namespace/repo1",
-            "_id": "some-id1",
-        },
-        {
-            "reference": "registry.com/namespace/namespace----repo1-image:2",
-            "manifest_digest": "sha256:1111111111",
-            "sig_key_id": "some-key",
-            "repository": "namespace/repo1",
-            "_id": "some-id2",
-        },
-    ]
-
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/tags/list",
-            json={
-                "name": "namespace----repo1",
-                "tags": [
-                    "1",
-                    "2",
-                ],
-            },
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo2/tags/list",
-            json={
-                "name": "namespace----repo1",
-                "tags": [
-                    "3",
-                ],
-            },
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/manifests/1",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/manifests/2",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo2/manifests/3",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo1/tag/1",
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo1/tag/2",
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo2/tag/3",
-        )
-
-        clear_repo.clear_repositories(
-            repositories="namespace/repo1,namespace/repo2",
-            quay_org="some-org",
-            quay_api_token="some-api-token",
-            quay_user="some-user",
-            quay_password="some-password",
-            pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
-            send_umb_msg=True,
-            umb_urls=["url1.com", "url2.com"],
-            umb_cert="some/path.crt",
-            umb_client_key="some/path.key",
-            umb_ca_cert="cacert/path.crt",
-        )
-
-
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.send_umb_message")
-@mock.patch("pubtools._quay.signature_remover.run_entrypoint")
-def test_clear_repo(
-    mock_run_entrypoint_signature_remover,
-    mock_send_umb_message_clear_repo,
-    mock_send_umb_message_untag_images,
-    src_manifest_list,
-):
-
-    mock_run_entrypoint_signature_remover.return_value = [
-        {
-            "reference": "registry.com/namespace/namespace----repo1:1",
-            "manifest_digest": "sha256:1111111111",
-            "sig_key_id": "some-key",
-            "repository": "namespace/repo1",
-            "_id": "some-id1",
-        },
-        {
-            "reference": "registry.com/namespace/namespace----repo1-image:2",
-            "manifest_digest": "sha256:1111111111",
-            "sig_key_id": "some-key",
-            "repository": "namespace/repo1",
-            "_id": "some-id2",
-        },
-    ]
-
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/tags/list",
-            json={
-                "name": "namespace----repo1",
-                "tags": [
-                    "1",
-                    "2",
-                ],
-            },
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo2/tags/list",
-            json={
-                "name": "namespace----repo1",
-                "tags": [
-                    "3",
-                ],
-            },
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/manifests/1",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo1/manifests/2",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/v2/some-org/namespace----repo2/manifests/3",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo1/tag/1",
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo1/tag/2",
-        )
-        m.delete(
-            "https://quay.io/api/v1/repository/some-org/namespace----repo2/tag/3",
-        )
-
-        clear_repo.clear_repositories(
-            repositories="namespace/repo1,namespace/repo2",
-            quay_org="some-org",
-            quay_api_token="some-api-token",
-            quay_user="some-user",
-            quay_password="some-password",
-            pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
-            send_umb_msg=True,
-            umb_urls=["url1.com", "url2.com"],
-            umb_cert="some/path.crt",
-            umb_client_key="some/path.key",
-            umb_ca_cert="cacert/path.crt",
-        )
-
-
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
-@mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_task_iib_build_from_scratch(
-    mock_run_entrypoint_operator_pusher,
-    mock_manifest_claims_handler,
-    mock_run_entrypoint_signature_handler,
-    mock_run_cmd,
-    mock_send_umb_message,
-    target_settings,
-    src_manifest_list,
-):
-    build_details = IIBRes(
-        "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
-    )
-    mock_run_entrypoint_operator_pusher.return_value = build_details
-    mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     mock_hub = mock.MagicMock()
 

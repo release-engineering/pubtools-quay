@@ -66,3 +66,20 @@ Connect to a remote host via ssh (using private key), perform the copying, and s
     --umb-url amqps://url2:5671 \
     --umb-cert /path/to/file.crt \
     --umb-topic VirtualTopic.eng.pub.some_topic
+
+Copy to multiple destination inside a specified container.
+::
+
+  $ export QUAY_PASSWORD=token
+  $ export SSH_PASSWORD=123456
+  $ pubtools-quay-tag-image \
+    --source-ref quay.io/source/image:34 \
+    --dest-ref quay.io/target/image:34 \
+    --dest-ref quay.io/target/image2:34 \
+    --quay-user quay+username \
+    --container-exec \
+    --container-image quay.io/namespace/image:1 \
+    --docker-url https://some-url.com \
+    --docker-timeout 120 \
+    --docker-verify-tls \
+    --docker-cert-path /some/path

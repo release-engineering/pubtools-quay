@@ -5,7 +5,7 @@ import logging
 
 import requests
 
-from .command_executor import RemoteExecutor
+from .command_executor import ContainerExecutor
 from .exceptions import (
     BadPushItem,
     InvalidTargetSettings,
@@ -57,7 +57,6 @@ class TagDocker:
         self.target_settings = target_settings
 
         self._quay_client = None
-        self._executor = None
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
@@ -78,23 +77,6 @@ class TagDocker:
             )
         return self._quay_client
 
-    @property
-    def executor(self):
-        """Create and access command executor."""
-        if self._executor is None:
-            # NOTE: Change this to LocalExecutor if we'll run skopeo locally
-            self._executor = RemoteExecutor(
-                hostname=self.target_settings["ssh_remote_host"],
-                username=self.target_settings["ssh_user"],
-                password=self.target_settings["ssh_password"],
-            )
-            # also login when creating an executor
-            self._executor.skopeo_login(
-                username=self.target_settings["dest_quay_user"],
-                password=self.target_settings["dest_quay_password"],
-            )
-        return self._executor
-
     def verify_target_settings(self):
         """Verify that target settings contains all the necessary data."""
         LOG.info("Verifying the necessary target settings")
@@ -109,9 +91,7 @@ class TagDocker:
             "iib_index_image",
             "iib_krb_principal",
             "quay_operator_repository",
-            "ssh_remote_host",
-            "ssh_user",
-            "ssh_password",
+            "skopeo_image",
             "docker_settings",
         ]
         for setting in required_settings:
@@ -199,13 +179,15 @@ class TagDocker:
                             )
                         )
 
-    def get_image_details(self, reference):
+    def get_image_details(self, reference, executor):
         """
         Create an ImageDetails namedtuple for the given image reference.
 
         Args:
             reference (str):
                 Image reference.
+            executor (Executor):
+                Instance of Executor subclass used for skopeo inspect.
         Returns (ImageDetails|None):
             Namedtuple filled with images data, or None if image doesn't exist.
         """
@@ -225,7 +207,7 @@ class TagDocker:
 
         # Check arch if the image is V2S2 manifest
         if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:
-            arch = self.executor.skopeo_inspect(reference)["Architecture"]
+            arch = executor.skopeo_inspect(reference)["Architecture"]
             # Arch check is not a great way to verify that this is a source image, but there are
             # no better options without having build details
             if arch != "amd64":
@@ -257,7 +239,7 @@ class TagDocker:
         else:
             return arch in push_item.metadata["archs"]
 
-    def tag_remove_calculate_archs(self, push_item, tag):
+    def tag_remove_calculate_archs(self, push_item, tag, executor):
         """
         Calculate which architectures would be removed, and which would remain from a given tag.
 
@@ -266,6 +248,8 @@ class TagDocker:
                 Push item to perform the workflow with.
             tag (str):
                 Tag, for which a 'remove' operation will be performed.
+            executor (Executor):
+                Instance of Executor subclass used for skopeo inspect.
         Returns ([str], [str]):
             Tuple where first element contains archs that will be removed, and second element
             contains archs that will remain.
@@ -280,12 +264,12 @@ class TagDocker:
 
         if push_item.metadata["tag_source"]:
             source_image = "{0}:{1}".format(full_repo, push_item.metadata["tag_source"])
-            source_details = self.get_image_details(source_image)
+            source_details = self.get_image_details(source_image, executor)
         else:
             source_details = None
 
         dest_image = "{0}:{1}".format(full_repo, tag)
-        dest_details = self.get_image_details(dest_image)
+        dest_details = self.get_image_details(dest_image, executor)
 
         if dest_details is None:
             LOG.warning("Tag '{0}' already doesn't exist, no removal necessary".format(tag))
@@ -406,7 +390,7 @@ class TagDocker:
 
         return (remove_archs, keep_archs)
 
-    def tag_add_calculate_archs(self, push_item, tag):
+    def tag_add_calculate_archs(self, push_item, tag, executor):
         """
         Calculate which architectures are present in a given tag, and which ones would be added.
 
@@ -415,6 +399,8 @@ class TagDocker:
                 Push item to perform the workflow with.
             tag (str):
                 Tag, for which an 'add' operation will be performed.
+            executor (Executor):
+                Instance of Executor subclass used for skopeo inspect.
         Returns ([str]|None):
             In case of multiarch image, arches which would be copied to the destination. In case
             of a source image, None if the copy operation is relevant or [] otherwise.
@@ -428,8 +414,8 @@ class TagDocker:
         )
         source_image = "{0}:{1}".format(full_repo, push_item.metadata["tag_source"])
         dest_image = "{0}:{1}".format(full_repo, tag)
-        source_details = self.get_image_details(source_image)
-        dest_details = self.get_image_details(dest_image)
+        source_details = self.get_image_details(source_image, executor)
+        dest_details = self.get_image_details(dest_image, executor)
 
         if source_details is None:
             raise BadPushItem("Source image must be specified if add operation was requested")
@@ -462,7 +448,7 @@ class TagDocker:
             ]
             return add_archs
 
-    def copy_tag_sign_images(self, push_item, tag, signature_handler):
+    def copy_tag_sign_images(self, push_item, tag, signature_handler, executor):
         """
         Copy image from source to the destination tag and sign new manifest claims.
 
@@ -476,6 +462,8 @@ class TagDocker:
                 Tag, which acts as a destination to the copy operation.
             signature_handler (BasicSignatureHandler):
                 Instance of signature handler which will perform the signing.
+            executor (Executor):
+                Instance of Executor subclass used for skopeo inspect.
         """
         full_repo_schema = "{host}/{namespace}/{repo}"
         external_image_schema = "{host}/{repo}:{tag}"
@@ -495,7 +483,7 @@ class TagDocker:
         )
 
         claim_messages = []
-        details = self.get_image_details(source_image)
+        details = self.get_image_details(source_image, executor)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
         if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:
@@ -734,34 +722,46 @@ class TagDocker:
         self.check_input_validity()
         signature_handler = BasicSignatureHandler(self.hub, self.target_settings, self.target_name)
 
-        for item in self.push_items:
-            for tag in item.metadata["add_tags"]:
-                LOG.info("Processing add tag '{0}'".format(tag))
-                add_archs = self.tag_add_calculate_archs(item, tag)
-                # If all archs were somehow excluded from being added, no-op
-                if add_archs == []:
-                    LOG.warning("No archs can be added to tag '{0}', skipping".format(tag))
-                    continue
-                # If None, we're dealing with a source image and we want to copy to destination
-                elif add_archs is None:
-                    self.copy_tag_sign_images(item, tag, signature_handler)
-                # Otherwise, merge relevant archs of source and dest
-                else:
-                    self.merge_manifest_lists_sign_images(item, tag, add_archs, signature_handler)
+        with ContainerExecutor(
+            self.target_settings["skopeo_image"],
+            self.target_settings.get("docker_host") or "unix://var/run/docker.sock",
+            self.target_settings.get("docker_timeout"),
+            self.target_settings.get("docker_tls_verify") or False,
+            self.target_settings.get("docker_cert_path") or None,
+        ) as executor:
+            executor.skopeo_login(
+                self.target_settings["dest_quay_user"], self.target_settings["dest_quay_password"]
+            )
+            for item in self.push_items:
+                for tag in item.metadata["add_tags"]:
+                    LOG.info("Processing add tag '{0}'".format(tag))
+                    add_archs = self.tag_add_calculate_archs(item, tag, executor)
+                    # If all archs were somehow excluded from being added, no-op
+                    if add_archs == []:
+                        LOG.warning("No archs can be added to tag '{0}', skipping".format(tag))
+                        continue
+                    # If None, we're dealing with a source image and we want to copy to destination
+                    elif add_archs is None:
+                        self.copy_tag_sign_images(item, tag, signature_handler, executor)
+                    # Otherwise, merge relevant archs of source and dest
+                    else:
+                        self.merge_manifest_lists_sign_images(
+                            item, tag, add_archs, signature_handler
+                        )
 
-            for tag in item.metadata["remove_tags"]:
-                LOG.info("Processing remove tag '{0}'".format(tag))
-                remove_archs, keep_archs = self.tag_remove_calculate_archs(item, tag)
-                # If all archs were somehow excluded from removal, no-op
-                if not remove_archs:
-                    LOG.warning("No archs can be removed from tag '{0}', skipping".format(tag))
-                    continue
-                # If no archs will remain after removal, just perform untagging
-                elif not keep_archs:
-                    self.untag_image(item, tag)
-                # if some archs will be removed and some will remain, create new manifest list
-                else:
-                    self.manifest_list_remove_archs(item, tag, remove_archs)
+                for tag in item.metadata["remove_tags"]:
+                    LOG.info("Processing remove tag '{0}'".format(tag))
+                    remove_archs, keep_archs = self.tag_remove_calculate_archs(item, tag, executor)
+                    # If all archs were somehow excluded from removal, no-op
+                    if not remove_archs:
+                        LOG.warning("No archs can be removed from tag '{0}', skipping".format(tag))
+                        continue
+                    # If no archs will remain after removal, just perform untagging
+                    elif not keep_archs:
+                        self.untag_image(item, tag)
+                    # if some archs will be removed and some will remain, create new manifest list
+                    else:
+                        self.manifest_list_remove_archs(item, tag, remove_archs)
 
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):

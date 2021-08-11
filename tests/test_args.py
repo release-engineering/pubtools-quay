@@ -64,6 +64,12 @@ def test_arg_parser_required_args(mock_tag_images):
         ssh_username=None,
         ssh_password=None,
         ssh_key_filename=None,
+        container_exec=False,
+        container_image=None,
+        docker_url="unix://var/run/docker.sock",
+        docker_timeout=None,
+        docker_verify_tls=False,
+        docker_cert_path=None,
         send_umb_msg=False,
         umb_cert=None,
         umb_client_key=None,
@@ -98,6 +104,16 @@ def test_arg_parser_full_args(mock_tag_images):
         "123456",
         "--ssh-key-filename",
         "/path/to/file.key",
+        "--container-exec",
+        "--container-image",
+        "quay.io/namespace/image:1",
+        "--docker-url",
+        "https://some-url.com",
+        "--docker-timeout",
+        "120",
+        "--docker-verify-tls",
+        "--docker-cert-path",
+        "/some/path",
         "--send-umb-msg",
         "--umb-url",
         "amqps://url:5671",
@@ -124,6 +140,12 @@ def test_arg_parser_full_args(mock_tag_images):
         ssh_username="dummy",
         ssh_password="123456",
         ssh_key_filename="/path/to/file.key",
+        container_exec=True,
+        container_image="quay.io/namespace/image:1",
+        docker_url="https://some-url.com",
+        docker_timeout="120",
+        docker_verify_tls=True,
+        docker_cert_path="/some/path",
         send_umb_msg=True,
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",
@@ -166,6 +188,12 @@ def test_arg_parser_multiple_args(mock_tag_images):
         ssh_username=None,
         ssh_password=None,
         ssh_key_filename=None,
+        container_exec=False,
+        container_image=None,
+        docker_url="unix://var/run/docker.sock",
+        docker_timeout=None,
+        docker_verify_tls=False,
+        docker_cert_path=None,
         send_umb_msg=True,
         umb_cert="/path/to/file.crt",
         umb_client_key=None,
@@ -274,6 +302,20 @@ def test_arg_parser_missing_umb_cert():
         tag_images.tag_images_main(missing_umb_url)
 
 
+def test_arg_parser_missing_container_image():
+    missing_umb_url = [
+        "dummy",
+        "--source-ref",
+        "quay.io/repo/souce-image:1",
+        "--dest-ref",
+        "quay.io/repo/target-image:1",
+        "--container-exec",
+    ]
+
+    with pytest.raises(ValueError, match="Container image is missing when.*"):
+        tag_images.tag_images_main(missing_umb_url)
+
+
 @mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"})
 @mock.patch("pubtools._quay.tag_images.tag_images")
 def test_arg_parser_env_variables(mock_tag_images):
@@ -319,6 +361,12 @@ def test_arg_parser_env_variables(mock_tag_images):
         ssh_username="dummy",
         ssh_password="123456",
         ssh_key_filename="/path/to/file.key",
+        container_exec=False,
+        container_image=None,
+        docker_url="unix://var/run/docker.sock",
+        docker_timeout=None,
+        docker_verify_tls=False,
+        docker_cert_path=None,
         send_umb_msg=True,
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",

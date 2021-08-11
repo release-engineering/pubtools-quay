@@ -14,18 +14,18 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs
 # flake8: noqa: E501
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_verify_target_settings_ok(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     tag_docker_push_item_remove_no_src,
     tag_docker_push_item_mixed,
 ):
     mock_skopeo_login = mock.MagicMock()
-    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_container_executor.return_value.skopeo_login = mock_skopeo_login
     hub = mock.MagicMock()
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add, tag_docker_push_item_remove_no_src, tag_docker_push_item_mixed],
@@ -44,22 +44,18 @@ def test_init_verify_target_settings_ok(
     assert tag_docker_instance.target_name == "some-target"
     assert tag_docker_instance.target_settings == target_settings
     assert tag_docker_instance.quay_host == "quay.io"
-    mock_remote_executor.assert_not_called()
+    mock_container_executor.assert_not_called()
 
     assert tag_docker_instance.quay_client == mock_quay_client.return_value
-    assert tag_docker_instance.executor == mock_remote_executor.return_value
     mock_quay_client.assert_called_once_with("dest-quay-user", "dest-quay-pass", "quay.io")
-    mock_remote_executor.assert_called_once_with(
-        hostname="127.0.0.1", username="ssh-user", password="ssh-password"
-    )
-    mock_skopeo_login.assert_called_once_with(username="dest-quay-user", password="dest-quay-pass")
+    mock_skopeo_login.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_missing_target_setting(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -75,11 +71,11 @@ def test_init_missing_target_setting(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_missing_docker_setting(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -95,11 +91,11 @@ def test_init_missing_docker_setting(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_wrong_input_data_non_docker_item_type(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -115,11 +111,11 @@ def test_init_wrong_input_data_non_docker_item_type(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_wrong_input_data_number_of_repos(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -135,11 +131,11 @@ def test_init_wrong_input_data_number_of_repos(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_wrong_input_data_no_tag_source(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -155,11 +151,11 @@ def test_init_wrong_input_data_no_tag_source(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_wrong_input_data_new_method(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -175,11 +171,11 @@ def test_init_wrong_input_data_new_method(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_init_wrong_input_data_hash_tag_source(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -195,16 +191,16 @@ def test_init_wrong_input_data_hash_tag_source(
         )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_check_input_validity_new_tag_not_in_stage(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
     mock_skopeo_login = mock.MagicMock()
-    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_container_executor.return_value.skopeo_login = mock_skopeo_login
     hub = mock.MagicMock()
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
@@ -248,16 +244,16 @@ def test_check_input_validity_new_tag_not_in_stage(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_check_input_validity_new_tag_server_error(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
     mock_skopeo_login = mock.MagicMock()
-    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_container_executor.return_value.skopeo_login = mock_skopeo_login
     hub = mock.MagicMock()
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
@@ -292,16 +288,16 @@ def test_check_input_validity_new_tag_server_error(
         tag_docker_instance.check_input_validity()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_check_input_validity_remove_tag_still_in_stage(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_no_src,
 ):
     mock_skopeo_login = mock.MagicMock()
-    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_container_executor.return_value.skopeo_login = mock_skopeo_login
     hub = mock.MagicMock()
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
@@ -345,16 +341,16 @@ def test_check_input_validity_remove_tag_still_in_stage(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_check_input_validity_remove_tag_server_error(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_no_src,
 ):
     mock_skopeo_login = mock.MagicMock()
-    mock_remote_executor.return_value.skopeo_login = mock_skopeo_login
+    mock_container_executor.return_value.skopeo_login = mock_skopeo_login
     hub = mock.MagicMock()
     target_settings["propagated_from"] = "quay-stage-target"
     mock_worker = mock.MagicMock()
@@ -386,11 +382,11 @@ def test_check_input_validity_remove_tag_server_error(
         tag_docker_instance.check_input_validity()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_multiarch(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -412,7 +408,9 @@ def test_get_image_details_multiarch(
         "some-target",
         target_settings,
     )
-    result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:2")
+    result = tag_docker_instance.get_image_details(
+        "some-registry.com/namespace/image:2", mock_container_executor.return_value
+    )
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:2")
     mock_get_manifest_digest.assert_called_once_with("some-registry.com/namespace/image:2")
@@ -425,11 +423,11 @@ def test_get_image_details_multiarch(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_source(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     repo_api_data,
@@ -446,7 +444,7 @@ def test_get_image_details_source(
     mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
     mock_skopeo_inspect = mock.MagicMock()
     mock_skopeo_inspect.return_value = {"Architecture": "amd64"}
-    mock_remote_executor.return_value.skopeo_inspect = mock_skopeo_inspect
+    mock_container_executor.return_value.skopeo_inspect = mock_skopeo_inspect
 
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],
@@ -455,7 +453,9 @@ def test_get_image_details_source(
         "some-target",
         target_settings,
     )
-    result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:1")
+    result = tag_docker_instance.get_image_details(
+        "some-registry.com/namespace/image:1", mock_container_executor.return_value
+    )
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:1")
     mock_get_manifest_digest.assert_called_once_with("some-registry.com/namespace/image:1")
@@ -469,11 +469,11 @@ def test_get_image_details_source(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_source_wrong_arch(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
@@ -484,7 +484,7 @@ def test_get_image_details_source_wrong_arch(
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_skopeo_inspect = mock.MagicMock()
     mock_skopeo_inspect.return_value = {"Architecture": "some-arch"}
-    mock_remote_executor.return_value.skopeo_inspect = mock_skopeo_inspect
+    mock_container_executor.return_value.skopeo_inspect = mock_skopeo_inspect
 
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],
@@ -494,14 +494,16 @@ def test_get_image_details_source_wrong_arch(
         target_settings,
     )
     with pytest.raises(exceptions.BadPushItem, match=".*contains an architecture some-arch.*"):
-        result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:1")
+        result = tag_docker_instance.get_image_details(
+            "some-registry.com/namespace/image:1", mock_container_executor.return_value
+        )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_doesnt_exist(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -521,17 +523,19 @@ def test_get_image_details_doesnt_exist(
         "some-target",
         target_settings,
     )
-    result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:2")
+    result = tag_docker_instance.get_image_details(
+        "some-registry.com/namespace/image:2", mock_container_executor.return_value
+    )
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:2")
     assert result == None
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_server_error(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -552,16 +556,18 @@ def test_get_image_details_server_error(
         target_settings,
     )
     with pytest.raises(requests.exceptions.HTTPError, match="server error"):
-        tag_docker_instance.get_image_details("some-registry.com/namespace/image:2")
+        tag_docker_instance.get_image_details(
+            "some-registry.com/namespace/image:2", mock_container_executor.return_value
+        )
 
     mock_get_manifest.assert_called_once_with("some-registry.com/namespace/image:2")
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_get_image_details_source_wrong_manifest_type(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -581,14 +587,16 @@ def test_get_image_details_source_wrong_manifest_type(
         target_settings,
     )
     with pytest.raises(exceptions.BadPushItem, match=".*different than V2S2 or manifest list.*"):
-        result = tag_docker_instance.get_image_details("some-registry.com/namespace/image:1")
+        result = tag_docker_instance.get_image_details(
+            "some-registry.com/namespace/image:1", mock_container_executor.return_value
+        )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_is_arch_relevant_no_exclude(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -605,11 +613,11 @@ def test_is_arch_relevant_no_exclude(
     assert tag_docker_instance.is_arch_relevant(tag_docker_push_item_add, "arch3") is False
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_is_arch_relevant_exclude(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -627,7 +635,7 @@ def test_is_arch_relevant_exclude(
     assert tag_docker_instance.is_arch_relevant(tag_docker_push_item_add, "arch3") is True
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
@@ -637,7 +645,7 @@ def test_tag_remove_calculate_archs_source_images(
     mock_remove_calculate_source,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     v2s2_manifest_data,
@@ -665,14 +673,16 @@ def test_tag_remove_calculate_archs_source_images(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_remove_calculate_archs(tag_docker_push_item_remove_src, "v1.8")
+    ret = tag_docker_instance.tag_remove_calculate_archs(
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.5"
+        "quay.io/some-namespace/namespace----test_repo2:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8"
+        "quay.io/some-namespace/namespace----test_repo2:v1.8", mock_container_executor.return_value
     )
     mock_remove_calculate_multiarch.assert_not_called()
     mock_remove_calculate_source.assert_called_once_with(
@@ -681,7 +691,7 @@ def test_tag_remove_calculate_archs_source_images(
     assert ret == "something"
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
@@ -691,7 +701,7 @@ def test_tag_remove_calculate_archs_multiarch_images(
     mock_remove_calculate_source,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -719,14 +729,16 @@ def test_tag_remove_calculate_archs_multiarch_images(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_remove_calculate_archs(tag_docker_push_item_remove_src, "v1.8")
+    ret = tag_docker_instance.tag_remove_calculate_archs(
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.5"
+        "quay.io/some-namespace/namespace----test_repo2:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8"
+        "quay.io/some-namespace/namespace----test_repo2:v1.8", mock_container_executor.return_value
     )
     mock_remove_calculate_source.assert_not_called()
     mock_remove_calculate_multiarch.assert_called_once_with(
@@ -735,7 +747,7 @@ def test_tag_remove_calculate_archs_multiarch_images(
     assert ret == "something-else"
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
@@ -745,7 +757,7 @@ def test_tag_remove_calculate_archs_no_src(
     mock_remove_calculate_source,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_no_src,
     manifest_list_data,
@@ -767,10 +779,12 @@ def test_tag_remove_calculate_archs_no_src(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_remove_calculate_archs(tag_docker_push_item_remove_no_src, "v1.8")
+    ret = tag_docker_instance.tag_remove_calculate_archs(
+        tag_docker_push_item_remove_no_src, "v1.8", mock_container_executor.return_value
+    )
 
     mock_get_image_details.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8"
+        "quay.io/some-namespace/namespace----test_repo2:v1.8", mock_container_executor.return_value
     )
     mock_remove_calculate_source.assert_not_called()
     mock_remove_calculate_multiarch.assert_called_once_with(
@@ -779,7 +793,7 @@ def test_tag_remove_calculate_archs_no_src(
     assert ret == "something-other"
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
@@ -789,7 +803,7 @@ def test_tag_remove_calculate_archs_no_dest(
     mock_remove_calculate_source,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -810,21 +824,23 @@ def test_tag_remove_calculate_archs_no_dest(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_remove_calculate_archs(tag_docker_push_item_remove_src, "v1.8")
+    ret = tag_docker_instance.tag_remove_calculate_archs(
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.5"
+        "quay.io/some-namespace/namespace----test_repo2:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8"
+        "quay.io/some-namespace/namespace----test_repo2:v1.8", mock_container_executor.return_value
     )
     mock_remove_calculate_source.assert_not_called()
     mock_remove_calculate_multiarch.assert_not_called()
     assert ret == ([], [])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
@@ -834,7 +850,7 @@ def test_tag_remove_calculate_archs_different_manifest_types(
     mock_remove_calculate_source,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -864,24 +880,26 @@ def test_tag_remove_calculate_archs_different_manifest_types(
         target_settings,
     )
     with pytest.raises(exceptions.BadPushItem, match="Mismatch between manifest.*"):
-        tag_docker_instance.tag_remove_calculate_archs(tag_docker_push_item_remove_src, "v1.8")
+        tag_docker_instance.tag_remove_calculate_archs(
+            tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value
+        )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.5"
+        "quay.io/some-namespace/namespace----test_repo2:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8"
+        "quay.io/some-namespace/namespace----test_repo2:v1.8", mock_container_executor.return_value
     )
     mock_remove_calculate_source.assert_not_called()
     mock_remove_calculate_multiarch.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_source_image_src_specified_digests_correspond(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     v2s2_manifest_data,
@@ -914,11 +932,11 @@ def test_tag_remove_calculate_archs_source_image_src_specified_digests_correspon
     assert ret == (["amd64"], [])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_source_image_src_specified_digests_dont_correspond(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     v2s2_manifest_data,
@@ -951,11 +969,11 @@ def test_tag_remove_calculate_archs_source_image_src_specified_digests_dont_corr
     assert ret == ([], ["amd64"])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_source_image_no_src_relevant_arch(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_no_src,
     v2s2_manifest_data,
@@ -983,11 +1001,11 @@ def test_tag_remove_calculate_archs_source_image_no_src_relevant_arch(
     assert ret == (["amd64"], [])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_source_image_irrelevant_arch(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     v2s2_manifest_data,
@@ -1021,11 +1039,11 @@ def test_tag_remove_calculate_archs_source_image_irrelevant_arch(
     assert ret == ([], ["amd64"])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_multiarch_image_all_archs_digests_correspond(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -1064,11 +1082,11 @@ def test_tag_remove_calculate_archs_multiarch_image_all_archs_digests_correspond
     assert ret == (["amd64", "arm64", "arm", "ppc64le", "s390x"], [])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_multiarch_image_all_digests_correspond_some_archs_irrelevant(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -1105,11 +1123,11 @@ def test_tag_remove_calculate_archs_multiarch_image_all_digests_correspond_some_
     assert ret == (["arm64", "arm", "ppc64le"], ["amd64", "s390x"])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_multiarch_image_all_archs_relevant_some_digests_dont_correspond(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -1156,11 +1174,11 @@ def test_tag_remove_calculate_archs_multiarch_image_all_archs_relevant_some_dige
     assert ret == (["amd64", "arm", "s390x"], ["arm64", "ppc64le"])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_tag_remove_calculate_archs_multiarch_image_no_src_some_archs_irrelevant(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -1188,13 +1206,13 @@ def test_tag_remove_calculate_archs_multiarch_image_no_src_some_archs_irrelevant
     assert ret == (["amd64", "s390x"], ["arm64", "arm", "ppc64le"])
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_source_images_overwrite(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
@@ -1222,25 +1240,27 @@ def test_tag_add_calculate_archs_source_images_overwrite(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+    ret = tag_docker_instance.tag_add_calculate_archs(
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
     assert ret == None
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_source_images_irrelevant_arch(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
@@ -1269,25 +1289,27 @@ def test_tag_add_calculate_archs_source_images_irrelevant_arch(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+    ret = tag_docker_instance.tag_add_calculate_archs(
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
     assert ret == []
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_multiarch_images_all_archs_relevant(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1316,25 +1338,27 @@ def test_tag_add_calculate_archs_multiarch_images_all_archs_relevant(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+    ret = tag_docker_instance.tag_add_calculate_archs(
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
     assert ret == ["amd64", "arm64", "arm", "ppc64le", "s390x"]
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_multiarch_images_some_archs_irrelevant(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1362,25 +1386,27 @@ def test_tag_add_calculate_archs_multiarch_images_some_archs_irrelevant(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+    ret = tag_docker_instance.tag_add_calculate_archs(
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
     assert ret == ["arm", "ppc64le"]
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_multiarch_images_missing_dest(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1404,25 +1430,27 @@ def test_tag_add_calculate_archs_multiarch_images_missing_dest(
         "some-target",
         target_settings,
     )
-    ret = tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+    ret = tag_docker_instance.tag_add_calculate_archs(
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+    )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
     assert ret == ["amd64", "arm64", "s390x"]
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_multiarch_images_missing_source(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1447,24 +1475,26 @@ def test_tag_add_calculate_archs_multiarch_images_missing_source(
         target_settings,
     )
     with pytest.raises(exceptions.BadPushItem, match="Source image must be specified.*"):
-        tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+        tag_docker_instance.tag_add_calculate_archs(
+            tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+        )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 def test_tag_add_calculate_archs_different_manifest_types(
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1495,19 +1525,21 @@ def test_tag_add_calculate_archs_different_manifest_types(
         target_settings,
     )
     with pytest.raises(exceptions.BadPushItem, match="Mismatch between manifest types.*"):
-        tag_docker_instance.tag_add_calculate_archs(tag_docker_push_item_add, "v1.6")
+        tag_docker_instance.tag_add_calculate_archs(
+            tag_docker_push_item_add, "v1.6", mock_container_executor.return_value
+        )
 
     assert mock_get_image_details.call_count == 2
     assert mock_get_image_details.call_args_list[0] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
     assert mock_get_image_details.call_args_list[1] == mock.call(
-        "quay.io/some-namespace/namespace----test_repo:v1.6"
+        "quay.io/some-namespace/namespace----test_repo:v1.6", mock_container_executor.return_value
     )
 
 
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -1517,7 +1549,7 @@ def test_copy_all_archs_sign_images_source(
     mock_create_claim_message,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_add,
@@ -1546,10 +1578,12 @@ def test_copy_all_archs_sign_images_source(
         "some-target",
         target_settings,
     )
-    tag_docker_instance.copy_tag_sign_images(tag_docker_push_item_add, "v1.6", sig_handler)
+    tag_docker_instance.copy_tag_sign_images(
+        tag_docker_push_item_add, "v1.6", sig_handler, mock_container_executor.return_value
+    )
 
     mock_get_image_details.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
 
     assert mock_create_claim_message.call_count == 2
@@ -1585,7 +1619,7 @@ def test_copy_all_archs_sign_images_source(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -1595,7 +1629,7 @@ def test_tag_sign_images_multiarch_error(
     mock_create_claim_message,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
@@ -1617,17 +1651,19 @@ def test_tag_sign_images_multiarch_error(
         target_settings,
     )
     with pytest.raises(ValueError, match="Tagging workflow is not supported.*"):
-        tag_docker_instance.copy_tag_sign_images(tag_docker_push_item_add, "v1.6", sig_handler)
+        tag_docker_instance.copy_tag_sign_images(
+            tag_docker_push_item_add, "v1.6", sig_handler, mock_container_executor.return_value
+        )
 
     mock_get_image_details.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo:v1.5"
+        "quay.io/some-namespace/namespace----test_repo:v1.5", mock_container_executor.return_value
     )
 
     mock_run_tag_images.assert_not_called()
 
 
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -1639,7 +1675,7 @@ def test_merge_manifest_lists_sign_images(
     mock_create_claim_message,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_add,
@@ -1736,7 +1772,7 @@ def test_merge_manifest_lists_sign_images(
 
 
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
@@ -1748,7 +1784,7 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     mock_create_claim_message,
     mock_get_image_details,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_add,
@@ -1858,13 +1894,13 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
 
 
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.run_untag_images")
 def test_untag_image(
     mock_run_untag_images,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_remove_src,
@@ -1893,11 +1929,11 @@ def test_untag_image(
 
 
 @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_manifest_list_remove_archs(
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_remove_src,
@@ -1940,7 +1976,7 @@ def test_manifest_list_remove_archs(
     )
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -1962,7 +1998,7 @@ def test_run_add_noop(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -1986,10 +2022,10 @@ def test_run_add_noop(
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_add, "v1.6"
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_add_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_add, "v1.7"
+        tag_docker_push_item_add, "v1.7", mock_container_executor.return_value.__enter__()
     )
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -1998,7 +2034,7 @@ def test_run_add_noop(
     mock_manifest_list_remove_archs.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -2020,7 +2056,7 @@ def test_run_add_tag_images(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -2044,17 +2080,23 @@ def test_run_add_tag_images(
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_add, "v1.6"
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_add_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_add, "v1.7"
+        tag_docker_push_item_add, "v1.7", mock_container_executor.return_value.__enter__()
     )
     assert mock_copy_tag_sign_images.call_count == 2
     assert mock_copy_tag_sign_images.call_args_list[0] == mock.call(
-        tag_docker_push_item_add, "v1.6", mock_basic_signature_handler.return_value
+        tag_docker_push_item_add,
+        "v1.6",
+        mock_basic_signature_handler.return_value,
+        mock_container_executor.return_value.__enter__(),
     )
     assert mock_copy_tag_sign_images.call_args_list[1] == mock.call(
-        tag_docker_push_item_add, "v1.7", mock_basic_signature_handler.return_value
+        tag_docker_push_item_add,
+        "v1.7",
+        mock_basic_signature_handler.return_value,
+        mock_container_executor.return_value.__enter__(),
     )
     mock_merge_manifest_lists_sign_images.assert_not_called()
     mock_tag_remove_calculate_archs.assert_not_called()
@@ -2062,7 +2104,7 @@ def test_run_add_tag_images(
     mock_manifest_list_remove_archs.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -2084,7 +2126,7 @@ def test_run_add_merge_manifest_lists(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_add,
 ):
@@ -2108,10 +2150,10 @@ def test_run_add_merge_manifest_lists(
     mock_basic_signature_handler.assert_called_once_with(hub, target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_add, "v1.6"
+        tag_docker_push_item_add, "v1.6", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_add_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_add, "v1.7"
+        tag_docker_push_item_add, "v1.7", mock_container_executor.return_value.__enter__()
     )
     mock_copy_tag_sign_images.assert_not_called()
     assert mock_merge_manifest_lists_sign_images.call_count == 2
@@ -2132,7 +2174,7 @@ def test_run_add_merge_manifest_lists(
     mock_manifest_list_remove_archs.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -2154,7 +2196,7 @@ def test_run_remove_noop(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
 ):
@@ -2181,16 +2223,16 @@ def test_run_remove_noop(
     mock_merge_manifest_lists_sign_images.assert_not_called()
     assert mock_tag_remove_calculate_archs.call_count == 2
     assert mock_tag_remove_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_remove_src, "v1.8"
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_remove_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_remove_src, "v1.9"
+        tag_docker_push_item_remove_src, "v1.9", mock_container_executor.return_value.__enter__()
     )
     mock_untag_image.assert_not_called()
     mock_manifest_list_remove_archs.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -2212,7 +2254,7 @@ def test_run_remove_untag_image(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
 ):
@@ -2239,10 +2281,10 @@ def test_run_remove_untag_image(
     mock_merge_manifest_lists_sign_images.assert_not_called()
     assert mock_tag_remove_calculate_archs.call_count == 2
     assert mock_tag_remove_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_remove_src, "v1.8"
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_remove_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_remove_src, "v1.9"
+        tag_docker_push_item_remove_src, "v1.9", mock_container_executor.return_value.__enter__()
     )
     assert mock_untag_image.call_count == 2
     assert mock_untag_image.call_args_list[0] == mock.call(tag_docker_push_item_remove_src, "v1.8")
@@ -2250,7 +2292,7 @@ def test_run_remove_untag_image(
     mock_manifest_list_remove_archs.assert_not_called()
 
 
-@mock.patch("pubtools._quay.tag_docker.RemoteExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
@@ -2272,7 +2314,7 @@ def test_run_remove_manifest_list_remove_archs(
     mock_check_repos_validity,
     mock_basic_signature_handler,
     mock_quay_client,
-    mock_remote_executor,
+    mock_container_executor,
     target_settings,
     tag_docker_push_item_remove_src,
 ):
@@ -2302,10 +2344,10 @@ def test_run_remove_manifest_list_remove_archs(
     mock_merge_manifest_lists_sign_images.assert_not_called()
     assert mock_tag_remove_calculate_archs.call_count == 2
     assert mock_tag_remove_calculate_archs.call_args_list[0] == mock.call(
-        tag_docker_push_item_remove_src, "v1.8"
+        tag_docker_push_item_remove_src, "v1.8", mock_container_executor.return_value.__enter__()
     )
     assert mock_tag_remove_calculate_archs.call_args_list[1] == mock.call(
-        tag_docker_push_item_remove_src, "v1.9"
+        tag_docker_push_item_remove_src, "v1.9", mock_container_executor.return_value.__enter__()
     )
     mock_untag_image.assert_not_called()
     assert mock_manifest_list_remove_archs.call_count == 2
@@ -2355,6 +2397,7 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     tag_docker_push_item_add,
     v2s2_manifest_data,
 ):
+    executor = mock.MagicMock()
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
     mock_sign_claim_messages = mock.MagicMock()
@@ -2378,7 +2421,7 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
         "some-target",
         target_settings,
     )
-    tag_docker_instance.copy_tag_sign_images(push_item_none_key, "v1.6", sig_handler)
+    tag_docker_instance.copy_tag_sign_images(push_item_none_key, "v1.6", sig_handler, executor)
 
     assert mock_create_claim_message.call_count == 0
     mock_sign_claim_messages.assert_called_once_with([], True, True)

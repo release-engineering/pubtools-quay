@@ -1,9 +1,10 @@
+import functools
 import logging
 
 from pubtools.pluggy import pm, task_context
 
 from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
-from .command_executor import LocalExecutor, RemoteExecutor
+from .command_executor import LocalExecutor, RemoteExecutor, ContainerExecutor
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -69,6 +70,38 @@ TAG_IMAGES_ARGS = {
     },
     ("--ssh-key-filename",): {
         "help": "Path to the private key file for SSH authentication.",
+        "required": False,
+        "type": str,
+    },
+    ("--container-exec",): {
+        "help": "Whether to execute the commands in a Docker container.",
+        "required": False,
+        "type": bool,
+    },
+    ("--container-image",): {
+        "help": "Path to the container image in which to execute the commands. Must be "
+        "downloadable without extra permissions.",
+        "required": False,
+        "type": str,
+    },
+    ("--docker-url",): {
+        "help": "URL of the docker client that should run the container. Local socket by default.",
+        "required": False,
+        "type": str,
+        "default": "unix://var/run/docker.sock",
+    },
+    ("--docker-timeout",): {
+        "help": "Timeout for executing Docker commands. Disabled by default.",
+        "required": False,
+        "type": str,
+    },
+    ("--docker-verify-tls",): {
+        "help": "Whether to perform TLS verification with the Docker client. Disabled by default.",
+        "required": False,
+        "type": bool,
+    },
+    ("--docker-cert-path",): {
+        "help": "Path to Docker certificates for TLS authentication. '~/.docker' by default.",
         "required": False,
         "type": str,
     },
@@ -146,6 +179,12 @@ def tag_images(
     ssh_username=None,
     ssh_password=None,
     ssh_key_filename=None,
+    container_exec=False,
+    container_image=None,
+    docker_url="unix://var/run/docker.sock",
+    docker_timeout=None,
+    docker_verify_tls=False,
+    docker_cert_path=None,
     send_umb_msg=False,
     umb_urls=[],
     umb_cert=None,
@@ -168,7 +207,7 @@ def tag_images(
         quay_password (str):
             Quay password for Docker HTTP API.
         remote_exec (bool):
-            Whether to execute the command remotely.
+            Whether to execute the command remotely. Takes precedence over container_exec.
         ssh_remote_host (str):
             Hostname for remote execution.
         ssh_remote_host_port (str):
@@ -181,6 +220,19 @@ def tag_images(
             Password for SSH. Will only be used if key-based validation is not available.
         ssh_key_filename (str):
             Path to the private key file for SSH authentication.
+        container_exec (bool):
+            Whether to execute the commands in a Docker container.
+        container_image (str):
+            Path to the container image in which to execute the commands. Must be downloadable
+            without extra permissions.
+        docker_url (str):
+            URL of the docker client that should run the container. Local socket by default.
+        docker_timeout (int):
+            Timeout for executing Docker commands. Disabled by default.
+        docker_verify_tls (bool):
+            Whether to perform TLS verification with the Docker client. Disabled by default.
+        docker_cert_path (str):
+            Path to Docker certificates for TLS authentication. '~/.docker' by default.
         send_umb_msg (bool):
             Whether to send UMB messages about the untagged images.
         umb_urls ([str]):
@@ -199,6 +251,8 @@ def tag_images(
         quay_password,
         remote_exec,
         ssh_remote_host,
+        container_exec,
+        container_image,
         send_umb_msg,
         umb_urls,
         umb_cert,
@@ -206,7 +260,8 @@ def tag_images(
 
     if remote_exec:
         accept_host = not ssh_reject_unknown_host if ssh_reject_unknown_host else True
-        executor = RemoteExecutor(
+        executor_class = functools.partial(
+            RemoteExecutor,
             ssh_remote_host,
             ssh_username,
             ssh_key_filename,
@@ -214,11 +269,23 @@ def tag_images(
             ssh_remote_host_port,
             accept_host,
         )
+    elif container_exec:
+        if isinstance(docker_timeout, str):
+            docker_timeout = int(docker_timeout)
+        executor_class = functools.partial(
+            ContainerExecutor,
+            container_image,
+            docker_url,
+            docker_timeout,
+            docker_verify_tls,
+            docker_cert_path,
+        )
     else:
-        executor = LocalExecutor()
+        executor_class = functools.partial(LocalExecutor)
 
-    executor.skopeo_login(quay_user, quay_password)
-    executor.tag_images(source_ref, dest_refs, all_arch)
+    with executor_class() as executor:
+        executor.skopeo_login(quay_user, quay_password)
+        executor.tag_images(source_ref, dest_refs, all_arch)
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
 
@@ -239,6 +306,8 @@ def verify_tag_images_args(
     quay_password,
     remote_exec,
     ssh_remote_host,
+    container_exec,
+    container_image,
     send_umb_msg,
     umb_urls,
     umb_cert,
@@ -247,6 +316,10 @@ def verify_tag_images_args(
     if remote_exec:
         if not ssh_remote_host:
             raise ValueError("Remote host is missing when remote execution was specified.")
+
+    if container_exec:
+        if not container_image:
+            raise ValueError("Container image is missing when container execution was specified.")
 
     if (quay_user and not quay_password) or (quay_password and not quay_user):
         raise ValueError("Both user and password must be present when attempting to log in.")

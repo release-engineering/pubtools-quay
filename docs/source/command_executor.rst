@@ -10,6 +10,8 @@ Base class
 
 .. autoclass:: Executor
 
+   .. automethod:: __enter__
+   .. automethod:: __exit__
    .. automethod:: skopeo_login
    .. automethod:: tag_images
    .. automethod:: skopeo_inspect
@@ -26,3 +28,11 @@ Children classes
 
    .. automethod:: __init__
    .. automethod:: _run_cmd
+
+.. autoclass:: ContainerExecutor
+
+   .. automethod:: __init__
+   .. automethod:: __exit__
+   .. automethod:: _run_cmd
+   .. automethod:: _add_file
+   .. automethod:: skopeo_login
