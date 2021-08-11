@@ -238,12 +238,6 @@ scenarios may occur:
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.executor">
-<span class="sig-name descname"><span class="pre">executor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.executor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create and access command executor.</p>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.verify_target_settings">
 <span class="sig-name descname"><span class="pre">verify_target_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.verify_target_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.verify_target_settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verify that target settings contains all the necessary data.</p>
@@ -266,11 +260,13 @@ scenarios may occur:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.get_image_details">
-<span class="sig-name descname"><span class="pre">get_image_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.get_image_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.get_image_details" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_image_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.get_image_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.get_image_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create an ImageDetails namedtuple for the given image reference.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>reference (str):</dt><dd><p>Image reference.</p>
+</dd>
+<dt>executor (Executor):</dt><dd><p>Instance of Executor subclass used for skopeo inspect.</p>
 </dd>
 </dl>
 </dd>
@@ -299,13 +295,15 @@ scenarios may occur:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs">
-<span class="sig-name descname"><span class="pre">tag_remove_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_remove_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">tag_remove_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_remove_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate which architectures would be removed, and which would remain from a given tag.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
 </dd>
 <dt>tag (str):</dt><dd><p>Tag, for which a ‘remove’ operation will be performed.</p>
+</dd>
+<dt>executor (Executor):</dt><dd><p>Instance of Executor subclass used for skopeo inspect.</p>
 </dd>
 </dl>
 </dd>
@@ -359,13 +357,15 @@ contains archs that will remain.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs">
-<span class="sig-name descname"><span class="pre">tag_add_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_add_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">tag_add_calculate_archs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.tag_add_calculate_archs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate which architectures are present in a given tag, and which ones would be added.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>push_item (ContainerPushItem):</dt><dd><p>Push item to perform the workflow with.</p>
 </dd>
 <dt>tag (str):</dt><dd><p>Tag, for which an ‘add’ operation will be performed.</p>
+</dd>
+<dt>executor (Executor):</dt><dd><p>Instance of Executor subclass used for skopeo inspect.</p>
 </dd>
 </dl>
 </dd>
@@ -377,7 +377,7 @@ of a source image, None if the copy operation is relevant or [] otherwise.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images">
-<span class="sig-name descname"><span class="pre">copy_tag_sign_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_handler</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.copy_tag_sign_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">copy_tag_sign_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">executor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_docker.html#TagDocker.copy_tag_sign_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy image from source to the destination tag and sign new manifest claims.</p>
 <p>If destination tag already contains a manifest, it will be overwritten.
 This workflow is expected to use on single-arch source images.</p>
@@ -388,6 +388,8 @@ This workflow is expected to use on single-arch source images.</p>
 <dt>tag (str):</dt><dd><p>Tag, which acts as a destination to the copy operation.</p>
 </dd>
 <dt>signature_handler (BasicSignatureHandler):</dt><dd><p>Instance of signature handler which will perform the signing.</p>
+</dd>
+<dt>executor (Executor):</dt><dd><p>Instance of Executor subclass used for skopeo inspect.</p>
 </dd>
 </dl>
 </dd>

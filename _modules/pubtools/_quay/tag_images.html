@@ -162,12 +162,13 @@
            <div itemprop="articleBody">
             
   <h1>Source code for pubtools._quay.tag_images</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
 
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">setup_arg_parser</span><span class="p">,</span> <span class="n">add_args_env_variables</span><span class="p">,</span> <span class="n">send_umb_message</span>
-<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">LocalExecutor</span><span class="p">,</span> <span class="n">RemoteExecutor</span>
+<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">LocalExecutor</span><span class="p">,</span> <span class="n">RemoteExecutor</span><span class="p">,</span> <span class="n">ContainerExecutor</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -233,6 +234,38 @@
     <span class="p">},</span>
     <span class="p">(</span><span class="s2">&quot;--ssh-key-filename&quot;</span><span class="p">,):</span> <span class="p">{</span>
         <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the private key file for SSH authentication.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--container-exec&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Whether to execute the commands in a Docker container.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--container-image&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the container image in which to execute the commands. Must be &quot;</span>
+        <span class="s2">&quot;downloadable without extra permissions.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--docker-url&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;URL of the docker client that should run the container. Local socket by default.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--docker-timeout&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Timeout for executing Docker commands. Disabled by default.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--docker-verify-tls&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Whether to perform TLS verification with the Docker client. Disabled by default.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--docker-cert-path&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to Docker certificates for TLS authentication. &#39;~/.docker&#39; by default.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
@@ -310,6 +343,12 @@
     <span class="n">ssh_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">ssh_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">ssh_key_filename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">container_exec</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">container_image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">docker_url</span><span class="o">=</span><span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+    <span class="n">docker_timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">docker_verify_tls</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">docker_cert_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -332,7 +371,7 @@
 <span class="sd">        quay_password (str):</span>
 <span class="sd">            Quay password for Docker HTTP API.</span>
 <span class="sd">        remote_exec (bool):</span>
-<span class="sd">            Whether to execute the command remotely.</span>
+<span class="sd">            Whether to execute the command remotely. Takes precedence over container_exec.</span>
 <span class="sd">        ssh_remote_host (str):</span>
 <span class="sd">            Hostname for remote execution.</span>
 <span class="sd">        ssh_remote_host_port (str):</span>
@@ -345,6 +384,19 @@
 <span class="sd">            Password for SSH. Will only be used if key-based validation is not available.</span>
 <span class="sd">        ssh_key_filename (str):</span>
 <span class="sd">            Path to the private key file for SSH authentication.</span>
+<span class="sd">        container_exec (bool):</span>
+<span class="sd">            Whether to execute the commands in a Docker container.</span>
+<span class="sd">        container_image (str):</span>
+<span class="sd">            Path to the container image in which to execute the commands. Must be downloadable</span>
+<span class="sd">            without extra permissions.</span>
+<span class="sd">        docker_url (str):</span>
+<span class="sd">            URL of the docker client that should run the container. Local socket by default.</span>
+<span class="sd">        docker_timeout (int):</span>
+<span class="sd">            Timeout for executing Docker commands. Disabled by default.</span>
+<span class="sd">        docker_verify_tls (bool):</span>
+<span class="sd">            Whether to perform TLS verification with the Docker client. Disabled by default.</span>
+<span class="sd">        docker_cert_path (str):</span>
+<span class="sd">            Path to Docker certificates for TLS authentication. &#39;~/.docker&#39; by default.</span>
 <span class="sd">        send_umb_msg (bool):</span>
 <span class="sd">            Whether to send UMB messages about the untagged images.</span>
 <span class="sd">        umb_urls ([str]):</span>
@@ -363,6 +415,8 @@
         <span class="n">quay_password</span><span class="p">,</span>
         <span class="n">remote_exec</span><span class="p">,</span>
         <span class="n">ssh_remote_host</span><span class="p">,</span>
+        <span class="n">container_exec</span><span class="p">,</span>
+        <span class="n">container_image</span><span class="p">,</span>
         <span class="n">send_umb_msg</span><span class="p">,</span>
         <span class="n">umb_urls</span><span class="p">,</span>
         <span class="n">umb_cert</span><span class="p">,</span>
@@ -370,7 +424,8 @@
 
     <span class="k">if</span> <span class="n">remote_exec</span><span class="p">:</span>
         <span class="n">accept_host</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">ssh_reject_unknown_host</span> <span class="k">if</span> <span class="n">ssh_reject_unknown_host</span> <span class="k">else</span> <span class="kc">True</span>
-        <span class="n">executor</span> <span class="o">=</span> <span class="n">RemoteExecutor</span><span class="p">(</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+            <span class="n">RemoteExecutor</span><span class="p">,</span>
             <span class="n">ssh_remote_host</span><span class="p">,</span>
             <span class="n">ssh_username</span><span class="p">,</span>
             <span class="n">ssh_key_filename</span><span class="p">,</span>
@@ -378,11 +433,23 @@
             <span class="n">ssh_remote_host_port</span><span class="p">,</span>
             <span class="n">accept_host</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">container_exec</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">docker_timeout</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">docker_timeout</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">docker_timeout</span><span class="p">)</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+            <span class="n">ContainerExecutor</span><span class="p">,</span>
+            <span class="n">container_image</span><span class="p">,</span>
+            <span class="n">docker_url</span><span class="p">,</span>
+            <span class="n">docker_timeout</span><span class="p">,</span>
+            <span class="n">docker_verify_tls</span><span class="p">,</span>
+            <span class="n">docker_cert_path</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">executor</span> <span class="o">=</span> <span class="n">LocalExecutor</span><span class="p">()</span>
+        <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">LocalExecutor</span><span class="p">)</span>
 
-    <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span><span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">)</span>
-    <span class="n">executor</span><span class="o">.</span><span class="n">tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">executor_class</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span><span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">)</span>
+        <span class="n">executor</span><span class="o">.</span><span class="n">tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">)</span>
 
     <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_images_tagged</span><span class="p">(</span><span class="n">source_ref</span><span class="o">=</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dest_refs</span><span class="p">))</span>
 
@@ -403,6 +470,8 @@
     <span class="n">quay_password</span><span class="p">,</span>
     <span class="n">remote_exec</span><span class="p">,</span>
     <span class="n">ssh_remote_host</span><span class="p">,</span>
+    <span class="n">container_exec</span><span class="p">,</span>
+    <span class="n">container_image</span><span class="p">,</span>
     <span class="n">send_umb_msg</span><span class="p">,</span>
     <span class="n">umb_urls</span><span class="p">,</span>
     <span class="n">umb_cert</span><span class="p">,</span>
@@ -411,6 +480,10 @@
     <span class="k">if</span> <span class="n">remote_exec</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ssh_remote_host</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Remote host is missing when remote execution was specified.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">container_exec</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">container_image</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Container image is missing when container execution was specified.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">quay_user</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_password</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">quay_password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_user</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Both user and password must be present when attempting to log in.&quot;</span><span class="p">)</span>

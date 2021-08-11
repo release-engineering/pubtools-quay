@@ -196,6 +196,12 @@
                                <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">username</span> <span class="n">SSH_USERNAME</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">password</span> <span class="n">SSH_PASSWORD</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">ssh</span><span class="o">-</span><span class="n">key</span><span class="o">-</span><span class="n">filename</span> <span class="n">SSH_KEY_FILENAME</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">container</span><span class="o">-</span><span class="n">exec</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">container</span><span class="o">-</span><span class="n">image</span> <span class="n">CONTAINER_IMAGE</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">docker</span><span class="o">-</span><span class="n">url</span> <span class="n">DOCKER_URL</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">docker</span><span class="o">-</span><span class="n">timeout</span> <span class="n">DOCKER_TIMEOUT</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">docker</span><span class="o">-</span><span class="n">verify</span><span class="o">-</span><span class="n">tls</span><span class="p">]</span>
+                               <span class="p">[</span><span class="o">--</span><span class="n">docker</span><span class="o">-</span><span class="n">cert</span><span class="o">-</span><span class="n">path</span> <span class="n">DOCKER_CERT_PATH</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">send</span><span class="o">-</span><span class="n">umb</span><span class="o">-</span><span class="n">msg</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">url</span> <span class="n">UMB_URL</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CERT</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">client</span><span class="o">-</span><span class="n">key</span> <span class="n">UMB_CLIENT_KEY</span><span class="p">]</span>
@@ -242,6 +248,25 @@
 <dt><kbd>--ssh-key-filename</kbd></dt>
 <dd><p>Path to the private key file for SSH authentication.</p>
 </dd>
+<dt><kbd>--container-exec</kbd></dt>
+<dd><p>Whether to execute the commands in a Docker container.</p>
+</dd>
+<dt><kbd>--container-image</kbd></dt>
+<dd><p>Path to the container image in which to execute the commands. Must be downloadable without extra permissions.</p>
+</dd>
+<dt><kbd>--docker-url</kbd></dt>
+<dd><p>URL of the docker client that should run the container. Local socket by default.</p>
+<p>Default: “unix://var/run/docker.sock”</p>
+</dd>
+<dt><kbd>--docker-timeout</kbd></dt>
+<dd><p>Timeout for executing Docker commands. Disabled by default.</p>
+</dd>
+<dt><kbd>--docker-verify-tls</kbd></dt>
+<dd><p>Whether to perform TLS verification with the Docker client. Disabled by default.</p>
+</dd>
+<dt><kbd>--docker-cert-path</kbd></dt>
+<dd><p>Path to Docker certificates for TLS authentication. ‘~/.docker’ by default.</p>
+</dd>
 <dt><kbd>--send-umb-msg</kbd></dt>
 <dd><p>Flag of whether to send a UMB message</p>
 </dd>
@@ -268,7 +293,7 @@
 <h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.tag_images.tag_images">
-<span class="sig-prename descclassname"><span class="pre">pubtools._quay.tag_images.</span></span><span class="sig-name descname"><span class="pre">tag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_reject_unknown_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_key_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_umb_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_client_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_ca_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VirtualTopic.eng.pub.quay_tag_image'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_images.html#tag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_images.tag_images" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.tag_images.</span></span><span class="sig-name descname"><span class="pre">tag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_reject_unknown_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_key_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unix://var/run/docker.sock'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_verify_tls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_umb_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_client_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_ca_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VirtualTopic.eng.pub.quay_tag_image'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_images.html#tag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_images.tag_images" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tag images in Quay.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -282,7 +307,7 @@
 </dd>
 <dt>quay_password (str):</dt><dd><p>Quay password for Docker HTTP API.</p>
 </dd>
-<dt>remote_exec (bool):</dt><dd><p>Whether to execute the command remotely.</p>
+<dt>remote_exec (bool):</dt><dd><p>Whether to execute the command remotely. Takes precedence over container_exec.</p>
 </dd>
 <dt>ssh_remote_host (str):</dt><dd><p>Hostname for remote execution.</p>
 </dd>
@@ -295,6 +320,19 @@
 <dt>ssh_password (str):</dt><dd><p>Password for SSH. Will only be used if key-based validation is not available.</p>
 </dd>
 <dt>ssh_key_filename (str):</dt><dd><p>Path to the private key file for SSH authentication.</p>
+</dd>
+<dt>container_exec (bool):</dt><dd><p>Whether to execute the commands in a Docker container.</p>
+</dd>
+<dt>container_image (str):</dt><dd><p>Path to the container image in which to execute the commands. Must be downloadable
+without extra permissions.</p>
+</dd>
+<dt>docker_url (str):</dt><dd><p>URL of the docker client that should run the container. Local socket by default.</p>
+</dd>
+<dt>docker_timeout (int):</dt><dd><p>Timeout for executing Docker commands. Disabled by default.</p>
+</dd>
+<dt>docker_verify_tls (bool):</dt><dd><p>Whether to perform TLS verification with the Docker client. Disabled by default.</p>
+</dd>
+<dt>docker_cert_path (str):</dt><dd><p>Path to Docker certificates for TLS authentication. ‘~/.docker’ by default.</p>
 </dd>
 <dt>send_umb_msg (bool):</dt><dd><p>Whether to send UMB messages about the untagged images.</p>
 </dd>
@@ -356,6 +394,22 @@ $ pubtools-quay-tag-image \
   --umb-url amqps://url2:5671 \
   --umb-cert /path/to/file.crt \
   --umb-topic VirtualTopic.eng.pub.some_topic
+</pre></div>
+</div>
+<p>Copy to multiple destination inside a specified container.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
+$ export SSH_PASSWORD=123456
+$ pubtools-quay-tag-image \
+  --source-ref quay.io/source/image:34 \
+  --dest-ref quay.io/target/image:34 \
+  --dest-ref quay.io/target/image2:34 \
+  --quay-user quay+username \
+  --container-exec \
+  --container-image quay.io/namespace/image:1 \
+  --docker-url https://some-url.com \
+  --docker-timeout 120 \
+  --docker-verify-tls \
+  --docker-cert-path /some/path
 </pre></div>
 </div>
 </div>

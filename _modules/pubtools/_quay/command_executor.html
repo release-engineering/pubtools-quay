@@ -163,15 +163,28 @@
             
   <h1>Source code for pubtools._quay.command_executor</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">import</span> <span class="nn">io</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shlex</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">import</span> <span class="nn">docker</span>
+<span class="kn">import</span> <span class="nn">paramiko</span>
 <span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">shlex_quote</span>
 
-<span class="kn">import</span> <span class="nn">paramiko</span>
-
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># Docker client is called differently based on the version used. Unify the calls.</span>
+<span class="c1"># Only use old call if version 1.X.X is used</span>
+<span class="k">class</span> <span class="nc">APIClient</span><span class="p">(</span><span class="n">docker</span><span class="o">.</span><span class="n">APIClient</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">docker</span><span class="o">.</span><span class="n">__version__</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">docker</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unify the call of Docker client for old and new version.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span>
 
 
 <span class="c1"># Python 2.6 version of paramiko doesn&#39;t support the usage</span>
@@ -194,6 +207,14 @@
 <span class="sd">    descendant classes. Common pre- and post-processing should be</span>
 <span class="sd">    implemented in this class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Executor.__enter__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.__enter__">[docs]</a>    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use the class as context manager. Returns instance upon invocation.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Executor.__exit__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.__exit__">[docs]</a>    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cleanup when used as context manager. No-op by default.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
 
     <span class="k">def</span> <span class="nf">_run_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">err_msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Run a bash command.&quot;&quot;&quot;</span>
@@ -409,6 +430,172 @@
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">out_text</span><span class="p">,</span> <span class="n">err_text</span></div></div>
+
+
+<div class="viewcode-block" id="ContainerExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor">[docs]</a><span class="k">class</span> <span class="nc">ContainerExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run commands in a Docker container.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ContainerExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">image</span><span class="p">,</span>
+        <span class="n">base_url</span><span class="o">=</span><span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">verify_tls</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">cert_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            image (str):</span>
+<span class="sd">                Path to an image which will be used for performing skopeo operations. Must be</span>
+<span class="sd">                downloadable by Docker.</span>
+<span class="sd">            base_url (str):</span>
+<span class="sd">                Base URL of the Docker client.</span>
+<span class="sd">            timeout (int):</span>
+<span class="sd">                Default timeout for API calls, in seconds.</span>
+<span class="sd">            verify_tls (bool):</span>
+<span class="sd">                Whether to use TLS verification.</span>
+<span class="sd">            cert_path (str|None):</span>
+<span class="sd">                Custom path to TLS certificates. If not specified, &#39;~/.docker&#39; is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
+
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_url</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+        <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;timeout&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
+        <span class="k">if</span> <span class="n">verify_tls</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;tcp://&quot;</span><span class="p">,</span> <span class="s2">&quot;https://&quot;</span><span class="p">)</span>
+            <span class="n">cert_path</span> <span class="o">=</span> <span class="n">cert_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">),</span> <span class="s2">&quot;.docker&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">cert_path</span><span class="p">):</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;tls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">docker</span><span class="o">.</span><span class="n">tls</span><span class="o">.</span><span class="n">TLSConfig</span><span class="p">(</span>
+                    <span class="n">client_cert</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;cert.pem&quot;</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;key.pem&quot;</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">verify</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;ca.pem&quot;</span><span class="p">),</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">APIClient</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">detach</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ContainerExecutor.__exit__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__exit__">[docs]</a>    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Cleanup the container when used as a context manager.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">remove_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerExecutor._run_cmd"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor._run_cmd">[docs]</a>    <span class="k">def</span> <span class="nf">_run_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="n">err_msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a command locally.</span>
+
+<span class="sd">        NOTE: Older versions of Docker API don&#39;t support demuxing of stdout and stderr.</span>
+<span class="sd">        This means that data from both streams will be mixed together. To maintain compatibility</span>
+<span class="sd">        with the other classes, same output will be returned twice as a tuple. Each string</span>
+<span class="sd">        will contain the same mix of stdout and stderr messages.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cmd (str):</span>
+<span class="sd">                Shell command to be executed.</span>
+<span class="sd">            error_msg (str):</span>
+<span class="sd">                Error message written when the command fails.</span>
+<span class="sd">            tolerate_err (bool):</span>
+<span class="sd">                Whether to tolerate a failed command.</span>
+<span class="sd">            stdin (None|str):</span>
+<span class="sd">                This parameter exists only for compatibility with parent class. Sending input</span>
+<span class="sd">                to containers is not supported.</span>
+
+<span class="sd">        Returns (str, str):</span>
+<span class="sd">            Tuple of stdout and stderr generated by the command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
+        <span class="n">cmd_exec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">cmd</span><span class="p">)</span>
+        <span class="c1"># Unfortunately, older versions of Docker API don&#39;t support demuxing stdout and stderr</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_start</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_inspect</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ExitCode&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">stdout</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stdout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stdout</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>
+        <span class="n">out_str</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">out_str</span><span class="p">,</span> <span class="n">out_str</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerExecutor._add_file"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor._add_file">[docs]</a>    <span class="k">def</span> <span class="nf">_add_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">file_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add a text file to the running container.</span>
+
+<span class="sd">        The primary use-case is to store a secret which will be accessed from inside the container.</span>
+<span class="sd">        File will be stored in the path /tmp/&lt;file_name&gt;.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (str):</span>
+<span class="sd">                Data that should be stored in the container.</span>
+<span class="sd">            file_name (str):</span>
+<span class="sd">                Name of the file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">data_tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">data_stream</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="n">tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">)</span>
+        <span class="n">tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">data_tar</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">,</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">))</span>
+        <span class="n">data_tar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="n">data_stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">put_archive</span><span class="p">(</span>
+            <span class="n">container</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_stream</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;File was not successfully added to the container&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ContainerExecutor.skopeo_login"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.skopeo_login">[docs]</a>    <span class="k">def</span> <span class="nf">skopeo_login</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Attempt to login to Quay if no login credentials are present.</span>
+
+<span class="sd">        This method is reimplemented because it uses a different approach to input the password.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            username (str):</span>
+<span class="sd">                Username for login.</span>
+<span class="sd">            password (str):</span>
+<span class="sd">                Password for login.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">&quot;skopeo login --get-login quay.io&quot;</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_check</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">username</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Already logged in to Quay.io&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">password</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Skopeo login credentials are not present. Quay user and token must be provided.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Logging in to Quay with provided credentials&quot;</span><span class="p">)</span>
+
+        <span class="n">password_file</span> <span class="o">=</span> <span class="s2">&quot;skopeo_password.txt&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">password_file</span><span class="p">)</span>
+
+        <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot; sh -c &#39;cat /tmp/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json&quot;</span>
+            <span class="s2">&quot; -u </span><span class="si">{0}</span><span class="s2"> --password-stdin quay.io&#39;&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">username</span><span class="p">),</span> <span class="n">shlex_quote</span><span class="p">(</span><span class="n">password_file</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Login successful&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Login command didn&#39;t generate expected output. &quot;</span>
+                <span class="s2">&quot;STDOUT: &#39;</span><span class="si">{0}</span><span class="s2">&#39;, STDERR: &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+            <span class="p">)</span></div></div>
 </pre></div>
 
            </div>

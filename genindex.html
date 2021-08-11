@@ -189,9 +189,19 @@
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="command_executor.html#pubtools._quay.command_executor.LocalExecutor.__init__">__init__() (pubtools._quay.command_executor.LocalExecutor method)</a>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.Executor.__enter__">__enter__() (pubtools._quay.command_executor.Executor method)</a>
+</li>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__exit__">__exit__() (pubtools._quay.command_executor.ContainerExecutor method)</a>
 
       <ul>
+        <li><a href="command_executor.html#pubtools._quay.command_executor.Executor.__exit__">(pubtools._quay.command_executor.Executor method)</a>
+</li>
+      </ul></li>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__init__">__init__() (pubtools._quay.command_executor.ContainerExecutor method)</a>
+
+      <ul>
+        <li><a href="command_executor.html#pubtools._quay.command_executor.LocalExecutor.__init__">(pubtools._quay.command_executor.LocalExecutor method)</a>
+</li>
         <li><a href="command_executor.html#pubtools._quay.command_executor.RemoteExecutor.__init__">(pubtools._quay.command_executor.RemoteExecutor method)</a>
 </li>
         <li><a href="container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">(pubtools._quay.container_image_pusher.ContainerImagePusher method)</a>
@@ -221,6 +231,8 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor._add_file">_add_file() (pubtools._quay.command_executor.ContainerExecutor method)</a>
+</li>
       <li><a href="manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger._add_missing_architectures">_add_missing_architectures() (pubtools._quay.manifest_list_merger.ManifestListMerger method)</a>
 </li>
       <li><a href="quay_session.html#pubtools._quay.quay_session.QuaySession._api_url">_api_url() (pubtools._quay.quay_session.QuaySession method)</a>
@@ -233,9 +245,11 @@
 </li>
       <li><a href="quay_client.html#pubtools._quay.quay_client.QuayClient._request_quay">_request_quay() (pubtools._quay.quay_client.QuayClient method)</a>
 </li>
-      <li><a href="command_executor.html#pubtools._quay.command_executor.LocalExecutor._run_cmd">_run_cmd() (pubtools._quay.command_executor.LocalExecutor method)</a>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor._run_cmd">_run_cmd() (pubtools._quay.command_executor.ContainerExecutor method)</a>
 
       <ul>
+        <li><a href="command_executor.html#pubtools._quay.command_executor.LocalExecutor._run_cmd">(pubtools._quay.command_executor.LocalExecutor method)</a>
+</li>
         <li><a href="command_executor.html#pubtools._quay.command_executor.RemoteExecutor._run_cmd">(pubtools._quay.command_executor.RemoteExecutor method)</a>
 </li>
       </ul></li>
@@ -285,6 +299,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler.construct_variant_claim_messages">construct_variant_claim_messages() (pubtools._quay.signature_handler.ContainerSignatureHandler method)</a>
 </li>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor">ContainerExecutor (class in pubtools._quay.command_executor)</a>
+</li>
       <li><a href="container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher">ContainerImagePusher (class in pubtools._quay.container_image_pusher)</a>
 </li>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler">ContainerSignatureHandler (class in pubtools._quay.signature_handler)</a>
@@ -318,10 +334,6 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="command_executor.html#pubtools._quay.command_executor.Executor">Executor (class in pubtools._quay.command_executor)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="tag_docker.html#pubtools._quay.tag_docker.TagDocker.executor">executor() (pubtools._quay.tag_docker.TagDocker method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -742,10 +754,10 @@
 </li>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler.sign_claim_messages">sign_claim_messages() (pubtools._quay.signature_handler.BasicSignatureHandler method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler.sign_container_images">sign_container_images() (pubtools._quay.signature_handler.ContainerSignatureHandler method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.sign_operator_images">sign_operator_images() (pubtools._quay.signature_handler.OperatorSignatureHandler method)</a>
 </li>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.sign_task_index_image">sign_task_index_image() (pubtools._quay.signature_handler.OperatorSignatureHandler method)</a>
@@ -758,8 +770,12 @@
 </li>
       <li><a href="command_executor.html#pubtools._quay.command_executor.Executor.skopeo_inspect">skopeo_inspect() (pubtools._quay.command_executor.Executor method)</a>
 </li>
-      <li><a href="command_executor.html#pubtools._quay.command_executor.Executor.skopeo_login">skopeo_login() (pubtools._quay.command_executor.Executor method)</a>
+      <li><a href="command_executor.html#pubtools._quay.command_executor.ContainerExecutor.skopeo_login">skopeo_login() (pubtools._quay.command_executor.ContainerExecutor method)</a>
+
+      <ul>
+        <li><a href="command_executor.html#pubtools._quay.command_executor.Executor.skopeo_login">(pubtools._quay.command_executor.Executor method)</a>
 </li>
+      </ul></li>
       <li><a href="signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.src_quay_client">src_quay_client() (pubtools._quay.signature_handler.SignatureHandler method)</a>
 </li>
   </ul></td>

@@ -169,7 +169,7 @@
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
-<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">RemoteExecutor</span>
+<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">ContainerExecutor</span>
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BadPushItem</span><span class="p">,</span>
     <span class="n">InvalidTargetSettings</span><span class="p">,</span>
@@ -221,7 +221,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span> <span class="o">=</span> <span class="n">target_settings</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
 
@@ -242,23 +241,6 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">executor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access command executor.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># NOTE: Change this to LocalExecutor if we&#39;ll run skopeo locally</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="n">RemoteExecutor</span><span class="p">(</span>
-                <span class="n">hostname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_remote_host&quot;</span><span class="p">],</span>
-                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_user&quot;</span><span class="p">],</span>
-                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;ssh_password&quot;</span><span class="p">],</span>
-            <span class="p">)</span>
-            <span class="c1"># also login when creating an executor</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span>
-                <span class="n">username</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
-                <span class="n">password</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span>
-
 <div class="viewcode-block" id="TagDocker.verify_target_settings"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.verify_target_settings">[docs]</a>    <span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Verify that target settings contains all the necessary data.&quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying the necessary target settings&quot;</span><span class="p">)</span>
@@ -273,9 +255,7 @@
             <span class="s2">&quot;iib_index_image&quot;</span><span class="p">,</span>
             <span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">,</span>
             <span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ssh_remote_host&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ssh_user&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ssh_password&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;skopeo_image&quot;</span><span class="p">,</span>
             <span class="s2">&quot;docker_settings&quot;</span><span class="p">,</span>
         <span class="p">]</span>
         <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">required_settings</span><span class="p">:</span>
@@ -363,13 +343,15 @@
                             <span class="p">)</span>
                         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="TagDocker.get_image_details"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.get_image_details">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">):</span>
+<div class="viewcode-block" id="TagDocker.get_image_details"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.get_image_details">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create an ImageDetails namedtuple for the given image reference.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            reference (str):</span>
 <span class="sd">                Image reference.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
 <span class="sd">        Returns (ImageDetails|None):</span>
 <span class="sd">            Namedtuple filled with images data, or None if image doesn&#39;t exist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -389,7 +371,7 @@
 
         <span class="c1"># Check arch if the image is V2S2 manifest</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
-            <span class="n">arch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">executor</span><span class="o">.</span><span class="n">skopeo_inspect</span><span class="p">(</span><span class="n">reference</span><span class="p">)[</span><span class="s2">&quot;Architecture&quot;</span><span class="p">]</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_inspect</span><span class="p">(</span><span class="n">reference</span><span class="p">)[</span><span class="s2">&quot;Architecture&quot;</span><span class="p">]</span>
             <span class="c1"># Arch check is not a great way to verify that this is a source image, but there are</span>
             <span class="c1"># no better options without having build details</span>
             <span class="k">if</span> <span class="n">arch</span> <span class="o">!=</span> <span class="s2">&quot;amd64&quot;</span><span class="p">:</span>
@@ -421,7 +403,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;archs&quot;</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="TagDocker.tag_remove_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_remove_calculate_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+<div class="viewcode-block" id="TagDocker.tag_remove_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_remove_calculate_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate which architectures would be removed, and which would remain from a given tag.</span>
 
@@ -430,6 +412,8 @@
 <span class="sd">                Push item to perform the workflow with.</span>
 <span class="sd">            tag (str):</span>
 <span class="sd">                Tag, for which a &#39;remove&#39; operation will be performed.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
 <span class="sd">        Returns ([str], [str]):</span>
 <span class="sd">            Tuple where first element contains archs that will be removed, and second element</span>
 <span class="sd">            contains archs that will remain.</span>
@@ -444,12 +428,12 @@
 
         <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">]:</span>
             <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
-            <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">)</span>
+            <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">source_details</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">)</span>
+        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">dest_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; already doesn&#39;t exist, no removal necessary&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
@@ -570,7 +554,7 @@
 
         <span class="k">return</span> <span class="p">(</span><span class="n">remove_archs</span><span class="p">,</span> <span class="n">keep_archs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="TagDocker.tag_add_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_add_calculate_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
+<div class="viewcode-block" id="TagDocker.tag_add_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_add_calculate_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate which architectures are present in a given tag, and which ones would be added.</span>
 
@@ -579,6 +563,8 @@
 <span class="sd">                Push item to perform the workflow with.</span>
 <span class="sd">            tag (str):</span>
 <span class="sd">                Tag, for which an &#39;add&#39; operation will be performed.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
 <span class="sd">        Returns ([str]|None):</span>
 <span class="sd">            In case of multiarch image, arches which would be copied to the destination. In case</span>
 <span class="sd">            of a source image, None if the copy operation is relevant or [] otherwise.</span>
@@ -592,8 +578,8 @@
         <span class="p">)</span>
         <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">)</span>
-        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">)</span>
+        <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Source image must be specified if add operation was requested&quot;</span><span class="p">)</span>
@@ -626,7 +612,7 @@
             <span class="p">]</span>
             <span class="k">return</span> <span class="n">add_archs</span></div>
 
-<div class="viewcode-block" id="TagDocker.copy_tag_sign_images"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images">[docs]</a>    <span class="k">def</span> <span class="nf">copy_tag_sign_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">signature_handler</span><span class="p">):</span>
+<div class="viewcode-block" id="TagDocker.copy_tag_sign_images"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images">[docs]</a>    <span class="k">def</span> <span class="nf">copy_tag_sign_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">signature_handler</span><span class="p">,</span> <span class="n">executor</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Copy image from source to the destination tag and sign new manifest claims.</span>
 
@@ -640,6 +626,8 @@
 <span class="sd">                Tag, which acts as a destination to the copy operation.</span>
 <span class="sd">            signature_handler (BasicSignatureHandler):</span>
 <span class="sd">                Instance of signature handler which will perform the signing.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
         <span class="n">external_image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
@@ -659,7 +647,7 @@
         <span class="p">)</span>
 
         <span class="n">claim_messages</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">)</span>
+        <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
         <span class="n">registries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span> <span class="ow">and</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
@@ -898,34 +886,46 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">check_input_validity</span><span class="p">()</span>
         <span class="n">signature_handler</span> <span class="o">=</span> <span class="n">BasicSignatureHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;add_tags&quot;</span><span class="p">]:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing add tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
-                <span class="n">add_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_add_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-                <span class="c1"># If all archs were somehow excluded from being added, no-op</span>
-                <span class="k">if</span> <span class="n">add_archs</span> <span class="o">==</span> <span class="p">[]:</span>
-                    <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be added to tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
-                    <span class="k">continue</span>
-                <span class="c1"># If None, we&#39;re dealing with a source image and we want to copy to destination</span>
-                <span class="k">elif</span> <span class="n">add_archs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">copy_tag_sign_images</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">signature_handler</span><span class="p">)</span>
-                <span class="c1"># Otherwise, merge relevant archs of source and dest</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">merge_manifest_lists_sign_images</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">add_archs</span><span class="p">,</span> <span class="n">signature_handler</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">ContainerExecutor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;skopeo_image&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_host&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_timeout&quot;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_tls_verify&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_cert_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;add_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing add tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                    <span class="n">add_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_add_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># If all archs were somehow excluded from being added, no-op</span>
+                    <span class="k">if</span> <span class="n">add_archs</span> <span class="o">==</span> <span class="p">[]:</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be added to tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If None, we&#39;re dealing with a source image and we want to copy to destination</span>
+                    <span class="k">elif</span> <span class="n">add_archs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">copy_tag_sign_images</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">signature_handler</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># Otherwise, merge relevant archs of source and dest</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">merge_manifest_lists_sign_images</span><span class="p">(</span>
+                            <span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">add_archs</span><span class="p">,</span> <span class="n">signature_handler</span>
+                        <span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;remove_tags&quot;</span><span class="p">]:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing remove tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
-                <span class="n">remove_archs</span><span class="p">,</span> <span class="n">keep_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-                <span class="c1"># If all archs were somehow excluded from removal, no-op</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">remove_archs</span><span class="p">:</span>
-                    <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be removed from tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
-                    <span class="k">continue</span>
-                <span class="c1"># If no archs will remain after removal, just perform untagging</span>
-                <span class="k">elif</span> <span class="ow">not</span> <span class="n">keep_archs</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">untag_image</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-                <span class="c1"># if some archs will be removed and some will remain, create new manifest list</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">manifest_list_remove_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">remove_archs</span><span class="p">)</span></div></div>
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;remove_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing remove tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                    <span class="n">remove_archs</span><span class="p">,</span> <span class="n">keep_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># If all archs were somehow excluded from removal, no-op</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">remove_archs</span><span class="p">:</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be removed from tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If no archs will remain after removal, just perform untagging</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="n">keep_archs</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">untag_image</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+                    <span class="c1"># if some archs will be removed and some will remain, create new manifest list</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">manifest_list_remove_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">remove_archs</span><span class="p">)</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">mod_entry_point</span><span class="p">(</span><span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
