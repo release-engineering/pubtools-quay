@@ -3,38 +3,6 @@ name: Tox tests
 on: [push, pull_request]
 
 jobs:
-  py26:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Update existing dependencies
-        run: sudo apt-get update -y
-      - name: Install system dependencies
-        run: sudo apt-get install -y libkrb5-dev libssl1.0-dev libldap2-dev libsasl2-dev libffi-dev
-      - name: Add Python 2.6 repository
-        run: sudo add-apt-repository -y ppa:deadsnakes/ppa
-      - name: Install Python 2.6
-        run: sudo apt-get install -y python2.6 python2.6-dev
-      - name: Install pip
-        run: curl -L https://github.com/pypa/get-pip/raw/main/public/2.7/get-pip.py -o get-pip.py && sudo python get-pip.py --no-setuptools
-      - name: qpid-proton
-        run: curl https://files.pythonhosted.org/packages/5d/00/83e3aeeb8d11aa0a4bc6c1b9bb2cdaf268deea7fef1167867ec977d90360/python-qpid-proton-0.18.0.tar.gz -o qpid.tar.gz && tar -xvzf qpid.tar.gz && cd python-qpid-proton-0.18.0 && sudo python2.6 setup.py install
-      - name: Install setuptools
-        run: sudo pip install --no-compile -t /usr/lib/python2.6/dist-packages setuptools==18.0 setuptools-scm==1.15.7 ordereddict argparse six
-      - name: Install pycparser
-        run: git clone https://github.com/eliben/pycparser && cd pycparser && git checkout release_v2.18 && sudo python2.6 setup.py install && cd ../ && sudo rm -r pycparser
-      - name: Install cffi
-        run: sudo pip install --no-compile -t /usr/lib/python2.6/dist-packages https://files.pythonhosted.org/packages/16/25/9e42730b51318aeb6545bcd0fc568271063926fec9f83bd51f333c87e3f3/cffi-1.11.0-cp26-cp26mu-manylinux1_x86_64.whl
-      - name: Install bcrypt
-        run: git clone https://github.com/pyca/bcrypt && cd bcrypt && git checkout 3.1.4 && sudo python2.6 setup.py install && cd ../ && sudo rm -r bcrypt
-      - name: install pytest-py
-        run: git clone https://github.com/pytest-dev/py && cd py && git checkout 1.4.33 && sudo python2.6 setup.py install && cd ../ && sudo rm -r py
-      - name: install pytest
-        run: git clone https://github.com/pytest-dev/pytest && cd pytest && git checkout 3.2.5 && sudo python2.6 setup.py install && cd ../ && sudo rm -r pytest
-      - name: Install Python dependencies
-        run: sudo pip install -r requirements-test-py26.txt -r requirements-py26.txt -t /usr/lib/python2.6/dist-packages && sudo pip install --no-compile -t /usr/lib/python2.6/dist-packages .
-      - name: Run tests
-        run: sudo python2.6 -m pytest
   py27:
     runs-on: ubuntu-latest
     steps:
