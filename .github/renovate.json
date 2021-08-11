@@ -1,4 +1,7 @@
 {
   "enabled": true,
-  "stabilityDays": 3
+  "stabilityDays": 3,
+    "python": {
+    "enabled": false
+  }
 }
