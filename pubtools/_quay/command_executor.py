@@ -328,7 +328,7 @@ class ContainerExecutor(Executor):
         """
         Run a command locally.
 
-        NOTE: Older versions of Docker API don't suppoer demuxing of stdout and stderr.
+        NOTE: Older versions of Docker API don't support demuxing of stdout and stderr.
         This means that data from both streams will be mixed together. To maintain compatibility
         with the other classes, same output will be returned twice as a tuple. Each string
         will contain the same mix of stdout and stderr messages.
