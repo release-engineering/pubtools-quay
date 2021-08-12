@@ -291,7 +291,7 @@ def get_pyxis_ssl_paths(target_settings):
     """
     Get certificate and key paths for Pyxis SSL authentication.
 
-    First attempt is made by invoking the hook implementation 'get_cert_key_paths_plugin'.
+    First attempt is made by invoking the hook implementation 'get_cert_key_paths'.
     If nothing is returned (no hook implementation is registered), fallback on target settings
     values of 'pyxis_ssl_cert' and 'pyxis_ssl_key'. If multiple values are returned (multiple
     hook implementations are registered), take the first response (from the implementation which
@@ -303,9 +303,9 @@ def get_pyxis_ssl_paths(target_settings):
     Returns ((str, str)):
         Paths to Pyxis SSL certificate and key.
     """
-    result = pm.hook.get_cert_key_paths_plugin(server_url=target_settings["pyxis_server"])
+    result = pm.hook.get_cert_key_paths(server_url=target_settings["pyxis_server"])
     if result:
-        cert, key = result[0]
+        cert, key = result
     elif "pyxis_ssl_cert" not in target_settings or "pyxis_ssl_key" not in target_settings:
         raise ValueError(
             "No key and certificate paths were provided for Pyxis SSL authentication. "

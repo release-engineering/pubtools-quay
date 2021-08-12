@@ -345,14 +345,9 @@ class SignatureHandler:
                 }
             )
 
-        args = [
-            "--pyxis-server",
-            self.target_settings["pyxis_server"],
-            "--pyxis-krb-principal",
-            self.target_settings["iib_krb_principal"],
-        ]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+        args = ["--pyxis-server", self.target_settings["pyxis_server"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="pubtools_quay_upload_signatures_"

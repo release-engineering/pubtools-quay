@@ -8,7 +8,7 @@ except ImportError:
 import pytest
 from six import PY3
 
-from pubtools.pluggy import pm, hookimpl
+from pubtools.pluggy import pm, hookimpl, hookspec
 
 from pubtools._quay.utils.logger import Logger
 from .utils.caplog_compat import CapturelogWrapper
@@ -1420,7 +1420,7 @@ def tag_docker_push_item_remove_no_src_integration():
 
 class FakeCertKeyPaths:
     @hookimpl
-    def get_cert_key_paths_plugin(self, server_url):
+    def get_cert_key_paths(self, server_url):
         return ("/path/to/file.crt", "/path/to/file.key")
 
 
