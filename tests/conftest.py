@@ -585,7 +585,7 @@ def target_settings():
         "ssh_user": "ssh-user",
         "ssh_password": "ssh-password",
         "iib_overwrite_from_index": True,
-        "iib_overwrite_from_index_token": "some-token",
+        "iib_overwrite_from_index_token": "some-user:some-pass",
         "skopeo_image": "registry.com/some/image:1",
     }
 

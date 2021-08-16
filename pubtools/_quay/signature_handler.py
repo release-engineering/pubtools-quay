@@ -542,7 +542,13 @@ class OperatorSignatureHandler(SignatureHandler):
         image_schema = "{host}/{repository}:{tag}"
 
         # Get digests of all archs this index image was build for
-        manifest_list = self.src_quay_client.get_manifest(index_image, manifest_list=True)
+        index_image_credential = self.target_settings["iib_overwrite_from_index_token"].split(":")
+        index_image_quay_client = QuayClient(
+            index_image_credential[0],
+            index_image_credential[1],
+            self.quay_host,
+        )
+        manifest_list = index_image_quay_client.get_manifest(index_image, manifest_list=True)
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
             for signing_key in signing_keys:

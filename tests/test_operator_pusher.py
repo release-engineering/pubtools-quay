@@ -175,7 +175,7 @@ def test_iib_add_bundles_str_deprecation_list(
             "--deprecation-list",
             "bundle3,bundle4",
         ],
-        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
     )
 
 
@@ -219,7 +219,7 @@ def test_iib_add_bundles_list_deprecation_list(
             "--deprecation-list",
             "bundle3,bundle4",
         ],
-        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
     )
 
 
@@ -258,7 +258,7 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
             "--arch",
             "arch2",
         ],
-        {"OVERWRITE_FROM_INDEX_TOKEN": "some-token"},
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
     )
 
 
