@@ -714,7 +714,7 @@
                 <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">sign_operator_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">)</span>
                 <span class="c1"># Push index images to Quay</span>
                 <span class="n">operator_pusher</span><span class="o">.</span><span class="n">push_index_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;An exception has occurred during the push, starting rollback&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
             <span class="k">raise</span>
