@@ -706,7 +706,13 @@
         <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{repository}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
 
         <span class="c1"># Get digests of all archs this index image was build for</span>
-        <span class="n">manifest_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">index_image</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">index_image_credential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index_token&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+        <span class="n">index_image_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+            <span class="n">index_image_credential</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">index_image_credential</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">index_image_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">index_image</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">digests</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]]</span>
         <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">signing_key</span> <span class="ow">in</span> <span class="n">signing_keys</span><span class="p">:</span>
