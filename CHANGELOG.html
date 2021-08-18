@@ -97,12 +97,13 @@
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">ChangeLog</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id1">0.6.0 (2021-7-14)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">0.5.0 (2021-6-2)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id3">0.4.0 (2021-5-4)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id4">0.3.0 (2021-2-11)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id5">0.2.0 (2021-2-9)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id6">0.1.0 (2021-2-9)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.7.0 (2021-8-18)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.6.0 (2021-7-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">0.5.0 (2021-6-2)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">0.4.0 (2021-5-4)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.3.0 (2021-2-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">0.2.0 (2021-2-9)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">0.1.0 (2021-2-9)</a></li>
 </ul>
 </li>
 </ul>
@@ -175,7 +176,19 @@
   <div class="section" id="changelog">
 <h1>ChangeLog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
-<h2>0.6.0 (2021-7-14)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>0.7.0 (2021-8-18)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Add hooks to declare events of interest</p></li>
+<li><p>Create documentation</p></li>
+<li><p>Add option to execute commands inside a container</p></li>
+<li><p>Add pagination support for getting all tags via Docker HTTP API</p></li>
+<li><p>Capture IIB operation exception</p></li>
+<li><p>Get index image manifests with its own token</p></li>
+<li><p>Lower python-qpid-proton version</p></li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>0.6.0 (2021-7-14)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Create entrypoint for removing a Quay repo</p></li>
 <li><p>Create entrypoint for clearing a Quay repo</p></li>
@@ -194,8 +207,8 @@
 <li><p>Allow pushing to non-existent repo</p></li>
 </ul>
 </div>
-<div class="section" id="id2">
-<h2>0.5.0 (2021-6-2)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h2>0.5.0 (2021-6-2)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix intermediate index image</p></li>
 <li><p>Implement tag docker</p></li>
@@ -204,28 +217,28 @@
 <li><p>Implement entrypoints for IIB methods</p></li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h2>0.4.0 (2021-5-4)<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h2>0.4.0 (2021-5-4)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Implement push-docker prototype</p></li>
 <li><p>Change signing order to happen before pushing</p></li>
 <li><p>Use intermediate index image for signing</p></li>
 </ul>
 </div>
-<div class="section" id="id4">
-<h2>0.3.0 (2021-2-11)<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h2>0.3.0 (2021-2-11)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix the versioning constraint of pyrsistent dependency</p></li>
 </ul>
 </div>
-<div class="section" id="id5">
-<h2>0.2.0 (2021-2-9)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h2>0.2.0 (2021-2-9)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Fix the definition of requirements.txt, allowing installation on Python 2.6</p></li>
 </ul>
 </div>
-<div class="section" id="id6">
-<h2>0.1.0 (2021-2-9)<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id7">
+<h2>0.1.0 (2021-2-9)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
 <li><p>Initial release.</p></li>
 <li><p>Added tag image entrypoint</p></li>
