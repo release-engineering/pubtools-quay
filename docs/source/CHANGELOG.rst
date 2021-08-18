@@ -1,6 +1,18 @@
 ChangeLog
 =========
 
+0.7.0 (2021-8-18)
+------------------
+
+* Add hooks to declare events of interest
+* Create documentation
+* Add option to execute commands inside a container
+* Add pagination support for getting all tags via Docker HTTP API
+* Capture IIB operation exception
+* Get index image manifests with its own token
+* Lower python-qpid-proton version
+
+
 0.6.0 (2021-7-14)
 ------------------
 
