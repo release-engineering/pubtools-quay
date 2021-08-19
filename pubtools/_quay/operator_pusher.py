@@ -278,12 +278,15 @@ class OperatorPusher:
         elif deprecation_list and isinstance(deprecation_list, list):
             args += ["--deprecation-list", ",".join(deprecation_list)]
 
-        return run_entrypoint(
-            ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
-            "pubtools-iib-add-bundles",
-            args,
-            env_vars,
-        )
+        try:
+            return run_entrypoint(
+                ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
+                "pubtools-iib-add-bundles",
+                args,
+                env_vars,
+            )
+        except SystemExit:
+            return False
 
     @classmethod
     def iib_remove_operators(cls, operators=None, archs=None, index_image=None, target_settings={}):

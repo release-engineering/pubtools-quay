@@ -1173,6 +1173,8 @@ def test_push_docker_no_operator_push_items(
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
     mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+    mock_build_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.build_index_images = mock_build_index_images
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = []
@@ -1222,7 +1224,7 @@ def test_push_docker_no_operator_push_items(
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-def test_push_docker_failure_rollback(
+def test_push_docker_failure_no_rollback(
     mock_quay_api_client,
     mock_quay_client,
     mock_get_docker_push_items,
@@ -1238,13 +1240,18 @@ def test_push_docker_failure_rollback(
     container_multiarch_push_item,
     operator_push_item_ok,
 ):
+    """Rollback shouldn't be triggered as one of the index image build is succesfull."""
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
-    mock_push_container_images.side_effect = ValueError("Error pushing container images")
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
     mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {
+        "v4.5": {"iib_result": iib_result, "signing_keys": []},
+        "v4.6": {"iib_result": False, "signing_keys": []},
+    }
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
@@ -1269,7 +1276,92 @@ def test_push_docker_failure_rollback(
         "some-target",
         target_settings,
     )
-    with pytest.raises(ValueError, match="Error pushing container images"):
+    push_docker_instance.run()
+
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings
+    )
+    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_container_image_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_push_container_images.assert_called_once_with()
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
+    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    mock_operator_pusher.assert_called_once()
+    mock_build_index_images.assert_called_once()
+    mock_push_index_images.assert_called_once()
+    mock_sign_operator_images.assert_called_once()
+    mock_rollback.assert_not_called()
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorPusher")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.ContainerImagePusher")
+@mock.patch("pubtools._quay.push_docker.PushDocker.generate_backup_mapping")
+@mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_push_docker_failure_rollback(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_docker_push_items,
+    mock_get_operator_push_items,
+    mock_check_repos_validity,
+    mock_generate_backup_mapping,
+    mock_container_image_pusher,
+    mock_container_signature_handler,
+    mock_operator_pusher,
+    mock_operator_signature_handler,
+    mock_rollback,
+    target_settings,
+    container_multiarch_push_item,
+    operator_push_item_ok,
+):
+    hub = mock.MagicMock()
+    mock_push_container_images = mock.MagicMock()
+    mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_build_index_images = mock.MagicMock()
+    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {
+        "v4.5": {"iib_result": False, "signing_keys": []},
+        "v4.6": {"iib_result": False, "signing_keys": []},
+    }
+    mock_operator_pusher.return_value.build_index_images = mock_build_index_images
+    mock_push_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.push_index_images = mock_push_index_images
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
+    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
+    mock_get_docker_push_items.return_value = [container_multiarch_push_item]
+    mock_get_operator_push_items.return_value = [operator_push_item_ok]
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
+                "digest": "some-digest"
+            }
+        },
+        ["item1", "item2"],
+    )
+
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, operator_push_item_ok],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    with pytest.raises(SystemExit):
         push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
@@ -1286,10 +1378,10 @@ def test_push_docker_failure_rollback(
         hub, "1", target_settings, "some-target"
     )
     mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
-    mock_operator_pusher.assert_not_called()
-    mock_build_index_images.assert_not_called()
-    mock_push_index_images.assert_not_called()
-    mock_sign_operator_images.assert_not_called()
+    mock_operator_pusher.assert_called_once()
+    mock_build_index_images.assert_called_once()
+    mock_push_index_images.assert_called_once()
+    mock_sign_operator_images.assert_called_once()
     mock_rollback.assert_called_once_with(
         {
             push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {

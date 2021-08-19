@@ -183,6 +183,21 @@ def test_iib_add_bundles_str_deprecation_list(
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_iib_add_bundles_error(mock_run_entrypoint, target_settings, operator_push_item_ok):
+    mock_run_entrypoint.side_effect = SystemExit(1)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    result = pusher.iib_add_bundles(
+        ["bundle1", "bundle2"],
+        ["arch1", "arch2"],
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        "bundle3,bundle4",
+        pusher.target_settings,
+    )
+
+    assert result == False
+
+
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles_list_deprecation_list(
     mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
