@@ -19,7 +19,6 @@ class SignatureHandler:
     """Base class implementing operations common for container and operator signing."""
 
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
-    DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH = 100
 
     def __init__(self, hub, task_id, target_settings, target_name):
         """
@@ -310,7 +309,7 @@ class SignatureHandler:
 
         return claims_handler.received_messages
 
-    def upload_signatures_to_pyxis(self, claim_mesages, signature_messages, max_items_per_batch):
+    def upload_signatures_to_pyxis(self, claim_mesages, signature_messages):
         """
         Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
 
@@ -328,22 +327,16 @@ class SignatureHandler:
                 Signature claim messages constructed for the RADAS service.
             signature_messages ([dict]):
                 Messages from RADAS containing image signatures.
-            max_items_per_batch (int):
-                Maximum number of items Pyxis allows to upload at once.
         """
         LOG.info("Sending new signatures to Pyxis")
-        signature_batches = [[]]
+        signatures = []
         claim_messages_by_id = dict((m["request_id"], m) for m in claim_mesages)
         sorted_signature_messages = sorted(signature_messages, key=lambda msg: msg["request_id"])
 
         for signature_message in sorted_signature_messages:
             claim_message = claim_messages_by_id[signature_message["request_id"]]
 
-            if len(signature_batches[-1]) >= max_items_per_batch:
-                signature_batches.append([])
-            batch = signature_batches[-1]
-
-            batch.append(
+            signatures.append(
                 {
                     "manifest_digest": signature_message["manifest_digest"],
                     "reference": claim_message["docker_reference"],
@@ -352,32 +345,31 @@ class SignatureHandler:
                     "signature_data": signature_message["signed_claim"],
                 }
             )
-        for i, batch in enumerate(signature_batches):
-            args = [
-                "--pyxis-server",
-                self.target_settings["pyxis_server"],
-                "--pyxis-krb-principal",
-                self.target_settings["iib_krb_principal"],
-            ]
-            if "iib_krb_ktfile" in self.target_settings:
-                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
 
-            with tempfile.NamedTemporaryFile(
-                mode="w", prefix="pubtools_quay_upload_signatures_"
-            ) as signature_batch_file:
-                json.dump(batch, signature_batch_file)
-                signature_batch_file.flush()
-                args += ["--signatures", "@{0}".format(signature_batch_file.name)]
+        args = [
+            "--pyxis-server",
+            self.target_settings["pyxis_server"],
+            "--pyxis-krb-principal",
+            self.target_settings["iib_krb_principal"],
+        ]
+        if "iib_krb_ktfile" in self.target_settings:
+            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
 
-                LOG.info("Uploading signature batch #{0}/{1}".format(i + 1, len(signature_batches)))
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="pubtools_quay_upload_signatures_"
+        ) as signature_file:
+            json.dump(signatures, signature_file)
+            signature_file.flush()
+            args += ["--signatures", "@{0}".format(signature_file.name)]
 
-                env_vars = {}
-                run_entrypoint(
-                    ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                    "pubtools-pyxis-upload-signature",
-                    args,
-                    env_vars,
-                )
+            LOG.info("Uploading {0} new signatures".format(len(signatures)))
+            env_vars = {}
+            run_entrypoint(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                "pubtools-pyxis-upload-signature",
+                args,
+                env_vars,
+            )
 
     def validate_radas_messages(self, claim_messages, signature_messages):
         """
@@ -511,13 +503,7 @@ class ContainerSignatureHandler(SignatureHandler):
         LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
-        self.upload_signatures_to_pyxis(
-            claim_messages,
-            signature_messages,
-            self.target_settings.get(
-                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
-            ),
-        )
+        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
 
 
 class OperatorSignatureHandler(SignatureHandler):
@@ -613,13 +599,7 @@ class OperatorSignatureHandler(SignatureHandler):
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
-        self.upload_signatures_to_pyxis(
-            claim_messages,
-            signature_messages,
-            self.target_settings.get(
-                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
-            ),
-        )
+        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
         return claim_messages
 
     def sign_task_index_image(self, signing_keys, index_image, tag):
@@ -647,13 +627,7 @@ class OperatorSignatureHandler(SignatureHandler):
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
 
-        self.upload_signatures_to_pyxis(
-            claim_messages,
-            signature_messages,
-            self.target_settings.get(
-                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
-            ),
-        )
+        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
 
         return claim_messages
 
@@ -707,10 +681,4 @@ class BasicSignatureHandler(SignatureHandler):
         LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
-        self.upload_signatures_to_pyxis(
-            claim_messages,
-            signature_messages,
-            self.target_settings.get(
-                "sigstore_max_upload_items", self.DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH
-            ),
-        )
+        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
