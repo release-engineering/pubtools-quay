@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.7.1 (2021-8-20)
+------------------
+
+* Fix installation of 'docker' dependency on Python 2.6
+
 0.7.0 (2021-8-18)
 ------------------
 
