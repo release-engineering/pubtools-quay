@@ -4,6 +4,7 @@
 
 import os
 import re
+import sys
 
 # import pkg_resources
 import sys
@@ -51,6 +52,11 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+# same dependency is called "docker-py" in for Python 2.6 and "docker" on newer Python versions
+# Thus, it has to be removed from the list of requirements and added under a different name
+PY26_BLACKLISTED_DEPENDENCIES = ["docker"]
+PY26_EXTRA_DEPENDENCIES = ["docker-py"]
+
 def building_rpm():
     """True when running within RPM build environment, which tweaks
     the build a little."""
@@ -65,9 +71,15 @@ def get_requirements():
     """
     with open("requirements.txt") as f:
         reqs = f.read().splitlines()
+    
+    if sys.version_info < (2, 7):
+        reqs = [d for d in reqs if d not in PY26_BLACKLISTED_DEPENDENCIES]
+        reqs.extend(PY26_EXTRA_DEPENDENCIES)
+
     # If we are building an RPM, we don't have pip available, and we want
     # to use the 'name + dependency_link' style
     if building_rpm():
+        reqs = sorted(list(set(reqs)))
         pip_version = [0, 0, 0]
     else:
         import pip
