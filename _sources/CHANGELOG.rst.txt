@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.7.2 (2021-8-23)
+------------------
+
+* Don't raise 404 errors when deleting tags during rollback
+
 0.7.1 (2021-8-20)
 ------------------
 
