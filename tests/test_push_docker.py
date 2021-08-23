@@ -814,6 +814,89 @@ def test_rollback(
     assert mock_delete_tag.call_args_list[1] == mock.call("some-namespace/target----repo4", "4")
 
 
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_rollback_deleted_tag_not_found(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_multiarch_push_item,
+    container_signing_push_item,
+):
+    hub = mock.MagicMock()
+    mock_delete_tag = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 404
+    mock_delete_tag.side_effect = [
+        requests.exceptions.HTTPError("not found", response=response),
+        None,
+    ]
+    mock_quay_api_client.return_value.delete_tag = mock_delete_tag
+
+    backup_tags = {}
+    rollback_tags = [
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo3", tag="3", digest=None
+        ),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo4", tag="4", digest=None
+        ),
+    ]
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, container_signing_push_item],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    push_docker_instance.rollback(backup_tags, rollback_tags)
+
+    assert mock_delete_tag.call_count == 2
+    assert mock_delete_tag.call_args_list[0] == mock.call("some-namespace/target----repo3", "3")
+    assert mock_delete_tag.call_args_list[1] == mock.call("some-namespace/target----repo4", "4")
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_rollback_delete_tag_server_error(
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_multiarch_push_item,
+    container_signing_push_item,
+):
+    hub = mock.MagicMock()
+    mock_delete_tag = mock.MagicMock()
+    response = mock.MagicMock()
+    response.status_code = 500
+    mock_delete_tag.side_effect = [
+        requests.exceptions.HTTPError("server error", response=response),
+        None,
+    ]
+    mock_quay_api_client.return_value.delete_tag = mock_delete_tag
+
+    backup_tags = {}
+    rollback_tags = [
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo3", tag="3", digest=None
+        ),
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo4", tag="4", digest=None
+        ),
+    ]
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, container_signing_push_item],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    with pytest.raises(requests.exceptions.HTTPError, match=".*server error.*"):
+        push_docker_instance.rollback(backup_tags, rollback_tags)
+
+    mock_delete_tag.assert_called_once_with("some-namespace/target----repo3", "3")
+
+
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")

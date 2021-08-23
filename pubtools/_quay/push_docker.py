@@ -371,7 +371,13 @@ class PushDocker:
         for image_data in rollback_tags:
             image_ref = schema.format(host=self.quay_host, repo=image_data.repo, tag=image_data.tag)
             LOG.info("Removing tag '{0}'".format(image_ref))
-            self.dest_quay_api_client.delete_tag(image_data.repo, image_data.tag)
+            try:
+                self.dest_quay_api_client.delete_tag(image_data.repo, image_data.tag)
+            except requests.exceptions.HTTPError as e:
+                # if error occurred before tag was copied, it may not exist
+                # deleting a non-existent tag shouldn't be an error
+                if e.response.status_code != 404 and e.response.status_code != 401:
+                    raise
 
     def remove_old_signatures(
         self,
