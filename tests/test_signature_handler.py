@@ -304,7 +304,7 @@ def test_upload_signatures_pyxis(
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
-    sig_handler.upload_signatures_to_pyxis(claim_messages, signed_messages, 2)
+    sig_handler.upload_signatures_to_pyxis(claim_messages, signed_messages)
 
     signatures = [
         {
@@ -337,23 +337,7 @@ def test_upload_signatures_pyxis(
         },
     ]
 
-    mock_run_entrypoint.call_count == 2
-    assert mock_run_entrypoint.mock_calls[0] == mock.call(
-        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-        "pubtools-pyxis-upload-signature",
-        [
-            "--pyxis-server",
-            "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
-            "--signatures",
-            "@/tmp/pubtools_quay_upload_signatures_ABC123",
-        ],
-        {},
-    )
-    assert mock_run_entrypoint.mock_calls[1] == mock.call(
+    mock_run_entrypoint.assert_called_once_with(
         ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
         "pubtools-pyxis-upload-signature",
         [
@@ -369,9 +353,9 @@ def test_upload_signatures_pyxis(
         {},
     )
 
-    assert mock_json_dump.call_count == 2
-    assert mock_json_dump.mock_calls[0][1][0] == signatures[:2]
-    assert mock_json_dump.mock_calls[1][1][0] == signatures[2:]
+    mock_json_dump.assert_called_once_with(
+        signatures, mock_tempfile.return_value.__enter__.return_value
+    )
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -495,7 +479,7 @@ def test_sign_container_images(
     mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_get_radas_signatures.assert_called_once_with(["msg2", "msg3"])
     mock_validate_radas_msgs.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
-    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"], 100)
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
@@ -595,7 +579,7 @@ def test_construct_operator_item_claim_messages(
     claim_messages = sig_handler.construct_index_image_claim_messages(
         operator_signing_push_item, "v4.5", ["key1", "key2"]
     )
-    print(json.dumps(claim_messages))
+
     with open("tests/test_data/test_expected_operator_claim_messages.json", "r") as f:
         expected_claim_messages = json.loads(f.read())
 
@@ -653,7 +637,7 @@ def test_sign_operator_images(
         ["msg1", "msg2", "msg3", "msg4"], ["sig1", "sig2", "sig3", "sig4"]
     )
     mock_upload_signatures_to_pyxis.assert_called_once_with(
-        ["msg1", "msg2", "msg3", "msg4"], ["sig1", "sig2", "sig3", "sig4"], 100
+        ["msg1", "msg2", "msg3", "msg4"], ["sig1", "sig2", "sig3", "sig4"]
     )
 
 
@@ -719,7 +703,7 @@ def test_sign_task_index_image(
     )
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
     mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
-    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"], 100)
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
 
     assert claims == ["msg1", "msg2"]
 
@@ -768,7 +752,7 @@ def test_sign_claim_messages(
     mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_get_radas_signatures.assert_called_once_with(["msg2", "msg3"])
     mock_validate_radas_msgs.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
-    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"], 100)
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
