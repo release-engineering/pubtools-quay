@@ -183,7 +183,6 @@
     <span class="sd">&quot;&quot;&quot;Base class implementing operations common for container and operator signing.&quot;&quot;&quot;</span>
 
     <span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span> <span class="o">=</span> <span class="mi">50</span>
-    <span class="n">DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH</span> <span class="o">=</span> <span class="mi">100</span>
 
 <div class="viewcode-block" id="SignatureHandler.__init__"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -474,7 +473,7 @@
 
         <span class="k">return</span> <span class="n">claims_handler</span><span class="o">.</span><span class="n">received_messages</span></div>
 
-<div class="viewcode-block" id="SignatureHandler.upload_signatures_to_pyxis"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis">[docs]</a>    <span class="k">def</span> <span class="nf">upload_signatures_to_pyxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_mesages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">,</span> <span class="n">max_items_per_batch</span><span class="p">):</span>
+<div class="viewcode-block" id="SignatureHandler.upload_signatures_to_pyxis"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis">[docs]</a>    <span class="k">def</span> <span class="nf">upload_signatures_to_pyxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_mesages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.</span>
 
@@ -492,22 +491,16 @@
 <span class="sd">                Signature claim messages constructed for the RADAS service.</span>
 <span class="sd">            signature_messages ([dict]):</span>
 <span class="sd">                Messages from RADAS containing image signatures.</span>
-<span class="sd">            max_items_per_batch (int):</span>
-<span class="sd">                Maximum number of items Pyxis allows to upload at once.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending new signatures to Pyxis&quot;</span><span class="p">)</span>
-        <span class="n">signature_batches</span> <span class="o">=</span> <span class="p">[[]]</span>
+        <span class="n">signatures</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">claim_messages_by_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;request_id&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">claim_mesages</span><span class="p">)</span>
         <span class="n">sorted_signature_messages</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">signature_messages</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;request_id&quot;</span><span class="p">])</span>
 
         <span class="k">for</span> <span class="n">signature_message</span> <span class="ow">in</span> <span class="n">sorted_signature_messages</span><span class="p">:</span>
             <span class="n">claim_message</span> <span class="o">=</span> <span class="n">claim_messages_by_id</span><span class="p">[</span><span class="n">signature_message</span><span class="p">[</span><span class="s2">&quot;request_id&quot;</span><span class="p">]]</span>
 
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature_batches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">max_items_per_batch</span><span class="p">:</span>
-                <span class="n">signature_batches</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
-            <span class="n">batch</span> <span class="o">=</span> <span class="n">signature_batches</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-            <span class="n">batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">&quot;manifest_digest&quot;</span><span class="p">:</span> <span class="n">signature_message</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;reference&quot;</span><span class="p">:</span> <span class="n">claim_message</span><span class="p">[</span><span class="s2">&quot;docker_reference&quot;</span><span class="p">],</span>
@@ -516,32 +509,31 @@
                     <span class="s2">&quot;signature_data&quot;</span><span class="p">:</span> <span class="n">signature_message</span><span class="p">[</span><span class="s2">&quot;signed_claim&quot;</span><span class="p">],</span>
                 <span class="p">}</span>
             <span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">signature_batches</span><span class="p">):</span>
-            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
 
-            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
-                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_upload_signatures_&quot;</span>
-            <span class="p">)</span> <span class="k">as</span> <span class="n">signature_batch_file</span><span class="p">:</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">signature_batch_file</span><span class="p">)</span>
-                <span class="n">signature_batch_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--signatures&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_batch_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
 
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Uploading signature batch #</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature_batches</span><span class="p">)))</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_upload_signatures_&quot;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">signature_file</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">signatures</span><span class="p">,</span> <span class="n">signature_file</span><span class="p">)</span>
+            <span class="n">signature_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--signatures&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
 
-                <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">run_entrypoint</span><span class="p">(</span>
-                    <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-upload-signatures&quot;</span><span class="p">),</span>
-                    <span class="s2">&quot;pubtools-pyxis-upload-signature&quot;</span><span class="p">,</span>
-                    <span class="n">args</span><span class="p">,</span>
-                    <span class="n">env_vars</span><span class="p">,</span>
-                <span class="p">)</span></div>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Uploading </span><span class="si">{0}</span><span class="s2"> new signatures&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signatures</span><span class="p">)))</span>
+            <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">run_entrypoint</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-upload-signatures&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;pubtools-pyxis-upload-signature&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="n">env_vars</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.validate_radas_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages">[docs]</a>    <span class="k">def</span> <span class="nf">validate_radas_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -675,13 +667,7 @@
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> claim messages will be uploaded&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)))</span>
         <span class="n">signature_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signatures_from_radas</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_radas_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span>
-            <span class="n">claim_messages</span><span class="p">,</span>
-            <span class="n">signature_messages</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;sigstore_max_upload_items&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH</span>
-            <span class="p">),</span>
-        <span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span></div></div>
 
 
 <div class="viewcode-block" id="OperatorSignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">OperatorSignatureHandler</span><span class="p">(</span><span class="n">SignatureHandler</span><span class="p">):</span>
@@ -777,13 +763,7 @@
         <span class="n">signature_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signatures_from_radas</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_radas_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span>
-            <span class="n">claim_messages</span><span class="p">,</span>
-            <span class="n">signature_messages</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;sigstore_max_upload_items&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">claim_messages</span></div>
 
 <div class="viewcode-block" id="OperatorSignatureHandler.sign_task_index_image"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.sign_task_index_image">[docs]</a>    <span class="k">def</span> <span class="nf">sign_task_index_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
@@ -811,13 +791,7 @@
         <span class="n">signature_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signatures_from_radas</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_radas_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span>
-            <span class="n">claim_messages</span><span class="p">,</span>
-            <span class="n">signature_messages</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;sigstore_max_upload_items&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">claim_messages</span></div></div>
 
@@ -871,13 +845,7 @@
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> claim messages will be uploaded&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)))</span>
         <span class="n">signature_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signatures_from_radas</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_radas_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span>
-            <span class="n">claim_messages</span><span class="p">,</span>
-            <span class="n">signature_messages</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;sigstore_max_upload_items&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEFAULT_MAX_ITEMS_PER_UPLOAD_BATCH</span>
-            <span class="p">),</span>
-        <span class="p">)</span></div></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upload_signatures_to_pyxis</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span></div></div>
 </pre></div>
 
            </div>

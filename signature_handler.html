@@ -328,7 +328,7 @@ sturcture is an iterator to reduce memory requirements.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis">
-<span class="sig-name descname"><span class="pre">upload_signatures_to_pyxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_mesages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_items_per_batch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#SignatureHandler.upload_signatures_to_pyxis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">upload_signatures_to_pyxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">claim_mesages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_messages</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#SignatureHandler.upload_signatures_to_pyxis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis" title="Permalink to this definition">¶</a></dt>
 <dd><p>Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.</p>
 <p>Data required for a Pyxis POST request:
 - manifest_digest
@@ -342,8 +342,6 @@ sturcture is an iterator to reduce memory requirements.</p>
 <dt>claim_messages ([dict]):</dt><dd><p>Signature claim messages constructed for the RADAS service.</p>
 </dd>
 <dt>signature_messages ([dict]):</dt><dd><p>Messages from RADAS containing image signatures.</p>
-</dd>
-<dt>max_items_per_batch (int):</dt><dd><p>Maximum number of items Pyxis allows to upload at once.</p>
 </dd>
 </dl>
 </dd>
