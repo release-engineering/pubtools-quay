@@ -173,6 +173,7 @@
 <span class="kn">import</span> <span class="nn">textwrap</span>
 
 <span class="kn">from</span> <span class="nn">six</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -448,6 +449,38 @@
         <span class="k">return</span> <span class="n">fn_wrapper</span>
 
     <span class="k">return</span> <span class="n">decorate</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get certificate and key paths for Pyxis SSL authentication.</span>
+
+<span class="sd">    First attempt is made by invoking the hook implementation &#39;get_cert_key_paths&#39;.</span>
+<span class="sd">    If nothing is returned (no hook implementation is registered), fallback on target settings</span>
+<span class="sd">    values of &#39;pyxis_ssl_cert&#39; and &#39;pyxis_ssl_key&#39;. If multiple values are returned (multiple</span>
+<span class="sd">    hook implementations are registered), take the first response (from the implementation which</span>
+<span class="sd">    was registered last). Otherwise, raise an error.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        target_settings (dict):</span>
+<span class="sd">            Dictionary containing various task-related settings.</span>
+<span class="sd">    Returns ((str, str)):</span>
+<span class="sd">        Paths to Pyxis SSL certificate and key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">get_cert_key_paths</span><span class="p">(</span><span class="n">server_url</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">result</span>
+    <span class="k">elif</span> <span class="s2">&quot;pyxis_ssl_cert&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span> <span class="ow">or</span> <span class="s2">&quot;pyxis_ssl_key&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;No key and certificate paths were provided for Pyxis SSL authentication. &quot;</span>
+            <span class="s2">&quot;Please, either provide hook implementation for &#39;get_cert_key_paths_plugin&#39; or &quot;</span>
+            <span class="s2">&quot;specify &#39;pyxis_ssl_cert&#39; and &#39;pyxis_ssl_key&#39; in the target settings.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cert</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_ssl_cert&quot;</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_ssl_key&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 </pre></div>
 
            </div>

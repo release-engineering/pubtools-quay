@@ -169,7 +169,7 @@
 <span class="kn">from</span> <span class="nn">.operator_pusher</span> <span class="kn">import</span> <span class="n">OperatorPusher</span>
 <span class="kn">from</span> <span class="nn">.signature_handler</span> <span class="kn">import</span> <span class="n">OperatorSignatureHandler</span>
 <span class="kn">from</span> <span class="nn">.signature_remover</span> <span class="kn">import</span> <span class="n">SignatureRemover</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -299,12 +299,14 @@
         <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
         <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+
     <span class="n">old_signatures</span> <span class="o">=</span> <span class="n">sig_remover</span><span class="o">.</span><span class="n">get_index_image_signatures</span><span class="p">(</span>
         <span class="n">dest_image</span><span class="p">,</span>
         <span class="n">claim_messages</span><span class="p">,</span>
         <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">cert</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Push image to Quay</span>
@@ -318,8 +320,8 @@
     <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
         <span class="n">signature_ids</span><span class="p">,</span>
         <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">cert</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -386,12 +388,14 @@
         <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
         <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
     <span class="p">)</span>
+    <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+
     <span class="n">old_signatures</span> <span class="o">=</span> <span class="n">sig_remover</span><span class="o">.</span><span class="n">get_index_image_signatures</span><span class="p">(</span>
         <span class="n">dest_image</span><span class="p">,</span>
         <span class="n">claim_messages</span><span class="p">,</span>
         <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">cert</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Push image to Quay</span>
@@ -403,8 +407,8 @@
     <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
         <span class="n">signature_ids</span><span class="p">,</span>
         <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">cert</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

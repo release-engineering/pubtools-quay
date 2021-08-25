@@ -210,14 +210,14 @@
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Pyxis kerberos principal in form: name@REALM&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to .crt file for the SSL authentication&quot;</span><span class="p">,</span>
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Pyxis Kerberos client keytab. Optional. Used for login if TGT is not available.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to .key file for the SSL authentication&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="p">(</span><span class="s2">&quot;--send-umb-msg&quot;</span><span class="p">,):</span> <span class="p">{</span>
@@ -309,8 +309,8 @@
     <span class="n">quay_user</span><span class="p">,</span>
     <span class="n">quay_password</span><span class="p">,</span>
     <span class="n">pyxis_server</span><span class="p">,</span>
-    <span class="n">pyxis_krb_principal</span><span class="p">,</span>
-    <span class="n">pyxis_krb_ktfile</span><span class="p">,</span>
+    <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
+    <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
     <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -334,10 +334,10 @@
 <span class="sd">            Quay password for Docker HTTP API.</span>
 <span class="sd">        pyxis_server (str):</span>
 <span class="sd">            Pyxis service hostname:</span>
-<span class="sd">        pyxis_krb_principal (str):</span>
-<span class="sd">            Pyxis kerberos principal in form: name@REALM.</span>
-<span class="sd">        pyxis_krb_ktfile (str):</span>
-<span class="sd">            Pyxis Kerberos client keytab.</span>
+<span class="sd">        pyxis_ssl_crtfile (str):</span>
+<span class="sd">            Path to .crt file for SSL authentication.</span>
+<span class="sd">        pyxis_ssl_keyfile (str):</span>
+<span class="sd">            Path to .key file for SSL authentication.</span>
 <span class="sd">        send_umb_msg (bool):</span>
 <span class="sd">            Whether to send UMB messages about the untagged images.</span>
 <span class="sd">        umb_urls ([str]):</span>
@@ -361,7 +361,11 @@
 
     <span class="k">for</span> <span class="n">repository</span> <span class="ow">in</span> <span class="n">parsed_repositories</span><span class="p">:</span>
         <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_repository_signatures</span><span class="p">(</span>
-            <span class="n">repository</span><span class="p">,</span> <span class="n">quay_org</span><span class="p">,</span> <span class="n">pyxis_server</span><span class="p">,</span> <span class="n">pyxis_krb_principal</span><span class="p">,</span> <span class="n">pyxis_krb_ktfile</span>
+            <span class="n">repository</span><span class="p">,</span>
+            <span class="n">quay_org</span><span class="p">,</span>
+            <span class="n">pyxis_server</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">internal_repo</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quay_org</span><span class="p">,</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repository</span><span class="p">))</span>

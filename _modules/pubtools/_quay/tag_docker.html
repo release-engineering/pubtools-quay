@@ -174,7 +174,7 @@
     <span class="n">BadPushItem</span><span class="p">,</span>
     <span class="n">InvalidTargetSettings</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
 <span class="kn">from</span> <span class="nn">.signature_handler</span> <span class="kn">import</span> <span class="n">SignatureHandler</span><span class="p">,</span> <span class="n">BasicSignatureHandler</span>
@@ -667,11 +667,13 @@
         <span class="k">elif</span> <span class="n">details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tagging workflow is not supported for multiarch images&quot;</span><span class="p">)</span>
 
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_tag_signatures</span><span class="p">(</span>
             <span class="n">reference</span><span class="o">=</span><span class="n">dest_image</span><span class="p">,</span>
             <span class="n">pyxis_server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_principal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_ktfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">pyxis_ssl_crtfile</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_keyfile</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
             <span class="n">exclude_by_claims</span><span class="o">=</span><span class="n">claim_messages</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -733,12 +735,14 @@
                     <span class="p">)</span>
                     <span class="n">claim_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
 
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="c1"># claim messages ensure that signatures of non-modified archs won&#39;t get removed</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_tag_signatures</span><span class="p">(</span>
             <span class="n">reference</span><span class="o">=</span><span class="n">dest_image</span><span class="p">,</span>
             <span class="n">pyxis_server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_principal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_ktfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">pyxis_ssl_crtfile</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_keyfile</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
             <span class="n">exclude_by_claims</span><span class="o">=</span><span class="n">claim_messages</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -811,11 +815,13 @@
         <span class="p">)</span>
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
 
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_tag_signatures</span><span class="p">(</span>
             <span class="n">reference</span><span class="o">=</span><span class="n">dest_image</span><span class="p">,</span>
             <span class="n">pyxis_server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_principal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_ktfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">pyxis_ssl_crtfile</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_keyfile</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">run_untag_images</span><span class="p">([</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
@@ -851,11 +857,13 @@
         <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">manifest_list</span><span class="p">)</span>
         <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">keep_manifests</span>
 
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_tag_signatures</span><span class="p">(</span>
             <span class="n">reference</span><span class="o">=</span><span class="n">dest_image</span><span class="p">,</span>
             <span class="n">pyxis_server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_principal</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="n">pyxis_krb_ktfile</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="n">pyxis_ssl_crtfile</span><span class="o">=</span><span class="n">cert</span><span class="p">,</span>
+            <span class="n">pyxis_ssl_keyfile</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
             <span class="n">remove_archs</span><span class="o">=</span><span class="n">remove_archs</span><span class="p">,</span>
         <span class="p">)</span>
 

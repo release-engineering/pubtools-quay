@@ -172,7 +172,7 @@
 <span class="kn">import</span> <span class="nn">proton</span>
 
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">SigningError</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">run_entrypoint</span><span class="p">,</span> <span class="n">log_step</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">run_entrypoint</span><span class="p">,</span> <span class="n">log_step</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.manifest_claims_handler</span> <span class="kn">import</span> <span class="n">ManifestClaimsHandler</span>
 
@@ -320,19 +320,15 @@
 <span class="sd">                Existing signatures as returned by Pyxis based on specified criteria. The returned</span>
 <span class="sd">                sturcture is an iterator to reduce memory requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
         <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span>
 
         <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="n">manifest_digests</span><span class="p">[</span><span class="n">chunk_start</span> <span class="p">:</span> <span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
 
-            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-                <span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
 
             <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
                 <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_get_signatures_&quot;</span>
@@ -493,6 +489,9 @@
 <span class="sd">                Messages from RADAS containing image signatures.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending new signatures to Pyxis&quot;</span><span class="p">)</span>
+
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="n">signatures</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">claim_messages_by_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;request_id&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">claim_mesages</span><span class="p">)</span>
         <span class="n">sorted_signature_messages</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">signature_messages</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">msg</span><span class="p">:</span> <span class="n">msg</span><span class="p">[</span><span class="s2">&quot;request_id&quot;</span><span class="p">])</span>
@@ -510,14 +509,9 @@
                 <span class="p">}</span>
             <span class="p">)</span>
 
-        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-        <span class="p">]</span>
-        <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
 
         <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
             <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_upload_signatures_&quot;</span>

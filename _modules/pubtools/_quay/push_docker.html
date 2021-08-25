@@ -175,7 +175,7 @@
 <span class="kn">from</span> <span class="nn">.signature_handler</span> <span class="kn">import</span> <span class="n">ContainerSignatureHandler</span><span class="p">,</span> <span class="n">OperatorSignatureHandler</span>
 <span class="kn">from</span> <span class="nn">.signature_remover</span> <span class="kn">import</span> <span class="n">SignatureRemover</span>
 <span class="kn">from</span> <span class="nn">.operator_pusher</span> <span class="kn">import</span> <span class="n">OperatorPusher</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_external_container_repo_name</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_external_container_repo_name</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span>
 
 <span class="c1"># TODO: do we want this, or should I remove it?</span>
 <span class="kn">from</span> <span class="nn">requests.packages.urllib3.exceptions</span> <span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
@@ -358,10 +358,11 @@
 <span class="sd">        Returns (dict):</span>
 <span class="sd">            Parsed response from Pyxis.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
-        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">]]</span>
-        <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--repo-name&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="p">]</span>
 
         <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>

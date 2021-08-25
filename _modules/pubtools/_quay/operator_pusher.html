@@ -171,7 +171,12 @@
 <span class="kn">from</span> <span class="nn">requests.packages.urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
 
 <span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">run_entrypoint</span><span class="p">,</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">run_entrypoint</span><span class="p">,</span>
+    <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
+    <span class="n">log_step</span><span class="p">,</span>
+    <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -255,15 +260,16 @@
 <span class="sd">        Returns ([str]):</span>
 <span class="sd">            Supported OCP versions as returned by Pyxis.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="n">ocp_versions</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.openshift.versions&quot;</span><span class="p">]</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting OCP versions of &#39;</span><span class="si">{0}</span><span class="s2">&#39; from Pyxis.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ocp_versions</span><span class="p">))</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
-        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-principal&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--organization&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_organization&quot;</span><span class="p">]]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--ocp-versions-range&quot;</span><span class="p">,</span> <span class="n">ocp_versions</span><span class="p">]</span>
-        <span class="k">if</span> <span class="s2">&quot;iib_krb_ktfile&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
-            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-krb-ktfile&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">]]</span>
         <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
