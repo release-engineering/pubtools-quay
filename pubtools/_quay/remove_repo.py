@@ -46,14 +46,14 @@ REMOVE_REPO_ARGS = {
         "required": True,
         "type": str,
     },
-    ("--pyxis-krb-principal",): {
-        "help": "Pyxis kerberos principal in form: name@REALM",
+    ("--pyxis-ssl-crtfile",): {
+        "help": "Path to .crt file for the SSL authentication",
         "required": True,
         "type": str,
     },
-    ("--pyxis-krb-ktfile",): {
-        "help": "Pyxis Kerberos client keytab. Optional. Used for login if TGT is not available.",
-        "required": False,
+    ("--pyxis-ssl-keyfile",): {
+        "help": "Path to .key file for the SSL authentication",
+        "required": True,
         "type": str,
     },
     ("--send-umb-msg",): {
@@ -145,8 +145,8 @@ def remove_repositories(
     quay_user,
     quay_password,
     pyxis_server,
-    pyxis_krb_principal,
-    pyxis_krb_ktfile,
+    pyxis_ssl_crtfile,
+    pyxis_ssl_keyfile,
     send_umb_msg=False,
     umb_urls=[],
     umb_cert=None,
@@ -170,10 +170,10 @@ def remove_repositories(
             Quay password for Docker HTTP API.
         pyxis_server (str):
             Pyxis service hostname:
-        pyxis_krb_principal (str):
-            Pyxis kerberos principal in form: name@REALM.
-        pyxis_krb_ktfile (str):
-            Pyxis Kerberos client keytab.
+        pyxis_ssl_crtfile (str):
+            Path to .crt file for SSL authentication.
+        pyxis_ssl_keyfile (str):
+            Path to .key file for SSL authentication.
         send_umb_msg (bool):
             Whether to send UMB messages about the untagged images.
         umb_urls ([str]):
@@ -197,7 +197,11 @@ def remove_repositories(
 
     for repository in parsed_repositories:
         sig_remover.remove_repository_signatures(
-            repository, quay_org, pyxis_server, pyxis_krb_principal, pyxis_krb_ktfile
+            repository,
+            quay_org,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
         )
 
         internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))

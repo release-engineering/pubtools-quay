@@ -15,8 +15,8 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 # flake8: noqa: E501
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -32,13 +32,14 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_run_cmd,
     mock_send_umb_message,
     mock_run_entrypoint_operator_pusher,
-    run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
     target_settings,
     container_multiarch_push_item_integration,
     operator_push_item_ok,
     src_manifest_list,
     dest_manifest_list,
+    fake_cert_key_paths,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -212,8 +213,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
@@ -227,11 +228,12 @@ def test_push_docker_multiarch_simple_workflow(
     mock_proton,
     mock_run_cmd,
     mock_send_umb_message,
-    run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -344,8 +346,8 @@ def test_push_docker_multiarch_simple_workflow(
         push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
+@mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
@@ -359,11 +361,12 @@ def test_push_docker_source(
     mock_proton,
     mock_run_cmd,
     mock_send_umb_message,
-    run_entrypoint_signature_remover,
     mock_api_client,
+    mock_run_entrypoint_signature_remover,
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -490,10 +493,11 @@ def test_push_docker_multiarch_rollback(
     mock_proton,
     mock_run_cmd,
     mock_send_umb_message,
-    run_entrypoint_signature_remover,
+    mock_run_entrypoint_signature_remover,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -603,6 +607,7 @@ def test_tag_docker_multiarch_merge_ml(
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -781,6 +786,7 @@ def test_tag_docker_source_copy_untag(
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
     v2s2_manifest_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -953,6 +959,7 @@ def test_task_iib_add_bundles(
     mock_api_client,
     target_settings,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     class IIBRes:
         def __init__(self, index_image, index_image_resolved):
@@ -1029,6 +1036,7 @@ def test_task_iib_remove_operators(
     mock_api_client,
     target_settings,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
@@ -1098,6 +1106,7 @@ def test_task_iib_build_from_scratch(
     mock_api_client,
     target_settings,
     src_manifest_list,
+    fake_cert_key_paths,
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
@@ -1208,8 +1217,8 @@ def test_clear_repo(
             quay_user="some-user",
             quay_password="some-password",
             pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
+            pyxis_ssl_crtfile="/path/to/file.crt",
+            pyxis_ssl_keyfile="/path/to/file.key",
             send_umb_msg=True,
             umb_urls=["url1.com", "url2.com"],
             umb_cert="some/path.crt",
@@ -1292,8 +1301,8 @@ def test_remove_repo(
             quay_user="some-user",
             quay_password="some-password",
             pyxis_server="pyxis-server.com",
-            pyxis_krb_principal="some-principal@REDHAT.COM",
-            pyxis_krb_ktfile="path/to/file",
+            pyxis_ssl_crtfile="/path/to/file.crt",
+            pyxis_ssl_keyfile="/path/to/file.key",
             send_umb_msg=True,
             umb_urls=["url1.com", "url2.com"],
             umb_cert="some/path.crt",

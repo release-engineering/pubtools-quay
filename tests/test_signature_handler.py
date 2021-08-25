@@ -126,6 +126,7 @@ def test_get_pyxis_signature(
     mock_tempfile,
     mock_json_dump,
     target_settings,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
@@ -150,10 +151,10 @@ def test_get_pyxis_signature(
         [
             "--pyxis-server",
             "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
             "--manifest-digest",
             "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
@@ -165,10 +166,10 @@ def test_get_pyxis_signature(
         [
             "--pyxis-server",
             "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
             "--manifest-digest",
             "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
@@ -298,6 +299,7 @@ def test_upload_signatures_pyxis(
     target_settings,
     claim_messages,
     signed_messages,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     temp_filename = "/tmp/pubtools_quay_upload_signatures_ABC123"
@@ -343,10 +345,10 @@ def test_upload_signatures_pyxis(
         [
             "--pyxis-server",
             "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
             "--signatures",
             "@/tmp/pubtools_quay_upload_signatures_ABC123",
         ],

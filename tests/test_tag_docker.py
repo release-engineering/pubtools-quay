@@ -1554,6 +1554,7 @@ def test_copy_all_archs_sign_images_source(
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
@@ -1613,8 +1614,8 @@ def test_copy_all_archs_sign_images_source(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         exclude_by_claims=["msg0", "msg1"],
     )
 
@@ -1680,6 +1681,7 @@ def test_merge_manifest_lists_sign_images(
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
@@ -1765,8 +1767,8 @@ def test_merge_manifest_lists_sign_images(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         exclude_by_claims=["msg0", "msg1", "msg2", "msg3"],
     )
 
@@ -1789,6 +1791,7 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
@@ -1847,8 +1850,8 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         exclude_by_claims=["msg0", "msg1", "msg2", "msg3"],
     )
 
@@ -1904,6 +1907,7 @@ def test_untag_image(
     mock_signature_remover,
     target_settings,
     tag_docker_push_item_remove_src,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_remove_tag_signatures = mock.MagicMock()
@@ -1923,8 +1927,8 @@ def test_untag_image(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo2:v1.8",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
     )
 
 
@@ -1938,6 +1942,7 @@ def test_manifest_list_remove_archs(
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_get_manifest = mock.MagicMock()
@@ -1970,8 +1975,8 @@ def test_manifest_list_remove_archs(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo2:v1.8",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         remove_archs=["amd64", "arm64", "arm"],
     )
 
@@ -2396,6 +2401,7 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     target_settings,
     tag_docker_push_item_add,
     v2s2_manifest_data,
+    fake_cert_key_paths,
 ):
     executor = mock.MagicMock()
     hub = mock.MagicMock()
@@ -2434,8 +2440,8 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         exclude_by_claims=[],
     )
 
@@ -2454,6 +2460,7 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
     target_settings,
     tag_docker_push_item_add,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     sig_handler = mock.MagicMock()
@@ -2496,7 +2503,7 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
     mock_remove_tag_signatures.assert_called_once_with(
         reference="quay.io/some-namespace/namespace----test_repo:v1.6",
         pyxis_server="pyxis-url.com",
-        pyxis_krb_principal="some-principal@REDHAT.COM",
-        pyxis_krb_ktfile="/etc/pub/some.keytab",
+        pyxis_ssl_crtfile="/path/to/file.crt",
+        pyxis_ssl_keyfile="/path/to/file.key",
         exclude_by_claims=[],
     )

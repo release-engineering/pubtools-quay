@@ -11,7 +11,7 @@ from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
-from .utils.misc import get_external_container_repo_name
+from .utils.misc import get_external_container_repo_name, get_pyxis_ssl_paths
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -194,10 +194,11 @@ class PushDocker:
         Returns (dict):
             Parsed response from Pyxis.
         """
+        cert, key = get_pyxis_ssl_paths(target_settings)
+
         args = ["--pyxis-server", target_settings["pyxis_server"]]
-        args += ["--pyxis-krb-principal", target_settings["iib_krb_principal"]]
-        if "iib_krb_ktfile" in target_settings:
-            args += ["--pyxis-krb-ktfile", target_settings["iib_krb_ktfile"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
         args += ["--repo-name", repo]
 
         env_vars = {}

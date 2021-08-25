@@ -5,7 +5,7 @@ from .exceptions import InvalidTargetSettings
 from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
 from .signature_remover import SignatureRemover
-from .utils.misc import get_internal_container_repo_name
+from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -135,12 +135,14 @@ def task_iib_add_bundles(
         quay_user=target_settings["dest_quay_user"],
         quay_password=target_settings["dest_quay_password"],
     )
+    cert, key = get_pyxis_ssl_paths(target_settings)
+
     old_signatures = sig_remover.get_index_image_signatures(
         dest_image,
         claim_messages,
         target_settings["pyxis_server"],
-        target_settings["iib_krb_principal"],
-        target_settings.get("iib_krb_ktfile", None),
+        cert,
+        key,
     )
 
     # Push image to Quay
@@ -154,8 +156,8 @@ def task_iib_add_bundles(
     sig_remover.remove_signatures_from_pyxis(
         signature_ids,
         target_settings["pyxis_server"],
-        target_settings["iib_krb_principal"],
-        target_settings.get("iib_krb_ktfile", None),
+        cert,
+        key,
     )
 
 
@@ -222,12 +224,14 @@ def task_iib_remove_operators(
         quay_user=target_settings["dest_quay_user"],
         quay_password=target_settings["dest_quay_password"],
     )
+    cert, key = get_pyxis_ssl_paths(target_settings)
+
     old_signatures = sig_remover.get_index_image_signatures(
         dest_image,
         claim_messages,
         target_settings["pyxis_server"],
-        target_settings["iib_krb_principal"],
-        target_settings.get("iib_krb_ktfile", None),
+        cert,
+        key,
     )
 
     # Push image to Quay
@@ -239,8 +243,8 @@ def task_iib_remove_operators(
     sig_remover.remove_signatures_from_pyxis(
         signature_ids,
         target_settings["pyxis_server"],
-        target_settings["iib_krb_principal"],
-        target_settings.get("iib_krb_ktfile", None),
+        cert,
+        key,
     )
 
 

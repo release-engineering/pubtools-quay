@@ -42,7 +42,9 @@ def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_pyxis_get_ocp_versions(mock_run_entrypoint, target_settings, operator_push_item_ok):
+def test_pyxis_get_ocp_versions(
+    mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
+):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
@@ -54,14 +56,14 @@ def test_pyxis_get_ocp_versions(mock_run_entrypoint, target_settings, operator_p
         [
             "--pyxis-server",
             "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
             "--organization",
             "redhat-operators",
             "--ocp-versions-range",
             "v4.5",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
         ],
         {},
     )
@@ -70,7 +72,7 @@ def test_pyxis_get_ocp_versions(mock_run_entrypoint, target_settings, operator_p
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions_no_data(
-    mock_run_entrypoint, target_settings, operator_push_item_ok
+    mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
 
@@ -85,6 +87,7 @@ def test_pyxis_generate_mapping(
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
+    fake_cert_key_paths,
 ):
 
     mock_run_entrypoint.side_effect = [
@@ -274,6 +277,7 @@ def test_push_operators(
     target_settings,
     operator_push_item_ok,
     operator_push_item_different_version,
+    fake_cert_key_paths,
 ):
     class IIBRes:
         def __init__(self, index_image):
@@ -375,6 +379,7 @@ def test_get_existing_index_images(
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.return_value = manifest_list_data
@@ -451,6 +456,7 @@ def test_get_existing_index_images_raises_401(
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.side_effect = [
@@ -505,6 +511,7 @@ def test_get_existing_index_images_raises_500(
     target_settings,
     operator_push_item_ok,
     manifest_list_data,
+    fake_cert_key_paths,
 ):
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.side_effect = [

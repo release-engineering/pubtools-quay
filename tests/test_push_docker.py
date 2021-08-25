@@ -285,6 +285,7 @@ def test_get_repo_metadata(
     target_settings,
     container_multiarch_push_item,
     operator_push_item_ok,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_run_entrypoint.return_value = {"key": "value"}
@@ -304,10 +305,10 @@ def test_get_repo_metadata(
         [
             "--pyxis-server",
             "pyxis-url.com",
-            "--pyxis-krb-principal",
-            "some-principal@REDHAT.COM",
-            "--pyxis-krb-ktfile",
-            "/etc/pub/some.keytab",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
             "--repo-name",
             "some_repo",
         ],

@@ -8,7 +8,7 @@ import tempfile
 import proton
 
 from .exceptions import SigningError
-from .utils.misc import run_entrypoint, log_step
+from .utils.misc import run_entrypoint, log_step, get_pyxis_ssl_paths
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
 
@@ -156,19 +156,15 @@ class SignatureHandler:
                 Existing signatures as returned by Pyxis based on specified criteria. The returned
                 sturcture is an iterator to reduce memory requirements.
         """
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
 
         for chunk_start in range(0, len(manifest_digests), chunk_size):
             chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
 
-            args = [
-                "--pyxis-server",
-                self.target_settings["pyxis_server"],
-                "--pyxis-krb-principal",
-                self.target_settings["iib_krb_principal"],
-            ]
-            if "iib_krb_ktfile" in self.target_settings:
-                args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+            args = ["--pyxis-server", self.target_settings["pyxis_server"]]
+            args += ["--pyxis-ssl-crtfile", cert]
+            args += ["--pyxis-ssl-keyfile", key]
 
             with tempfile.NamedTemporaryFile(
                 mode="w", prefix="pubtools_quay_get_signatures_"
@@ -329,6 +325,9 @@ class SignatureHandler:
                 Messages from RADAS containing image signatures.
         """
         LOG.info("Sending new signatures to Pyxis")
+
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
+
         signatures = []
         claim_messages_by_id = dict((m["request_id"], m) for m in claim_mesages)
         sorted_signature_messages = sorted(signature_messages, key=lambda msg: msg["request_id"])
@@ -346,14 +345,9 @@ class SignatureHandler:
                 }
             )
 
-        args = [
-            "--pyxis-server",
-            self.target_settings["pyxis_server"],
-            "--pyxis-krb-principal",
-            self.target_settings["iib_krb_principal"],
-        ]
-        if "iib_krb_ktfile" in self.target_settings:
-            args += ["--pyxis-krb-ktfile", self.target_settings["iib_krb_ktfile"]]
+        args = ["--pyxis-server", self.target_settings["pyxis_server"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="pubtools_quay_upload_signatures_"

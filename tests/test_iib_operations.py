@@ -45,6 +45,7 @@ def test_task_iib_add_bundles(
     mock_operator_signature_handler,
     mock_signature_remover,
     target_settings,
+    fake_cert_key_paths,
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
@@ -109,11 +110,11 @@ def test_task_iib_add_bundles(
         "quay.io/some-namespace/operators----index-image:8",
         [{"claim": "value1"}, {"claim": "value2"}],
         "pyxis-url.com",
-        "some-principal@REDHAT.COM",
-        "/etc/pub/some.keytab",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
     )
 
 
@@ -129,6 +130,7 @@ def test_task_iib_remove_operators(
     mock_operator_signature_handler,
     mock_signature_remover,
     target_settings,
+    fake_cert_key_paths,
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
@@ -191,11 +193,11 @@ def test_task_iib_remove_operators(
         "quay.io/some-namespace/operators----index-image:8",
         [{"claim": "value1"}, {"claim": "value2"}],
         "pyxis-url.com",
-        "some-principal@REDHAT.COM",
-        "/etc/pub/some.keytab",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "some-principal@REDHAT.COM", "/etc/pub/some.keytab"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
     )
 
 

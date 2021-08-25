@@ -10,7 +10,7 @@ from .exceptions import (
     BadPushItem,
     InvalidTargetSettings,
 )
-from .utils.misc import get_internal_container_repo_name
+from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import SignatureHandler, BasicSignatureHandler
@@ -503,11 +503,13 @@ class TagDocker:
         elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
+
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
             pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
-            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            pyxis_ssl_crtfile=cert,
+            pyxis_ssl_keyfile=key,
             exclude_by_claims=claim_messages,
         )
 
@@ -569,12 +571,14 @@ class TagDocker:
                     )
                     claim_messages.append(message)
 
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
+
         # claim messages ensure that signatures of non-modified archs won't get removed
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
             pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
-            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            pyxis_ssl_crtfile=cert,
+            pyxis_ssl_keyfile=key,
             exclude_by_claims=claim_messages,
         )
 
@@ -647,11 +651,13 @@ class TagDocker:
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
 
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
+
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
             pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
-            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            pyxis_ssl_crtfile=cert,
+            pyxis_ssl_keyfile=key,
         )
 
         self.run_untag_images([dest_image], True, self.target_settings)
@@ -687,11 +693,13 @@ class TagDocker:
         new_manifest_list = deepcopy(manifest_list)
         new_manifest_list["manifests"] = keep_manifests
 
+        cert, key = get_pyxis_ssl_paths(self.target_settings)
+
         self.signature_remover.remove_tag_signatures(
             reference=dest_image,
             pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_krb_principal=self.target_settings["iib_krb_principal"],
-            pyxis_krb_ktfile=self.target_settings.get("iib_krb_ktfile", None),
+            pyxis_ssl_crtfile=cert,
+            pyxis_ssl_keyfile=key,
             remove_archs=remove_archs,
         )
 
