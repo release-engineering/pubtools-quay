@@ -139,7 +139,7 @@ def test_get_pyxis_signature(
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 2
     sig_data = sig_handler.get_signatures_from_pyxis(
-        ["sha256:a1a1a1a1a", "sha256:b2b2b2b2", "sha256:c3c3c3c3"]
+        ["sha256:a1a1a1a1a", "sha256:b2b2b2b2", "sha256:c3c3c3c3", "sha256:c3c3c3c3"]
     )
     for i, data in enumerate(sig_data):
         assert data == (expected_data1 + expected_data2)[i]
