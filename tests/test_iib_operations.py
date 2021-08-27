@@ -38,7 +38,9 @@ def test_verify_target_settings_overwrite_index_mismatch(target_settings):
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+@mock.patch("pubtools._quay.iib_operations.timestamp")
 def test_task_iib_add_bundles(
+    mock_timestamp,
     mock_verify_target_settings,
     mock_iib_add_bundles,
     mock_run_tag_images,
@@ -47,6 +49,7 @@ def test_task_iib_add_bundles(
     target_settings,
     fake_cert_key_paths,
 ):
+    mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -92,7 +95,10 @@ def test_task_iib_add_bundles(
     )
     mock_run_tag_images.assert_called_once_with(
         "some-registry.com/iib-namespace/new-index-image:8",
-        ["quay.io/some-namespace/operators----index-image:8"],
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
         True,
         target_settings,
     )
@@ -100,7 +106,7 @@ def test_task_iib_add_bundles(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8", "8-timestamp"
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -123,7 +129,9 @@ def test_task_iib_add_bundles(
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_remove_operators")
 @mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+@mock.patch("pubtools._quay.iib_operations.timestamp")
 def test_task_iib_remove_operators(
+    mock_timestamp,
     mock_verify_target_settings,
     mock_iib_remove_operators,
     mock_run_tag_images,
@@ -132,6 +140,7 @@ def test_task_iib_remove_operators(
     target_settings,
     fake_cert_key_paths,
 ):
+    mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -175,7 +184,10 @@ def test_task_iib_remove_operators(
     )
     mock_run_tag_images.assert_called_once_with(
         "some-registry.com/iib-namespace/new-index-image:8",
-        ["quay.io/some-namespace/operators----index-image:8"],
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
         True,
         target_settings,
     )
@@ -183,7 +195,7 @@ def test_task_iib_remove_operators(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "8", "8-timestamp"
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -205,13 +217,16 @@ def test_task_iib_remove_operators(
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+@mock.patch("pubtools._quay.iib_operations.timestamp")
 def test_task_iib_build_from_scratch(
+    mock_timestamp,
     mock_verify_target_settings,
     mock_iib_add_bundles,
     mock_run_tag_images,
     mock_operator_signature_handler,
     target_settings,
 ):
+    mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
@@ -241,7 +256,10 @@ def test_task_iib_build_from_scratch(
     )
     mock_run_tag_images.assert_called_once_with(
         "some-registry.com/iib-namespace/new-index-image:8",
-        ["quay.io/some-namespace/operators----index-image:12"],
+        [
+            "quay.io/some-namespace/operators----index-image:12",
+            "quay.io/some-namespace/operators----index-image:12-timestamp",
+        ],
         True,
         target_settings,
     )
@@ -249,7 +267,7 @@ def test_task_iib_build_from_scratch(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "12"
+        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", "12", "12-timestamp"
     )
 
 

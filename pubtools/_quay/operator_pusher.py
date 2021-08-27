@@ -414,7 +414,7 @@ class OperatorPusher:
         return iib_results
 
     @log_step("Push index images to Quay")
-    def push_index_images(self, iib_results):
+    def push_index_images(self, iib_results, timestamp=None):
         """
         Push index images which were built in the previous stage to Quay.
 
@@ -437,3 +437,8 @@ class OperatorPusher:
             ContainerImagePusher.run_tag_images(
                 build_details.index_image, [dest_image], True, self.target_settings
             )
+            if timestamp:
+                dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, timestamp)
+                ContainerImagePusher.run_tag_images(
+                    build_details.index_image, [dest_image], True, self.target_settings
+                )

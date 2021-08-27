@@ -7,6 +7,7 @@ import os
 import pkg_resources
 import sys
 import textwrap
+import time
 
 from six import StringIO
 from pubtools.pluggy import pm
@@ -317,3 +318,8 @@ def get_pyxis_ssl_paths(target_settings):
         key = target_settings["pyxis_ssl_key"]
 
     return (cert, key)
+
+
+def timestamp():
+    """Return now() timestamp."""
+    return str(time.time()).split(".")[0]

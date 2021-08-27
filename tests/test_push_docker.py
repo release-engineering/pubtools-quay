@@ -898,6 +898,7 @@ def test_rollback_delete_tag_server_error(
     mock_delete_tag.assert_called_once_with("some-namespace/target----repo3", "3")
 
 
+@mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -921,6 +922,7 @@ def test_push_docker_full_success(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_timestamp,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -952,6 +954,7 @@ def test_push_docker_full_success(
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
     mock_sign_operator_images = mock.MagicMock(return_value=([], []))
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+    mock_timestamp.return_value = "timestamp"
 
     mock_get_docker_push_items.return_value = [container_multiarch_push_item]
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
@@ -994,18 +997,19 @@ def test_push_docker_full_success(
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
-        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"
     )
     mock_operator_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
     mock_sign_operator_images.assert_called_once_with(
-        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"
     )
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]
 
 
+@mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -1029,6 +1033,7 @@ def test_push_docker_full_success_repush(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_timestamp,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -1046,6 +1051,7 @@ def test_push_docker_full_success_repush(
     mock_get_existing_index_images = mock.MagicMock(
         return_value=[("somerepo", "somedigest", "sometag")]
     )
+    mock_timestamp.return_value = "timestamp"
     mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
     mock_sign_operator_images = mock.MagicMock(
         return_value=(
@@ -1112,13 +1118,13 @@ def test_push_docker_full_success_repush(
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
-        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"
     )
     mock_operator_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
     mock_sign_operator_images.assert_called_once_with(
-        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
+        {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"
     )
     mock_rollback.assert_not_called()
     assert repos == ["test_repo"]

@@ -5,7 +5,7 @@ from .exceptions import InvalidTargetSettings
 from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
 from .signature_remover import SignatureRemover
-from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
+from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths, timestamp
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -127,8 +127,11 @@ def task_iib_add_bundles(
     )
 
     # Sign image
+    index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
-    claim_messages = sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+    claim_messages = sig_handler.sign_task_index_image(
+        signing_keys, intermediate_index_image, tag, "%s-%s" % (tag, index_stamp)
+    )
 
     sig_remover = SignatureRemover(
         quay_api_token=target_settings["dest_quay_api_token"],
@@ -144,12 +147,18 @@ def task_iib_add_bundles(
         cert,
         key,
     )
+    dest_image_stamp = image_schema_tag.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag="%s-%s" % (tag, index_stamp),
+    )
 
     # Push image to Quay
     # NOTE: tagging doesn't use intermediate index image, because we want the most up-to-date
     #       image to be copied to the destination
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
+        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -216,8 +225,11 @@ def task_iib_remove_operators(
     )
 
     # Sign image
+    index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
-    claim_messages = sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, tag)
+    claim_messages = sig_handler.sign_task_index_image(
+        signing_keys, intermediate_index_image, tag, "%s-%s" % (tag, index_stamp)
+    )
 
     sig_remover = SignatureRemover(
         quay_api_token=target_settings["dest_quay_api_token"],
@@ -233,10 +245,16 @@ def task_iib_remove_operators(
         cert,
         key,
     )
+    dest_image_stamp = image_schema_tag.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag="%s-%s" % (tag, index_stamp),
+    )
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
+        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -300,14 +318,26 @@ def task_iib_build_from_scratch(
         repo="iib",
         digest=image_digest,
     )
+    index_stamp = timestamp()
+    dest_image_stamp = image_schema_tag.format(
+        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
+        namespace=target_settings["quay_namespace"],
+        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
+        tag="%s-%s" % (index_image_tag, index_stamp),
+    )
 
     # Sign image
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
-    sig_handler.sign_task_index_image(signing_keys, intermediate_index_image, index_image_tag)
+    sig_handler.sign_task_index_image(
+        signing_keys,
+        intermediate_index_image,
+        index_image_tag,
+        "%s-%s" % (index_image_tag, index_stamp),
+    )
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, target_settings
+        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
     )
 
 

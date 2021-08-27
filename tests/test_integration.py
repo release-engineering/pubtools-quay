@@ -949,7 +949,9 @@ def test_tag_docker_source_copy_untag(
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.utils.misc.timestamp")
 def test_task_iib_add_bundles(
+    mock_timestamp,
     mock_run_entrypoint_operator_pusher,
     mock_manifest_claims_handler,
     mock_run_entrypoint_signature_handler,
@@ -966,6 +968,7 @@ def test_task_iib_add_bundles(
             self.index_image = index_image
             self.index_image_resolved = index_image_resolved
 
+    mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
