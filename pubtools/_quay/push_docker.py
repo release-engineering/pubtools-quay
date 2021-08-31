@@ -474,7 +474,7 @@ class PushDocker:
                 )
                 ii_claim_messages += (
                     operator_signature_handler.construct_index_image_claim_messages(
-                        intermediate_index_image, version, None, signing_keys
+                        intermediate_index_image, [version], signing_keys
                     )
                 )
             new_operator_signatures = [

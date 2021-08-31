@@ -130,7 +130,7 @@ def task_iib_add_bundles(
     index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
     claim_messages = sig_handler.sign_task_index_image(
-        signing_keys, intermediate_index_image, tag, "%s-%s" % (tag, index_stamp)
+        signing_keys, intermediate_index_image, [tag, "%s-%s" % (tag, index_stamp)]
     )
 
     sig_remover = SignatureRemover(
@@ -228,7 +228,7 @@ def task_iib_remove_operators(
     index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
     claim_messages = sig_handler.sign_task_index_image(
-        signing_keys, intermediate_index_image, tag, "%s-%s" % (tag, index_stamp)
+        signing_keys, intermediate_index_image, [tag, "%s-%s" % (tag, index_stamp)]
     )
 
     sig_remover = SignatureRemover(
@@ -331,8 +331,7 @@ def task_iib_build_from_scratch(
     sig_handler.sign_task_index_image(
         signing_keys,
         intermediate_index_image,
-        index_image_tag,
-        "%s-%s" % (index_image_tag, index_stamp),
+        [index_image_tag, "%s-%s" % (index_image_tag, index_stamp)],
     )
 
     # Push image to Quay

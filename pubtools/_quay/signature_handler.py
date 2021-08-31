@@ -503,16 +503,14 @@ class ContainerSignatureHandler(SignatureHandler):
 class OperatorSignatureHandler(SignatureHandler):
     """Class for handling the signing of index images."""
 
-    def construct_index_image_claim_messages(self, index_image, tag, stamp_tag, signing_keys):
+    def construct_index_image_claim_messages(self, index_image, tags, signing_keys):
         """
         Construct signature claim messages for RADAS for the specified index image.
 
         index_image (str):
             Reference to a new index image constructed by IIB.
-        tag (str):
-            Tag of the newly built index image.
-        tag (str):
-            Aditional timestamp tag which is pushed (if specified).
+        tags (str):
+            List of tags to be signed.
         signing_keys (str):
             Signing keys to be used for signing.
 
@@ -538,9 +536,7 @@ class OperatorSignatureHandler(SignatureHandler):
                     continue
                 for digest in digests:
                     repo = self.target_settings["quay_operator_repository"]
-                    for _tag in (tag, stamp_tag):
-                        if not _tag:
-                            continue
+                    for _tag in tags:
                         reference = image_schema.format(host=registry, repository=repo, tag=_tag)
                         claim_message = self.create_manifest_claim_message(
                             destination_repo=repo,
@@ -555,7 +551,7 @@ class OperatorSignatureHandler(SignatureHandler):
         return claim_messages
 
     @log_step("Sign operator images")
-    def sign_operator_images(self, iib_results, index_stamp):
+    def sign_operator_images(self, iib_results, tag_suffix):
         """
         Perform all the steps needed to sign the newly constructed index images.
 
@@ -588,7 +584,7 @@ class OperatorSignatureHandler(SignatureHandler):
             )
             # Version acts as a tag of the index image
             claim_messages += self.construct_index_image_claim_messages(
-                intermediate_index_image, version, "%s-%s" % (version, index_stamp), signing_keys
+                intermediate_index_image, [version, "%s-%s" % (version, tag_suffix)], signing_keys
             )
 
         if not claim_messages:
@@ -601,7 +597,7 @@ class OperatorSignatureHandler(SignatureHandler):
         self.upload_signatures_to_pyxis(claim_messages, signature_messages)
         return claim_messages
 
-    def sign_task_index_image(self, signing_keys, index_image, tag, stamp_tag):
+    def sign_task_index_image(self, signing_keys, index_image, tags):
         """
         Perform an alternatve signing workflow used by IIB methods in pub.
 
@@ -613,14 +609,12 @@ class OperatorSignatureHandler(SignatureHandler):
                 Signing key to be used.
             index_image (str):
                 Index image pointing to the new manifest list.
-            tag (str):
-                Tag of the result index image.
+            tags ([str]):
+                List of tags to sign.
         Returns ([dict]):
             Constructed claim messages.
         """
-        claim_messages = self.construct_index_image_claim_messages(
-            index_image, tag, stamp_tag, signing_keys
-        )
+        claim_messages = self.construct_index_image_claim_messages(index_image, tags, signing_keys)
         if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
             return

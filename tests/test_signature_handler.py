@@ -579,7 +579,7 @@ def test_construct_operator_item_claim_messages(
     )
 
     claim_messages = sig_handler.construct_index_image_claim_messages(
-        operator_signing_push_item, "v4.5", None, ["key1", "key2"]
+        operator_signing_push_item, ["v4.5"], ["key1", "key2"]
     )
 
     with open("tests/test_data/test_expected_operator_claim_messages.json", "r") as f:
@@ -700,10 +700,10 @@ def test_sign_task_index_image(
         hub, "1", target_settings, "some-target"
     )
     claims = sig_handler.sign_task_index_image(
-        ["some-key"], "registry1/namespace/image:1", "3", "3-stamp"
+        ["some-key"], "registry1/namespace/image:1", ["3", "3-stamp"]
     )
     mock_construct_index_claim_msgs.assert_called_once_with(
-        "registry1/namespace/image:1", "3", "3-stamp", ["some-key"]
+        "registry1/namespace/image:1", ["3", "3-stamp"], ["some-key"]
     )
     mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
     mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
@@ -849,7 +849,7 @@ def test_construct_operator_item_claim_messages_none_signing_key(
     )
 
     claim_messages = sig_handler.construct_index_image_claim_messages(
-        operator_signing_push_item, "v4.5", "v4.5-stamp", [None]
+        operator_signing_push_item, ["v4.5", "v4.5-stamp"], [None]
     )
 
     assert claim_messages == []
@@ -888,7 +888,7 @@ def test_sign_operator_images_no_signatures(
     )
     sig_handler.sign_operator_images(iib_results, "stamp")
     mock_construct_index_claim_msgs.assert_called_once_with(
-        "quay.io/iib-namespace/iib@sha256:a1a1a1", "v4.5", "v4.5-stamp", [None]
+        "quay.io/iib-namespace/iib@sha256:a1a1a1", ["v4.5", "v4.5-stamp"], [None]
     )
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
@@ -916,9 +916,9 @@ def test_sign_task_index_image_no_signatures(
     sig_handler = signature_handler.OperatorSignatureHandler(
         hub, "1", target_settings, "some-target"
     )
-    sig_handler.sign_task_index_image([None], "registry1/namespace/image:1", "3", "3-stamp")
+    sig_handler.sign_task_index_image([None], "registry1/namespace/image:1", ["3", "3-stamp"])
     mock_construct_index_claim_msgs.assert_called_once_with(
-        "registry1/namespace/image:1", "3", "3-stamp", [None]
+        "registry1/namespace/image:1", ["3", "3-stamp"], [None]
     )
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
