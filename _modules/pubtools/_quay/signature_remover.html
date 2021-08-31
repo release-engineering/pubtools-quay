@@ -256,6 +256,7 @@
 <span class="sd">                sturcture is an iterator to reduce memory requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span>
+        <span class="n">manifest_digests</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">)))</span>
 
         <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="n">manifest_digests</span><span class="p">[</span><span class="n">chunk_start</span> <span class="p">:</span> <span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
@@ -263,16 +264,23 @@
             <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="n">pyxis_server</span><span class="p">]</span>
             <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">pyxis_ssl_crtfile</span><span class="p">]</span>
             <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">pyxis_ssl_keyfile</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">manifest_digests</span><span class="p">:</span>
-                <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--manifest-digest&quot;</span><span class="p">,</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunk</span><span class="p">)]</span>
 
-            <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
-                <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">),</span>
-                <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">,</span>
-                <span class="n">args</span><span class="p">,</span>
-                <span class="n">env_vars</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_get_signatures_&quot;</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">signature_fetch_file</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">manifest_digests</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">signature_fetch_file</span><span class="p">)</span>
+                    <span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--manifest-digest&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+
+                <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">,</span>
+                    <span class="n">args</span><span class="p">,</span>
+                    <span class="n">env_vars</span><span class="p">,</span>
+                <span class="p">)</span>
+
             <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">chunk_results</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">result</span></div>
 

@@ -322,6 +322,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
         <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span>
+        <span class="n">manifest_digests</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">)))</span>
 
         <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
             <span class="n">chunk</span> <span class="o">=</span> <span class="n">manifest_digests</span><span class="p">[</span><span class="n">chunk_start</span> <span class="p">:</span> <span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
