@@ -158,6 +158,7 @@ class SignatureHandler:
         """
         cert, key = get_pyxis_ssl_paths(self.target_settings)
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
+        manifest_digests = sorted(list(set(manifest_digests)))
 
         for chunk_start in range(0, len(manifest_digests), chunk_size):
             chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203

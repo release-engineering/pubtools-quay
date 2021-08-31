@@ -47,16 +47,24 @@ def test_quay_client_error():
         sig_remover.quay_client
 
 
+@mock.patch("json.dump")
+@mock.patch("tempfile.NamedTemporaryFile")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
-def test_get_signatures_from_pyxis(mock_run_entrypoint):
+def test_get_signatures_from_pyxis(mock_run_entrypoint, mock_tempfile, mock_json_dump):
     expected_data1 = [{"some": "data"}, {"other": "data"}]
     expected_data2 = [{"some-other": "data"}]
     mock_run_entrypoint.side_effect = [iter(expected_data1), iter(expected_data2)]
 
+    temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
+    mock_tempfile.return_value.__enter__.return_value.name = temp_filename
+
     sig_remover = signature_remover.SignatureRemover()
     sig_remover.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 2
     sig_data = sig_remover.get_signatures_from_pyxis(
-        ["digest1", "digest2", "digest3"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["digest1", "digest2", "digest3", "digest3"],
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
     )
 
     for i, data in enumerate(sig_data):
@@ -74,7 +82,7 @@ def test_get_signatures_from_pyxis(mock_run_entrypoint):
             "--pyxis-ssl-keyfile",
             "some-keytab",
             "--manifest-digest",
-            "digest1,digest2",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -89,10 +97,14 @@ def test_get_signatures_from_pyxis(mock_run_entrypoint):
             "--pyxis-ssl-keyfile",
             "some-keytab",
             "--manifest-digest",
-            "digest3",
+            "@/tmp/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
+
+    assert mock_json_dump.call_count == 2
+    assert mock_json_dump.mock_calls[0][1][0] == ["digest1", "digest2"]
+    assert mock_json_dump.mock_calls[1][1][0] == ["digest3"]
 
 
 @mock.patch("pubtools._quay.signature_remover.tempfile.NamedTemporaryFile")
