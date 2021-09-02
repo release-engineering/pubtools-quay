@@ -925,6 +925,7 @@ def test_push_docker_full_success(
     container_multiarch_push_item,
     container_push_item_external_repos,
     operator_push_item_ok,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
@@ -1032,6 +1033,7 @@ def test_push_docker_full_success_repush(
     container_multiarch_push_item,
     container_push_item_external_repos,
     operator_push_item_ok,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
@@ -1147,6 +1149,7 @@ def test_push_docker_no_operator_push_items(
     mock_rollback,
     target_settings,
     container_multiarch_push_item,
+    fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
@@ -1322,6 +1325,7 @@ def test_remove_old_signatures_no_old_signatures(
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
+    fake_cert_key_paths,
 ):
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
@@ -1372,6 +1376,7 @@ def test_remove_old_signatures_container_signatures(
     mock_container_signature_handler,
     patched_verify_target_settings,
     container_push_item_external_repos,
+    fake_cert_key_paths,
 ):
     mock_get_signatures_from_pyxis = mock.MagicMock(
         return_value=(
@@ -1414,7 +1419,7 @@ def test_remove_old_signatures_container_signatures(
         mock_signature_remover,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
-        ["signature-id-1"], "mock_pyxis_server", "mock_pyxis_principal", "mock_pyxis_krb_ktfile"
+        ["signature-id-1"], "mock_pyxis_server", "/path/to/file.crt", "/path/to/file.key"
     )
 
 
@@ -1429,6 +1434,7 @@ def test_remove_old_signatures_operator_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
     operator_push_item_ok,
+    fake_cert_key_paths,
 ):
     mock_get_signatures_from_pyxis = mock.MagicMock(
         side_effect=[
@@ -1458,13 +1464,18 @@ def test_remove_old_signatures_operator_signatures(
         "reference/some-product----some-repo", "someversion", None
     )
     backup_tags[image_data] = {"digest": "some-digest"}
+    mock_target_settings = {
+        "pyxis_server": "mock_pyxis_server",
+        "iib_krb_principal": "mock_pyxis_principal",
+        "iib_krb_ktfile": "mock_pyxis_krb_ktfile",
+    }
 
     push_docker.PushDocker(
         [container_push_item_external_repos],
         mock.MagicMock(),
         mock.MagicMock(),
         mock.MagicMock(),
-        mock.MagicMock(),
+        mock_target_settings,
     ).remove_old_signatures(
         [container_push_item_external_repos],
         [operator_push_item_ok],
@@ -1480,9 +1491,7 @@ def test_remove_old_signatures_operator_signatures(
         mock_operator_signature_handler,
         mock_signature_remover,
     )
-    mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
-        mock.call(["signature-id-1"])
-    )
-    mock_container_signature_handler.remove_signatures_from_pyxis.has_calls(
-        mock.call(["signature-id-2"])
+
+    mock_signature_remover.remove_signatures_from_pyxis.assert_called_once_with(
+        ["signature-id-2"], "mock_pyxis_server", "/path/to/file.crt", "/path/to/file.key"
     )
