@@ -514,9 +514,6 @@ class PushDocker:
         - Push the index images to Quay
         - Remove outdated container signatures
         - (in case of failure) Rollback destination repos to the pre-push state
-
-        Returns ([str]):
-            List of container image repos (for UD cache flush done by pub)
         """
         # TODO: Do we need to manage push item state?
         # Filter out non-docker push items
@@ -574,15 +571,8 @@ class PushDocker:
                 sig_remover,
             )
 
-        # Return repos for UD cache flush
-        repos = []
-        for item in docker_push_items:
-            repos += item.repos.keys()
-
-        return sorted(list(set(repos)))
-
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
     """Entry point for use in another python code."""
     push = PushDocker(push_items, hub, task_id, target_name, target_settings)
-    return push.run()
+    push.run()

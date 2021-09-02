@@ -976,7 +976,7 @@ def test_push_docker_full_success(
         "some-target",
         target_settings,
     )
-    repos = push_docker_instance.run()
+    push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_check_repos_validity.assert_called_once_with(
@@ -1003,7 +1003,6 @@ def test_push_docker_full_success(
         {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
     )
     mock_rollback.assert_not_called()
-    assert repos == ["test_repo"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -1087,7 +1086,7 @@ def test_push_docker_full_success_repush(
         "some-target",
         target_settings,
     )
-    repos = push_docker_instance.run()
+    push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
@@ -1121,7 +1120,6 @@ def test_push_docker_full_success_repush(
         {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
     )
     mock_rollback.assert_not_called()
-    assert repos == ["test_repo"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -1176,7 +1174,7 @@ def test_push_docker_no_operator_push_items(
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item], hub, "1", "some-target", target_settings
     )
-    repos = push_docker_instance.run()
+    push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
@@ -1197,7 +1195,6 @@ def test_push_docker_no_operator_push_items(
     mock_push_index_images.assert_not_called()
     mock_sign_operator_images.assert_not_called()
     mock_rollback.assert_not_called()
-    assert repos == ["test_repo"]
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -1298,7 +1295,7 @@ def test_mod_entrypoint(
     mock_run.return_value = ["repo1", "repo2"]
     mock_push_docker.return_value.run = mock_run
 
-    repos = push_docker.mod_entry_point(
+    push_docker.mod_entry_point(
         [container_multiarch_push_item, operator_push_item_ok],
         hub,
         "1",
