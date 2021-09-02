@@ -613,12 +613,14 @@
             <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_signatures</span><span class="p">:</span>
                 <span class="n">signatures_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">esig</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
 
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="n">signatures_to_remove</span><span class="p">:</span>
             <span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
                 <span class="n">signatures_to_remove</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">],</span>
+                <span class="n">cert</span><span class="p">,</span>
+                <span class="n">key</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="n">signatures_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
@@ -658,8 +660,8 @@
                 <span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
                     <span class="n">signatures_to_remove</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">],</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_ktfile&quot;</span><span class="p">],</span>
+                    <span class="n">cert</span><span class="p">,</span>
+                    <span class="n">key</span><span class="p">,</span>
                 <span class="p">)</span></div>
 
 <div class="viewcode-block" id="PushDocker.run"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
