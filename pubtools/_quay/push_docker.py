@@ -126,10 +126,13 @@ class PushDocker:
 
         Also, Check the validity of these items and raise an exception in case of incorrect data.
 
+        For items having the same pull_url, only one of them is returned to avoid duplication.
+
         Returns ([ContainerPushItem]):
             Docker push items.
         """
         docker_push_items = []
+        url_items = {}
         for item in self.push_items:
             if item.file_type != "docker":
                 LOG.warning("Push item {0} doesn't have 'docker' type, skipping.".format(item))
@@ -139,7 +142,13 @@ class PushDocker:
             if not item.metadata.get("pull_data"):
                 raise BadPushItem("Push item {0} doesn't contain pull data.".format(item))
             LOG.info("Docker push item found: {0}".format(item))
-            docker_push_items.append(item)
+            pull_url = item.metadata["pull_url"]
+            if pull_url in url_items:
+                url_items[pull_url].append(item)
+            else:
+                url_items[pull_url] = [item]
+        for _, items in sorted(url_items.items()):
+            docker_push_items.append(items[0])
 
         return docker_push_items
 
