@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.8.0 (2021-9-7)
+------------------
+
+* Use SSL certificates for Pyxis authentication
+* Remove duplicate digests when getting signatures from Pyxis
+* Remove return of push_docker entrypoint
+
 0.7.2 (2021-8-23)
 ------------------
 
