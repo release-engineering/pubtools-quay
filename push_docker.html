@@ -241,6 +241,7 @@
 <span class="sig-name descname"><span class="pre">get_docker_push_items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.get_docker_push_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.get_docker_push_items" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter push items to only include docker ones.</p>
 <p>Also, Check the validity of these items and raise an exception in case of incorrect data.</p>
+<p>For items having the same pull_url, only one of them is returned to avoid duplication.</p>
 <dl class="simple">
 <dt>Returns ([ContainerPushItem]):</dt><dd><p>Docker push items.</p>
 </dd>

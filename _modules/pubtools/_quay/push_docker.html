@@ -290,10 +290,13 @@
 
 <span class="sd">        Also, Check the validity of these items and raise an exception in case of incorrect data.</span>
 
+<span class="sd">        For items having the same pull_url, only one of them is returned to avoid duplication.</span>
+
 <span class="sd">        Returns ([ContainerPushItem]):</span>
 <span class="sd">            Docker push items.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">docker_push_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">url_items</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">file_type</span> <span class="o">!=</span> <span class="s2">&quot;docker&quot;</span><span class="p">:</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Push item </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have &#39;docker&#39; type, skipping.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
@@ -303,7 +306,13 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pull_data&quot;</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Push item </span><span class="si">{0}</span><span class="s2"> doesn&#39;t contain pull data.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Docker push item found: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
-            <span class="n">docker_push_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">pull_url</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">pull_url</span> <span class="ow">in</span> <span class="n">url_items</span><span class="p">:</span>
+                <span class="n">url_items</span><span class="p">[</span><span class="n">pull_url</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">url_items</span><span class="p">[</span><span class="n">pull_url</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">url_items</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">docker_push_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">docker_push_items</span></div>
 
