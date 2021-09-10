@@ -79,7 +79,7 @@ def test_copy_src_item(
     )
     pusher.copy_source_push_item(container_source_push_item)
     mock_tag_images.assert_called_once_with(
-        "some-registry/src/repo:1",
+        "some-registry/src/repo:2",
         [
             "quay.io/some-namespace/target----repo:latest-test-tag",
             "quay.io/some-namespace/target----repo:1.0",

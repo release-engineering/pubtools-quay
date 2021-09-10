@@ -122,7 +122,12 @@ def test_get_container_push_items_ok(
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
-        [container_multiarch_push_item, operator_push_item_ok, container_source_push_item],
+        [
+            container_multiarch_push_item,
+            container_multiarch_push_item,
+            operator_push_item_ok,
+            container_source_push_item,
+        ],
         hub,
         "1",
         "some-target",
