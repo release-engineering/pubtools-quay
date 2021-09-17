@@ -414,13 +414,15 @@ class OperatorPusher:
         return iib_results
 
     @log_step("Push index images to Quay")
-    def push_index_images(self, iib_results):
+    def push_index_images(self, iib_results, tag_suffix=None):
         """
         Push index images which were built in the previous stage to Quay.
 
         Args:
             iib_results (dict):
                 IIB results returned by the build stage
+            tag_suffix (str):
+                extra tag suffix applied to iib version tags if specified
         """
         image_schema = "{host}/{namespace}/{repo}"
         index_image_repo = image_schema.format(
@@ -437,3 +439,8 @@ class OperatorPusher:
             ContainerImagePusher.run_tag_images(
                 build_details.index_image, [dest_image], True, self.target_settings
             )
+            if tag_suffix:
+                dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
+                ContainerImagePusher.run_tag_images(
+                    build_details.index_image, [dest_image], True, self.target_settings
+                )

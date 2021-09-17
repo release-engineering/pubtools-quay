@@ -11,7 +11,7 @@ from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
-from .utils.misc import get_external_container_repo_name, get_pyxis_ssl_paths
+from .utils.misc import get_external_container_repo_name, get_pyxis_ssl_paths, timestamp
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -485,7 +485,7 @@ class PushDocker:
                 )
                 ii_claim_messages += (
                     operator_signature_handler.construct_index_image_claim_messages(
-                        intermediate_index_image, version, signing_keys
+                        intermediate_index_image, [version], signing_keys
                     )
                 )
             new_operator_signatures = [
@@ -537,7 +537,7 @@ class PushDocker:
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
         existing_index_images = []
         iib_results = None
-
+        index_stamp = timestamp()
         try:
             # Sign container images
             container_signature_handler = ContainerSignatureHandler(
@@ -562,9 +562,9 @@ class PushDocker:
                 )
                 iib_results = operator_pusher.build_index_images()
                 # Sign operator images
-                operator_signature_handler.sign_operator_images(iib_results)
+                operator_signature_handler.sign_operator_images(iib_results, index_stamp)
                 # Push index images to Quay
-                operator_pusher.push_index_images(iib_results)
+                operator_pusher.push_index_images(iib_results, index_stamp)
         except (Exception, SystemExit):
             LOG.error("An exception has occurred during the push, starting rollback")
             self.rollback(backup_tags, rollback_tags)
