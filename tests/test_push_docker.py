@@ -1276,7 +1276,8 @@ def test_push_docker_failure_no_rollback(
         "some-target",
         target_settings,
     )
-    push_docker_instance.run()
+    with pytest.raises(SystemExit):
+        push_docker_instance.run()
 
     mock_get_docker_push_items.assert_called_once_with()
     mock_get_docker_push_items.assert_called_once_with()
