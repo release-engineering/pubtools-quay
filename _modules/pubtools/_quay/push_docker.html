@@ -1,75 +1,34 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>pubtools._quay.push_docker &mdash; pubtools-quay 0.6.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
         <script src="../../../_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
-
-    
+    <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="../../../index.html" class="icon icon-home"> pubtools-quay
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 0.6.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -77,18 +36,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
@@ -98,69 +46,30 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">pubtools-quay</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-        
           <li><a href="../../index.html">Module code</a> &raquo;</li>
-        
       <li>pubtools._quay.push_docker</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <h1>Source code for pubtools._quay.push_docker</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
@@ -175,7 +84,7 @@
 <span class="kn">from</span> <span class="nn">.signature_handler</span> <span class="kn">import</span> <span class="n">ContainerSignatureHandler</span><span class="p">,</span> <span class="n">OperatorSignatureHandler</span>
 <span class="kn">from</span> <span class="nn">.signature_remover</span> <span class="kn">import</span> <span class="n">SignatureRemover</span>
 <span class="kn">from</span> <span class="nn">.operator_pusher</span> <span class="kn">import</span> <span class="n">OperatorPusher</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_external_container_repo_name</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_external_container_repo_name</span><span class="p">,</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span> <span class="n">timestamp</span>
 
 <span class="c1"># TODO: do we want this, or should I remove it?</span>
 <span class="kn">from</span> <span class="nn">requests.packages.urllib3.exceptions</span> <span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
@@ -649,7 +558,7 @@
                 <span class="p">)</span>
                 <span class="n">ii_claim_messages</span> <span class="o">+=</span> <span class="p">(</span>
                     <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">construct_index_image_claim_messages</span><span class="p">(</span>
-                        <span class="n">intermediate_index_image</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">signing_keys</span>
+                        <span class="n">intermediate_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">version</span><span class="p">],</span> <span class="n">signing_keys</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
             <span class="n">new_operator_signatures</span> <span class="o">=</span> <span class="p">[</span>
@@ -701,7 +610,7 @@
         <span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_backup_mapping</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">)</span>
         <span class="n">existing_index_images</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">iib_results</span> <span class="o">=</span> <span class="kc">None</span>
-
+        <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="c1"># Sign container images</span>
             <span class="n">container_signature_handler</span> <span class="o">=</span> <span class="n">ContainerSignatureHandler</span><span class="p">(</span>
@@ -726,9 +635,9 @@
                 <span class="p">)</span>
                 <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
                 <span class="c1"># Sign operator images</span>
-                <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">sign_operator_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">)</span>
+                <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">sign_operator_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
                 <span class="c1"># Push index images to Quay</span>
-                <span class="n">operator_pusher</span><span class="o">.</span><span class="n">push_index_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">)</span>
+                <span class="n">operator_pusher</span><span class="o">.</span><span class="n">push_index_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
         <span class="k">except</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;An exception has occurred during the push, starting rollback&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
@@ -754,46 +663,30 @@
 </pre></div>
 
            </div>
-           
           </div>
           <footer>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2021, Red Hat.
-
-    </p>
+    <p>&#169; Copyright 2021, Red Hat.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>

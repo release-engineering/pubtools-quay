@@ -1,77 +1,36 @@
-
-
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
   <title>Operator Pusher &mdash; pubtools-quay 0.6.0 documentation</title>
-  
-
-  
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-
-  
-  
-
-  
-  
-
-  
-
-  
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
   
-    
-      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
-    
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-
-    
+    <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Push Docker" href="push_docker.html" />
     <link rel="prev" title="Manifest list merger" href="manifest_list_merger.html" /> 
 </head>
 
-<body class="wy-body-for-nav">
-
-   
+<body class="wy-body-for-nav"> 
   <div class="wy-grid-for-nav">
-    
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-          
-
-          
             <a href="index.html" class="icon icon-home"> pubtools-quay
-          
-
-          
           </a>
-
-          
-            
-            
               <div class="version">
                 0.6.0
               </div>
-            
-          
-
-          
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -79,18 +38,7 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-          
-        </div>
-
-        
-        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
-          
-            
-            
-              
-            
-            
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
@@ -117,84 +65,42 @@
 <li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
 </ul>
 
-            
-          
         </div>
-        
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
-
-      
-      <nav class="wy-nav-top" aria-label="top navigation">
-        
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">pubtools-quay</a>
-        
       </nav>
 
-
       <div class="wy-nav-content">
-        
         <div class="rst-content">
-        
-          
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div role="navigation" aria-label="breadcrumbs navigation">
-
+          <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-    
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-        
           <li><a href="modules_reference.html">Modules reference</a> &raquo;</li>
-        
       <li>Operator Pusher</li>
-    
-    
       <li class="wy-breadcrumbs-aside">
-        
-          
             <a href="_sources/operator_pusher.rst.txt" rel="nofollow"> View page source</a>
-          
-        
       </li>
-    
   </ul>
-
-  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
-            
+             
   <div class="section" id="operator-pusher">
-<h1>Operator Pusher<a class="headerlink" href="#operator-pusher" title="Permalink to this headline">¶</a></h1>
+<h1>Operator Pusher<a class="headerlink" href="#operator-pusher" title="Permalink to this headline"></a></h1>
 <p>This class handles all the operator-related parts of the full Push Docker workflow.</p>
 <span class="target" id="module-pubtools._quay.operator_pusher"></span><dl class="py class">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.operator_pusher.</span></span><span class="sig-name descname"><span class="pre">OperatorPusher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.operator_pusher.</span></span><span class="sig-name descname"><span class="pre">OperatorPusher</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher" title="Permalink to this definition"></a></dt>
 <dd><p>Add operator bundles to index images and push them to Quay.</p>
 <p>No validation is performed, push items are expected to be correct.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.build_index_images">
-<span class="sig-name descname"><span class="pre">build_index_images</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.build_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.build_index_images" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">build_index_images</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.build_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.build_index_images" title="Permalink to this definition"></a></dt>
 <dd><p>Perform the ‘build’ part of the operator workflow.</p>
 <p>This workflow is a part of push-docker operation.
 The workflow can be summarized as:
@@ -221,11 +127,13 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.push_index_images">
-<span class="sig-name descname"><span class="pre">push_index_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iib_results</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.push_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.push_index_images" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">push_index_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iib_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag_suffix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.push_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.push_index_images" title="Permalink to this definition"></a></dt>
 <dd><p>Push index images which were built in the previous stage to Quay.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>iib_results (dict):</dt><dd><p>IIB results returned by the build stage</p>
+</dd>
+<dt>tag_suffix (str):</dt><dd><p>extra tag suffix applied to iib version tags if specified</p>
 </dd>
 </dl>
 </dd>
@@ -234,7 +142,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.__init__" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -249,7 +157,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher._get_immutable_tag">
-<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">_get_immutable_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher._get_immutable_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher._get_immutable_tag" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">_get_immutable_tag</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher._get_immutable_tag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher._get_immutable_tag" title="Permalink to this definition"></a></dt>
 <dd><p>Return immutable tag from operator push item production tags.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -264,7 +172,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.public_bundle_ref">
-<span class="sig-name descname"><span class="pre">public_bundle_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.public_bundle_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.public_bundle_ref" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">public_bundle_ref</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.public_bundle_ref"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.public_bundle_ref" title="Permalink to this definition"></a></dt>
 <dd><p>Get public reference of a bundle image.</p>
 <p>It will be used by IIB to access the bundle image.</p>
 <dl class="simple">
@@ -280,7 +188,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.pyxis_get_ocp_versions">
-<span class="sig-name descname"><span class="pre">pyxis_get_ocp_versions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.pyxis_get_ocp_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.pyxis_get_ocp_versions" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pyxis_get_ocp_versions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.pyxis_get_ocp_versions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.pyxis_get_ocp_versions" title="Permalink to this definition"></a></dt>
 <dd><p>Get a list of supported ocp versions from Pyxis.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -295,7 +203,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.version_items_mapping">
-<span class="sig-name descname"><span class="pre">version_items_mapping</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.version_items_mapping" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">version_items_mapping</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.version_items_mapping" title="Permalink to this definition"></a></dt>
 <dd><p>Generate mapping of OCP version -&gt; push_items.</p>
 <p>The mapping describes which operator bundles should be added to which index images.</p>
 <dl class="simple">
@@ -306,7 +214,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list">
-<span class="sig-name descname"><span class="pre">get_deprecation_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.get_deprecation_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_deprecation_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.get_deprecation_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list" title="Permalink to this definition"></a></dt>
 <dd><p>Get bundles to be deprecated in the index image.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -321,7 +229,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.pubtools_iib_get_common_args">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">pubtools_iib_get_common_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.pubtools_iib_get_common_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.pubtools_iib_get_common_args" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">pubtools_iib_get_common_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.pubtools_iib_get_common_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.pubtools_iib_get_common_args" title="Permalink to this definition"></a></dt>
 <dd><p>Create an argument list common for all pubtools-iib operations.</p>
 <p>Target settings are used to set the values of the arguments</p>
 <dl class="simple">
@@ -337,7 +245,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">iib_add_bundles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bundles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deprecation_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.iib_add_bundles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">iib_add_bundles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bundles</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">deprecation_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.iib_add_bundles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles" title="Permalink to this definition"></a></dt>
 <dd><p>Construct and execute pubtools-iib command to add bundles to index image.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -360,7 +268,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.iib_remove_operators">
-<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">iib_remove_operators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.iib_remove_operators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.iib_remove_operators" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">iib_remove_operators</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">operators</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.iib_remove_operators"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.iib_remove_operators" title="Permalink to this definition"></a></dt>
 <dd><p>Construct and execute pubtools-iib command to remove operators from index image.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -381,7 +289,7 @@ used in operator signing. Dictionary structure:
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images">
-<span class="sig-name descname"><span class="pre">get_existing_index_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quay_client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.get_existing_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_existing_index_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quay_client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.get_existing_index_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images" title="Permalink to this definition"></a></dt>
 <dd><p>Return existing index images for push items.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><p>quay_client (QuayClient): quay_client_instance</p>
@@ -397,50 +305,33 @@ used in operator signing. Dictionary structure:
 
 
            </div>
-           
           </div>
-          <footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="push_docker.html" class="btn btn-neutral float-right" title="Push Docker" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="manifest_list_merger.html" class="btn btn-neutral float-left" title="Manifest list merger" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="push_docker.html" class="btn btn-neutral float-right" title="Push Docker" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>
-        &#169; Copyright 2021, Red Hat.
-
-    </p>
+    <p>&#169; Copyright 2021, Red Hat.</p>
   </div>
-    
-    
-    
-    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    
-    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
 
 </footer>
         </div>
       </div>
-
     </section>
-
   </div>
-  
-
-  <script type="text/javascript">
+  <script>
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-
-  
-  
-    
-   
+  </script> 
 
 </body>
 </html>
