@@ -435,7 +435,9 @@ class OperatorPusher:
         )
 
         for version in self.version_items_mapping:
-            build_details = iib_results[version]["iib_result"]
+            build_details = iib_results.get(version, {}).get("iib_result", None)
+            if not build_details:
+                continue
 
             _, tag = build_details.index_image.split(":", 1)
             dest_image = "{0}:{1}".format(index_image_repo, tag)

@@ -384,6 +384,100 @@ def test_push_operators(
     )
 
 
+@mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+def test_push_operators_not_all_successful(
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    mock_run_tag_images,
+    target_settings,
+    operator_push_item_ok,
+    operator_push_item_different_version,
+    fake_cert_key_paths,
+):
+    class IIBRes:
+        def __init__(self, index_image):
+            self.index_image = index_image
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
+        [{"ocp_version": "4.7"}],
+    ]
+    iib_results = [
+        IIBRes("some-registry.com/index-image:5"),
+        None,
+        IIBRes("some-registry.com/index-image:7"),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_ok, operator_push_item_different_version], target_settings
+    )
+
+    results = pusher.build_index_images()
+
+    assert mock_get_deprecation_list.call_count == 3
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.5")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
+    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+
+    assert results == {
+        "v4.5": {"iib_result": iib_results[0], "signing_keys": ["some-key"]},
+        "v4.6": {"iib_result": None, "signing_keys": ["some-key"]},
+        "v4.7": {"iib_result": iib_results[2], "signing_keys": ["some-key"]},
+    }
+    assert mock_add_bundles.call_count == 3
+    assert mock_add_bundles.call_args_list[0] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
+        archs=["some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
+        deprecation_list=["bundle1", "bundle2"],
+        target_settings=target_settings,
+    )
+    assert mock_add_bundles.call_args_list[1] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
+        archs=["some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+        deprecation_list=["bundle3"],
+        target_settings=target_settings,
+    )
+    assert mock_add_bundles.call_args_list[2] == mock.call(
+        bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
+        archs=["amd64", "some-arch"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
+        deprecation_list=[],
+        target_settings=target_settings,
+    )
+
+    pusher.push_index_images(results)
+
+    assert mock_run_tag_images.call_count == 2
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index-image:5",
+                ["quay.io/some-namespace/operators----index-image:5"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index-image:7",
+                ["quay.io/some-namespace/operators----index-image:7"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+
+
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
