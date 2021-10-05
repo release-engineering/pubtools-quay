@@ -166,18 +166,7 @@
             <span class="n">docker_timeout</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_timeout&quot;</span><span class="p">),</span>
             <span class="n">docker_verify_tls</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_tls_verify&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">docker_cert_path</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_cert_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">umb_urls</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">],</span>
-            <span class="n">umb_cert</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;umb_pub_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pub/umb-pub-cert-key.pem&quot;</span>
-            <span class="p">),</span>
-            <span class="c1"># assumption that we&#39;ll continue using .pem format</span>
-            <span class="n">umb_client_key</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;umb_pub_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pub/umb-pub-cert-key.pem&quot;</span>
-            <span class="p">),</span>
-            <span class="n">umb_ca_cert</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                <span class="s2">&quot;umb_ca_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pki/tls/certs/ca-bundle.crt&quot;</span>
-            <span class="p">),</span>
+            <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
