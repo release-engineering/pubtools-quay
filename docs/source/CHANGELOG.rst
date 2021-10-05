@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.8.1 (2021-10-5)
+------------------
+
+* Disable sending UMB messages for taggign and untagging images
+
 0.8.0 (2021-9-7)
 ------------------
 
