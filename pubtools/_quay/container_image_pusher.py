@@ -93,18 +93,7 @@ class ContainerImagePusher:
             docker_timeout=target_settings.get("docker_timeout"),
             docker_verify_tls=target_settings.get("docker_tls_verify") or False,
             docker_cert_path=target_settings.get("docker_cert_path") or None,
-            send_umb_msg=True,
-            umb_urls=target_settings["docker_settings"]["umb_urls"],
-            umb_cert=target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            # assumption that we'll continue using .pem format
-            umb_client_key=target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            umb_ca_cert=target_settings["docker_settings"].get(
-                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
-            ),
+            send_umb_msg=False,
         )
 
     def copy_source_push_item(self, push_item):

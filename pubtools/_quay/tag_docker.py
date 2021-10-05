@@ -617,18 +617,7 @@ class TagDocker:
             remove_last=remove_last,
             quay_user=target_settings["dest_quay_user"],
             quay_password=target_settings["dest_quay_password"],
-            send_umb_msg=True,
-            umb_urls=target_settings["docker_settings"]["umb_urls"],
-            umb_cert=target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            # assumption that we'll continue using .pem format
-            umb_client_key=target_settings["docker_settings"].get(
-                "umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"
-            ),
-            umb_ca_cert=target_settings["docker_settings"].get(
-                "umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"
-            ),
+            send_umb_msg=False,
         )
 
     def untag_image(self, push_item, tag):

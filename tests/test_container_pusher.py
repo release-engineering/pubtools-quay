@@ -58,11 +58,7 @@ def test_tag_images(
         docker_timeout=None,
         docker_verify_tls=False,
         docker_cert_path=None,
-        send_umb_msg=True,
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        send_umb_msg=False,
     )
 
 
@@ -93,11 +89,7 @@ def test_copy_src_item(
         docker_timeout=None,
         docker_verify_tls=False,
         docker_cert_path=None,
-        send_umb_msg=True,
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        send_umb_msg=False,
     )
 
 

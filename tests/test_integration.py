@@ -1222,11 +1222,7 @@ def test_clear_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
-            send_umb_msg=True,
-            umb_urls=["url1.com", "url2.com"],
-            umb_cert="some/path.crt",
-            umb_client_key="some/path.key",
-            umb_ca_cert="cacert/path.crt",
+            send_umb_msg=False,
         )
 
 
@@ -1306,9 +1302,5 @@ def test_remove_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
-            send_umb_msg=True,
-            umb_urls=["url1.com", "url2.com"],
-            umb_cert="some/path.crt",
-            umb_client_key="some/path.key",
-            umb_ca_cert="cacert/path.crt",
+            send_umb_msg=False,
         )

@@ -1868,11 +1868,7 @@ def test_run_untag_images_remove_last(mock_untag_images, target_settings):
         remove_last=True,
         quay_user="dest-quay-user",
         quay_password="dest-quay-pass",
-        send_umb_msg=True,
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        send_umb_msg=False,
     )
 
 
@@ -1888,11 +1884,7 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
         remove_last=False,
         quay_user="dest-quay-user",
         quay_password="dest-quay-pass",
-        send_umb_msg=True,
-        umb_urls=["some-url1", "some-url2"],
-        umb_cert="/etc/pub/umb-pub-cert-key.pem",
-        umb_client_key="/etc/pub/umb-pub-cert-key.pem",
-        umb_ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
+        send_umb_msg=False,
     )
 
 
