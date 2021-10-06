@@ -105,19 +105,6 @@ class PushDocker:
                 raise InvalidTargetSettings(
                     "'{0}' must be present in the docker settings.".format(setting)
                 )
-        if (
-            "iib_overwrite_from_index_token" in self.target_settings
-            and "iib_overwrite_from_index" not in self.target_settings
-        ) or (
-            "iib_overwrite_from_index_token" not in self.target_settings
-            and "iib_overwrite_from_index" in self.target_settings
-        ):
-            msg = (
-                "Either both or neither of 'iib_overwrite_from_index' and "
-                "'iib_overwrite_from_index_token' should be specified in target settings."
-            )
-            LOG.error(msg)
-            raise InvalidTargetSettings(msg)
 
     @log_step("Get container push items")
     def get_docker_push_items(self):

@@ -27,12 +27,6 @@ def test_verify_target_settings_missing_docker_setting(target_settings):
         iib_operations.verify_target_settings(target_settings)
 
 
-def test_verify_target_settings_overwrite_index_mismatch(target_settings):
-    target_settings.pop("iib_overwrite_from_index_token")
-    with pytest.raises(exceptions.InvalidTargetSettings, match="Either both or neither.*"):
-        iib_operations.verify_target_settings(target_settings)
-
-
 @mock.patch("pubtools._quay.iib_operations.SignatureRemover")
 @mock.patch("pubtools._quay.iib_operations.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")

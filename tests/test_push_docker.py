@@ -91,27 +91,6 @@ def test_init_verify_target_settings_missing_docker_item(
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-def test_init_verify_target_settings_missing_overwrite_index(
-    mock_quay_api_client,
-    mock_quay_client,
-    target_settings,
-    container_multiarch_push_item,
-    operator_push_item_ok,
-):
-    hub = mock.MagicMock()
-    target_settings.pop("iib_overwrite_from_index", None)
-    with pytest.raises(exceptions.InvalidTargetSettings, match="Either both or neither of.*"):
-        push_docker_instance = push_docker.PushDocker(
-            [container_multiarch_push_item, operator_push_item_ok],
-            hub,
-            "1",
-            "some-target",
-            target_settings,
-        )
-
-
-@mock.patch("pubtools._quay.push_docker.QuayClient")
-@mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_container_push_items_ok(
     mock_quay_api_client,
     mock_quay_client,
