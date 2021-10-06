@@ -47,19 +47,6 @@ def verify_target_settings(target_settings):
             raise InvalidTargetSettings(
                 "'{0}' must be present in the docker settings.".format(setting)
             )
-    if (
-        "iib_overwrite_from_index_token" in target_settings
-        and "iib_overwrite_from_index" not in target_settings
-    ) or (
-        "iib_overwrite_from_index_token" not in target_settings
-        and "iib_overwrite_from_index" in target_settings
-    ):
-        msg = (
-            "Either both or neither of 'iib_overwrite_from_index' and "
-            "'iib_overwrite_from_index_token' should be specified in target settings."
-        )
-        LOG.error(msg)
-        raise InvalidTargetSettings(msg)
 
 
 def task_iib_add_bundles(

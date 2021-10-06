@@ -230,7 +230,7 @@ class OperatorPusher:
         args += ["--iib-server", target_settings["iib_server"]]
         args += ["--iib-krb-principal", target_settings["iib_krb_principal"]]
 
-        if "iib_overwrite_from_index" in target_settings:
+        if target_settings.get("iib_overwrite_from_index", False):
             args += ["--overwrite-from-index"]
         if "iib_krb_ktfile" in target_settings:
             args += ["--iib-krb-ktfile", target_settings["iib_krb_ktfile"]]
