@@ -152,12 +152,15 @@ class OperatorPusher:
         """
         Get bundles to be deprecated in the index image.
 
+        If deprecation list URL isn't in the target settings, None is returned.
+
         Args:
             version: (str)
                 version for which deprecation list will be fetched.
 
         Returns:
-            list(str): list of bundles to be deprecated in the index image.
+            list(str)|None: list of bundles to be deprecated in the index image. or None if
+                            deprecation list URL was not specified.
         """
 
         def _get_requests_session():
@@ -174,6 +177,9 @@ class OperatorPusher:
             session.mount("https://", adapter)
 
             return session
+
+        if not self.target_settings["iib_deprecation_list_url"]:
+            return None
 
         deprecation_list = []
         deprecation_list_url = "{0}/{1}.yml/raw?ref=master".format(
