@@ -177,20 +177,7 @@
             <span class="k">if</span> <span class="n">setting</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]:</span>
                 <span class="k">raise</span> <span class="n">InvalidTargetSettings</span><span class="p">(</span>
                     <span class="s2">&quot;&#39;</span><span class="si">{0}</span><span class="s2">&#39; must be present in the docker settings.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
-                <span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="s2">&quot;iib_overwrite_from_index_token&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
-            <span class="ow">and</span> <span class="s2">&quot;iib_overwrite_from_index&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
-        <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="s2">&quot;iib_overwrite_from_index_token&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
-            <span class="ow">and</span> <span class="s2">&quot;iib_overwrite_from_index&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
-        <span class="p">):</span>
-            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="s2">&quot;Either both or neither of &#39;iib_overwrite_from_index&#39; and &quot;</span>
-                <span class="s2">&quot;&#39;iib_overwrite_from_index_token&#39; should be specified in target settings.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">InvalidTargetSettings</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+                <span class="p">)</span></div>
 
 <div class="viewcode-block" id="PushDocker.get_docker_push_items"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_docker_push_items">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Get container push items&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_docker_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
