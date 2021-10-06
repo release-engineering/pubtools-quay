@@ -138,6 +138,15 @@ def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_o
             deprecation_list = pusher.get_deprecation_list("4.7")
 
 
+def test_get_deprecation_list_no_url(target_settings, operator_push_item_ok):
+    target_settings["iib_deprecation_list_url"] = None
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+
+    deprecation_list = pusher.get_deprecation_list("4.7")
+
+    assert deprecation_list == None
+
+
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles_str_deprecation_list(
     mock_run_entrypoint, target_settings, operator_push_item_ok
