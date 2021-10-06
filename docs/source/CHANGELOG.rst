@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.8.2 (2021-10-6)
+------------------
+
+* Make deprecation list functionality optional
+
 0.8.1 (2021-10-5)
 ------------------
 
