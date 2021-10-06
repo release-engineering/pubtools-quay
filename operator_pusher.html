@@ -216,13 +216,17 @@ used in operator signing. Dictionary structure:
 <dt class="sig sig-object py" id="pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list">
 <span class="sig-name descname"><span class="pre">get_deprecation_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">version</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/operator_pusher.html#OperatorPusher.get_deprecation_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list" title="Permalink to this definition"></a></dt>
 <dd><p>Get bundles to be deprecated in the index image.</p>
+<p>If deprecation list URL isn’t in the target settings, None is returned.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>version: (str)</dt><dd><p>version for which deprecation list will be fetched.</p>
 </dd>
 </dl>
 </dd>
-<dt>Returns:</dt><dd><p>list(str): list of bundles to be deprecated in the index image.</p>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>list(str)|None: list of bundles to be deprecated in the index image. or None if</dt><dd><p>deprecation list URL was not specified.</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>

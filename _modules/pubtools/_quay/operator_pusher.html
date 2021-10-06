@@ -225,12 +225,15 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get bundles to be deprecated in the index image.</span>
 
+<span class="sd">        If deprecation list URL isn&#39;t in the target settings, None is returned.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            version: (str)</span>
 <span class="sd">                version for which deprecation list will be fetched.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list(str): list of bundles to be deprecated in the index image.</span>
+<span class="sd">            list(str)|None: list of bundles to be deprecated in the index image. or None if</span>
+<span class="sd">                            deprecation list URL was not specified.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">_get_requests_session</span><span class="p">():</span>
@@ -247,6 +250,9 @@
             <span class="n">session</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">session</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_deprecation_list_url&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
         <span class="n">deprecation_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">deprecation_list_url</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">.yml/raw?ref=master&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
