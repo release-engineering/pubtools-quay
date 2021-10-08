@@ -538,6 +538,7 @@ class PushDocker:
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
         existing_index_images = []
         iib_results = None
+        successful_iib_results = dict()
         index_stamp = timestamp()
         # Sign container images
         container_signature_handler = ContainerSignatureHandler(
@@ -560,18 +561,18 @@ class PushDocker:
             existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
             iib_results = operator_pusher.build_index_images()
             # Sign operator images
-            successful_results = dict(
+            successful_iib_results = dict(
                 [(key, val) for key, val in iib_results.items() if val["iib_result"]]
             )
-            operator_signature_handler.sign_operator_images(successful_results, index_stamp)
+            operator_signature_handler.sign_operator_images(successful_iib_results, index_stamp)
             # Push index images to Quay
-            operator_pusher.push_index_images(successful_results, index_stamp)
+            operator_pusher.push_index_images(successful_iib_results, index_stamp)
             # Rollback only when all index image builds fails
             if set([x["iib_result"] for x in iib_results.values()]) == set([False]):
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
                 sys.exit(1)
-            if successful_results != iib_results:
+            if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
                 sys.exit(1)
 
@@ -580,7 +581,7 @@ class PushDocker:
             docker_push_items,
             operator_push_items,
             existing_index_images,
-            dict([(k, v) for k, v in (iib_results or {}).items() if v["iib_result"]]),
+            dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
             backup_tags,
             container_signature_handler,
             operator_signature_handler,
