@@ -104,9 +104,9 @@ class Executor(object):
                 Whether to copy all architectures (if multiarch image)
         """
         if all_arch:
-            cmd = "skopeo copy --all docker://{0} docker://{1}"
+            cmd = "skopeo copy --all docker://{0} docker://{1} --format v2s2"
         else:
-            cmd = "skopeo copy docker://{0} docker://{1}"
+            cmd = "skopeo copy docker://{0} docker://{1} --format v2s2"
 
         for dest_ref in dest_refs:
             LOG.info("Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref))
