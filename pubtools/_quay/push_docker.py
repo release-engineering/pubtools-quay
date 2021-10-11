@@ -496,7 +496,10 @@ class PushDocker:
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
-                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures and (
+                if (
+                    esig["manifest_digest"],
+                    esig["reference"],
+                ) not in new_operator_signatures and (
                     esig["manifest_digest"],
                     esig["reference"].split(":")[-1],
                     esig["repository"],
@@ -555,6 +558,7 @@ class PushDocker:
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
 
+        failed = 0
         if operator_push_items:
             # Build index images
             operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
@@ -571,10 +575,10 @@ class PushDocker:
             if set([x["iib_result"] for x in iib_results.values()]) == set([False]):
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
-                sys.exit(1)
+                failed = 1
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
-                sys.exit(1)
+                failed = 1
 
         # Remove old signatures
         self.remove_old_signatures(
@@ -587,6 +591,8 @@ class PushDocker:
             operator_signature_handler,
             sig_remover,
         )
+        if failed:
+            sys.exit(1)
 
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):

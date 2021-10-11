@@ -1222,11 +1222,13 @@ def test_push_docker_no_operator_push_items(
 @mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.remove_old_signatures")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_push_docker_failure_no_rollback(
     mock_quay_api_client,
     mock_quay_client,
+    mock_remove_old_signatures,
     mock_get_docker_push_items,
     mock_get_operator_push_items,
     mock_check_repos_validity,
@@ -1308,6 +1310,7 @@ def test_push_docker_failure_no_rollback(
 @mock.patch("pubtools._quay.push_docker.PushDocker.generate_backup_mapping")
 @mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.remove_old_signatures")
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
@@ -1315,6 +1318,7 @@ def test_push_docker_failure_rollback(
     mock_quay_api_client,
     mock_quay_client,
     mock_get_docker_push_items,
+    mock_remove_old_signatures,
     mock_get_operator_push_items,
     mock_check_repos_validity,
     mock_generate_backup_mapping,
