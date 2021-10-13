@@ -73,6 +73,7 @@
   <h1>Source code for pubtools._quay.push_docker</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
@@ -555,7 +556,10 @@
             <span class="k">for</span> <span class="n">esig</span> <span class="ow">in</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">get_signatures_from_pyxis</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">digest_version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">digest_version</span> <span class="ow">in</span> <span class="n">existing_index_images</span><span class="p">]</span>
             <span class="p">):</span>
-                <span class="k">if</span> <span class="p">(</span><span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span> <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">])</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_operator_signatures</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
+                <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_operator_signatures</span> <span class="ow">and</span> <span class="p">(</span>
                     <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
                     <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                     <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
@@ -597,50 +601,58 @@
         <span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_backup_mapping</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">)</span>
         <span class="n">existing_index_images</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">iib_results</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">successful_iib_results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c1"># Sign container images</span>
-            <span class="n">container_signature_handler</span> <span class="o">=</span> <span class="n">ContainerSignatureHandler</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span>
-            <span class="p">)</span>
-            <span class="n">operator_signature_handler</span> <span class="o">=</span> <span class="n">OperatorSignatureHandler</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span>
-            <span class="p">)</span>
-            <span class="n">sig_remover</span> <span class="o">=</span> <span class="n">SignatureRemover</span><span class="p">()</span>
-            <span class="n">sig_remover</span><span class="o">.</span><span class="n">set_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
+        <span class="c1"># Sign container images</span>
+        <span class="n">container_signature_handler</span> <span class="o">=</span> <span class="n">ContainerSignatureHandler</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span>
+        <span class="p">)</span>
+        <span class="n">operator_signature_handler</span> <span class="o">=</span> <span class="n">OperatorSignatureHandler</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span>
+        <span class="p">)</span>
+        <span class="n">sig_remover</span> <span class="o">=</span> <span class="n">SignatureRemover</span><span class="p">()</span>
+        <span class="n">sig_remover</span><span class="o">.</span><span class="n">set_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
 
-            <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">sign_container_images</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">)</span>
-            <span class="c1"># Push container images</span>
-            <span class="n">container_pusher</span> <span class="o">=</span> <span class="n">ContainerImagePusher</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
-            <span class="n">container_pusher</span><span class="o">.</span><span class="n">push_container_images</span><span class="p">()</span>
+        <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">sign_container_images</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">)</span>
+        <span class="c1"># Push container images</span>
+        <span class="n">container_pusher</span> <span class="o">=</span> <span class="n">ContainerImagePusher</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+        <span class="n">container_pusher</span><span class="o">.</span><span class="n">push_container_images</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="n">operator_push_items</span><span class="p">:</span>
-                <span class="c1"># Build index images</span>
-                <span class="n">operator_pusher</span> <span class="o">=</span> <span class="n">OperatorPusher</span><span class="p">(</span><span class="n">operator_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
-                <span class="n">existing_index_images</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">get_existing_index_images</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span>
-                <span class="p">)</span>
-                <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
-                <span class="c1"># Sign operator images</span>
-                <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">sign_operator_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
-                <span class="c1"># Push index images to Quay</span>
-                <span class="n">operator_pusher</span><span class="o">.</span><span class="n">push_index_images</span><span class="p">(</span><span class="n">iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
-        <span class="k">except</span> <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="ne">SystemExit</span><span class="p">):</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;An exception has occurred during the push, starting rollback&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
-            <span class="k">raise</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Remove old signatures</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">remove_old_signatures</span><span class="p">(</span>
-                <span class="n">docker_push_items</span><span class="p">,</span>
-                <span class="n">operator_push_items</span><span class="p">,</span>
-                <span class="n">existing_index_images</span><span class="p">,</span>
-                <span class="n">iib_results</span><span class="p">,</span>
-                <span class="n">backup_tags</span><span class="p">,</span>
-                <span class="n">container_signature_handler</span><span class="p">,</span>
-                <span class="n">operator_signature_handler</span><span class="p">,</span>
-                <span class="n">sig_remover</span><span class="p">,</span>
-            <span class="p">)</span></div></div>
+        <span class="n">failed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">operator_push_items</span><span class="p">:</span>
+            <span class="c1"># Build index images</span>
+            <span class="n">operator_pusher</span> <span class="o">=</span> <span class="n">OperatorPusher</span><span class="p">(</span><span class="n">operator_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+            <span class="n">existing_index_images</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
+            <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
+            <span class="c1"># Sign operator images</span>
+            <span class="n">successful_iib_results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]]</span>
+            <span class="p">)</span>
+            <span class="n">operator_signature_handler</span><span class="o">.</span><span class="n">sign_operator_images</span><span class="p">(</span><span class="n">successful_iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
+            <span class="c1"># Push index images to Quay</span>
+            <span class="n">operator_pusher</span><span class="o">.</span><span class="n">push_index_images</span><span class="p">(</span><span class="n">successful_iib_results</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)</span>
+            <span class="c1"># Rollback only when all index image builds fails</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="kc">False</span><span class="p">]):</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of all index images failed, running rollback.&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">successful_iib_results</span> <span class="o">!=</span> <span class="n">iib_results</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of some index images failed&quot;</span><span class="p">)</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Remove old signatures</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_old_signatures</span><span class="p">(</span>
+            <span class="n">docker_push_items</span><span class="p">,</span>
+            <span class="n">operator_push_items</span><span class="p">,</span>
+            <span class="n">existing_index_images</span><span class="p">,</span>
+            <span class="nb">dict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">successful_iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]]),</span>
+            <span class="n">backup_tags</span><span class="p">,</span>
+            <span class="n">container_signature_handler</span><span class="p">,</span>
+            <span class="n">operator_signature_handler</span><span class="p">,</span>
+            <span class="n">sig_remover</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">mod_entry_point</span><span class="p">(</span><span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
