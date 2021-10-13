@@ -1,5 +1,6 @@
 from collections import namedtuple
 import logging
+import sys
 
 import requests
 
@@ -482,7 +483,10 @@ class PushDocker:
             for esig in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
-                if (esig["manifest_digest"], esig["reference"]) not in new_operator_signatures and (
+                if (
+                    esig["manifest_digest"],
+                    esig["reference"],
+                ) not in new_operator_signatures and (
                     esig["manifest_digest"],
                     esig["reference"].split(":")[-1],
                     esig["repository"],
@@ -524,50 +528,58 @@ class PushDocker:
         backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
         existing_index_images = []
         iib_results = None
+        successful_iib_results = dict()
         index_stamp = timestamp()
-        try:
-            # Sign container images
-            container_signature_handler = ContainerSignatureHandler(
-                self.hub, self.task_id, self.target_settings, self.target_name
-            )
-            operator_signature_handler = OperatorSignatureHandler(
-                self.hub, self.task_id, self.target_settings, self.target_name
-            )
-            sig_remover = SignatureRemover()
-            sig_remover.set_quay_client(self.dest_quay_client)
+        # Sign container images
+        container_signature_handler = ContainerSignatureHandler(
+            self.hub, self.task_id, self.target_settings, self.target_name
+        )
+        operator_signature_handler = OperatorSignatureHandler(
+            self.hub, self.task_id, self.target_settings, self.target_name
+        )
+        sig_remover = SignatureRemover()
+        sig_remover.set_quay_client(self.dest_quay_client)
 
-            container_signature_handler.sign_container_images(docker_push_items)
-            # Push container images
-            container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
-            container_pusher.push_container_images()
+        container_signature_handler.sign_container_images(docker_push_items)
+        # Push container images
+        container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
+        container_pusher.push_container_images()
 
-            if operator_push_items:
-                # Build index images
-                operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
-                existing_index_images = operator_pusher.get_existing_index_images(
-                    self.dest_quay_client
-                )
-                iib_results = operator_pusher.build_index_images()
-                # Sign operator images
-                operator_signature_handler.sign_operator_images(iib_results, index_stamp)
-                # Push index images to Quay
-                operator_pusher.push_index_images(iib_results, index_stamp)
-        except (Exception, SystemExit):
-            LOG.error("An exception has occurred during the push, starting rollback")
-            self.rollback(backup_tags, rollback_tags)
-            raise
-        else:
-            # Remove old signatures
-            self.remove_old_signatures(
-                docker_push_items,
-                operator_push_items,
-                existing_index_images,
-                iib_results,
-                backup_tags,
-                container_signature_handler,
-                operator_signature_handler,
-                sig_remover,
+        failed = 0
+        if operator_push_items:
+            # Build index images
+            operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
+            existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
+            iib_results = operator_pusher.build_index_images()
+            # Sign operator images
+            successful_iib_results = dict(
+                [(key, val) for key, val in iib_results.items() if val["iib_result"]]
             )
+            operator_signature_handler.sign_operator_images(successful_iib_results, index_stamp)
+            # Push index images to Quay
+            operator_pusher.push_index_images(successful_iib_results, index_stamp)
+            # Rollback only when all index image builds fails
+            if set([x["iib_result"] for x in iib_results.values()]) == set([False]):
+                LOG.error("Push of all index images failed, running rollback.")
+                self.rollback(backup_tags, rollback_tags)
+                failed = 1
+            if successful_iib_results != iib_results:
+                LOG.error("Push of some index images failed")
+                failed = 1
+
+        # Remove old signatures
+        self.remove_old_signatures(
+            docker_push_items,
+            operator_push_items,
+            existing_index_images,
+            dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
+            backup_tags,
+            container_signature_handler,
+            operator_signature_handler,
+            sig_remover,
+        )
+        if failed:
+            sys.exit(1)
 
 
 def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
