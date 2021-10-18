@@ -15,4 +15,7 @@ Set of utilities used in various parts of the code
 .. autofunction:: get_external_container_repo_name
 .. autofunction:: task_status
 .. autofunction:: log_step
-
+.. autofunction:: get_pyxis_ssl_paths
+.. autofunction:: timestamp
+.. autofunction:: run_with_retries
+.. autofunction:: retry

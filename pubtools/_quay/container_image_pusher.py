@@ -1,3 +1,4 @@
+import functools
 import logging
 
 import requests
@@ -9,6 +10,7 @@ from .exceptions import (
 from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
+    run_with_retries,
 )
 from .quay_client import QuayClient
 from .tag_images import tag_images
@@ -68,6 +70,9 @@ class ContainerImagePusher:
         """
         Prepare the "tag images" entrypoint with all the necessary arguments and run it.
 
+        NOTE: Tagging operation will run with retries to compensate for transient
+              container-related issues.
+
         Args:
             source_ref (str):
                 Source image reference.
@@ -78,10 +83,8 @@ class ContainerImagePusher:
             target_settings (dict):
                 Settings used for setting the values of the function parameters.
         """
-        # TODO: do we want to do some registry-proxy -> quay transformation?
-        # TODO: tag-images only supports quay.io hostname, should we extend the functionality?
-        # TODO: should this command always be performed remotely?
-        tag_images(
+        tag_images_partial = functools.partial(
+            tag_images,
             source_ref,
             dest_refs,
             all_arch=all_arch,
@@ -94,6 +97,13 @@ class ContainerImagePusher:
             docker_verify_tls=target_settings.get("docker_tls_verify") or False,
             docker_cert_path=target_settings.get("docker_cert_path") or None,
             send_umb_msg=False,
+        )
+
+        run_with_retries(
+            tag_images_partial,
+            "Tag images",
+            target_settings.get("tag_images_tries", 4),
+            target_settings.get("tag_images_wait_time_increase", 10),
         )
 
     def copy_source_push_item(self, push_item):
