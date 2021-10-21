@@ -278,6 +278,8 @@ class ContainerExecutor(Executor):
         timeout=None,
         verify_tls=False,
         cert_path=None,
+        registry_username=None,
+        registry_password=None,
     ):
         """
         Initialize.
@@ -294,6 +296,12 @@ class ContainerExecutor(Executor):
                 Whether to use TLS verification.
             cert_path (str|None):
                 Custom path to TLS certificates. If not specified, '~/.docker' is used.
+            registry_username (str|None):
+                Username to login to registry containing the specified image. If not provided,
+                login will be assumed to not be needed.
+            registry_password (str|None):
+                Password to login to registry containing the specified image. If not provided,
+                login will be assumed to not be needed.
         """
         self.image = image
 
@@ -316,6 +324,13 @@ class ContainerExecutor(Executor):
 
         self.client = APIClient(**kwargs)
         repo, tag = self.image.split(":", 1)
+        if registry_username and registry_password:
+            self.client.login(
+                username=registry_username,
+                password=registry_password,
+                registry=image.split("/")[0] if "/" in image else None,
+                reauth=True,
+            )
         self.client.pull(repo, tag=tag)
         self.container = self.client.create_container(self.image, detach=True, tty=True)
         self.client.start(self.container["Id"])

@@ -587,6 +587,8 @@ def target_settings():
         "iib_overwrite_from_index": True,
         "iib_overwrite_from_index_token": "some-user:some-pass",
         "skopeo_image": "registry.com/some/image:1",
+        "skopeo_executor_username": "quay-executor-user",
+        "skopeo_executor_password": "quay-executor-password",
     }
 
 

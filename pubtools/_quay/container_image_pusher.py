@@ -93,6 +93,8 @@ class ContainerImagePusher:
             docker_timeout=target_settings.get("docker_timeout"),
             docker_verify_tls=target_settings.get("docker_tls_verify") or False,
             docker_cert_path=target_settings.get("docker_cert_path") or None,
+            registry_username=target_settings.get("skopeo_executor_username") or None,
+            registry_password=target_settings.get("skopeo_executor_password") or None,
             send_umb_msg=False,
         )
 

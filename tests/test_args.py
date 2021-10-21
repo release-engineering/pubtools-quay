@@ -74,6 +74,8 @@ def test_arg_parser_required_args(mock_tag_images):
         umb_cert=None,
         umb_client_key=None,
         umb_ca_cert=None,
+        registry_username=None,
+        registry_password=None,
         umb_topic="VirtualTopic.eng.pub.quay_tag_image",
         dest_refs=["quay.io/repo/target-image:1"],
         umb_urls=None,
@@ -114,6 +116,10 @@ def test_arg_parser_full_args(mock_tag_images):
         "--docker-verify-tls",
         "--docker-cert-path",
         "/some/path",
+        "--registry-username",
+        "registry_user",
+        "--registry-password",
+        "registry_passwd",
         "--send-umb-msg",
         "--umb-url",
         "amqps://url:5671",
@@ -146,6 +152,8 @@ def test_arg_parser_full_args(mock_tag_images):
         docker_timeout="120",
         docker_verify_tls=True,
         docker_cert_path="/some/path",
+        registry_username="registry_user",
+        registry_password="registry_passwd",
         send_umb_msg=True,
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",
@@ -198,6 +206,8 @@ def test_arg_parser_multiple_args(mock_tag_images):
         umb_cert="/path/to/file.crt",
         umb_client_key=None,
         umb_ca_cert=None,
+        registry_username=None,
+        registry_password=None,
         umb_topic="VirtualTopic.eng.pub.quay_tag_image",
         dest_refs=["quay.io/repo/target-image:1", "quay.io/repo/target-image:2"],
         umb_urls=["amqps://url1:5671", "amqps://url2:5671"],
@@ -316,7 +326,14 @@ def test_arg_parser_missing_container_image():
         tag_images.tag_images_main(missing_umb_url)
 
 
-@mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "SSH_PASSWORD": "123456"})
+@mock.patch.dict(
+    "os.environ",
+    {
+        "QUAY_PASSWORD": "robot_token",
+        "SSH_PASSWORD": "123456",
+        "REGISTRY_PASSWORD": "registry_passwd",
+    },
+)
 @mock.patch("pubtools._quay.tag_images.tag_images")
 def test_arg_parser_env_variables(mock_tag_images):
     full_args = [
@@ -344,6 +361,8 @@ def test_arg_parser_env_variables(mock_tag_images):
         "/path/to/umb.key",
         "--umb-ca-cert",
         "/path/to/ca_cert.crt",
+        "--registry-username",
+        "registry_user",
         "--umb-topic",
         "VirtualTopic.eng.pub.tagimage",
     ]
@@ -371,6 +390,8 @@ def test_arg_parser_env_variables(mock_tag_images):
         umb_cert="/path/to/file.crt",
         umb_client_key="/path/to/umb.key",
         umb_ca_cert="/path/to/ca_cert.crt",
+        registry_username="registry_user",
+        registry_password="registry_passwd",
         umb_topic="VirtualTopic.eng.pub.tagimage",
         dest_refs=["quay.io/repo/target-image:1"],
         umb_urls=["amqps://url:5671"],
