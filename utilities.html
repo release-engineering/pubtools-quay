@@ -253,6 +253,71 @@ simply returns the repo without any alterations.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.utils.misc.get_pyxis_ssl_paths">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.utils.misc.</span></span><span class="sig-name descname"><span class="pre">get_pyxis_ssl_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/utils/misc.html#get_pyxis_ssl_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.utils.misc.get_pyxis_ssl_paths" title="Permalink to this definition"></a></dt>
+<dd><p>Get certificate and key paths for Pyxis SSL authentication.</p>
+<p>First attempt is made by invoking the hook implementation ‘get_cert_key_paths’.
+If nothing is returned (no hook implementation is registered), fallback on target settings
+values of ‘pyxis_ssl_cert’ and ‘pyxis_ssl_key’. If multiple values are returned (multiple
+hook implementations are registered), take the first response (from the implementation which
+was registered last). Otherwise, raise an error.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>target_settings (dict):</dt><dd><p>Dictionary containing various task-related settings.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns ((str, str)):</dt><dd><p>Paths to Pyxis SSL certificate and key.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.utils.misc.timestamp">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.utils.misc.</span></span><span class="sig-name descname"><span class="pre">timestamp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/utils/misc.html#timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.utils.misc.timestamp" title="Permalink to this definition"></a></dt>
+<dd><p>Return now() timestamp.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.utils.misc.run_with_retries">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.utils.misc.</span></span><span class="sig-name descname"><span class="pre">run_with_retries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_time_increase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/utils/misc.html#run_with_retries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.utils.misc.run_with_retries" title="Permalink to this definition"></a></dt>
+<dd><p>Run the specified function until it succeeds or maximum retries are reached.</p>
+<p>Wait time will increase after every retry, up to a point defined by MAX_RETRY_WAIT.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>function (callable):</dt><dd><p>Function that should be retried. It must be able to run with 0 parameters.</p>
+</dd>
+<dt>message (str):</dt><dd><p>Message describing the action performed by the function. For example, “tag images”.</p>
+</dd>
+<dt>tries (int):</dt><dd><p>Numbers of times to run the function before giving up.</p>
+</dd>
+<dt>wait_time_increase (int):</dt><dd><p>Time increase (in seconds) to wait before running the function again. Example (default):
+RUN -&gt; WAIT 0 -&gt; RUN -&gt; WAIT 10 -&gt; RUN -&gt; WAIT 20 -&gt; RUN</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pubtools._quay.utils.misc.retry">
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.utils.misc.</span></span><span class="sig-name descname"><span class="pre">retry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_time_increase</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/utils/misc.html#retry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.utils.misc.retry" title="Permalink to this definition"></a></dt>
+<dd><p>Retry decorated function.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>message (str):</dt><dd><p>Message describing the action performed by the function. For example, “tag images”.</p>
+</dd>
+<dt>tries (int):</dt><dd><p>Numbers of times to run the function before giving up.</p>
+</dd>
+<dt>wait_time_increase (int):</dt><dd><p>Time increase (in seconds) to wait before running the function again. Example (default):
+RUN -&gt; WAIT 0 -&gt; RUN -&gt; WAIT 10 -&gt; RUN -&gt; WAIT 20 -&gt; RUN</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 
 

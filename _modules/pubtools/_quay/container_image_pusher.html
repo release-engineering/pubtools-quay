@@ -71,7 +71,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.container_image_pusher</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
@@ -82,6 +83,7 @@
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
     <span class="n">log_step</span><span class="p">,</span>
+    <span class="n">run_with_retries</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.tag_images</span> <span class="kn">import</span> <span class="n">tag_images</span>
@@ -141,6 +143,9 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prepare the &quot;tag images&quot; entrypoint with all the necessary arguments and run it.</span>
 
+<span class="sd">        NOTE: Tagging operation will run with retries to compensate for transient</span>
+<span class="sd">              container-related issues.</span>
+
 <span class="sd">        Args:</span>
 <span class="sd">            source_ref (str):</span>
 <span class="sd">                Source image reference.</span>
@@ -151,10 +156,8 @@
 <span class="sd">            target_settings (dict):</span>
 <span class="sd">                Settings used for setting the values of the function parameters.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># TODO: do we want to do some registry-proxy -&gt; quay transformation?</span>
-        <span class="c1"># TODO: tag-images only supports quay.io hostname, should we extend the functionality?</span>
-        <span class="c1"># TODO: should this command always be performed remotely?</span>
-        <span class="n">tag_images</span><span class="p">(</span>
+        <span class="n">tag_images_partial</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
+            <span class="n">tag_images</span><span class="p">,</span>
             <span class="n">source_ref</span><span class="p">,</span>
             <span class="n">dest_refs</span><span class="p">,</span>
             <span class="n">all_arch</span><span class="o">=</span><span class="n">all_arch</span><span class="p">,</span>
@@ -167,6 +170,13 @@
             <span class="n">docker_verify_tls</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_tls_verify&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
             <span class="n">docker_cert_path</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_cert_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
             <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">run_with_retries</span><span class="p">(</span>
+            <span class="n">tag_images_partial</span><span class="p">,</span>
+            <span class="s2">&quot;Tag images&quot;</span><span class="p">,</span>
+            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_tries&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_wait_time_increase&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
         <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>

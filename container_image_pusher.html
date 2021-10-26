@@ -118,6 +118,8 @@
 <em class="property"><span class="pre">classmethod</span> </em><span class="sig-name descname"><span class="pre">run_tag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/container_image_pusher.html#ContainerImagePusher.run_tag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.run_tag_images" title="Permalink to this definition"></a></dt>
 <dd><p>Prepare the “tag images” entrypoint with all the necessary arguments and run it.</p>
 <dl class="simple">
+<dt>NOTE: Tagging operation will run with retries to compensate for transient</dt><dd><p>container-related issues.</p>
+</dd>
 <dt>Args:</dt><dd><dl class="simple">
 <dt>source_ref (str):</dt><dd><p>Source image reference.</p>
 </dd>
