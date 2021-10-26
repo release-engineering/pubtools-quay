@@ -116,3 +116,49 @@ def test_get_pyxis_ssl_paths_target_settings():
 def test_get_pyxis_ssl_paths_error():
     with pytest.raises(ValueError, match="No key and certificate paths were.*"):
         cert, key = misc.get_pyxis_ssl_paths({"pyxis_server": "some-url"})
+
+
+@mock.patch("time.sleep")
+@mock.patch("pubtools._quay.utils.misc.timestamp")
+def test_run_with_retries(mock_timestamp, mock_sleep):
+    mock_timestamp.side_effect = [ValueError, 10]
+    misc.run_with_retries(misc.timestamp, "Get timestamp")
+
+    assert mock_timestamp.call_count == 2
+    mock_sleep.assert_called_once_with(0)
+
+
+@mock.patch("time.sleep")
+@mock.patch("pubtools._quay.utils.misc.timestamp")
+def test_run_with_retries_fail(mock_timestamp, mock_sleep):
+    mock_timestamp.side_effect = [ValueError] * 4
+    with pytest.raises(ValueError):
+        misc.run_with_retries(misc.timestamp, "Get timestamp")
+
+    assert mock_timestamp.call_count == 4
+    assert mock_sleep.call_count == 3
+    assert mock_sleep.call_args_list[0] == mock.call(0)
+    assert mock_sleep.call_args_list[1] == mock.call(10)
+    assert mock_sleep.call_args_list[2] == mock.call(20)
+
+
+@mock.patch("time.sleep")
+@mock.patch("pubtools._quay.utils.misc.timestamp")
+def test_retry(mock_timestamp, mock_sleep):
+    mock_timestamp.side_effect = [1, 2, 3, 4]
+
+    @misc.retry("Add value to timestamp")
+    def add_value_to_timestamp(value):
+        timestamp = misc.timestamp()
+        if isinstance(value, str):
+            raise ValueError("Not a number!")
+        return timestamp + value
+
+    with pytest.raises(ValueError):
+        add_value_to_timestamp("not a number")
+
+    assert mock_timestamp.call_count == 4
+    assert mock_sleep.call_count == 3
+    assert mock_sleep.call_args_list[0] == mock.call(0)
+    assert mock_sleep.call_args_list[1] == mock.call(10)
+    assert mock_sleep.call_args_list[2] == mock.call(20)

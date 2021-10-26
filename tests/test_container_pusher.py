@@ -62,6 +62,47 @@ def test_tag_images(
     )
 
 
+@mock.patch("time.sleep")
+@mock.patch("pubtools._quay.container_image_pusher.tag_images")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_tag_images_retry(
+    mock_quay_client,
+    mock_tag_images,
+    mock_sleep,
+    target_settings,
+    container_multiarch_push_item,
+):
+    mock_tag_images.side_effect = [RuntimeError, ValueError, 0]
+
+    pusher = container_image_pusher.ContainerImagePusher(
+        [container_multiarch_push_item], target_settings
+    )
+
+    pusher.run_tag_images(
+        "source-ref:1", ["dest-ref:1", "dest-ref:2"], True, pusher.target_settings
+    )
+
+    tag_images_call = mock.call(
+        "source-ref:1",
+        ["dest-ref:1", "dest-ref:2"],
+        all_arch=True,
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
+        container_exec=True,
+        container_image="registry.com/some/image:1",
+        docker_url="unix://var/run/docker.sock",
+        docker_timeout=None,
+        docker_verify_tls=False,
+        docker_cert_path=None,
+        send_umb_msg=False,
+    )
+
+    assert mock_tag_images.call_count == 3
+    assert mock_tag_images.call_args_list[0] == tag_images_call
+    assert mock_tag_images.call_args_list[1] == tag_images_call
+    assert mock_tag_images.call_args_list[2] == tag_images_call
+
+
 @mock.patch("pubtools._quay.container_image_pusher.tag_images")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_copy_src_item(
