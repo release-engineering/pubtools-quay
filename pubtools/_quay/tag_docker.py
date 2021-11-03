@@ -725,6 +725,8 @@ class TagDocker:
             self.target_settings.get("docker_timeout"),
             self.target_settings.get("docker_tls_verify") or False,
             self.target_settings.get("docker_cert_path") or None,
+            self.target_settings.get("skopeo_executor_username") or None,
+            self.target_settings.get("skopeo_executor_password") or None,
         ) as executor:
             executor.skopeo_login(
                 self.target_settings["dest_quay_user"], self.target_settings["dest_quay_password"]

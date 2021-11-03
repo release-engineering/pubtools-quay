@@ -105,6 +105,20 @@ TAG_IMAGES_ARGS = {
         "required": False,
         "type": str,
     },
+    ("--registry-username",): {
+        "help": "Username to login to registry containing the specified image. If not provided, "
+        "login will be assumed to not be needed.",
+        "required": False,
+        "type": str,
+    },
+    ("--registry-password",): {
+        "help": "Password to login to registry containing the specified image. If not provided, "
+        "login will be assumed to not be needed. "
+        "Can be specified by env variable REGISTRY_PASSWORD.",
+        "required": False,
+        "type": str,
+        "env_variable": "REGISTRY_PASSWORD",
+    },
     ("--send-umb-msg",): {
         "help": "Flag of whether to send a UMB message",
         "required": False,
@@ -185,6 +199,8 @@ def tag_images(
     docker_timeout=None,
     docker_verify_tls=False,
     docker_cert_path=None,
+    registry_username=None,
+    registry_password=None,
     send_umb_msg=False,
     umb_urls=[],
     umb_cert=None,
@@ -233,6 +249,12 @@ def tag_images(
             Whether to perform TLS verification with the Docker client. Disabled by default.
         docker_cert_path (str):
             Path to Docker certificates for TLS authentication. '~/.docker' by default.
+        registry_username (str):
+            Username to login to registry containing the specified image. If not provided,
+            login will be assumed to not be needed.
+        registry_password (str):
+            Password to login to registry containing the specified image. If not provided,
+            login will be assumed to not be needed.
         send_umb_msg (bool):
             Whether to send UMB messages about the untagged images.
         umb_urls ([str]):
@@ -279,6 +301,8 @@ def tag_images(
             docker_timeout,
             docker_verify_tls,
             docker_cert_path,
+            registry_username,
+            registry_password,
         )
     else:
         executor_class = functools.partial(LocalExecutor)

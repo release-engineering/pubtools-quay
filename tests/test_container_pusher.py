@@ -58,6 +58,8 @@ def test_tag_images(
         docker_timeout=None,
         docker_verify_tls=False,
         docker_cert_path=None,
+        registry_username="quay-executor-user",
+        registry_password="quay-executor-password",
         send_umb_msg=False,
     )
 
@@ -130,6 +132,8 @@ def test_copy_src_item(
         docker_timeout=None,
         docker_verify_tls=False,
         docker_cert_path=None,
+        registry_username="quay-executor-user",
+        registry_password="quay-executor-password",
         send_umb_msg=False,
     )
 

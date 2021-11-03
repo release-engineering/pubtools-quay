@@ -240,6 +240,8 @@ def test_container_executor_init(mock_api_client, mock_tls_config, mock_isdir):
         timeout=120,
         verify_tls=True,
         cert_path="/some/path",
+        registry_username="registry_user",
+        registry_password="registry_passwd",
     ):
         pass
 
@@ -252,6 +254,10 @@ def test_container_executor_init(mock_api_client, mock_tls_config, mock_isdir):
     mock_create_container.assert_called_once_with("quay.io/some/image:1", detach=True, tty=True)
     mock_start.assert_called_once_with("123")
     mock_remove_container.assert_called_once_with("123", force=True)
+    mock_api_client.return_value.login.assert_called_once_with(
+        username="registry_user", password="registry_passwd", registry="quay.io", reauth=True
+    )
+    mock_api_client.return_value.pull.assert_called_once_with("quay.io/some/image", tag="1")
 
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")

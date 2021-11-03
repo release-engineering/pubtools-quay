@@ -126,6 +126,10 @@ def test_run_tag_entrypoint_container_success(mock_container_executor):
         "--docker-verify-tls",
         "--docker-cert-path",
         "/some/path",
+        "--registry-username",
+        "registry-user",
+        "--registry-password",
+        "registry-passwd",
     ]
     mock_skopeo_login = mock.MagicMock()
     mock_container_executor.return_value.skopeo_login = mock_skopeo_login
@@ -138,7 +142,13 @@ def test_run_tag_entrypoint_container_success(mock_container_executor):
     tag_images.tag_images_main(args)
 
     mock_container_executor.assert_called_once_with(
-        "quay.io/some/image:1", "some-url.com", 120, True, "/some/path"
+        "quay.io/some/image:1",
+        "some-url.com",
+        120,
+        True,
+        "/some/path",
+        "registry-user",
+        "registry-passwd",
     )
     mock_skopeo_login.assert_called_once_with(None, None)
     mock_tag_images.assert_called_once_with(
