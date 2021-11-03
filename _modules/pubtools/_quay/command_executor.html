@@ -351,6 +351,8 @@
         <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">verify_tls</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">cert_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">registry_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">registry_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
@@ -367,6 +369,12 @@
 <span class="sd">                Whether to use TLS verification.</span>
 <span class="sd">            cert_path (str|None):</span>
 <span class="sd">                Custom path to TLS certificates. If not specified, &#39;~/.docker&#39; is used.</span>
+<span class="sd">            registry_username (str|None):</span>
+<span class="sd">                Username to login to registry containing the specified image. If not provided,</span>
+<span class="sd">                login will be assumed to not be needed.</span>
+<span class="sd">            registry_password (str|None):</span>
+<span class="sd">                Password to login to registry containing the specified image. If not provided,</span>
+<span class="sd">                login will be assumed to not be needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
 
@@ -389,6 +397,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">APIClient</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">registry_username</span> <span class="ow">and</span> <span class="n">registry_password</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
+                <span class="n">username</span><span class="o">=</span><span class="n">registry_username</span><span class="p">,</span>
+                <span class="n">password</span><span class="o">=</span><span class="n">registry_password</span><span class="p">,</span>
+                <span class="n">registry</span><span class="o">=</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">image</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">reauth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">detach</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span></div>

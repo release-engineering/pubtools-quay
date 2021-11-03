@@ -178,6 +178,20 @@
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--registry-username&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username to login to registry containing the specified image. If not provided, &quot;</span>
+        <span class="s2">&quot;login will be assumed to not be needed.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--registry-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password to login to registry containing the specified image. If not provided, &quot;</span>
+        <span class="s2">&quot;login will be assumed to not be needed. &quot;</span>
+        <span class="s2">&quot;Can be specified by env variable REGISTRY_PASSWORD.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;REGISTRY_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
     <span class="p">(</span><span class="s2">&quot;--send-umb-msg&quot;</span><span class="p">,):</span> <span class="p">{</span>
         <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to send a UMB message&quot;</span><span class="p">,</span>
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
@@ -258,6 +272,8 @@
     <span class="n">docker_timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">docker_verify_tls</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">docker_cert_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">registry_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">registry_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
     <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -306,6 +322,12 @@
 <span class="sd">            Whether to perform TLS verification with the Docker client. Disabled by default.</span>
 <span class="sd">        docker_cert_path (str):</span>
 <span class="sd">            Path to Docker certificates for TLS authentication. &#39;~/.docker&#39; by default.</span>
+<span class="sd">        registry_username (str):</span>
+<span class="sd">            Username to login to registry containing the specified image. If not provided,</span>
+<span class="sd">            login will be assumed to not be needed.</span>
+<span class="sd">        registry_password (str):</span>
+<span class="sd">            Password to login to registry containing the specified image. If not provided,</span>
+<span class="sd">            login will be assumed to not be needed.</span>
 <span class="sd">        send_umb_msg (bool):</span>
 <span class="sd">            Whether to send UMB messages about the untagged images.</span>
 <span class="sd">        umb_urls ([str]):</span>
@@ -352,6 +374,8 @@
             <span class="n">docker_timeout</span><span class="p">,</span>
             <span class="n">docker_verify_tls</span><span class="p">,</span>
             <span class="n">docker_cert_path</span><span class="p">,</span>
+            <span class="n">registry_username</span><span class="p">,</span>
+            <span class="n">registry_password</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">LocalExecutor</span><span class="p">)</span>
