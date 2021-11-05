@@ -9,7 +9,7 @@ import six
 from pubtools._quay import exceptions
 from pubtools._quay import quay_client
 from pubtools._quay import signature_handler
-from .utils.misc import sort_dictionary_sortable_values, compare_logs
+from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 
 # flake8: noqa: E501
 
@@ -703,20 +703,24 @@ def test_sign_operator_images(
     mock_upload_signatures_to_pyxis,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image_resolved):
-            self.index_image_resolved = index_image_resolved
-
     hub = mock.MagicMock()
     mock_construct_index_claim_msgs.side_effect = [["msg1", "msg2"], ["msg3", "msg4"]]
     mock_get_radas_signatures.return_value = ["sig1", "sig2", "sig3", "sig4"]
     iib_results = {
         "v4.5": {
-            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:a1a1a1"),
+            "iib_result": IIBRes(
+                "registry1/iib-namespace/image:v4.5",
+                "registry1/iib-namespace/image@sha256:a1a1a1",
+                ["v4.5-1"],
+            ),
             "signing_keys": ["key1"],
         },
         "v4.6": {
-            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:b2b2b2"),
+            "iib_result": IIBRes(
+                "registry1/iib-namespace/image:v4.6",
+                "registry1/iib-namespace/image@sha256:b2b2b2",
+                ["v4.6-1"],
+            ),
             "signing_keys": ["key2"],
         },
     }
@@ -785,14 +789,12 @@ def test_sign_task_index_image(
     mock_upload_signatures_to_pyxis,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image_resolved):
-            self.index_image_resolved = index_image_resolved
-
     hub = mock.MagicMock()
     mock_construct_index_claim_msgs.return_value = ["msg1", "msg2"]
     mock_get_radas_signatures.return_value = ["sig1", "sig2"]
-    build_details = IIBRes("registry1/namespace/image:1")
+    build_details = IIBRes(
+        "registry1/namespace/image:1", "registry1/iib-namespace/image@sha256:a1a1a1", ["1-1"]
+    )
 
     sig_handler = signature_handler.OperatorSignatureHandler(
         hub, "1", target_settings, "some-target"
@@ -968,15 +970,15 @@ def test_sign_operator_images_no_signatures(
     mock_upload_signatures_to_pyxis,
     target_settings,
 ):
-    class IIBRes:
-        def __init__(self, index_image_resolved):
-            self.index_image_resolved = index_image_resolved
-
     hub = mock.MagicMock()
     mock_construct_index_claim_msgs.return_value = []
     iib_results = {
         "v4.5": {
-            "iib_result": IIBRes("registry1/iib-namespace/image@sha256:a1a1a1"),
+            "iib_result": IIBRes(
+                "registry1/iib-namespace/image:v4.5",
+                "registry1/iib-namespace/image@sha256:a1a1a1",
+                ["v4.5-1"],
+            ),
             "signing_keys": [None],
         },
     }
@@ -986,7 +988,7 @@ def test_sign_operator_images_no_signatures(
     )
     sig_handler.sign_operator_images(iib_results, "stamp")
     mock_construct_index_claim_msgs.assert_called_once_with(
-        "quay.io/iib-namespace/iib@sha256:a1a1a1", ["v4.5", "v4.5-stamp"], [None]
+        "quay.io/iib-namespace/image:v4.5-1", ["v4.5", "v4.5-stamp"], [None]
     )
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()

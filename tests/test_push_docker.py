@@ -1077,7 +1077,7 @@ def test_push_docker_full_success(
     assert mock_sign_container_images.call_args_list[1] == mock.call(
         [container_multiarch_push_item], only_v2s1_manifests=True
     )
-    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
+    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
         {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"
@@ -1203,7 +1203,7 @@ def test_push_docker_full_success_repush(
         [container_multiarch_push_item, container_push_item_external_repos],
         only_v2s1_manifests=True,
     )
-    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
+    mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
         {"v4.5": {"iib_result": iib_result, "signing_keys": []}}, "timestamp"

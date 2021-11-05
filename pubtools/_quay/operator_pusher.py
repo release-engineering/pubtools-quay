@@ -24,18 +24,21 @@ class OperatorPusher:
     No validation is performed, push items are expected to be correct.
     """
 
-    def __init__(self, push_items, target_settings):
+    def __init__(self, push_items, task_id, target_settings):
         """
         Initialize.
 
         Args:
             push_items ([ContainerPushItem]):
                 List of push items.
+            task_id (str):
+                task id
             target_settings (dict):
                 Target settings.
         """
         self.push_items = push_items
         self.target_settings = target_settings
+        self.task_id = task_id
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
         self._version_items_mapping = {}
@@ -245,7 +248,13 @@ class OperatorPusher:
 
     @classmethod
     def iib_add_bundles(
-        cls, bundles=None, archs=None, index_image=None, deprecation_list=None, target_settings={}
+        cls,
+        bundles=None,
+        archs=None,
+        index_image=None,
+        deprecation_list=None,
+        build_tags=None,
+        target_settings={},
     ):
         """
         Construct and execute pubtools-iib command to add bundles to index image.
@@ -259,6 +268,8 @@ class OperatorPusher:
                 Index image to add the bundles to.
             deprecation_list ([str]|str):
                 List of bundles to be deprecated. Accepts both str (csv) and a list.
+            build_tags ([str]):
+                Extra tags that the new index image should be tagged with.
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
 
@@ -283,6 +294,9 @@ class OperatorPusher:
             args += ["--deprecation-list", deprecation_list]
         elif deprecation_list and isinstance(deprecation_list, list):
             args += ["--deprecation-list", ",".join(deprecation_list)]
+        if build_tags:
+            for build_tag in build_tags:
+                args += ["--build-tag", build_tag]
 
         try:
             return run_entrypoint(
@@ -295,7 +309,9 @@ class OperatorPusher:
             return False
 
     @classmethod
-    def iib_remove_operators(cls, operators=None, archs=None, index_image=None, target_settings={}):
+    def iib_remove_operators(
+        cls, operators=None, archs=None, index_image=None, build_tags=None, target_settings={}
+    ):
         """
         Construct and execute pubtools-iib command to remove operators from index image.
 
@@ -304,8 +320,10 @@ class OperatorPusher:
                 Operator names to be removed from the index image.
             archs ([str]):
                 Architectures to build for.
-            ocp_version (str):
+            index_image (str):
                 Index image to remove the operators from.
+            build_tags ([str]):
+                Extra tags that the new index image should be tagged with.
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
 
@@ -327,6 +345,9 @@ class OperatorPusher:
         if archs:
             for arch in archs:
                 args += ["--arch", arch]
+        if build_tags:
+            for build_tag in build_tags:
+                args += ["--build-tag", build_tag]
 
         return run_entrypoint(
             ("pubtools-iib", "console_scripts", "pubtools-iib-remove-operators"),
@@ -415,6 +436,7 @@ class OperatorPusher:
                 archs=archs,
                 index_image=index_image,
                 deprecation_list=deprecation_list,
+                build_tags=["{0}-{1}".format(index_image.split(":")[1], self.task_id)],
                 target_settings=self.target_settings,
             )
 
