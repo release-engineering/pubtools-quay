@@ -628,7 +628,7 @@ class OperatorSignatureHandler(SignatureHandler):
             iib_results ({str:dict}):
                 IIB results for each version the push was performed for.
         """
-        image_schema = "{host}/{namespace}/{repo}@{digest}"
+        image_schema = "{host}/{namespace}/{repo}:{tag}"
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
         ):
@@ -639,18 +639,18 @@ class OperatorSignatureHandler(SignatureHandler):
         for version, iib_details in sorted(iib_results.items()):
             iib_result = iib_details["iib_result"]
             signing_keys = iib_details["signing_keys"]
-            # Using intermediate index image to ensure that it doesn't get overwritten
+            # Index image used to fetch manifest list. This image will never be overwritten
             iib_namespace = iib_result.index_image_resolved.split("/")[1]
-            image_digest = iib_result.index_image_resolved.split("@")[1]
-            intermediate_index_image = image_schema.format(
+            iib_repo = iib_result.index_image_resolved.split("/")[2].split("@")[0]
+            permanent_index_image = image_schema.format(
                 host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
                 namespace=iib_namespace,
-                repo="iib",
-                digest=image_digest,
+                repo=iib_repo,
+                tag=iib_result.build_tags[0],
             )
             # Version acts as a tag of the index image
             claim_messages += self.construct_index_image_claim_messages(
-                intermediate_index_image, [version, "%s-%s" % (version, tag_suffix)], signing_keys
+                permanent_index_image, [version, "%s-%s" % (version, tag_suffix)], signing_keys
             )
 
         if not claim_messages:

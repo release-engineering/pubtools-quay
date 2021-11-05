@@ -7,35 +7,36 @@ import requests
 from pubtools._quay import exceptions
 from pubtools._quay import quay_client
 from pubtools._quay import operator_pusher
-from .utils.misc import sort_dictionary_sortable_values, compare_logs
+from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 
 # flake8: noqa: E501
 
 
 def test_init(target_settings, operator_push_item_ok):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     assert pusher.push_items == [operator_push_item_ok]
+    assert pusher.task_id == "3"
     assert pusher.target_settings == target_settings
     assert pusher.quay_host == "quay.io"
 
 
 def test_get_immutable_tag_vr(target_settings, operator_push_item_vr):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_vr], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_vr], "3", target_settings)
 
     tag = pusher._get_immutable_tag(operator_push_item_vr)
     assert tag == "1.0"
 
 
 def test_get_immutable_tag_no_vr(target_settings, operator_push_item_no_vr):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], "3", target_settings)
 
     tag = pusher._get_immutable_tag(operator_push_item_no_vr)
     assert tag == "1.0000000"
 
 
 def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_no_vr], "3", target_settings)
 
     ref = pusher.public_bundle_ref(operator_push_item_no_vr)
     assert ref == "some-registry1.com/repo1:1.0000000"
@@ -45,7 +46,7 @@ def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
 def test_pyxis_get_ocp_versions(
     mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
@@ -74,7 +75,7 @@ def test_pyxis_get_ocp_versions(
 def test_pyxis_get_ocp_versions_no_data(
     mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     mock_run_entrypoint.return_value = []
     with pytest.raises(ValueError, match="Pyxis has returned no OCP.*"):
@@ -95,7 +96,7 @@ def test_pyxis_generate_mapping(
         [{"ocp_version": "4.7"}],
     ]
     pusher = operator_pusher.OperatorPusher(
-        [operator_push_item_ok, operator_push_item_different_version], target_settings
+        [operator_push_item_ok, operator_push_item_different_version], "3", target_settings
     )
 
     mapping = pusher.version_items_mapping
@@ -106,7 +107,7 @@ def test_pyxis_generate_mapping(
 
 
 def test_get_deprecation_list(target_settings, operator_push_item_ok):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     with open("tests/test_data/deprecation_list_data.yaml", "r") as f:
         deprecate_data = f.read()
 
@@ -121,7 +122,7 @@ def test_get_deprecation_list(target_settings, operator_push_item_ok):
 
 
 def test_get_deprecation_list_server_error(target_settings, operator_push_item_ok, caplog):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     with requests_mock.Mocker() as m:
         m.get("https://git-server.com/4_7.yml/raw?ref=master", status_code=500)
@@ -130,7 +131,7 @@ def test_get_deprecation_list_server_error(target_settings, operator_push_item_o
 
 
 def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_ok):
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     with requests_mock.Mocker() as m:
         m.get("https://git-server.com/4_7.yml/raw?ref=master", text="{some-invalid-data}")
@@ -140,7 +141,7 @@ def test_get_deprecation_list_invalid_data(target_settings, operator_push_item_o
 
 def test_get_deprecation_list_no_url(target_settings, operator_push_item_ok):
     target_settings["iib_deprecation_list_url"] = None
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
 
     deprecation_list = pusher.get_deprecation_list("4.7")
 
@@ -152,12 +153,13 @@ def test_iib_add_bundles_str_deprecation_list(
     mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_add_bundles(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "registry.com/rh-osbs/iib-pub-pending:v4.5",
         "bundle3,bundle4",
+        ["tag1", "tag2"],
         pusher.target_settings,
     )
 
@@ -186,6 +188,10 @@ def test_iib_add_bundles_str_deprecation_list(
             "arch2",
             "--deprecation-list",
             "bundle3,bundle4",
+            "--build-tag",
+            "tag1",
+            "--build-tag",
+            "tag2",
         ],
         {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
     )
@@ -194,12 +200,13 @@ def test_iib_add_bundles_str_deprecation_list(
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_add_bundles_error(mock_run_entrypoint, target_settings, operator_push_item_ok):
     mock_run_entrypoint.side_effect = SystemExit(1)
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_add_bundles(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "registry.com/rh-osbs/iib-pub-pending:v4.5",
         "bundle3,bundle4",
+        ["tag1", "tag2"],
         pusher.target_settings,
     )
 
@@ -211,12 +218,13 @@ def test_iib_add_bundles_list_deprecation_list(
     mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_add_bundles(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "registry.com/rh-osbs/iib-pub-pending:v4.5",
         ["bundle3", "bundle4"],
+        None,
         pusher.target_settings,
     )
 
@@ -253,11 +261,12 @@ def test_iib_add_bundles_list_deprecation_list(
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_push_item_ok):
     mock_run_entrypoint.return_value = "some-data"
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_remove_operators(
         ["operator1", "operator2"],
         ["arch1", "arch2"],
         "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        ["tag1", "tag2"],
         pusher.target_settings,
     )
 
@@ -284,6 +293,10 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
             "arch1",
             "--arch",
             "arch2",
+            "--build-tag",
+            "tag1",
+            "--build-tag",
+            "tag2",
         ],
         {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
     )
@@ -303,11 +316,6 @@ def test_push_operators(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
-    class IIBRes:
-        def __init__(self, index_image, resolved):
-            self.index_image = index_image
-            self.index_image_resolved = resolved
-
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
@@ -315,13 +323,25 @@ def test_push_operators(
         [{"ocp_version": "4.7"}],
     ]
     iib_results = [
-        IIBRes("some-registry.com/index-image:5", "some-registry.com/index-image:5-resolved"),
-        IIBRes("some-registry.com/index-image:6", "some-registry.com/index-image:6-resolved"),
-        IIBRes("some-registry.com/index-image:7", "some-registry.com/index-image:7-resolved"),
+        IIBRes(
+            "some-registry.com/index-image:5",
+            "some-registry.com/index-image@sha256:a1a1",
+            ["v4.5-3"],
+        ),
+        IIBRes(
+            "some-registry.com/index-image:6",
+            "some-registry.com/index-image@sha256:b2b2",
+            ["v4.6-3"],
+        ),
+        IIBRes(
+            "some-registry.com/index-image:7",
+            "some-registry.com/index-image@sha256:c3c3",
+            ["v4.7-3"],
+        ),
     ]
     mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(
-        [operator_push_item_ok, operator_push_item_different_version], target_settings
+        [operator_push_item_ok, operator_push_item_different_version], "3", target_settings
     )
 
     results = pusher.build_index_images()
@@ -342,6 +362,7 @@ def test_push_operators(
         archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
+        build_tags=["v4.5-3"],
         target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
@@ -349,6 +370,7 @@ def test_push_operators(
         archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
+        build_tags=["v4.6-3"],
         target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
@@ -356,6 +378,7 @@ def test_push_operators(
         archs=["amd64", "some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
         deprecation_list=[],
+        build_tags=["v4.7-3"],
         target_settings=target_settings,
     )
 
@@ -408,11 +431,6 @@ def test_push_operators_not_all_successful(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
-    class IIBRes:
-        def __init__(self, index_image, resolved):
-            self.index_image = index_image
-            self.index_image_resolved = resolved
-
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
@@ -420,13 +438,21 @@ def test_push_operators_not_all_successful(
         [{"ocp_version": "4.7"}],
     ]
     iib_results = [
-        IIBRes("some-registry.com/index-image:5", "some-registry.com/index-image:5-resolved"),
+        IIBRes(
+            "some-registry.com/index-image:5",
+            "some-registry.com/index-image@sha256:a1a1",
+            ["v4.5-3"],
+        ),
         None,
-        IIBRes("some-registry.com/index-image:7", "some-registry.com/index-image:7-resolved"),
+        IIBRes(
+            "some-registry.com/index-image:7",
+            "some-registry.com/index-image@sha256:c3c3",
+            ["v4.7-3"],
+        ),
     ]
     mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(
-        [operator_push_item_ok, operator_push_item_different_version], target_settings
+        [operator_push_item_ok, operator_push_item_different_version], "3", target_settings
     )
 
     results = pusher.build_index_images()
@@ -447,6 +473,7 @@ def test_push_operators_not_all_successful(
         archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
+        build_tags=["v4.5-3"],
         target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
@@ -454,6 +481,7 @@ def test_push_operators_not_all_successful(
         archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
+        build_tags=["v4.6-3"],
         target_settings=target_settings,
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
@@ -461,6 +489,7 @@ def test_push_operators_not_all_successful(
         archs=["amd64", "some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
         deprecation_list=[],
+        build_tags=["v4.7-3"],
         target_settings=target_settings,
     )
 
@@ -504,7 +533,7 @@ def test_get_existing_index_images(
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.return_value = manifest_list_data
 
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     existing_index_images = pusher.get_existing_index_images(mock_quay_client)
     mock_quay_client.get_manifest.assert_has_calls(
         [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
@@ -584,7 +613,7 @@ def test_get_existing_index_images_raises_401(
         manifest_list_data,
     ]
 
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     existing_index_images = pusher.get_existing_index_images(mock_quay_client)
     mock_quay_client.get_manifest.assert_has_calls(
         [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
@@ -639,6 +668,6 @@ def test_get_existing_index_images_raises_500(
         manifest_list_data,
     ]
 
-    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], target_settings)
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     with pytest.raises(requests.exceptions.HTTPError, match=".*500.*"):
         existing_index_images = pusher.get_existing_index_images(mock_quay_client)

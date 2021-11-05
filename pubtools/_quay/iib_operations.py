@@ -84,7 +84,6 @@ def task_iib_add_bundles(
             Name of the target.
     """
     image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
-    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -93,6 +92,7 @@ def task_iib_add_bundles(
         archs=archs,
         index_image=index_image,
         deprecation_list=deprecation_list,
+        build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
         target_settings=target_settings,
     )
 
@@ -105,19 +105,19 @@ def task_iib_add_bundles(
     )
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    image_digest = build_details.index_image_resolved.split("@")[1]
-    intermediate_index_image = image_schema_digest.format(
+    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
+    permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
-        digest=image_digest,
+        repo=iib_repo,
+        tag=build_details.build_tags[0],
     )
 
     # Sign image
     index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
     claim_messages = sig_handler.sign_task_index_image(
-        signing_keys, intermediate_index_image, [tag, "%s-%s" % (tag, index_stamp)]
+        signing_keys, permanent_index_image, [tag, "%s-%s" % (tag, index_stamp)]
     )
 
     sig_remover = SignatureRemover(
@@ -142,8 +142,6 @@ def task_iib_add_bundles(
     )
 
     # Push image to Quay
-    # NOTE: tagging doesn't use intermediate index image, because we want the most up-to-date
-    #       image to be copied to the destination
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
     )
@@ -182,7 +180,6 @@ def task_iib_remove_operators(
             Name of the target.
     """
     image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
-    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -190,6 +187,7 @@ def task_iib_remove_operators(
         operators=operators,
         archs=archs,
         index_image=index_image,
+        build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
         target_settings=target_settings,
     )
 
@@ -203,19 +201,19 @@ def task_iib_remove_operators(
 
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    image_digest = build_details.index_image_resolved.split("@")[1]
-    intermediate_index_image = image_schema_digest.format(
+    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
+    permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
-        digest=image_digest,
+        repo=iib_repo,
+        tag=build_details.build_tags[0],
     )
 
     # Sign image
     index_stamp = timestamp()
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
     claim_messages = sig_handler.sign_task_index_image(
-        signing_keys, intermediate_index_image, [tag, "%s-%s" % (tag, index_stamp)]
+        signing_keys, permanent_index_image, [tag, "%s-%s" % (tag, index_stamp)]
     )
 
     sig_remover = SignatureRemover(
@@ -278,13 +276,13 @@ def task_iib_build_from_scratch(
             Name of the target.
     """
     image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
-    image_schema_digest = "{host}/{namespace}/{repo}@{digest}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
     build_details = OperatorPusher.iib_add_bundles(
         bundles=bundles,
         archs=archs,
+        build_tags=["{0}-{1}".format(index_image_tag, task_id)],
         target_settings=target_settings,
     )
 
@@ -295,15 +293,14 @@ def task_iib_build_from_scratch(
         tag=index_image_tag,
     )
 
-    _, tag = build_details.index_image.split(":", 1)
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    image_digest = build_details.index_image_resolved.split("@")[1]
-    intermediate_index_image = image_schema_digest.format(
+    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
+    permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
-        digest=image_digest,
+        repo=iib_repo,
+        tag=build_details.build_tags[0],
     )
     index_stamp = timestamp()
     dest_image_stamp = image_schema_tag.format(
@@ -317,7 +314,7 @@ def task_iib_build_from_scratch(
     sig_handler = OperatorSignatureHandler(hub, task_id, target_settings, target_name)
     sig_handler.sign_task_index_image(
         signing_keys,
-        intermediate_index_image,
+        permanent_index_image,
         [index_image_tag, "%s-%s" % (index_image_tag, index_stamp)],
     )
 

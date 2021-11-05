@@ -47,6 +47,7 @@ def test_task_iib_add_bundles(
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["8-1"],
     )
     mock_iib_add_bundles.return_value = build_details
 
@@ -85,6 +86,7 @@ def test_task_iib_add_bundles(
         archs=["arch1", "arch2"],
         index_image="some-registry.com/redhat-namespace/new-index-image:5",
         deprecation_list=["bundle3", "bundle4"],
+        build_tags=["5-1"],
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
@@ -100,7 +102,7 @@ def test_task_iib_add_bundles(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", ["8", "8-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["8", "8-timestamp"]
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -138,6 +140,7 @@ def test_task_iib_remove_operators(
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["8-1"],
     )
     mock_iib_remove_operators.return_value = build_details
 
@@ -174,6 +177,7 @@ def test_task_iib_remove_operators(
         operators=["operator1", "operator2"],
         archs=["arch1", "arch2"],
         index_image="some-registry.com/redhat-namespace/new-index-image:5",
+        build_tags=["5-1"],
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
@@ -189,7 +193,7 @@ def test_task_iib_remove_operators(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", ["8", "8-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["8", "8-timestamp"]
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -224,6 +228,7 @@ def test_task_iib_build_from_scratch(
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["8-1"],
     )
     mock_iib_add_bundles.return_value = build_details
 
@@ -246,6 +251,7 @@ def test_task_iib_build_from_scratch(
     mock_iib_add_bundles.assert_called_once_with(
         bundles=["bundle1", "bundle2"],
         archs=["arch1", "arch2"],
+        build_tags=["12-1"],
         target_settings=target_settings,
     )
     mock_run_tag_images.assert_called_once_with(
@@ -261,7 +267,7 @@ def test_task_iib_build_from_scratch(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/iib@sha256:a1a1a1", ["12", "12-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["12", "12-timestamp"]
     )
 
 

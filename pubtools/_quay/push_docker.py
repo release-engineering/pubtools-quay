@@ -469,18 +469,19 @@ class PushDocker:
             for version, iib_details in sorted(iib_results.items()):
                 iib_result = iib_details["iib_result"]
                 signing_keys = iib_details["signing_keys"]
-                image_schema = "{host}/{namespace}/{repo}@{digest}"
+                image_schema = "{host}/{namespace}/{repo}@{tag}"
+                # Index image used to fetch manifest list. This image will never be overwritten
                 iib_namespace = iib_result.index_image_resolved.split("/")[1]
-                image_digest = iib_result.index_image_resolved.split("@")[1]
-                intermediate_index_image = image_schema.format(
+                iib_repo = iib_result.index_image_resolved.split("/")[2].split("@")[0]
+                permanent_index_image = image_schema.format(
                     host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
                     namespace=iib_namespace,
-                    repo="iib",
-                    digest=image_digest,
+                    repo=iib_repo,
+                    tag=iib_result.build_tags[0],
                 )
                 ii_claim_messages += (
                     operator_signature_handler.construct_index_image_claim_messages(
-                        intermediate_index_image, [version], signing_keys
+                        permanent_index_image, [version], signing_keys
                     )
                 )
             new_operator_signatures = [
@@ -561,7 +562,9 @@ class PushDocker:
         failed = False
         if operator_push_items:
             # Build index images
-            operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
+            operator_pusher = OperatorPusher(
+                operator_push_items, self.task_id, self.target_settings
+            )
             existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
             iib_results = operator_pusher.build_index_images()
             # Sign operator images
