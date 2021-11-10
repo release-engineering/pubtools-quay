@@ -254,8 +254,9 @@ class PushDocker:
                     raise
 
             # Check if repo is not deprecated
-            # TODO: check with Comet team if this is a reliable way of checking
-            if "Deprecated" in metadata["release_categories"]:
+            if "Deprecated" in metadata["release_categories"] and target_settings.get(
+                "do_repo_deprecation_check", True
+            ):
                 raise InvalidRepository("Repository {0} is deprecated".format(repo))
 
             # if we're pushing to prod target, check if repo exists on stage as well
