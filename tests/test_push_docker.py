@@ -516,6 +516,53 @@ def test_check_repos_validity_deprecated_repo(
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_check_repos_validity_deprecated_repo_check_disabled(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_repo_metadata,
+    target_settings,
+    container_push_item_ok,
+    container_signing_push_item,
+):
+    target_settings["do_repo_deprecation_check"] = False
+    mock_get_target_info = mock.MagicMock()
+    mock_get_target_info.return_value = {
+        "settings": {
+            "quay_namespace": "stage_namespace",
+            "dest_quay_user": "stage-user",
+            "dest_quay_password": "stage-password",
+        }
+    }
+    mock_worker = mock.MagicMock()
+    mock_worker.get_target_info = mock_get_target_info
+    hub = mock.MagicMock()
+    hub.worker = mock_worker
+
+    mock_get_repo_metadata.return_value = {"release_categories": "Deprecated"}
+    target_settings["propagated_from"] = "target_stage_quay"
+    push_docker_instance = push_docker.PushDocker(
+        [container_push_item_ok, container_signing_push_item],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    push_docker_instance.check_repos_validity(
+        [container_push_item_ok, container_signing_push_item],
+        hub,
+        target_settings,
+    )
+
+    mock_get_target_info.assert_called_once_with("target_stage_quay")
+    assert mock_get_repo_metadata.call_count == 3
+    mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
+    mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
+    mock_get_repo_metadata.call_args_list[2] == mock.call("namespace/repo3")
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_missing_stage_repo(
     mock_quay_api_client,
     mock_quay_client,
