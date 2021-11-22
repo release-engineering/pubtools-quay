@@ -327,8 +327,9 @@
                     <span class="k">raise</span>
 
             <span class="c1"># Check if repo is not deprecated</span>
-            <span class="c1"># TODO: check with Comet team if this is a reliable way of checking</span>
-            <span class="k">if</span> <span class="s2">&quot;Deprecated&quot;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;release_categories&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="s2">&quot;Deprecated&quot;</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;release_categories&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;do_repo_deprecation_check&quot;</span><span class="p">,</span> <span class="kc">True</span>
+            <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">InvalidRepository</span><span class="p">(</span><span class="s2">&quot;Repository </span><span class="si">{0}</span><span class="s2"> is deprecated&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="p">))</span>
 
             <span class="c1"># if we&#39;re pushing to prod target, check if repo exists on stage as well</span>
