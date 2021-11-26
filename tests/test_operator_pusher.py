@@ -365,7 +365,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:5-resolved",
+                "some-registry.com/index-image:5",
                 ["quay.io/some-namespace/operators----index-image:5"],
                 True,
                 target_settings,
@@ -375,7 +375,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:6-resolved",
+                "some-registry.com/index-image:6",
                 ["quay.io/some-namespace/operators----index-image:6"],
                 True,
                 target_settings,
@@ -385,7 +385,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:7-resolved",
+                "some-registry.com/index-image:7",
                 ["quay.io/some-namespace/operators----index-image:7"],
                 True,
                 target_settings,
@@ -470,7 +470,7 @@ def test_push_operators_not_all_successful(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:5-resolved",
+                "some-registry.com/index-image:5",
                 ["quay.io/some-namespace/operators----index-image:5"],
                 True,
                 target_settings,
@@ -480,7 +480,7 @@ def test_push_operators_not_all_successful(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:7-resolved",
+                "some-registry.com/index-image:7",
                 ["quay.io/some-namespace/operators----index-image:7"],
                 True,
                 target_settings,
