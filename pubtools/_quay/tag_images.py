@@ -186,6 +186,8 @@ def tag_images(
     all_arch=False,
     quay_user=None,
     quay_password=None,
+    source_quay_user=None,
+    source_quay_password=None,
     remote_exec=False,
     ssh_remote_host=None,
     ssh_remote_host_port=None,
@@ -309,6 +311,8 @@ def tag_images(
 
     with executor_class() as executor:
         executor.skopeo_login(quay_user, quay_password)
+        if source_quay_user and source_quay_password:
+            executor.skopeo_login(source_quay_user, source_quay_password)
         executor.tag_images(source_ref, dest_refs, all_arch)
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))

@@ -76,6 +76,7 @@ def merge_manifest_list_main(sysargs=None):
     merger = ManifestListMerger(
         args.source_ref,
         args.dest_ref,
+        None,
         args.source_quay_user,
         args.source_quay_password,
         args.dest_quay_user,

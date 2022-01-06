@@ -15,6 +15,7 @@ class ManifestListMerger:
         self,
         src_image,
         dest_image,
+        src_quay_host=None,
         src_quay_username=None,
         src_quay_password=None,
         dest_quay_username=None,
@@ -43,7 +44,9 @@ class ManifestListMerger:
         self.src_image = src_image
         self.dest_image = dest_image
         if src_quay_username and src_quay_password:
-            self._src_quay_client = QuayClient(src_quay_username, src_quay_password, host)
+            self._src_quay_client = QuayClient(
+                src_quay_username, src_quay_password, src_quay_host or host
+            )
         else:
             self._src_quay_client = None
         if dest_quay_username and dest_quay_password:

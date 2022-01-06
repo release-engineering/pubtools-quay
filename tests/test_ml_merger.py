@@ -184,6 +184,7 @@ def test_init_create_client():
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
+        "src.quay.io",
         "src-user",
         "src-pass",
         "dest-user",
@@ -196,7 +197,7 @@ def test_init_create_client():
     assert isinstance(merger._dest_quay_client, quay_client.QuayClient)
     assert merger._src_quay_client.username == "src-user"
     assert merger._src_quay_client.password == "src-pass"
-    assert merger._src_quay_client.session.hostname == "stage.quay.io"
+    assert merger._src_quay_client.session.hostname == "src.quay.io"
     assert merger._dest_quay_client.username == "dest-user"
     assert merger._dest_quay_client.password == "dest-pass"
     assert merger._dest_quay_client.session.hostname == "stage.quay.io"
@@ -236,6 +237,7 @@ def test_merge_manifest_lists_success():
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
+        "src-quay.io",
         "src-user",
         "src-pass",
         "dest-user",
@@ -244,7 +246,7 @@ def test_merge_manifest_lists_success():
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/src/image/manifests/1",
+            "https://src-quay.io/v2/src/image/manifests/1",
             json=new_ml,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -276,6 +278,7 @@ def test_merge_selected_architectures():
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
+        "src-quay.io",
         "src-user",
         "src-pass",
         "dest-user",
@@ -284,7 +287,7 @@ def test_merge_selected_architectures():
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/src/image/manifests/1",
+            "https://src-quay.io/v2/src/image/manifests/1",
             json=new_ml,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -308,6 +311,7 @@ def test_merge_selected_architectures_no_dest_manifest(mock_authenticate):
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
+        "src-quay.io",
         "src-user",
         "src-pass",
         "dest-user",
@@ -316,7 +320,7 @@ def test_merge_selected_architectures_no_dest_manifest(mock_authenticate):
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/src/image/manifests/1",
+            "https://src-quay.io/v2/src/image/manifests/1",
             json=new_ml,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -341,6 +345,7 @@ def test_merge_selected_architectures_raises_unrelated_error():
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
         "quay.io/dest/image:1",
+        "src-quay.io",
         "src-user",
         "src-pass",
         "dest-user",
@@ -349,7 +354,7 @@ def test_merge_selected_architectures_raises_unrelated_error():
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/src/image/manifests/1",
+            "https://src-quay.io/v2/src/image/manifests/1",
             json=new_ml,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )

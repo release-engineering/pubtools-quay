@@ -827,6 +827,8 @@ def test_tag_docker_source_copy_untag(
         b'{"Architecture": "amd64"}',
         b'{"Architecture": "amd64"}',
         b"dest-quay-user",
+        b"Login Succeeded",
+        b"Login Succeeded",
         b"finished tagging",
         b'{"Architecture": "amd64"}',
     ]
@@ -974,7 +976,7 @@ def test_task_iib_add_bundles(
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
-    mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_run_cmd.side_effect = [("Login Succeeded", "err"), ("Login Succeeded", "err")]
     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
