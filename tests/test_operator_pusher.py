@@ -304,8 +304,9 @@ def test_push_operators(
     fake_cert_key_paths,
 ):
     class IIBRes:
-        def __init__(self, index_image):
+        def __init__(self, index_image, resolved):
             self.index_image = index_image
+            self.index_image_resolved = resolved
 
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
@@ -314,9 +315,9 @@ def test_push_operators(
         [{"ocp_version": "4.7"}],
     ]
     iib_results = [
-        IIBRes("some-registry.com/index-image:5"),
-        IIBRes("some-registry.com/index-image:6"),
-        IIBRes("some-registry.com/index-image:7"),
+        IIBRes("some-registry.com/index-image:5", "some-registry.com/index-image:5-resolved"),
+        IIBRes("some-registry.com/index-image:6", "some-registry.com/index-image:6-resolved"),
+        IIBRes("some-registry.com/index-image:7", "some-registry.com/index-image:7-resolved"),
     ]
     mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(
@@ -408,8 +409,9 @@ def test_push_operators_not_all_successful(
     fake_cert_key_paths,
 ):
     class IIBRes:
-        def __init__(self, index_image):
+        def __init__(self, index_image, resolved):
             self.index_image = index_image
+            self.index_image_resolved = resolved
 
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
@@ -418,9 +420,9 @@ def test_push_operators_not_all_successful(
         [{"ocp_version": "4.7"}],
     ]
     iib_results = [
-        IIBRes("some-registry.com/index-image:5"),
+        IIBRes("some-registry.com/index-image:5", "some-registry.com/index-image:5-resolved"),
         None,
-        IIBRes("some-registry.com/index-image:7"),
+        IIBRes("some-registry.com/index-image:7", "some-registry.com/index-image:7-resolved"),
     ]
     mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(

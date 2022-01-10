@@ -453,5 +453,5 @@ class OperatorPusher:
             if tag_suffix:
                 dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
                 ContainerImagePusher.run_tag_images(
-                    build_details.index_image, [dest_image], True, self.target_settings
+                    build_details.index_image_resolved, [dest_image], True, self.target_settings
                 )
