@@ -32,6 +32,17 @@ from the environment variable.
     --dest-ref quay.io/target/image:34 \
     --quay-user quay+username \
 
+Locally copy an image from source to destination. Use extra login and password for source ref
+::
+
+  $ export QUAY_PASSWORD=token
+  $ export SOURCE_QUAY_PASSWORD=token2
+  $ pubtools-quay-tag-image \
+    --source-ref quay.io/source/image:34 \
+    --dest-ref quay.io/target/image:34 \
+    --source-quay-user source-quay+username \
+    --quay-user quay+username \
+
 Connect to a remote host via ssh (using password) and perform the copying to multiple destinations.
 ::
 

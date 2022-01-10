@@ -36,6 +36,18 @@ TAG_IMAGES_ARGS = {
         "type": str,
         "env_variable": "QUAY_PASSWORD",
     },
+    ("--source-quay-user",): {
+        "help": "Username for source_ref registry login.",
+        "required": False,
+        "type": str,
+    },
+    ("--source-quay-password",): {
+        "help": "Password for source_ref registry. Can be specified by env "
+        "variable SOURCE_QUAY_PASSWORD.",
+        "required": False,
+        "type": str,
+        "env_variable": "SOURCE_QUAY_PASSWORD",
+    },
     ("--remote-exec",): {
         "help": "Flag of whether the commands should be executed on a remote server.",
         "required": False,
@@ -224,6 +236,10 @@ def tag_images(
             Quay username for Docker HTTP API.
         quay_password (str):
             Quay password for Docker HTTP API.
+        source_quay_user (str):
+            Quay username for Docker HTTP API for the source ref.
+        source_quay_password (str):
+            Quay password for Docker HTTP API for the source ref.
         remote_exec (bool):
             Whether to execute the command remotely. Takes precedence over container_exec.
         ssh_remote_host (str):
@@ -273,6 +289,8 @@ def tag_images(
     verify_tag_images_args(
         quay_user,
         quay_password,
+        source_quay_user,
+        source_quay_password,
         remote_exec,
         ssh_remote_host,
         container_exec,
@@ -310,9 +328,11 @@ def tag_images(
         executor_class = functools.partial(LocalExecutor)
 
     with executor_class() as executor:
-        executor.skopeo_login(quay_user, quay_password)
+        executor.skopeo_login(dest_refs[0].split("/", 1)[0], quay_user, quay_password)
         if source_quay_user and source_quay_password:
-            executor.skopeo_login(source_quay_user, source_quay_password)
+            executor.skopeo_login(
+                source_ref.split("/", 1)[0], source_quay_user, source_quay_password
+            )
         executor.tag_images(source_ref, dest_refs, all_arch)
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
@@ -332,6 +352,8 @@ def tag_images(
 def verify_tag_images_args(
     quay_user,
     quay_password,
+    source_quay_user,
+    source_quay_password,
     remote_exec,
     ssh_remote_host,
     container_exec,
@@ -351,6 +373,13 @@ def verify_tag_images_args(
 
     if (quay_user and not quay_password) or (quay_password and not quay_user):
         raise ValueError("Both user and password must be present when attempting to log in.")
+
+    if (source_quay_user and not source_quay_password) or (
+        source_quay_password and not source_quay_user
+    ):
+        raise ValueError(
+            "Both source quay user and password must be present when attempting to log in."
+        )
 
     if send_umb_msg:
         if not umb_urls:

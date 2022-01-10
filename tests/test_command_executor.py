@@ -536,15 +536,15 @@ def test_container_executor_skopeo_login(
         verify_tls=True,
         cert_path="/some/path",
     ) as executor:
-        executor.skopeo_login("some-name", "some-password")
+        executor.skopeo_login("some-host", "some-name", "some-password")
 
     assert mock_run_cmd.call_count == 2
     assert mock_run_cmd.call_args_list[0] == mock.call(
-        "skopeo login --get-login quay.io", tolerate_err=True
+        "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
         " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
-        "-u some-name --password-stdin quay.io'"
+        "-u some-name --password-stdin some-host'"
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
 
@@ -575,9 +575,9 @@ def test_container_executor_skopeo_login_already_logged(
         verify_tls=True,
         cert_path="/some/path",
     ) as executor:
-        executor.skopeo_login("some-name", "some-password")
+        executor.skopeo_login("some-host", "some-name", "some-password")
 
-    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
+    mock_run_cmd.assert_called_once_with("skopeo login --get-login some-host", tolerate_err=True)
     mock_add_file.assert_not_called()
 
 
@@ -608,9 +608,9 @@ def test_container_executor_skopeo_login_missing_credential(
         cert_path="/some/path",
     ) as executor:
         with pytest.raises(ValueError, match="Skopeo login credentials are not present.*"):
-            executor.skopeo_login("some-name")
+            executor.skopeo_login("some-host", "some-name")
 
-    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
+    mock_run_cmd.assert_called_once_with("skopeo login --get-login some-host", tolerate_err=True)
     mock_add_file.assert_not_called()
 
 
@@ -641,15 +641,15 @@ def test_container_executor_skopeo_login_fail(
         cert_path="/some/path",
     ) as executor:
         with pytest.raises(RuntimeError, match="Login command didn't generate expected output.*"):
-            executor.skopeo_login("some-name", "some-password")
+            executor.skopeo_login("some-host", "some-name", "some-password")
 
     assert mock_run_cmd.call_count == 2
     assert mock_run_cmd.call_args_list[0] == mock.call(
-        "skopeo login --get-login quay.io", tolerate_err=True
+        "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
         " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
-        "-u some-name --password-stdin quay.io'"
+        "-u some-name --password-stdin some-host'"
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
 
@@ -659,8 +659,8 @@ def test_skopeo_login_already_logged(mock_run_cmd):
     executor = command_executor.LocalExecutor()
 
     mock_run_cmd.return_value = ("quay_user", "")
-    executor.skopeo_login("quay_user", "quay_token")
-    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay.io", tolerate_err=True)
+    executor.skopeo_login("quay_host", "quay_user", "quay_token")
+    mock_run_cmd.assert_called_once_with("skopeo login --get-login quay_host", tolerate_err=True)
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
@@ -669,7 +669,7 @@ def test_skopeo_login_missing_credentials(mock_run_cmd):
 
     mock_run_cmd.return_value = ("not logged into quay", "")
     with pytest.raises(ValueError, match=".*login credentials are not present.*"):
-        executor.skopeo_login()
+        executor.skopeo_login("some-host")
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
@@ -677,12 +677,12 @@ def test_skopeo_login_success(mock_run_cmd):
     executor = command_executor.LocalExecutor()
 
     mock_run_cmd.side_effect = [("not logged into quay", ""), ("Login Succeeded", "")]
-    executor.skopeo_login("quay_user", "quay_token")
+    executor.skopeo_login("quay_host", "quay_user", "quay_token")
     assert mock_run_cmd.call_args_list == [
-        mock.call("skopeo login --get-login quay.io", tolerate_err=True),
+        mock.call("skopeo login --get-login quay_host", tolerate_err=True),
         mock.call(
             "skopeo login --authfile $HOME/.docker/config.json -u quay_user "
-            "--password-stdin quay.io",
+            "--password-stdin quay_host",
             stdin="quay_token",
         ),
     ]
@@ -694,7 +694,7 @@ def test_skopeo_login_failed(mock_run_cmd):
 
     mock_run_cmd.side_effect = [("not logged into quay", ""), ("", "Login failed")]
     with pytest.raises(RuntimeError, match="Login command didn't generate.*"):
-        executor.skopeo_login("quay_user", "quay_token")
+        executor.skopeo_login("quay_host", "quay_user", "quay_token")
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
