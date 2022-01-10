@@ -30,6 +30,8 @@ class ManifestListMerger:
                 Address to a new image whose manifest list contains the newer data.
             dest_image (str):
                 Address to an older image whose data will be overwritten.
+            src_quay_host (str):
+                Custom hostname to connect to use for pulling src_image.
             src_quay_username (str):
                 Quay username to get src_image. If ommited, external client instance should be set.
             src_quay_password (str):

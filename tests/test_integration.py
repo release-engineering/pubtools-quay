@@ -827,8 +827,6 @@ def test_tag_docker_source_copy_untag(
         b'{"Architecture": "amd64"}',
         b'{"Architecture": "amd64"}',
         b"dest-quay-user",
-        b"Login Succeeded",
-        b"Login Succeeded",
         b"finished tagging",
         b'{"Architecture": "amd64"}',
     ]

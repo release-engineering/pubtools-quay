@@ -56,11 +56,13 @@ class Executor(object):
         """Run a bash command."""
         raise NotImplementedError  # pragma: no cover"
 
-    def skopeo_login(self, host, username=None, password=None):
+    def skopeo_login(self, host="quay.io", username=None, password=None):
         """
         Attempt to login to Quay if no login credentials are present.
 
         Args:
+            host (str):
+                docker registry host (quay.io as default)
             username (str):
                 Username for login.
             password (str):
@@ -407,13 +409,15 @@ class ContainerExecutor(Executor):
         if not success:
             raise RuntimeError("File was not successfully added to the container")
 
-    def skopeo_login(self, host, username=None, password=None):
+    def skopeo_login(self, host="quay.io", username=None, password=None):
         """
         Attempt to login to Quay if no login credentials are present.
 
         This method is reimplemented because it uses a different approach to input the password.
 
         Args:
+            host (str):
+                docker registry host (quay.io as default)
             username (str):
                 Username for login.
             password (str):

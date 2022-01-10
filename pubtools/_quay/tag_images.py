@@ -328,11 +328,11 @@ def tag_images(
         executor_class = functools.partial(LocalExecutor)
 
     with executor_class() as executor:
-        executor.skopeo_login(dest_refs[0].split("/", 1)[0], quay_user, quay_password)
-        if source_quay_user and source_quay_password:
-            executor.skopeo_login(
-                source_ref.split("/", 1)[0], source_quay_user, source_quay_password
-            )
+        dest_host = dest_refs[0].split("/", 1)[0]
+        source_host = source_ref.split("/", 1)[0]
+        executor.skopeo_login(dest_host, quay_user, quay_password)
+        if source_quay_user and source_quay_password and dest_host != source_host:
+            executor.skopeo_login(source_host, source_quay_user, source_quay_password)
         executor.tag_images(source_ref, dest_refs, all_arch)
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
