@@ -526,7 +526,7 @@
             <span class="k">if</span> <span class="n">tag_suffix</span><span class="p">:</span>
                 <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)</span>
                 <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-                    <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                    <span class="n">build_details</span><span class="o">.</span><span class="n">index_image_resolved</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
                 <span class="p">)</span></div></div>
 </pre></div>
 
