@@ -312,6 +312,7 @@ def test_check_repos_validity_success(
     container_signing_push_item,
     container_push_item_external_repos,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -370,9 +371,9 @@ def test_check_repos_validity_missing_repo(
     mock_quay_client,
     mock_get_repo_metadata,
     target_settings,
-    container_push_item_ok,
     container_signing_push_item,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -386,6 +387,10 @@ def test_check_repos_validity_missing_repo(
     hub = mock.MagicMock()
     hub.worker = mock_worker
 
+    mock_get_repository_tags = mock.MagicMock()
+    mock_get_repository_tags.side_effect = ["repo_data1", "repo_data2"]
+    mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
+
     response = mock.MagicMock()
     response.status_code = 404
     mock_get_repo_metadata.side_effect = [
@@ -394,23 +399,25 @@ def test_check_repos_validity_missing_repo(
     ]
     target_settings["propagated_from"] = "target_stage_quay"
     push_docker_instance = push_docker.PushDocker(
-        [container_push_item_ok, container_signing_push_item],
+        [container_signing_push_item],
         hub,
         "1",
         "some-target",
         target_settings,
     )
-    with pytest.raises(exceptions.InvalidRepository, match=".*doesn't exist in Comet.*"):
-        push_docker_instance.check_repos_validity(
-            [container_push_item_ok, container_signing_push_item],
-            hub,
-            target_settings,
-        )
+    push_docker_instance.check_repos_validity(
+        [container_signing_push_item],
+        hub,
+        target_settings,
+    )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
     assert mock_get_repo_metadata.call_count == 2
     mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
+    assert mock_get_repository_tags.call_count == 2
+    mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
+    mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
@@ -424,6 +431,7 @@ def test_check_repos_validity_get_repo_server_error(
     container_push_item_ok,
     container_signing_push_item,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -475,6 +483,7 @@ def test_check_repos_validity_deprecated_repo(
     container_push_item_ok,
     container_signing_push_item,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -524,7 +533,6 @@ def test_check_repos_validity_deprecated_repo_check_disabled(
     container_push_item_ok,
     container_signing_push_item,
 ):
-    target_settings["do_repo_deprecation_check"] = False
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -554,10 +562,7 @@ def test_check_repos_validity_deprecated_repo_check_disabled(
     )
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
-    assert mock_get_repo_metadata.call_count == 3
-    mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
-    mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
-    mock_get_repo_metadata.call_args_list[2] == mock.call("namespace/repo3")
+    assert mock_get_repo_metadata.call_count == 0
 
 
 @mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
@@ -571,6 +576,7 @@ def test_check_repos_validity_missing_stage_repo(
     container_push_item_ok,
     container_signing_push_item,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {
@@ -632,6 +638,7 @@ def test_check_repos_validity_get_stage_repo_server_error(
     container_push_item_ok,
     container_signing_push_item,
 ):
+    target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
     mock_get_target_info.return_value = {
         "settings": {

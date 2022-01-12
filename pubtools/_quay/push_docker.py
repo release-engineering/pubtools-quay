@@ -243,21 +243,22 @@ class PushDocker:
             )
 
         for repo in repos:
-            LOG.info("Checking validity of Comet repository '{0}'".format(repo))
-            # Check if repo exists in Comet
-            try:
-                metadata = cls.get_repo_metadata(repo, target_settings)
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
-                    raise InvalidRepository("Repository {0} doesn't exist in Comet".format(repo))
-                else:
-                    raise
-
-            # Check if repo is not deprecated
-            if "Deprecated" in metadata["release_categories"] and target_settings.get(
-                "do_repo_deprecation_check", True
-            ):
-                raise InvalidRepository("Repository {0} is deprecated".format(repo))
+            # Only check Pyxis if the option is enabled in target settings
+            if target_settings.get("do_repo_deprecation_check", False):
+                LOG.info("Checking validity of repository metadata '{0}'".format(repo))
+                # Check if repo exists in Pyxis
+                try:
+                    metadata = cls.get_repo_metadata(repo, target_settings)
+                    # Check if repo is not deprecated
+                    if "Deprecated" in metadata.get("release_categories", []):
+                        raise InvalidRepository("Repository {0} is deprecated".format(repo))
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 404:
+                        LOG.warning(
+                            "Metadata of repository '{0}' don't exist in Pyxis".format(repo)
+                        )
+                    else:
+                        raise
 
             # if we're pushing to prod target, check if repo exists on stage as well
             if "propagated_from" in target_settings:
