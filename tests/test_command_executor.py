@@ -544,7 +544,7 @@ def test_container_executor_skopeo_login(
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
         " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
-        "-u some-name --password-stdin some-host'"
+        '-u "some-name" --password-stdin some-host\''
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
 
@@ -649,7 +649,7 @@ def test_container_executor_skopeo_login_fail(
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
         " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
-        "-u some-name --password-stdin some-host'"
+        '-u "some-name" --password-stdin some-host\''
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
 

@@ -440,8 +440,8 @@ class ContainerExecutor(Executor):
 
         cmd_login = (
             " sh -c 'cat /tmp/{1} | skopeo login --authfile $HOME/.docker/config.json"
-            " -u {0} --password-stdin %s'" % host
-        ).format(shlex_quote(username), shlex_quote(password_file))
+            ' -u "{0}" --password-stdin %s\'' % host
+        ).format(shlex_quote(username), password_file)
         out, err = self._run_cmd(cmd_login)
 
         if "Login Succeeded" in out:
