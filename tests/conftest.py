@@ -593,6 +593,12 @@ def target_settings():
 
 
 @pytest.fixture
+def target_settings_allow_v1_containers_false(target_settings):
+    target_settings["allow_v1_containers"] = False
+    return target_settings
+
+
+@pytest.fixture
 def container_source_push_item():
     return MockContainerPushItem(
         file_path="push_item_filepath",
@@ -617,6 +623,35 @@ def container_source_push_item():
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:2",
             "build": {"extra": {"image": {"sources_for_nvr": "some-src"}}},
+        },
+    )
+
+
+@pytest.fixture
+def container_v1_push_item():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"test_repo": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:2",
+            "build": {"extra": {"image": {}}},
         },
     )
 

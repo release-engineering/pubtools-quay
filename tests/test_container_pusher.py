@@ -122,7 +122,40 @@ def test_copy_src_item(
     pusher = container_image_pusher.ContainerImagePusher(
         [container_source_push_item], target_settings
     )
-    pusher.copy_source_push_item(container_source_push_item)
+    pusher.copy_source_or_v1_push_item(container_source_push_item)
+    mock_tag_images.assert_called_once_with(
+        "some-registry/src/repo:2",
+        [
+            "quay.io/some-namespace/target----repo:latest-test-tag",
+            "quay.io/some-namespace/target----repo:1.0",
+        ],
+        all_arch=True,
+        quay_user="dest-quay-user",
+        quay_password="dest-quay-pass",
+        container_exec=True,
+        container_image="registry.com/some/image:1",
+        docker_url="unix://var/run/docker.sock",
+        docker_timeout=None,
+        docker_verify_tls=False,
+        docker_cert_path=None,
+        registry_username="quay-executor-user",
+        registry_password="quay-executor-password",
+        send_umb_msg=False,
+        source_quay_password="src-quay-pass",
+        source_quay_user="src-quay-user",
+    )
+
+
+@mock.patch("pubtools._quay.container_image_pusher.tag_images")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_copy_v1_item(
+    mock_quay_client,
+    mock_tag_images,
+    target_settings,
+    container_v1_push_item,
+):
+    pusher = container_image_pusher.ContainerImagePusher([container_v1_push_item], target_settings)
+    pusher.copy_source_or_v1_push_item(container_v1_push_item)
     mock_tag_images.assert_called_once_with(
         "some-registry/src/repo:2",
         [
@@ -324,7 +357,9 @@ def test_copy_multiarch_item_missing_archs(
     mock_tag_images.assert_not_called()
 
 
-@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch(
+    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
+)
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_src_item(
@@ -348,10 +383,36 @@ def test_push_container_items_src_item(
     mock_copy_src.assert_called_once()
 
 
-@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch(
+    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
+)
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
-def test_push_container_items_arch_item_error(
+def test_push_container_items_v1_item(
+    mock_quay_client,
+    mock_copy_multiarch,
+    mock_copy_src,
+    target_settings,
+    container_v1_push_item,
+):
+    mock_get_manifest = mock.MagicMock()
+
+    mock_get_manifest.side_effect = exceptions.ManifestTypeError("no manifest list")
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    pusher = container_image_pusher.ContainerImagePusher([container_v1_push_item], target_settings)
+    pusher.push_container_images()
+
+    mock_copy_multiarch.assert_not_called()
+    mock_copy_src.assert_called_once()
+
+
+@mock.patch(
+    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
+)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_push_container_items_v1_item(
     mock_quay_client,
     mock_copy_multiarch,
     mock_copy_src,
@@ -366,11 +427,36 @@ def test_push_container_items_arch_item_error(
     pusher = container_image_pusher.ContainerImagePusher(
         [container_multiarch_push_item], target_settings
     )
+    pusher.push_container_images()
+
+
+@mock.patch(
+    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
+)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_push_container_items_v1_item_disabled(
+    mock_quay_client,
+    mock_copy_multiarch,
+    mock_copy_src,
+    target_settings_allow_v1_containers_false,
+    container_multiarch_push_item,
+):
+    mock_get_manifest = mock.MagicMock()
+
+    mock_get_manifest.side_effect = exceptions.ManifestTypeError("no manifest list")
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    pusher = container_image_pusher.ContainerImagePusher(
+        [container_multiarch_push_item], target_settings_allow_v1_containers_false
+    )
     with pytest.raises(exceptions.BadPushItem, match=".*contains a single-arch.*"):
         pusher.push_container_images()
 
 
-@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch(
+    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
+)
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_multiarch_item(

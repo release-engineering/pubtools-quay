@@ -110,7 +110,7 @@ class ContainerImagePusher:
             target_settings.get("tag_images_wait_time_increase", 10),
         )
 
-    def copy_source_push_item(self, push_item):
+    def copy_source_or_v1_push_item(self, push_item, is_source=None):
         """
         Perform the tagging operation for a push item containing a source image.
 
@@ -118,7 +118,11 @@ class ContainerImagePusher:
             push_item (ContainerPushItem):
                 Source container push item.
         """
-        LOG.info("Copying push item '{0}' as a source image".format(push_item))
+        if is_source:
+            LOG.info("Copying push item '{0}' as a source image".format(push_item))
+        else:
+            LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
+
         source_ref = push_item.metadata["pull_url"]
         dest_refs = []
         image_schema = "{host}/{namespace}/{repo}:{tag}"
@@ -266,14 +270,18 @@ class ContainerImagePusher:
                 .get("image", {})
                 .get("sources_for_nvr", None)
             )
-            if not sources_for_nvr and not source_ml:
+            if (
+                not sources_for_nvr
+                and not source_ml
+                and not self.target_settings.get("allow_v1_containers", True)
+            ):
                 raise BadPushItem(
                     "Push item '{0}' contains a single-arch image that's not a "
                     "source image. This use-case is not supported".format(item)
                 )
             # Source image
-            if sources_for_nvr:
-                self.copy_source_push_item(item)
+            if sources_for_nvr and source_ml or not source_ml:
+                self.copy_source_or_v1_push_item(item, is_source=sources_for_nvr)
             # Multiarch images
             else:
                 self.copy_multiarch_push_item(item, source_ml)
