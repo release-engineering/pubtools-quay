@@ -120,10 +120,12 @@ implemented in this class.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.command_executor.Executor.skopeo_login">
-<span class="sig-name descname"><span class="pre">skopeo_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#Executor.skopeo_login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.Executor.skopeo_login" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">skopeo_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quay.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#Executor.skopeo_login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.Executor.skopeo_login" title="Permalink to this definition"></a></dt>
 <dd><p>Attempt to login to Quay if no login credentials are present.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
+<dt>host (str):</dt><dd><p>docker registry host (quay.io as default)</p>
+</dd>
 <dt>username (str):</dt><dd><p>Username for login.</p>
 </dd>
 <dt>password (str):</dt><dd><p>Password for login.</p>
@@ -348,11 +350,13 @@ File will be stored in the path /tmp/&lt;file_name&gt;.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.command_executor.ContainerExecutor.skopeo_login">
-<span class="sig-name descname"><span class="pre">skopeo_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#ContainerExecutor.skopeo_login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.ContainerExecutor.skopeo_login" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">skopeo_login</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quay.io'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#ContainerExecutor.skopeo_login"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.ContainerExecutor.skopeo_login" title="Permalink to this definition"></a></dt>
 <dd><p>Attempt to login to Quay if no login credentials are present.</p>
 <p>This method is reimplemented because it uses a different approach to input the password.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
+<dt>host (str):</dt><dd><p>docker registry host (quay.io as default)</p>
+</dd>
 <dt>username (str):</dt><dd><p>Username for login.</p>
 </dd>
 <dt>password (str):</dt><dd><p>Password for login.</p>

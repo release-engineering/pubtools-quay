@@ -88,6 +88,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">src_image</span><span class="p">,</span>
         <span class="n">dest_image</span><span class="p">,</span>
+        <span class="n">src_quay_host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">src_quay_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">src_quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">dest_quay_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -102,6 +103,8 @@
 <span class="sd">                Address to a new image whose manifest list contains the newer data.</span>
 <span class="sd">            dest_image (str):</span>
 <span class="sd">                Address to an older image whose data will be overwritten.</span>
+<span class="sd">            src_quay_host (str):</span>
+<span class="sd">                Custom hostname to connect to use for pulling src_image.</span>
 <span class="sd">            src_quay_username (str):</span>
 <span class="sd">                Quay username to get src_image. If ommited, external client instance should be set.</span>
 <span class="sd">            src_quay_password (str):</span>
@@ -116,7 +119,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">src_image</span> <span class="o">=</span> <span class="n">src_image</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span> <span class="o">=</span> <span class="n">dest_image</span>
         <span class="k">if</span> <span class="n">src_quay_username</span> <span class="ow">and</span> <span class="n">src_quay_password</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span><span class="n">src_quay_username</span><span class="p">,</span> <span class="n">src_quay_password</span><span class="p">,</span> <span class="n">host</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="n">src_quay_username</span><span class="p">,</span> <span class="n">src_quay_password</span><span class="p">,</span> <span class="n">src_quay_host</span> <span class="ow">or</span> <span class="n">host</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">dest_quay_username</span> <span class="ow">and</span> <span class="n">dest_quay_password</span><span class="p">:</span>
