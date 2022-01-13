@@ -729,7 +729,9 @@ class TagDocker:
             self.target_settings.get("skopeo_executor_password") or None,
         ) as executor:
             executor.skopeo_login(
-                self.target_settings["dest_quay_user"], self.target_settings["dest_quay_password"]
+                self.quay_host,
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
             )
             for item in self.push_items:
                 for tag in item.metadata["add_tags"]:

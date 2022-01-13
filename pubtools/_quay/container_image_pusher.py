@@ -50,7 +50,7 @@ class ContainerImagePusher:
             self._src_quay_client = QuayClient(
                 self.target_settings["source_quay_user"],
                 self.target_settings["source_quay_password"],
-                self.quay_host,
+                self.target_settings.get("source_quay_host") or self.quay_host,
             )
         return self._src_quay_client
 
@@ -90,6 +90,8 @@ class ContainerImagePusher:
             all_arch=all_arch,
             quay_user=target_settings["dest_quay_user"],
             quay_password=target_settings["dest_quay_password"],
+            source_quay_user=target_settings.get("source_quay_user"),
+            source_quay_password=target_settings.get("source_quay_password"),
             container_exec=True,
             container_image=target_settings["skopeo_image"],
             docker_url=target_settings.get("docker_host") or "unix://var/run/docker.sock",

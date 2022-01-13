@@ -15,6 +15,7 @@ class ManifestListMerger:
         self,
         src_image,
         dest_image,
+        src_quay_host=None,
         src_quay_username=None,
         src_quay_password=None,
         dest_quay_username=None,
@@ -29,6 +30,8 @@ class ManifestListMerger:
                 Address to a new image whose manifest list contains the newer data.
             dest_image (str):
                 Address to an older image whose data will be overwritten.
+            src_quay_host (str):
+                Custom hostname to connect to use for pulling src_image.
             src_quay_username (str):
                 Quay username to get src_image. If ommited, external client instance should be set.
             src_quay_password (str):
@@ -43,7 +46,9 @@ class ManifestListMerger:
         self.src_image = src_image
         self.dest_image = dest_image
         if src_quay_username and src_quay_password:
-            self._src_quay_client = QuayClient(src_quay_username, src_quay_password, host)
+            self._src_quay_client = QuayClient(
+                src_quay_username, src_quay_password, src_quay_host or host
+            )
         else:
             self._src_quay_client = None
         if dest_quay_username and dest_quay_password:

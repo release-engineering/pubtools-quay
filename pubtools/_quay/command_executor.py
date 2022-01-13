@@ -56,17 +56,19 @@ class Executor(object):
         """Run a bash command."""
         raise NotImplementedError  # pragma: no cover"
 
-    def skopeo_login(self, username=None, password=None):
+    def skopeo_login(self, host="quay.io", username=None, password=None):
         """
         Attempt to login to Quay if no login credentials are present.
 
         Args:
+            host (str):
+                docker registry host (quay.io as default)
             username (str):
                 Username for login.
             password (str):
                 Password for login.
         """
-        cmd_check = "skopeo login --get-login quay.io"
+        cmd_check = "skopeo login --get-login %s" % host
         out, err = self._run_cmd(cmd_check, tolerate_err=True)
         if username and username in out:
             LOG.info("Already logged in to Quay.io")
@@ -79,7 +81,7 @@ class Executor(object):
         LOG.info("Logging in to Quay with provided credentials")
 
         cmd_login = (
-            "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin quay.io"
+            "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin %s" % host
         ).format(shlex_quote(username))
         out, err = self._run_cmd(cmd_login, stdin=password)
 
@@ -407,19 +409,21 @@ class ContainerExecutor(Executor):
         if not success:
             raise RuntimeError("File was not successfully added to the container")
 
-    def skopeo_login(self, username=None, password=None):
+    def skopeo_login(self, host="quay.io", username=None, password=None):
         """
         Attempt to login to Quay if no login credentials are present.
 
         This method is reimplemented because it uses a different approach to input the password.
 
         Args:
+            host (str):
+                docker registry host (quay.io as default)
             username (str):
                 Username for login.
             password (str):
                 Password for login.
         """
-        cmd_check = "skopeo login --get-login quay.io"
+        cmd_check = "skopeo login --get-login %s" % host
         out, err = self._run_cmd(cmd_check, tolerate_err=True)
         if username and username in out:
             LOG.info("Already logged in to Quay.io")
@@ -436,8 +440,8 @@ class ContainerExecutor(Executor):
 
         cmd_login = (
             " sh -c 'cat /tmp/{1} | skopeo login --authfile $HOME/.docker/config.json"
-            " -u {0} --password-stdin quay.io'"
-        ).format(shlex_quote(username), shlex_quote(password_file))
+            ' -u "{0}" --password-stdin %s\'' % host
+        ).format(shlex_quote(username), password_file)
         out, err = self._run_cmd(cmd_login)
 
         if "Login Succeeded" in out:

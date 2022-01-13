@@ -29,7 +29,7 @@ def test_run_tag_entrypoint_local_success(mock_local_executor, hookspy):
     tag_images.tag_images_main(args)
 
     mock_local_executor.assert_called_once_with()
-    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
@@ -66,7 +66,7 @@ def test_run_tag_entrypoint_local_success_all_arch(mock_local_executor):
     tag_images.tag_images_main(args)
 
     mock_local_executor.assert_called_once_with()
-    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], True
     )
@@ -102,7 +102,7 @@ def test_run_tag_entrypoint_remote_success(mock_remote_executor):
     mock_remote_executor.assert_called_once_with(
         "127.0.0.1", "dummy", "/path/to/file.key", "123456", None, False
     )
-    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
@@ -150,7 +150,7 @@ def test_run_tag_entrypoint_container_success(mock_container_executor):
         "registry-user",
         "registry-passwd",
     )
-    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )
@@ -190,7 +190,7 @@ def test_run_tag_entrypoint_send_umb(mock_amq_producer, mock_local_executor):
     tag_images.tag_images_main(args)
 
     mock_local_executor.assert_called_once_with()
-    mock_skopeo_login.assert_called_once_with(None, None)
+    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
     mock_tag_images.assert_called_once_with(
         "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], False
     )

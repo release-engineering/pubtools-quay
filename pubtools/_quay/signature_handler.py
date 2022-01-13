@@ -57,7 +57,7 @@ class SignatureHandler:
             self._src_quay_client = QuayClient(
                 self.target_settings["source_quay_user"],
                 self.target_settings["source_quay_password"],
-                self.quay_host,
+                self.target_settings.get("source_quay_host") or self.quay_host,
             )
         return self._src_quay_client
 
