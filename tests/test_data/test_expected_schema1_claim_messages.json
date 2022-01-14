@@ -1,0 +1,68 @@
+[
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "0",
+        "manifest_digest": "sha256:a1a1a1a1",
+        "repo": "target/repo1",
+        "image_name": "target/repo1",
+        "docker_reference": "some-registry1.com/target/repo1:tag1",
+        "created": "2021-03-19T14:45:23.128632Z"
+    },
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "1",
+        "manifest_digest": "sha256:a1a1a1a1",
+        "repo": "target/repo1",
+        "image_name": "target/repo1",
+        "docker_reference": "some-registry2.com/target/repo1:tag1",
+        "created": "2021-03-19T14:45:23.128632Z"
+    },
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "2",
+        "manifest_digest": "sha256:b2b2b2b2",
+        "repo": "target/repo1",
+        "image_name": "target/repo1",
+        "docker_reference": "some-registry1.com/target/repo1:tag2",
+        "created": "2021-03-19T14:45:23.128632Z"
+    },
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "3",
+        "manifest_digest": "sha256:b2b2b2b2",
+        "repo": "target/repo1",
+        "image_name": "target/repo1",
+        "docker_reference": "some-registry2.com/target/repo1:tag2",
+        "created": "2021-03-19T14:45:23.128632Z"
+    },
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "4",
+        "manifest_digest": "sha256:c3c3c3c3",
+        "repo": "target/repo2",
+        "image_name": "target/repo2",
+        "docker_reference": "some-registry1.com/target/repo2:tag3",
+        "created": "2021-03-19T14:45:23.128632Z"
+    },
+    {
+        "sig_key_id": "some-key",
+        "claim_file": "some-encode",
+        "pub_task_id": "1",
+        "request_id": "5",
+        "manifest_digest": "sha256:c3c3c3c3",
+        "repo": "target/repo2",
+        "image_name": "target/repo2",
+        "docker_reference": "some-registry2.com/target/repo2:tag3",
+        "created": "2021-03-19T14:45:23.128632Z"
+    }
+]

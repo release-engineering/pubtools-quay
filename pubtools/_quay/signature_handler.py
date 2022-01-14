@@ -8,7 +8,12 @@ import tempfile
 import proton
 
 from .exceptions import SigningError
-from .utils.misc import run_entrypoint, log_step, get_pyxis_ssl_paths
+from .utils.misc import (
+    run_entrypoint,
+    log_step,
+    get_pyxis_ssl_paths,
+    get_internal_container_repo_name,
+)
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
 
@@ -49,6 +54,7 @@ class SignatureHandler:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
         self._src_quay_client = None
+        self._dest_quay_client = None
 
     @property
     def src_quay_client(self):
@@ -60,6 +66,17 @@ class SignatureHandler:
                 self.target_settings.get("source_quay_host") or self.quay_host,
             )
         return self._src_quay_client
+
+    @property
+    def dest_quay_client(self):
+        """Create and access QuayClient for dest image."""
+        if self._dest_quay_client is None:
+            self._dest_quay_client = QuayClient(
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
+                self.quay_host,
+            )
+        return self._dest_quay_client
 
     @classmethod
     def create_manifest_claim_message(
@@ -427,6 +444,44 @@ class ContainerSignatureHandler(SignatureHandler):
 
         return claim_messages
 
+    def construct_item_schema1_claim_messages(self, push_item):
+        """
+        Construct all the schema1 signature claim messages for RADAS for one push item.
+
+        The reason why these claims are created separately at a different stage is that
+        an image must already be in its destination in order to retrieve its schema1 manifest.
+        Thus, there will be a small time window where unsigned schema1 digests will be available
+        for customers.
+
+        NOTE: Only one schema1 manifest exists for every tag. This is true even for multiarch
+        images. The reason is that schema1 manifests predate the existence of manifest lists.
+
+        push_item (ContainerPushItem):
+            Container push item whose schema1 claim messages will be created.
+        Returns ([dict]):
+            Schema1 claim messages for a given push item.
+        """
+        LOG.info("Constructing schema1 claim messages for push item '{0}'".format(push_item))
+        claim_messages = []
+        image_schema = "{host}/{namespace}/{repo}:{tag}"
+
+        if push_item.claims_signing_key:
+            for repo, tags in sorted(push_item.metadata["tags"].items()):
+                internal_repo = get_internal_container_repo_name(repo)
+                for tag in tags:
+                    dest_ref = image_schema.format(
+                        host=self.quay_host,
+                        namespace=self.target_settings["quay_namespace"],
+                        repo=internal_repo,
+                        tag=tag,
+                    )
+                    digest = self.dest_quay_client.get_manifest_digest(dest_ref, v2s1_manifest=True)
+                    claim_messages += self.construct_variant_claim_messages(
+                        repo, tag, digest, [push_item.claims_signing_key]
+                    )
+
+        return claim_messages
+
     def construct_variant_claim_messages(self, repo, tag, digest, signing_keys):
         """
         Construct claim messages for all specified variations of a given image.
@@ -466,7 +521,7 @@ class ContainerSignatureHandler(SignatureHandler):
         return claim_messages
 
     @log_step("Sign container images")
-    def sign_container_images(self, push_items):
+    def sign_container_images(self, push_items, only_v2s1_manifests=False):
         """
         Perform all the steps needed to sign the images of specified push items.
 
@@ -476,9 +531,16 @@ class ContainerSignatureHandler(SignatureHandler):
         - send messages to RADAS and receive signatures (ManifestClaimsHandler class)
         - Upload new signatures to Pyxis
 
+        NOTE: The reason for separating the creation of schema1 and schema2 claim messages is that
+        they must happen in different stages of the push, schema2 before pushing to destination,
+        and schema1 after pushing to destination.
+
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
+            only_v2s1_manifests (bool):
+                If True, only claim messages for schema1 manifests are created. If False,
+                only claim messages for schema2 manifests are created.
         """
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
@@ -488,7 +550,10 @@ class ContainerSignatureHandler(SignatureHandler):
 
         claim_messages = []
         for item in push_items:
-            claim_messages += self.construct_item_claim_messages(item)
+            if only_v2s1_manifests:
+                claim_messages += self.construct_item_schema1_claim_messages(item)
+            else:
+                claim_messages += self.construct_item_claim_messages(item)
         claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         claim_messages = self.filter_claim_messages(claim_messages)
         if not claim_messages:

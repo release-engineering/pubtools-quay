@@ -39,6 +39,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     operator_push_item_ok,
     src_manifest_list,
     dest_manifest_list,
+    v2s1_manifest,
     fake_cert_key_paths,
 ):
     # hub usage has to be mocked
@@ -68,6 +69,16 @@ def test_push_docker_multiarch_merge_ml_operator(
             }
         ],
         # pubtools-pyxis-upload-signatures
+        [],
+        # pubtools-pyxis-get-signatures (containers) (v2s1)
+        [
+            {
+                "reference": "registry.com/namespace/repo:1",
+                "manifest_digest": "e5e5e5",
+                "sig_key_id": "some-key",
+            }
+        ],
+        # pubtools-pyxis-upload-signatures (v2s1)
         [],
         # pubtools-pyxis-get-signatures (operators)
         [
@@ -170,6 +181,13 @@ def test_push_docker_multiarch_merge_ml_operator(
                     },
                 },
             ],
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/target----repo/manifests/sha256:9daac465523ce42a89e605151734e7b92c5ade2123055a6a2aeabbf60e5edfa4",
@@ -233,6 +251,7 @@ def test_push_docker_multiarch_simple_workflow(
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
+    v2s1_manifest,
     fake_cert_key_paths,
 ):
     # hub usage has to be mocked
@@ -262,6 +281,16 @@ def test_push_docker_multiarch_simple_workflow(
             }
         ],
         # pubtools-pyxis-upload-signatures
+        [],
+        # pubtools-pyxis-get-signatures (containers) (v2s1)
+        [
+            {
+                "reference": "registry.com/namespace/repo:1",
+                "manifest_digest": "e5e5e5",
+                "sig_key_id": "some-key",
+            }
+        ],
+        # pubtools-pyxis-upload-signatures (v2s1)
         [],
         # pubtools-pyxis-get-signatures (containers) (removing signatures)
         [
@@ -325,6 +354,12 @@ def test_push_docker_multiarch_simple_workflow(
                     },
                 },
             ],
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/target----repo/manifests/sha256:8ce181d89b7bb7f1639d8df3d65d630b1322d0bb6daff5c492eec24ec53628d5",
@@ -366,6 +401,7 @@ def test_push_docker_source(
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
+    v2s1_manifest,
     fake_cert_key_paths,
 ):
     # hub usage has to be mocked
@@ -395,6 +431,16 @@ def test_push_docker_source(
             }
         ],
         # pubtools-pyxis-upload-signatures
+        [],
+        # pubtools-pyxis-get-signatures (containers) (v2s1)
+        [
+            {
+                "reference": "registry.com/namespace/repo:1",
+                "manifest_digest": "e5e5e5",
+                "sig_key_id": "some-key",
+            }
+        ],
+        # pubtools-pyxis-upload-signatures (v2s1)
         [],
         # pubtools-pyxis-get-signatures (containers) (removing signatures)
         [
@@ -460,6 +506,18 @@ def test_push_docker_source(
             ],
         )
         m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/1.0",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+        m.get(
             "https://quay.io/v2/some-namespace/target----repo/manifests/sha256:8ce181d89b7bb7f1639d8df3d65d630b1322d0bb6daff5c492eec24ec53628d5",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
@@ -497,6 +555,7 @@ def test_push_docker_multiarch_rollback(
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
+    v2s1_manifest,
     fake_cert_key_paths,
 ):
     # hub usage has to be mocked
@@ -570,6 +629,12 @@ def test_push_docker_multiarch_rollback(
                     },
                 },
             ],
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
         )
         m.put(
             "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
