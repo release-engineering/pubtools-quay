@@ -705,7 +705,9 @@ def test_generate_backup_mapping(
     mock_get_manifest_digest = mock.MagicMock()
     mock_get_manifest_digest.side_effect = [
         "sha256:a1a1a1a1a1a1",
+        "sha256:a3a3a3a3a3a3",
         "sha256:b2b2b2b2b2b2",
+        "sha256:b4b4b4b4b4b4",
     ]
     mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
@@ -723,23 +725,33 @@ def test_generate_backup_mapping(
     backup_tags, rollback_tags = push_docker_instance.generate_backup_mapping(
         [container_multiarch_push_item, container_signing_push_item]
     )
-
+    print(backup_tags)
     assert backup_tags == {
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo",
             tag="latest-test-tag",
             digest="sha256:a1a1a1a1a1a1",
+            v2s1_digest="sha256:a3a3a3a3a3a3",
         ): "some-manifest-list"
     }
     assert rollback_tags == [
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo1", tag="tag1", digest=None
+            repo="some-namespace/target----repo1",
+            tag="tag1",
+            digest=None,
+            v2s1_digest=None,
         ),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo1", tag="tag2", digest=None
+            repo="some-namespace/target----repo1",
+            tag="tag2",
+            digest=None,
+            v2s1_digest=None,
         ),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo2", tag="tag3", digest=None
+            repo="some-namespace/target----repo2",
+            tag="tag3",
+            digest=None,
+            v2s1_digest=None,
         ),
     ]
     assert mock_get_repository_tags.call_count == 3
@@ -775,7 +787,9 @@ def test_generate_backup_mapping_server_error(
     mock_get_manifest_digest = mock.MagicMock()
     mock_get_manifest_digest.side_effect = [
         "sha256:a1a1a1a1a1a1",
+        "sha256:a3a3a3a3a3a3",
         "sha256:b2b2b2b2b2b2",
+        "sha256:b4b4b4b4b4b4",
     ]
     mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
@@ -811,18 +825,30 @@ def test_rollback(
 
     backup_tags = {
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo1", tag="1", digest=None
+            repo="some-namespace/target----repo1",
+            tag="1",
+            digest=None,
+            v2s1_digest=None,
         ): "some-manifest-list",
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo2", tag="2", digest=None
+            repo="some-namespace/target----repo2",
+            tag="2",
+            digest=None,
+            v2s1_digest=None,
         ): "other-manifest-list",
     }
     rollback_tags = [
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo3", tag="3", digest=None
+            repo="some-namespace/target----repo3",
+            tag="3",
+            digest=None,
+            v2s1_digest=None,
         ),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo4", tag="4", digest=None
+            repo="some-namespace/target----repo4",
+            tag="4",
+            digest=None,
+            v2s1_digest=None,
         ),
     ]
     push_docker_instance = push_docker.PushDocker(
@@ -868,10 +894,16 @@ def test_rollback_deleted_tag_not_found(
     backup_tags = {}
     rollback_tags = [
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo3", tag="3", digest=None
+            repo="some-namespace/target----repo3",
+            tag="3",
+            digest=None,
+            v2s1_digest=None,
         ),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo4", tag="4", digest=None
+            repo="some-namespace/target----repo4",
+            tag="4",
+            digest=None,
+            v2s1_digest=None,
         ),
     ]
     push_docker_instance = push_docker.PushDocker(
@@ -910,10 +942,16 @@ def test_rollback_delete_tag_server_error(
     backup_tags = {}
     rollback_tags = [
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo3", tag="3", digest=None
+            repo="some-namespace/target----repo3",
+            tag="3",
+            digest=None,
+            v2s1_digest=None,
         ),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo4", tag="4", digest=None
+            repo="some-namespace/target----repo4",
+            tag="4",
+            digest=None,
+            v2s1_digest=None,
         ),
     ]
     push_docker_instance = push_docker.PushDocker(
@@ -992,12 +1030,12 @@ def test_push_docker_full_success(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag", None): {
-                "digest": "some-digest"
-            },
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----some-repo", "sometag2", None): {
-                "manifests": [{"digest": "some-digest"}]
-            },
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----some-repo", "sometag", None, None
+            ): {"digest": "some-digest"},
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----some-repo", "sometag2", None, None
+            ): {"manifests": [{"digest": "some-digest"}]},
         },
         ["item1", "item2"],
     )
@@ -1025,7 +1063,13 @@ def test_push_docker_full_success(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
+    )
+    assert mock_sign_container_images.call_args_list[1] == mock.call(
+        [container_multiarch_push_item], only_v2s1_manifests=True
+    )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
@@ -1106,12 +1150,12 @@ def test_push_docker_full_success_repush(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
-                "digest": "some-digest"
-            },
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag2", None): {
-                "manifests": [{"digest": "some-digest"}]
-            },
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"},
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag2", None, None
+            ): {"manifests": [{"digest": "some-digest"}]},
         },
         ["item1", "item2"],
     )
@@ -1144,8 +1188,13 @@ def test_push_docker_full_success_repush(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_container_images.assert_called_once_with(
+    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item, container_push_item_external_repos]
+    )
+    assert mock_sign_container_images.call_args_list[1] == mock.call(
+        [container_multiarch_push_item, container_push_item_external_repos],
+        only_v2s1_manifests=True,
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
@@ -1206,9 +1255,9 @@ def test_push_docker_no_operator_push_items(
     mock_get_operator_push_items.return_value = []
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
-                "digest": "some-digest"
-            }
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
     )
@@ -1231,7 +1280,14 @@ def test_push_docker_no_operator_push_items(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
+    )
+    assert mock_sign_container_images.call_args_list[1] == mock.call(
+        [container_multiarch_push_item],
+        only_v2s1_manifests=True,
+    )
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
@@ -1290,9 +1346,9 @@ def test_push_docker_failure_no_rollback(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
-                "digest": "some-digest"
-            }
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
     )
@@ -1320,7 +1376,14 @@ def test_push_docker_failure_no_rollback(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
+    )
+    assert mock_sign_container_images.call_args_list[1] == mock.call(
+        [container_multiarch_push_item],
+        only_v2s1_manifests=True,
+    )
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
     mock_push_index_images.assert_called_once()
@@ -1378,9 +1441,9 @@ def test_push_docker_failure_rollback(
     mock_get_operator_push_items.return_value = [operator_push_item_ok]
     mock_generate_backup_mapping.return_value = (
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
-                "digest": "some-digest"
-            }
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
     )
@@ -1408,16 +1471,23 @@ def test_push_docker_failure_rollback(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    mock_sign_container_images.assert_called_once_with([container_multiarch_push_item])
+    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
+    )
+    assert mock_sign_container_images.call_args_list[1] == mock.call(
+        [container_multiarch_push_item],
+        only_v2s1_manifests=True,
+    )
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
     mock_push_index_images.assert_called_once()
     mock_sign_operator_images.assert_called_once()
     mock_rollback.assert_called_once_with(
         {
-            push_docker.PushDocker.ImageData("some-ns/orig-ns----somerepo", "sometag", None): {
-                "digest": "some-digest"
-            }
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
     )
@@ -1463,7 +1533,7 @@ def test_remove_old_signatures_no_old_signatures(
 ):
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
-        "another-reference/some-product----repo:sometag", "sometag", None
+        "another-reference/some-product----repo:sometag", "sometag", None, None
     )
     backup_tags[image_data] = {"digest": "somedigest"}
 
@@ -1489,7 +1559,6 @@ def test_remove_old_signatures_no_old_signatures(
         mock.MagicMock(),
     ).remove_old_signatures(
         [container_push_item_external_repos],
-        [],
         [],
         backup_tags,
         {},
@@ -1527,7 +1596,7 @@ def test_remove_old_signatures_container_signatures(
     mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
-        "reference/some-product----some-repo", "sometag", "some-digest"
+        "reference/some-product----some-repo", "sometag", "some-digest", "other-digest"
     )
     backup_tags[image_data] = "v2sch2-manifest"
     mock_target_settings = {
@@ -1544,7 +1613,6 @@ def test_remove_old_signatures_container_signatures(
         mock_target_settings,
     ).remove_old_signatures(
         [container_push_item_external_repos],
-        [],
         [],
         {},
         backup_tags,
@@ -1595,7 +1663,7 @@ def test_remove_old_signatures_operator_signatures(
     mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
-        "reference/some-product----some-repo", "someversion", None
+        "reference/some-product----some-repo", "someversion", None, None
     )
     backup_tags[image_data] = {"digest": "some-digest"}
     mock_target_settings = {
@@ -1612,7 +1680,6 @@ def test_remove_old_signatures_operator_signatures(
         mock_target_settings,
     ).remove_old_signatures(
         [container_push_item_external_repos],
-        [operator_push_item_ok],
         existing_index_images,
         {
             "v4.5": {

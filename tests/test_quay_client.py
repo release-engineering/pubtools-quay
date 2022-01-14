@@ -354,6 +354,87 @@ def test_get_manifest_accept_any():
     assert v2s1_manifest == ret_manifest
 
 
+def test_get_v2s1_manifest():
+    v2s1_manifest = {
+        "name": "hello-world",
+        "tag": "latest",
+        "architecture": "amd64",
+        "fsLayers": [],
+        "history": [],
+        "schemaVersion": 1,
+        "signatures": [],
+    }
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            json=v2s1_manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        ret_manifest = client.get_manifest("quay.io/namespace/image:1", v2s1_manifest=True)
+        assert m.call_count == 1
+
+    assert v2s1_manifest == ret_manifest
+
+
+def test_get_v2s1_manifest_wrong_type():
+    v2s2_manifest = {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 429,
+        "digest": "sha256:6d5f4d65fg4d6f54g",
+        "platform": {"architecture": "arm64", "os": "linux"},
+    }
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            json=v2s2_manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a V2S1 manifest"):
+            client.get_manifest("quay.io/namespace/image:1", v2s1_manifest=True)
+        assert m.call_count == 1
+
+
+def test_get_v2s1_manifest_raw():
+    v2s1_manifest_data = {
+        "name": "hello-world",
+        "tag": "latest",
+        "architecture": "amd64",
+        "fsLayers": [],
+        "history": [],
+        "schemaVersion": 1,
+        "signatures": [],
+    }
+    v2s1_manifest = json.dumps(v2s1_manifest_data, sort_keys=True, indent=4)
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            text=v2s1_manifest,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+
+        client = quay_client.QuayClient("user", "pass")
+        ret_manifest = client.get_manifest(
+            "quay.io/namespace/image:1", v2s1_manifest=True, raw=True
+        )
+        assert m.call_count == 1
+
+    assert v2s1_manifest == ret_manifest
+
+
+def test_get_manifest_v2s1_list_same_time():
+
+    client = quay_client.QuayClient("user", "pass")
+    with pytest.raises(ValueError, match=".*at the same time"):
+        client.get_manifest("quay.io/namespace/image:1", v2s1_manifest=True, manifest_list=True)
+
+
 def test_upload_manifest_list_success():
     ml = {
         "schemaVersion": 2,

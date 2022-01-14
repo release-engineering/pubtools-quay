@@ -1369,6 +1369,24 @@ def dest_manifest_list():
 
 
 @pytest.fixture
+def v2s1_manifest():
+    return {
+        "schemaVersion": 1,
+        "tag": "5",
+        "name": "some-repo/some-image",
+        "architecture": "amd64",
+        "fsLayers": [
+            {"blobSum": "sha256:e6307d6a11e152dd13522c8fc4209bf859b3d2d0acbdd2aaaddf314cdd3677d8"}
+        ],
+        "history": [
+            {
+                "v1Compatibility": '{"comment": "Created by Image Factory", "created": "2020-11-20T16:43:05Z", "config": {"Systemd": false, "Hostname": "", "Entrypoint": null, "Env": ["DISTTAG=f34container", "FGC=f34", "container=oci"], "OnBuild": null, "OpenStdin": false, "MacAddress": "", "User": "", "VolumeDriver": "", "AttachStderr": false, "AttachStdout": false, "NetworkDisabled": false, "StdinOnce": false, "Cmd": ["/bin/bash"], "WorkingDir": "", "AttachStdin": false, "Volumes": null, "Tty": false, "Domainname": "", "Image": "", "Labels": {"version": "34", "vendor": "Fedora Project", "name": "fedora", "license": "MIT"}, "ExposedPorts": null}, "container_config": {"Systemd": false, "Hostname": "", "Entrypoint": null, "Env": null, "OnBuild": null, "OpenStdin": false, "MacAddress": "", "User": "", "VolumeDriver": "", "AttachStderr": false, "AttachStdout": false, "NetworkDisabled": false, "StdinOnce": false, "Cmd": null, "WorkingDir": "", "AttachStdin": false, "Volumes": null, "Tty": false, "Domainname": "", "Image": "", "Labels": null, "ExposedPorts": null}, "Size": 69754778, "architecture": "amd64", "docker_version": "1.10.1", "os": "linux", "id": "1a1d7fd200d783bd61e78e9e2fed23c8c1ffcefe54168939c53084f4af7e884e"}'
+            }
+        ],
+    }
+
+
+@pytest.fixture
 def tag_docker_push_item_add_integration():
     return MockContainerPushItem(
         file_path="push_item_filepath",

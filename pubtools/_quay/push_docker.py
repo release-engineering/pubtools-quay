@@ -25,7 +25,7 @@ LOG = logging.getLogger("pubtools.quay")
 class PushDocker:
     """Handle full Docker push workflow."""
 
-    ImageData = namedtuple("ImageData", ["repo", "tag", "digest"])
+    ImageData = namedtuple("ImageData", ["repo", "tag", "digest", "v2s1_digest"])
 
     def __init__(self, push_items, hub, task_id, target_name, target_settings):
         """
@@ -320,7 +320,7 @@ class PushDocker:
                     # repo doesn't exist, add to rollback tags
                     if not repo_tags:
                         # for rollback tags digest is not known
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
                         continue
                     # tag exists in the repo, add to backup tags
                     if tag in repo_tags.get("tags", {}):
@@ -328,8 +328,11 @@ class PushDocker:
                             host=self.quay_host, repo=full_repo, tag=tag
                         )
                         digest = self.dest_quay_client.get_manifest_digest(image_tag)
+                        v2s1_digest = self.dest_quay_client.get_manifest_digest(
+                            image_tag, v2s1_manifest=True
+                        )
                         # for backup tags store also digest
-                        image_data = PushDocker.ImageData(full_repo, tag, digest)
+                        image_data = PushDocker.ImageData(full_repo, tag, digest, v2s1_digest)
                         image = image_schema.format(
                             host=self.quay_host,
                             repo=full_repo,
@@ -340,7 +343,7 @@ class PushDocker:
                     # tag doesn't exist in the repo, add to rollback tags
                     else:
                         # for rollback tags digest is not known
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None))
+                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
 
         # it's possible that rollback tags will contain duplicate entries
         rollback_tags = sorted(list(set(rollback_tags)))
@@ -381,7 +384,6 @@ class PushDocker:
     def remove_old_signatures(
         self,
         push_items,
-        operator_push_items,
         existing_index_images,
         iib_results,
         backup_tags,
@@ -402,8 +404,6 @@ class PushDocker:
         Args:
             push_items ([_PushItem]):
                 List of container push items.
-            operator_push_items ([_PushItem]):
-                List of operator push items.
             existing_index_images: ([(digest, version)]):
                 List of tuple of digest + version(tag) of index images which existed
                 before new index image was pushed in the current task
@@ -422,6 +422,9 @@ class PushDocker:
         claim_messages = []
         for item in push_items:
             claim_messages += container_signature_handler.construct_item_claim_messages(item)
+            claim_messages += container_signature_handler.construct_item_schema1_claim_messages(
+                item
+            )
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
@@ -432,20 +435,22 @@ class PushDocker:
                     outdated_signatures.append((arch_manifest["digest"], image_data.tag, ext_repo))
             else:
                 outdated_signatures.append((image_data.digest, image_data.tag, ext_repo))
+            # also add V2S1 signature (only one per tag)
+            outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
 
         signatures_to_remove = []
-        for esig in container_signature_handler.get_signatures_from_pyxis(
+        for existing_signature in container_signature_handler.get_signatures_from_pyxis(
             [sig[0] for sig in outdated_signatures]
         ):
             if (
-                esig["manifest_digest"],
-                esig["reference"].split(":")[-1],
-                esig["repository"],
+                existing_signature["manifest_digest"],
+                existing_signature["reference"].split(":")[-1],
+                existing_signature["repository"],
             ) in outdated_signatures and (
-                esig["manifest_digest"],
-                esig["reference"],
+                existing_signature["manifest_digest"],
+                existing_signature["reference"],
             ) not in new_signatures:
-                signatures_to_remove.append(esig["_id"])
+                signatures_to_remove.append(existing_signature["_id"])
 
         cert, key = get_pyxis_ssl_paths(self.target_settings)
 
@@ -481,18 +486,18 @@ class PushDocker:
                 (m["manifest_digest"], m["docker_reference"]) for m in ii_claim_messages
             ]
 
-            for esig in container_signature_handler.get_signatures_from_pyxis(
+            for existing_signature in container_signature_handler.get_signatures_from_pyxis(
                 [digest_version[0] for digest_version in existing_index_images]
             ):
                 if (
-                    esig["manifest_digest"],
-                    esig["reference"],
+                    existing_signature["manifest_digest"],
+                    existing_signature["reference"],
                 ) not in new_operator_signatures and (
-                    esig["manifest_digest"],
-                    esig["reference"].split(":")[-1],
-                    esig["repository"],
+                    existing_signature["manifest_digest"],
+                    existing_signature["reference"].split(":")[-1],
+                    existing_signature["repository"],
                 ) in existing_index_images:
-                    signatures_to_remove.append(esig["_id"])
+                    signatures_to_remove.append(existing_signature["_id"])
             if signatures_to_remove:
                 signature_remover.remove_signatures_from_pyxis(
                     signatures_to_remove,
@@ -511,6 +516,7 @@ class PushDocker:
         - Generate backup mapping that will be used for rollback if something goes wrong.
         - Sign container images using RADAS and upload signatures to Pyxis
         - Push container images to their destinations
+        - Sign V2S1 images (has to be done after pushing)
         - Filter out push items to only include operator image items
         - Add operator bundles to index images by using IIB
         - Sign index images using RADAS and upload signatures to Pyxis
@@ -546,7 +552,12 @@ class PushDocker:
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
 
-        failed = 0
+        # sign V2S1 images
+        container_signature_handler.sign_container_images(
+            docker_push_items, only_v2s1_manifests=True
+        )
+
+        failed = False
         if operator_push_items:
             # Build index images
             operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
@@ -563,15 +574,14 @@ class PushDocker:
             if set([x["iib_result"] for x in iib_results.values()]) == set([False]):
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
-                failed = 1
+                failed = True
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
-                failed = 1
+                failed = True
 
         # Remove old signatures
         self.remove_old_signatures(
             docker_push_items,
-            operator_push_items,
             existing_index_images,
             dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
             backup_tags,
@@ -580,6 +590,7 @@ class PushDocker:
             sig_remover,
         )
         if failed:
+            # Why???
             sys.exit(1)
 
 
