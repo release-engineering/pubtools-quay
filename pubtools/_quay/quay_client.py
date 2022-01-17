@@ -78,7 +78,11 @@ class QuayClient:
             kwargs = {"headers": {"Accept": QuayClient.MANIFEST_V2S1_TYPE}}
             response = self._request_quay("GET", endpoint, kwargs)
 
-            if response.headers["Content-Type"] != QuayClient.MANIFEST_V2S1_TYPE:
+            # text/plain may be returned for V2S1 by our CDN
+            if (
+                response.headers["Content-Type"] != QuayClient.MANIFEST_V2S1_TYPE
+                and "text/plain" not in response.headers["Content-Type"]
+            ):
                 raise ManifestTypeError("Image {0} doesn't have a V2S1 manifest".format(image))
 
             if raw:
