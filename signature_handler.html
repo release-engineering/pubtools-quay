@@ -293,6 +293,24 @@ sturcture is an iterator to reduce memory requirements.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_schema1_claim_messages">
+<span class="sig-name descname"><span class="pre">construct_item_schema1_claim_messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#ContainerSignatureHandler.construct_item_schema1_claim_messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_schema1_claim_messages" title="Permalink to this definition"></a></dt>
+<dd><p>Construct all the schema1 signature claim messages for RADAS for one push item.</p>
+<p>The reason why these claims are created separately at a different stage is that
+an image must already be in its destination in order to retrieve its schema1 manifest.
+Thus, there will be a small time window where unsigned schema1 digests will be available
+for customers.</p>
+<p>NOTE: Only one schema1 manifest exists for every tag. This is true even for multiarch
+images. The reason is that schema1 manifests predate the existence of manifest lists.</p>
+<dl class="simple">
+<dt>push_item (ContainerPushItem):</dt><dd><p>Container push item whose schema1 claim messages will be created.</p>
+</dd>
+<dt>Returns ([dict]):</dt><dd><p>Schema1 claim messages for a given push item.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_handler.ContainerSignatureHandler.construct_variant_claim_messages">
 <span class="sig-name descname"><span class="pre">construct_variant_claim_messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digest</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signing_keys</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#ContainerSignatureHandler.construct_variant_claim_messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.ContainerSignatureHandler.construct_variant_claim_messages" title="Permalink to this definition"></a></dt>
 <dd><p>Construct claim messages for all specified variations of a given image.</p>
@@ -316,16 +334,22 @@ sturcture is an iterator to reduce memory requirements.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_handler.ContainerSignatureHandler.sign_container_images">
-<span class="sig-name descname"><span class="pre">sign_container_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#ContainerSignatureHandler.sign_container_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.ContainerSignatureHandler.sign_container_images" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">sign_container_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only_v2s1_manifests</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#ContainerSignatureHandler.sign_container_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.ContainerSignatureHandler.sign_container_images" title="Permalink to this definition"></a></dt>
 <dd><p>Perform all the steps needed to sign the images of specified push items.</p>
 <p>The workflow can be summarized as:
 - create manifest claim messages for all items, registries, keys, digests, repos, and tags
 - filter out requests for signatures which are already in Pyxis
 - send messages to RADAS and receive signatures (ManifestClaimsHandler class)
 - Upload new signatures to Pyxis</p>
+<p>NOTE: The reason for separating the creation of schema1 and schema2 claim messages is that
+they must happen in different stages of the push, schema2 before pushing to destination,
+and schema1 after pushing to destination.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>push_items (([ContainerPushItem])):</dt><dd><p>Container push items whose images will be signed.</p>
+</dd>
+<dt>only_v2s1_manifests (bool):</dt><dd><p>If True, only claim messages for schema1 manifests are created. If False,
+only claim messages for schema2 manifests are created.</p>
 </dd>
 </dl>
 </dd>

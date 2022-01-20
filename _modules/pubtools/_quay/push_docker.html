@@ -98,7 +98,7 @@
 <div class="viewcode-block" id="PushDocker"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker">[docs]</a><span class="k">class</span> <span class="nc">PushDocker</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Handle full Docker push workflow.&quot;&quot;&quot;</span>
 
-    <span class="n">ImageData</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ImageData&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;tag&quot;</span><span class="p">,</span> <span class="s2">&quot;digest&quot;</span><span class="p">])</span>
+    <span class="n">ImageData</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ImageData&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;tag&quot;</span><span class="p">,</span> <span class="s2">&quot;digest&quot;</span><span class="p">,</span> <span class="s2">&quot;v2s1_digest&quot;</span><span class="p">])</span>
 
 <div class="viewcode-block" id="PushDocker.__init__"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -394,7 +394,7 @@
                     <span class="c1"># repo doesn&#39;t exist, add to rollback tags</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">repo_tags</span><span class="p">:</span>
                         <span class="c1"># for rollback tags digest is not known</span>
-                        <span class="n">rollback_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                        <span class="n">rollback_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
                         <span class="k">continue</span>
                     <span class="c1"># tag exists in the repo, add to backup tags</span>
                     <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">repo_tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{}):</span>
@@ -402,8 +402,11 @@
                             <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
                         <span class="p">)</span>
                         <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
+                        <span class="n">v2s1_digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span>
+                            <span class="n">image_tag</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="kc">True</span>
+                        <span class="p">)</span>
                         <span class="c1"># for backup tags store also digest</span>
-                        <span class="n">image_data</span> <span class="o">=</span> <span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">digest</span><span class="p">)</span>
+                        <span class="n">image_data</span> <span class="o">=</span> <span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">digest</span><span class="p">,</span> <span class="n">v2s1_digest</span><span class="p">)</span>
                         <span class="n">image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                             <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
                             <span class="n">repo</span><span class="o">=</span><span class="n">full_repo</span><span class="p">,</span>
@@ -414,7 +417,7 @@
                     <span class="c1"># tag doesn&#39;t exist in the repo, add to rollback tags</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="c1"># for rollback tags digest is not known</span>
-                        <span class="n">rollback_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                        <span class="n">rollback_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
         <span class="c1"># it&#39;s possible that rollback tags will contain duplicate entries</span>
         <span class="n">rollback_tags</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">rollback_tags</span><span class="p">)))</span>
@@ -455,7 +458,6 @@
 <div class="viewcode-block" id="PushDocker.remove_old_signatures"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.remove_old_signatures">[docs]</a>    <span class="k">def</span> <span class="nf">remove_old_signatures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">push_items</span><span class="p">,</span>
-        <span class="n">operator_push_items</span><span class="p">,</span>
         <span class="n">existing_index_images</span><span class="p">,</span>
         <span class="n">iib_results</span><span class="p">,</span>
         <span class="n">backup_tags</span><span class="p">,</span>
@@ -476,8 +478,6 @@
 <span class="sd">        Args:</span>
 <span class="sd">            push_items ([_PushItem]):</span>
 <span class="sd">                List of container push items.</span>
-<span class="sd">            operator_push_items ([_PushItem]):</span>
-<span class="sd">                List of operator push items.</span>
 <span class="sd">            existing_index_images: ([(digest, version)]):</span>
 <span class="sd">                List of tuple of digest + version(tag) of index images which existed</span>
 <span class="sd">                before new index image was pushed in the current task</span>
@@ -496,6 +496,9 @@
         <span class="n">claim_messages</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">push_items</span><span class="p">:</span>
             <span class="n">claim_messages</span> <span class="o">+=</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">construct_item_claim_messages</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">claim_messages</span> <span class="o">+=</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">construct_item_schema1_claim_messages</span><span class="p">(</span>
+                <span class="n">item</span>
+            <span class="p">)</span>
         <span class="n">new_signatures</span> <span class="o">=</span> <span class="p">[(</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;docker_reference&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">claim_messages</span><span class="p">]</span>
         <span class="n">outdated_signatures</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -506,20 +509,22 @@
                     <span class="n">outdated_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">arch_manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">image_data</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">ext_repo</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">outdated_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">image_data</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">image_data</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">ext_repo</span><span class="p">))</span>
+            <span class="c1"># also add V2S1 signature (only one per tag)</span>
+            <span class="n">outdated_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">image_data</span><span class="o">.</span><span class="n">v2s1_digest</span><span class="p">,</span> <span class="n">image_data</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">ext_repo</span><span class="p">))</span>
 
         <span class="n">signatures_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">esig</span> <span class="ow">in</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">get_signatures_from_pyxis</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">existing_signature</span> <span class="ow">in</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">get_signatures_from_pyxis</span><span class="p">(</span>
             <span class="p">[</span><span class="n">sig</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="n">outdated_signatures</span><span class="p">]</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
-                <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
             <span class="p">)</span> <span class="ow">in</span> <span class="n">outdated_signatures</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
-                <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
             <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_signatures</span><span class="p">:</span>
-                <span class="n">signatures_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">esig</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
+                <span class="n">signatures_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
 
         <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
@@ -555,18 +560,18 @@
                 <span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;docker_reference&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">ii_claim_messages</span>
             <span class="p">]</span>
 
-            <span class="k">for</span> <span class="n">esig</span> <span class="ow">in</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">get_signatures_from_pyxis</span><span class="p">(</span>
+            <span class="k">for</span> <span class="n">existing_signature</span> <span class="ow">in</span> <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">get_signatures_from_pyxis</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">digest_version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">digest_version</span> <span class="ow">in</span> <span class="n">existing_index_images</span><span class="p">]</span>
             <span class="p">):</span>
                 <span class="k">if</span> <span class="p">(</span>
-                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
-                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
+                    <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                    <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
                 <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_operator_signatures</span> <span class="ow">and</span> <span class="p">(</span>
-                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
-                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-                    <span class="n">esig</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
+                    <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                    <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
                 <span class="p">)</span> <span class="ow">in</span> <span class="n">existing_index_images</span><span class="p">:</span>
-                    <span class="n">signatures_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">esig</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
+                    <span class="n">signatures_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
             <span class="k">if</span> <span class="n">signatures_to_remove</span><span class="p">:</span>
                 <span class="n">signature_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
                     <span class="n">signatures_to_remove</span><span class="p">,</span>
@@ -585,6 +590,7 @@
 <span class="sd">        - Generate backup mapping that will be used for rollback if something goes wrong.</span>
 <span class="sd">        - Sign container images using RADAS and upload signatures to Pyxis</span>
 <span class="sd">        - Push container images to their destinations</span>
+<span class="sd">        - Sign V2S1 images (has to be done after pushing)</span>
 <span class="sd">        - Filter out push items to only include operator image items</span>
 <span class="sd">        - Add operator bundles to index images by using IIB</span>
 <span class="sd">        - Sign index images using RADAS and upload signatures to Pyxis</span>
@@ -620,7 +626,12 @@
         <span class="n">container_pusher</span> <span class="o">=</span> <span class="n">ContainerImagePusher</span><span class="p">(</span><span class="n">docker_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
         <span class="n">container_pusher</span><span class="o">.</span><span class="n">push_container_images</span><span class="p">()</span>
 
-        <span class="n">failed</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># sign V2S1 images</span>
+        <span class="n">container_signature_handler</span><span class="o">.</span><span class="n">sign_container_images</span><span class="p">(</span>
+            <span class="n">docker_push_items</span><span class="p">,</span> <span class="n">only_v2s1_manifests</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="n">failed</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">if</span> <span class="n">operator_push_items</span><span class="p">:</span>
             <span class="c1"># Build index images</span>
             <span class="n">operator_pusher</span> <span class="o">=</span> <span class="n">OperatorPusher</span><span class="p">(</span><span class="n">operator_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
@@ -637,15 +648,14 @@
             <span class="k">if</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span> <span class="o">==</span> <span class="nb">set</span><span class="p">([</span><span class="kc">False</span><span class="p">]):</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of all index images failed, running rollback.&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
-                <span class="n">failed</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">if</span> <span class="n">successful_iib_results</span> <span class="o">!=</span> <span class="n">iib_results</span><span class="p">:</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of some index images failed&quot;</span><span class="p">)</span>
-                <span class="n">failed</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># Remove old signatures</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">remove_old_signatures</span><span class="p">(</span>
             <span class="n">docker_push_items</span><span class="p">,</span>
-            <span class="n">operator_push_items</span><span class="p">,</span>
             <span class="n">existing_index_images</span><span class="p">,</span>
             <span class="nb">dict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">successful_iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]]),</span>
             <span class="n">backup_tags</span><span class="p">,</span>
@@ -654,6 +664,7 @@
             <span class="n">sig_remover</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+            <span class="c1"># Why???</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 

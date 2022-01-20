@@ -21,6 +21,7 @@ Classes which handle container image signing. Base class, "SignatureHandler" con
 .. autoclass:: ContainerSignatureHandler
 
    .. automethod:: construct_item_claim_messages
+   .. automethod:: construct_item_schema1_claim_messages
    .. automethod:: construct_variant_claim_messages
    .. automethod:: sign_container_images
 
