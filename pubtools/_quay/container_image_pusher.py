@@ -110,7 +110,7 @@ class ContainerImagePusher:
             target_settings.get("tag_images_wait_time_increase", 10),
         )
 
-    def copy_source_or_v1_push_item(self, push_item, is_source=None):
+    def copy_source_push_item(self, push_item):
         """
         Perform the tagging operation for a push item containing a source image.
 
@@ -118,10 +118,35 @@ class ContainerImagePusher:
             push_item (ContainerPushItem):
                 Source container push item.
         """
-        if is_source:
-            LOG.info("Copying push item '{0}' as a source image".format(push_item))
-        else:
-            LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
+        LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
+
+        source_ref = push_item.metadata["pull_url"]
+        dest_refs = []
+        image_schema = "{host}/{namespace}/{repo}:{tag}"
+        namespace = self.target_settings["quay_namespace"]
+
+        for repo, tags in sorted(push_item.metadata["tags"].items()):
+            internal_repo = get_internal_container_repo_name(repo)
+            for tag in tags:
+                dest_ref = image_schema.format(
+                    host=self.quay_host,
+                    namespace=namespace,
+                    repo=internal_repo,
+                    tag=tag,
+                )
+                dest_refs.append(dest_ref)
+
+        self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
+
+    def copy_v1_push_item(self, push_item, is_source=None):
+        """
+        Perform the tagging operation for a push item containing a source image.
+
+        Args:
+            push_item (ContainerPushItem):
+                Source container push item.
+        """
+        LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
 
         source_ref = push_item.metadata["pull_url"]
         dest_refs = []
