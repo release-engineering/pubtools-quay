@@ -641,11 +641,10 @@ class OperatorSignatureHandler(SignatureHandler):
             signing_keys = iib_details["signing_keys"]
             # Index image used to fetch manifest list. This image will never be overwritten
             iib_namespace = iib_result.index_image_resolved.split("/")[1]
-            iib_repo = iib_result.index_image_resolved.split("/")[2].split("@")[0]
             permanent_index_image = image_schema.format(
                 host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
                 namespace=iib_namespace,
-                repo=iib_repo,
+                repo="iib",
                 tag=iib_result.build_tags[0],
             )
             # Version acts as a tag of the index image

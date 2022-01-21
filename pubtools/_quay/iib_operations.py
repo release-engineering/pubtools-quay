@@ -105,11 +105,10 @@ def task_iib_add_bundles(
     )
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo=iib_repo,
+        repo="iib",
         tag=build_details.build_tags[0],
     )
 
@@ -201,11 +200,10 @@ def task_iib_remove_operators(
 
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo=iib_repo,
+        repo="iib",
         tag=build_details.build_tags[0],
     )
 
@@ -295,11 +293,10 @@ def task_iib_build_from_scratch(
 
     # Index image used to fetch manifest list. This image will never be overwritten
     iib_namespace = build_details.index_image_resolved.split("/")[1]
-    iib_repo = build_details.index_image_resolved.split("/")[2].split("@")[0]
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo=iib_repo,
+        repo="iib",
         tag=build_details.build_tags[0],
     )
     index_stamp = timestamp()

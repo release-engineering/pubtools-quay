@@ -472,11 +472,10 @@ class PushDocker:
                 image_schema = "{host}/{namespace}/{repo}@{tag}"
                 # Index image used to fetch manifest list. This image will never be overwritten
                 iib_namespace = iib_result.index_image_resolved.split("/")[1]
-                iib_repo = iib_result.index_image_resolved.split("/")[2].split("@")[0]
                 permanent_index_image = image_schema.format(
                     host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
                     namespace=iib_namespace,
-                    repo=iib_repo,
+                    repo="iib",
                     tag=iib_result.build_tags[0],
                 )
                 ii_claim_messages += (

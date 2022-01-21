@@ -988,7 +988,7 @@ def test_sign_operator_images_no_signatures(
     )
     sig_handler.sign_operator_images(iib_results, "stamp")
     mock_construct_index_claim_msgs.assert_called_once_with(
-        "quay.io/iib-namespace/image:v4.5-1", ["v4.5", "v4.5-stamp"], [None]
+        "quay.io/iib-namespace/iib:v4.5-1", ["v4.5", "v4.5-stamp"], [None]
     )
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
