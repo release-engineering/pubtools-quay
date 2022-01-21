@@ -210,12 +210,12 @@ def test_push_docker_multiarch_merge_ml_operator(
         m.get("https://git-server.com/v4_5.yml/raw?ref=master")
         m.get("https://git-server.com/v4_6.yml/raw?ref=master")
         m.get(
-            "https://quay.io/v2/namespace/index-image/manifests/v4.5-1",
+            "https://quay.io/v2/namespace/iib/manifests/v4.5-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.get(
-            "https://quay.io/v2/namespace/index-image/manifests/v4.6-1",
+            "https://quay.io/v2/namespace/iib/manifests/v4.6-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1062,7 +1062,7 @@ def test_task_iib_add_bundles(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/new-index-image/manifests/8-1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/8-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1135,7 +1135,7 @@ def test_task_iib_remove_operators(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/new-index-image/manifests/8-1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/8-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1189,7 +1189,7 @@ def test_task_iib_build_from_scratch(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/new-index-image/manifests/12-1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/12-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )

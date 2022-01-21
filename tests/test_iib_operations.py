@@ -102,7 +102,7 @@ def test_task_iib_add_bundles(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["8", "8-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/iib:8-1", ["8", "8-timestamp"]
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -193,7 +193,7 @@ def test_task_iib_remove_operators(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["8", "8-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/iib:8-1", ["8", "8-timestamp"]
     )
 
     mock_signature_remover.assert_called_once_with(
@@ -267,7 +267,7 @@ def test_task_iib_build_from_scratch(
         mock_hub, "1", target_settings, "some-target"
     )
     mock_sign_task_index_image.assert_called_once_with(
-        ["some-key"], "quay.io/iib-namespace/new-index-image:8-1", ["12", "12-timestamp"]
+        ["some-key"], "quay.io/iib-namespace/iib:8-1", ["12", "12-timestamp"]
     )
 
 
