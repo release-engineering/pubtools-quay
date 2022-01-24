@@ -512,7 +512,7 @@ class PushDocker:
         return digest
 
     def fetch_missing_push_items_digests(self, push_items, target_settings):
-        """Fetch digests for media types which weren't original pushed.
+        """Fetch digests for media types which weren't originally pushed.
 
         In order to be able to sign v1 for images which were pushed as
         v2sch2 or to sign v2sch2 for images which were pushed as v1
