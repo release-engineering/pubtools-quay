@@ -494,7 +494,7 @@ class PushDocker:
         Args:
             repo(str): Repository name.
             tag(str): Image tag.
-            mtype(str): media type fo requested digest
+            mtype(str): Media type for requested digest.
             (can be only application/vnd.docker.distribution.manifest.v2+json,
             application/vnd.docker.distribution.manifest.v1+json)
 
