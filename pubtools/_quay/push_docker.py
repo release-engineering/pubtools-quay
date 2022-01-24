@@ -520,7 +520,7 @@ class PushDocker:
         set it to item metadata into 'new_digests' mapping.
 
         Args:
-            push_items(list): list of push items
+            push_items(list): List of push items.
             target_settings(dict): target settings
         """
         for item in sorted(push_items):
