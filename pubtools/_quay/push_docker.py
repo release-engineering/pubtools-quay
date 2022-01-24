@@ -492,7 +492,7 @@ class PushDocker:
         """Fetch digest of repo and tag for given media type.
 
         Args:
-            repo(str): repository name
+            repo(str): Repository name.
             tag(str): image tag
             mtype(str): media type fo requested digest
             (can be only application/vnd.docker.distribution.manifest.v2+json,
