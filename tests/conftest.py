@@ -74,6 +74,12 @@ class MockContainerPushItem(object):
         """Return item string representation."""
         return "%s" % (self.file_path or self.file_name)
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __lt__(self, other):
+        return str(self) < str(other)
+
 
 @pytest.fixture
 def fixture_isodate_now():
@@ -133,6 +139,14 @@ def container_push_item_external_repos():
                 "registry": "test-regitry",
                 "repo": "test-repo",
                 "tag": "test-tag",
+            },
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
             },
             "destination": {"tags": {"repo": ["tag1"]}},
             "tags": {
@@ -216,7 +230,15 @@ def container_push_item_errors():
                 "registry": "test-regitry",
                 "repo": "test-repo",
                 "tag": "test-tag",
-            }
+            },
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
         },
         errors={"fake-error1": "fake-error1 message"},
     )
@@ -244,7 +266,14 @@ def operator_push_item_ok():
             },
             "com.redhat.openshift.versions": "v4.5",
             "op_type": "bundle",
-            "build": {"build_id": 123456},
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
             "destination": {"tags": {"repo": ["tag1", "tag2"]}},
             "tags": {"repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",
@@ -651,7 +680,13 @@ def container_v1_push_item():
             "tags": {"target/repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:2",
-            "build": {"extra": {"image": {}}},
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                }
+            },
         },
     )
 
@@ -680,7 +715,13 @@ def container_multiarch_push_item():
             "tags": {"target/repo": ["latest-test-tag"]},
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:1",
-            "build": {},
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                }
+            },
         },
     )
 
@@ -1307,7 +1348,13 @@ def container_multiarch_push_item_integration():
             "tags": {"target/repo": ["latest-test-tag"]},
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:1",
-            "build": {},
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                }
+            },
         },
     )
 
@@ -1336,7 +1383,14 @@ def container_source_push_item_integration():
             "tags": {"target/repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:1",
-            "build": {"extra": {"image": {"sources_for_nvr": "some-src"}}},
+            "build": {
+                "extra": {
+                    "image": {
+                        "sources_for_nvr": "some-src",
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"],
+                    }
+                }
+            },
         },
     )
 

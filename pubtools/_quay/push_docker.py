@@ -391,6 +391,7 @@ class PushDocker:
         container_signature_handler,
         operator_signature_handler,
         signature_remover,
+        claim_messages,
     ):
         """
         Remove signatures of containers for tags which were overwritten in the current push.
@@ -420,12 +421,6 @@ class PushDocker:
             operator_signature_handler (SignatureRemover):
                 SignatureRemover instance.
         """
-        claim_messages = []
-        for item in push_items:
-            claim_messages += container_signature_handler.construct_item_claim_messages(item)
-            claim_messages += container_signature_handler.construct_item_schema1_claim_messages(
-                item
-            )
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
@@ -507,6 +502,51 @@ class PushDocker:
                     key,
                 )
 
+    def _fetch_digest(self, repo, tag, mtype):
+        image_schema = "{host}/{namespace}/{repo}:{tag}"
+        dest_ref = image_schema.format(
+            host=self.quay_host,
+            namespace=self.target_settings["quay_namespace"],
+            repo=repo,
+            tag=tag,
+        )
+        if mtype == QuayClient.MANIFEST_V2S2_TYPE:
+            v2s1_manifest = True
+        else:
+            v2s1_manifest = False
+        missing_digest = self.dest_quay_client.get_manifest_digest(
+            dest_ref, v2s1_manifest=v2s1_manifest
+        )
+        return missing_digest
+
+    def fetch_missing_push_items_digests(self, push_items, target_settings):
+        """Fetch digests for media types which weren't original pushed.
+
+        In order to be able to sign v2ch1 for images which were pushed as
+        v2ch2 or to sign v2ch2 for images which were pushed as v2ch1
+        fetch digests of those missing media types from quay and
+        set it to item metadata into  'new_digests' mapping
+
+        Args:
+            push_items(list): list of push items
+            target_settings(dict): target settings
+        """
+        for item in sorted(push_items):
+            item.metadata["new_digests"] = {}
+            missing_media_types = set(
+                [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
+            ) - set(item.metadata["build"]["extra"]["image"]["media_types"])
+
+            # Always add v1sch1 due to possible digest change
+            missing_media_types.add(QuayClient.MANIFEST_V2S1_TYPE)
+            for repo, tags in item.metadata["tags"].items():
+                internal_repo = get_internal_container_repo_name(repo)
+                for tag in tags:
+                    for mtype in missing_media_types:
+                        item.metadata["new_digests"][mtype] = self._fetch_digest(
+                            internal_repo, tag, mtype
+                        )
+
     def run(self):
         """
         Perform the full push-docker workflow.
@@ -548,14 +588,17 @@ class PushDocker:
         sig_remover = SignatureRemover()
         sig_remover.set_quay_client(self.dest_quay_client)
 
-        container_signature_handler.sign_container_images(docker_push_items)
+        manifest_claims = container_signature_handler.sign_container_images(docker_push_items)
         # Push container images
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
 
-        # sign V2S1 images
-        container_signature_handler.sign_container_images(
-            docker_push_items, only_v2s1_manifests=True
+        # fetch missing digests
+        self.fetch_missing_push_items_digests(docker_push_items, self.target_settings)
+
+        # sign missing images
+        manifest_claims += container_signature_handler.sign_container_images_new_digests(
+            docker_push_items
         )
 
         failed = False
@@ -568,7 +611,9 @@ class PushDocker:
             successful_iib_results = dict(
                 [(key, val) for key, val in iib_results.items() if val["iib_result"]]
             )
-            operator_signature_handler.sign_operator_images(successful_iib_results, index_stamp)
+            manifest_claims += operator_signature_handler.sign_operator_images(
+                successful_iib_results, index_stamp
+            )
             # Push index images to Quay
             operator_pusher.push_index_images(successful_iib_results, index_stamp)
             # Rollback only when all index image builds fails
@@ -589,6 +634,7 @@ class PushDocker:
             container_signature_handler,
             operator_signature_handler,
             sig_remover,
+            manifest_claims,
         )
         if failed:
             # Why???

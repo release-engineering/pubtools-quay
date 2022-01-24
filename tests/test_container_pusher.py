@@ -122,7 +122,7 @@ def test_copy_src_item(
     pusher = container_image_pusher.ContainerImagePusher(
         [container_source_push_item], target_settings
     )
-    pusher.copy_source_or_v1_push_item(container_source_push_item)
+    pusher.copy_source_push_item(container_source_push_item)
     mock_tag_images.assert_called_once_with(
         "some-registry/src/repo:2",
         [
@@ -155,7 +155,7 @@ def test_copy_v1_item(
     container_v1_push_item,
 ):
     pusher = container_image_pusher.ContainerImagePusher([container_v1_push_item], target_settings)
-    pusher.copy_source_or_v1_push_item(container_v1_push_item)
+    pusher.copy_v1_push_item(container_v1_push_item)
     mock_tag_images.assert_called_once_with(
         "some-registry/src/repo:2",
         [
@@ -357,9 +357,7 @@ def test_copy_multiarch_item_missing_archs(
     mock_tag_images.assert_not_called()
 
 
-@mock.patch(
-    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
-)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_src_item(
@@ -383,9 +381,7 @@ def test_push_container_items_src_item(
     mock_copy_src.assert_called_once()
 
 
-@mock.patch(
-    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
-)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_v1_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_v1_item(
@@ -407,9 +403,7 @@ def test_push_container_items_v1_item(
     mock_copy_src.assert_called_once()
 
 
-@mock.patch(
-    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
-)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_v1_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_v1_item(
@@ -430,9 +424,7 @@ def test_push_container_items_v1_item(
     pusher.push_container_images()
 
 
-@mock.patch(
-    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
-)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_v1_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_v1_item_disabled(
@@ -454,9 +446,7 @@ def test_push_container_items_v1_item_disabled(
         pusher.push_container_images()
 
 
-@mock.patch(
-    "pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_or_v1_push_item"
-)
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
 def test_push_container_items_multiarch_item(

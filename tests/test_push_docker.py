@@ -1008,8 +1008,21 @@ def test_push_docker_full_success(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+
+    mock_sign_container_images = mock.MagicMock(return_value=[])
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=[])
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
+
+    mock_sign_operator_images = mock.MagicMock(return_value=[])
+    mock_container_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
+    mock_push_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.push_index_images = mock_push_index_images
+
     mock_get_signatures_from_pyxis = mock.MagicMock(
         return_value=(
             [
@@ -1027,9 +1040,10 @@ def test_push_docker_full_success(
     )
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
+
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
+
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
     mock_timestamp.return_value = "timestamp"
 
@@ -1070,12 +1084,13 @@ def test_push_docker_full_success(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_count == 1
     assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
-    assert mock_sign_container_images.call_args_list[1] == mock.call(
-        [container_multiarch_push_item], only_v2s1_manifests=True
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
@@ -1125,7 +1140,12 @@ def test_push_docker_full_success_repush(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+    mock_sign_container_images = mock.MagicMock(return_value=[])
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=[])
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
+
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
@@ -1137,16 +1157,13 @@ def test_push_docker_full_success_repush(
     mock_timestamp.return_value = "timestamp"
     mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
     mock_sign_operator_images = mock.MagicMock(
-        return_value=(
-            [
-                {
-                    "repo": "somerepo",
-                    "manifest_digest": "somedigest",
-                    "docker_reference": "reference/repo:sometag",
-                }
-            ],
-            [],
-        )
+        return_value=[
+            {
+                "repo": "somerepo",
+                "manifest_digest": "somedigest",
+                "docker_reference": "reference/repo:sometag",
+            }
+        ]
     )
     mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
 
@@ -1195,13 +1212,13 @@ def test_push_docker_full_success_repush(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_count == 1
     assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item, container_push_item_external_repos]
     )
-    assert mock_sign_container_images.call_args_list[1] == mock.call(
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item, container_push_item_external_repos],
-        only_v2s1_manifests=True,
     )
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], target_settings)
     mock_build_index_images.assert_called_once_with()
@@ -1247,14 +1264,22 @@ def test_push_docker_no_operator_push_items(
     hub = mock.MagicMock()
     mock_push_container_images = mock.MagicMock()
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
-    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=[])
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
+
+    mock_sign_container_images = mock.MagicMock(return_value=[])
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+
+    mock_sign_operator_images = mock.MagicMock(return_value=[])
+    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
-    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
-    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
     mock_build_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.build_index_images = mock_build_index_images
 
@@ -1287,13 +1312,14 @@ def test_push_docker_no_operator_push_items(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_count == 1
     assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
-    assert mock_sign_container_images.call_args_list[1] == mock.call(
+
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
-        only_v2s1_manifests=True,
     )
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
@@ -1337,6 +1363,11 @@ def test_push_docker_failure_no_rollback(
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
     mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
+
     mock_build_index_images = mock.MagicMock()
     iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {
@@ -1380,16 +1411,18 @@ def test_push_docker_failure_no_rollback(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_container_signature_handler.assert_called_once_with(
+
+    assert mock_container_signature_handler.call_count == 1
+    assert mock_container_signature_handler.call_args_list[0] == mock.call(
         hub, "1", target_settings, "some-target"
     )
-    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_count == 1
     assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
-    assert mock_sign_container_images.call_args_list[1] == mock.call(
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
-        only_v2s1_manifests=True,
     )
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
@@ -1432,6 +1465,10 @@ def test_push_docker_failure_rollback(
     mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
     mock_sign_container_images = mock.MagicMock(return_value=([], []))
     mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
     mock_build_index_images = mock.MagicMock()
     iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {
@@ -1478,13 +1515,13 @@ def test_push_docker_failure_rollback(
     mock_container_signature_handler.assert_called_once_with(
         hub, "1", target_settings, "some-target"
     )
-    assert mock_sign_container_images.call_count == 2
+    assert mock_sign_container_images.call_count == 1
     assert mock_sign_container_images.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
-    assert mock_sign_container_images.call_args_list[1] == mock.call(
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
-        only_v2s1_manifests=True,
     )
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
@@ -1537,6 +1574,7 @@ def test_remove_old_signatures_no_old_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
     fake_cert_key_paths,
+    claim_messages,
 ):
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(
@@ -1545,16 +1583,14 @@ def test_remove_old_signatures_no_old_signatures(
     backup_tags[image_data] = {"digest": "somedigest"}
 
     mock_get_signatures_from_pyxis = mock.MagicMock(
-        return_value=(
-            [
-                {
-                    "manifest_digest": "some-digest",
-                    "repository": "some-product/some-repo",
-                    "reference": "registry/some-product/some-repo:sometag",
-                    "_id": "signature-id-1",
-                }
-            ]
-        )
+        return_value=[
+            {
+                "manifest_digest": "some-digest",
+                "repository": "some-product/some-repo",
+                "reference": "registry/some-product/some-repo:sometag",
+                "_id": "signature-id-1",
+            }
+        ]
     )
     mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
 
@@ -1572,6 +1608,7 @@ def test_remove_old_signatures_no_old_signatures(
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
+        claim_messages,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_not_called()
 
@@ -1587,6 +1624,7 @@ def test_remove_old_signatures_container_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
     fake_cert_key_paths,
+    claim_messages,
 ):
     mock_get_signatures_from_pyxis = mock.MagicMock(
         return_value=(
@@ -1626,6 +1664,7 @@ def test_remove_old_signatures_container_signatures(
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
+        claim_messages,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
         ["signature-id-1"], "mock_pyxis_server", "/path/to/file.crt", "/path/to/file.key"
@@ -1644,6 +1683,7 @@ def test_remove_old_signatures_operator_signatures(
     container_push_item_external_repos,
     operator_push_item_ok,
     fake_cert_key_paths,
+    claim_messages,
 ):
     mock_get_signatures_from_pyxis = mock.MagicMock(
         side_effect=[
@@ -1698,6 +1738,7 @@ def test_remove_old_signatures_operator_signatures(
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
+        claim_messages,
     )
 
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_once_with(

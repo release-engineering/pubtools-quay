@@ -110,21 +110,10 @@ class ContainerImagePusher:
             target_settings.get("tag_images_wait_time_increase", 10),
         )
 
-    def copy_source_push_item(self, push_item):
-        """
-        Perform the tagging operation for a push item containing a source image.
-
-        Args:
-            push_item (ContainerPushItem):
-                Source container push item.
-        """
-        LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
-
-        source_ref = push_item.metadata["pull_url"]
+    def _prepare_dest_refs(self, push_item):
         dest_refs = []
         image_schema = "{host}/{namespace}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
-
         for repo, tags in sorted(push_item.metadata["tags"].items()):
             internal_repo = get_internal_container_repo_name(repo)
             for tag in tags:
@@ -135,7 +124,20 @@ class ContainerImagePusher:
                     tag=tag,
                 )
                 dest_refs.append(dest_ref)
+        return dest_refs
 
+    def copy_source_push_item(self, push_item):
+        """
+        Perform the tagging operation for a push item containing a source image.
+
+        Args:
+            push_item (ContainerPushItem):
+                Source container push item.
+        """
+        LOG.info("Copying push item '{0}' as a source image".format(push_item))
+
+        source_ref = push_item.metadata["pull_url"]
+        dest_refs = self._prepare_dest_refs(push_item)
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
     def copy_v1_push_item(self, push_item, is_source=None):
@@ -149,20 +151,7 @@ class ContainerImagePusher:
         LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
 
         source_ref = push_item.metadata["pull_url"]
-        dest_refs = []
-        image_schema = "{host}/{namespace}/{repo}:{tag}"
-        namespace = self.target_settings["quay_namespace"]
-
-        for repo, tags in sorted(push_item.metadata["tags"].items()):
-            internal_repo = get_internal_container_repo_name(repo)
-            for tag in tags:
-                dest_ref = image_schema.format(
-                    host=self.quay_host,
-                    namespace=namespace,
-                    repo=internal_repo,
-                    tag=tag,
-                )
-                dest_refs.append(dest_ref)
+        dest_refs = self._prepare_dest_refs(push_item)
 
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
@@ -295,18 +284,21 @@ class ContainerImagePusher:
                 .get("image", {})
                 .get("sources_for_nvr", None)
             )
-            if (
-                not sources_for_nvr
-                and not source_ml
-                and not self.target_settings.get("allow_v1_containers", True)
-            ):
-                raise BadPushItem(
-                    "Push item '{0}' contains a single-arch image that's not a "
-                    "source image. This use-case is not supported".format(item)
-                )
+            v1 = False
+            if not sources_for_nvr and not source_ml:
+                if not self.target_settings.get("allow_v1_containers", True):
+                    raise BadPushItem(
+                        "Push item '{0}' contains a single-arch image that's not a "
+                        "source image. This use-case is not supported".format(item)
+                    )
+                else:
+                    v1 = True
             # Source image
-            if sources_for_nvr and source_ml or not source_ml:
-                self.copy_source_or_v1_push_item(item, is_source=sources_for_nvr)
+            if sources_for_nvr:
+                self.copy_source_push_item(item)
+            # v1 image
+            elif v1:
+                self.copy_v1_push_item(item)
             # Multiarch images
             else:
                 self.copy_multiarch_push_item(item, source_ml)
