@@ -521,7 +521,7 @@ class PushDocker:
 
         Args:
             push_items(list): List of push items.
-            target_settings(dict): target settings
+            target_settings(dict): Target settings.
         """
         for item in sorted(push_items):
             item.metadata["new_digests"] = {}
