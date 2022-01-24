@@ -113,7 +113,7 @@ class ContainerImagePusher:
     def _prepare_dest_refs(self, push_item):
         """Prepare destination references for push.
 
-        Construct destination references based on tags and repo of push item
+        Construct destination references based on tags and repo of push item.
 
         Args:
             push_item(PushItem): container push item
