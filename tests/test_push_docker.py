@@ -1609,6 +1609,7 @@ def test_remove_old_signatures_no_old_signatures(
         mock_operator_signature_handler,
         mock_signature_remover,
         claim_messages,
+        claim_messages,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_not_called()
 
@@ -1664,6 +1665,7 @@ def test_remove_old_signatures_container_signatures(
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
+        claim_messages,
         claim_messages,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
@@ -1738,6 +1740,7 @@ def test_remove_old_signatures_operator_signatures(
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
+        claim_messages,
         claim_messages,
     )
 

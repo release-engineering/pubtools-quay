@@ -492,13 +492,11 @@ class ContainerSignatureHandler(SignatureHandler):
         - send messages to RADAS and receive signatures (ManifestClaimsHandler class)
         - Upload new signatures to Pyxis
 
-        # NOTE: The reason for separating the creation of schema1 and schema2 claim messages is that
-        # they must happen in different stages of the push, schema2 before pushing to destination,
-        # and schema1 after pushing to destination.
-
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
+        Returns (list(claim-message)):
+            List of claim message sent for signing
         """
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
@@ -519,7 +517,7 @@ class ContainerSignatureHandler(SignatureHandler):
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
         self.upload_signatures_to_pyxis(claim_messages, signature_messages)
-        return signature_messages
+        return claim_messages
 
     @log_step("Sign container images")
     def sign_container_images_new_digests(self, push_items):
@@ -533,6 +531,8 @@ class ContainerSignatureHandler(SignatureHandler):
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
+        Returns (list(claim-message)):
+            List of claim message sent for signing
         """
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
@@ -558,7 +558,7 @@ class ContainerSignatureHandler(SignatureHandler):
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
         self.upload_signatures_to_pyxis(claim_messages, signature_messages)
-        return signature_messages
+        return claim_messages
 
 
 class OperatorSignatureHandler(SignatureHandler):

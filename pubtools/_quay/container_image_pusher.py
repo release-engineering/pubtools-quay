@@ -111,6 +111,16 @@ class ContainerImagePusher:
         )
 
     def _prepare_dest_refs(self, push_item):
+        """Prepare destination references for push.
+
+        Construct destination references based on tags and repo of push item
+
+        Args:
+            push_item(PushItem): container push item
+
+        Returns (list(str)):
+            List of destination references for the push
+        """
         dest_refs = []
         image_schema = "{host}/{namespace}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
@@ -142,11 +152,11 @@ class ContainerImagePusher:
 
     def copy_v1_push_item(self, push_item, is_source=None):
         """
-        Perform the tagging operation for a push item containing a source image.
+        Perform the tagging operation for a push item containing a v1 image.
 
         Args:
             push_item (ContainerPushItem):
-                Source container push item.
+                container push item.
         """
         LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
 
