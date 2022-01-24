@@ -522,7 +522,7 @@ class ContainerSignatureHandler(SignatureHandler):
     @log_step("Sign container images")
     def sign_container_images_new_digests(self, push_items):
         """
-        Sign digests for manifest types which haven't exist before the push.
+        Sign digests for manifest types which haven't existed before the push.
 
         Manifest types which are not pushed in the push items can be fetched
         from quay and then created dynamically on the fly. This methods is meant
