@@ -498,7 +498,7 @@ class PushDocker:
             (can be only application/vnd.docker.distribution.manifest.v2+json,
             application/vnd.docker.distribution.manifest.v1+json)
 
-        Returns(str): manifest digest of the container
+        Returns(str): Manifest digest of the container.
         """
         image_schema = "{host}/{namespace}/{repo}:{tag}"
         dest_ref = image_schema.format(
