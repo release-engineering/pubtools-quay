@@ -542,12 +542,11 @@ class ContainerSignatureHandler(SignatureHandler):
 
         claim_messages = []
         for item in push_items:
-            for repo, tags in sorted(item.metadata["tags"].items()):
-                for tag in tags:
-                    for digest in item.metadata["new_digests"].values():
-                        claim_messages += self.construct_variant_claim_messages(
-                            repo, tag, digest, [item.claims_signing_key]
-                        )
+            for (repo, tag), digests_per_type in sorted(item.metadata["new_digests"].items()):
+                for digest in digests_per_type.values():
+                    claim_messages += self.construct_variant_claim_messages(
+                        repo, tag, digest, [item.claims_signing_key]
+                    )
         claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         claim_messages = self.filter_claim_messages(claim_messages)
         if not claim_messages:

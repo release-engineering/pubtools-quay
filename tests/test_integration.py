@@ -540,8 +540,10 @@ def test_push_docker_source(
             fake_digest_counter = 0
             for item in push_items:
                 item.metadata["new_digests"] = {
-                    "application/vnd.docker.distribution.manifest.v2+json": "fake-digest-%s"
-                    % fake_digest_counter
+                    ("target----repo", "latest-test-tag"): {
+                        "application/vnd.docker.distribution.manifest.v2+json": "fake-digest-%s"
+                        % fake_digest_counter
+                    }
                 }
                 fake_digest_counter += 1
 

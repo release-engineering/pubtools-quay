@@ -535,9 +535,9 @@ class PushDocker:
                 internal_repo = get_internal_container_repo_name(repo)
                 for tag in tags:
                     for mtype in missing_media_types:
-                        item.metadata["new_digests"][mtype] = self._fetch_digest(
-                            internal_repo, tag, mtype
-                        )
+                        item.metadata["new_digests"].setdefault((repo, tag), {})[
+                            mtype
+                        ] = self._fetch_digest(internal_repo, tag, mtype)
 
     def run(self):
         """
