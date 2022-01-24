@@ -517,7 +517,7 @@ class PushDocker:
         In order to be able to sign v1 for images which were pushed as
         v2sch2 or to sign v2sch2 for images which were pushed as v1
         fetch digests of those missing media types from quay and
-        set it to item metadata into  'new_digests' mapping
+        set it to item metadata into 'new_digests' mapping.
 
         Args:
             push_items(list): list of push items
