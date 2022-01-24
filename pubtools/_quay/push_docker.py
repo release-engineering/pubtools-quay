@@ -492,13 +492,13 @@ class PushDocker:
         """Fetch digest of repo and tag for given media type.
 
         Args:
-            repo(str): repository name
-            tag(str): image tag
-            mtype(str): media type fo requested digest
+            repo(str): Repository name.
+            tag(str): Image tag.
+            mtype(str): Media type for requested digest.
             (can be only application/vnd.docker.distribution.manifest.v2+json,
             application/vnd.docker.distribution.manifest.v1+json)
 
-        Returns(str): manifest digest of the container
+        Returns(str): Manifest digest of the container.
         """
         image_schema = "{host}/{namespace}/{repo}:{tag}"
         dest_ref = image_schema.format(
@@ -514,14 +514,14 @@ class PushDocker:
     def fetch_missing_push_items_digests(self, push_items, target_settings):
         """Fetch digests for media types which weren't originally pushed.
 
-        In order to be able to sign v1 for images which were pushed as
-        v2sch2 or to sign v2sch2 for images which were pushed as v1
+        In order to be able to sign v2s1 for images which were pushed as
+        v2s2 or to sign v2s2 for images which were pushed as v2s1
         fetch digests of those missing media types from quay and
-        set it to item metadata into  'new_digests' mapping
+        set it to item metadata into 'new_digests' mapping.
 
         Args:
-            push_items(list): list of push items
-            target_settings(dict): target settings
+            push_items(list): List of push items.
+            target_settings(dict): Target settings.
         """
         for item in sorted(push_items):
             item.metadata["new_digests"] = {}
@@ -529,7 +529,7 @@ class PushDocker:
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
             ) - set(item.metadata["build"]["extra"]["image"]["media_types"])
 
-            # Always add v1sch1 due to possible digest change
+            # Always add v2s1 due to possible digest change
             missing_media_types.add(QuayClient.MANIFEST_V2S1_TYPE)
             for repo, tags in item.metadata["tags"].items():
                 internal_repo = get_internal_container_repo_name(repo)

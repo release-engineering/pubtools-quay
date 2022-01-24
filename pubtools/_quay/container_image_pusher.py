@@ -113,13 +113,13 @@ class ContainerImagePusher:
     def _prepare_dest_refs(self, push_item):
         """Prepare destination references for push.
 
-        Construct destination references based on tags and repo of push item
+        Construct destination references based on tags and repo of push item.
 
         Args:
             push_item(ContainerPushItem): container push item
 
         Returns (list(str)):
-            List of destination references for the push
+            List of destination references for the push.
         """
         dest_refs = []
         image_schema = "{host}/{namespace}/{repo}:{tag}"
@@ -156,7 +156,7 @@ class ContainerImagePusher:
 
         Args:
             push_item (ContainerPushItem):
-                container push item.
+                Container push item.
         """
         LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
 
