@@ -533,11 +533,19 @@ class PushDocker:
             missing_media_types.add(QuayClient.MANIFEST_V2S1_TYPE)
             for repo, tags in item.metadata["tags"].items():
                 internal_repo = get_internal_container_repo_name(repo)
+                v2_sch2_cache = {}
                 for tag in tags:
                     for mtype in missing_media_types:
-                        item.metadata["new_digests"].setdefault((repo, tag), {})[
-                            mtype
-                        ] = self._fetch_digest(internal_repo, tag, mtype)
+                        if mtype == QuayClient.MANIFEST_V2S2_TYPE:
+                            if repo not in v2_sch2_cache:
+                                v2_sch2_cache[repo] = self._fetch_digest(internal_repo, tag, mtype)
+                            item.metadata["new_digests"].setdefault((repo, tag), {})[
+                                mtype
+                            ] = v2_sch2_cache[repo]
+                        else:
+                            item.metadata["new_digests"].setdefault((repo, tag), {})[
+                                mtype
+                            ] = self._fetch_digest(internal_repo, tag, mtype)
 
     def run(self):
         """

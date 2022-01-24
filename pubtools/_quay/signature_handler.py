@@ -495,7 +495,7 @@ class ContainerSignatureHandler(SignatureHandler):
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
-        Returns (list(claim-message)):
+        Returns (list(dict)):
             List of claim message sent for signing
         """
         if not self.target_settings["docker_settings"].get(
@@ -531,7 +531,7 @@ class ContainerSignatureHandler(SignatureHandler):
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
-        Returns (list(claim-message)):
+        Returns (list(dict)):
             List of claim message sent for signing
         """
         if not self.target_settings["docker_settings"].get(
