@@ -529,7 +529,7 @@ class PushDocker:
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
             ) - set(item.metadata["build"]["extra"]["image"]["media_types"])
 
-            # Always add v1sch1 due to possible digest change
+            # Always add v2s1 due to possible digest change
             missing_media_types.add(QuayClient.MANIFEST_V2S1_TYPE)
             for repo, tags in item.metadata["tags"].items():
                 internal_repo = get_internal_container_repo_name(repo)
