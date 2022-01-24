@@ -525,7 +525,7 @@ class ContainerSignatureHandler(SignatureHandler):
         Sign digests for manifest types which haven't existed before the push.
 
         Manifest types which are not pushed in the push items can be fetched
-        from quay and then created dynamically on the fly. This methods is meant
+        from quay and then created dynamically on the fly. This method is meant
         to create signatures for those.
 
         Args:
