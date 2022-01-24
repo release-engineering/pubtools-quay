@@ -156,7 +156,7 @@ class ContainerImagePusher:
 
         Args:
             push_item (ContainerPushItem):
-                container push item.
+                Container push item.
         """
         LOG.info("Copying push item '{0}' as v1 container only".format(push_item))
 
