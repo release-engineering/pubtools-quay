@@ -496,7 +496,7 @@ class ContainerSignatureHandler(SignatureHandler):
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
         Returns (list(claim-message)):
-            List of claim message sent for signing
+            List of claim message sent for signing.
         """
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
