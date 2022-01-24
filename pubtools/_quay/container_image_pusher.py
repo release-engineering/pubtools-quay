@@ -119,7 +119,7 @@ class ContainerImagePusher:
             push_item(PushItem): container push item
 
         Returns (list(str)):
-            List of destination references for the push
+            List of destination references for the push.
         """
         dest_refs = []
         image_schema = "{host}/{namespace}/{repo}:{tag}"
