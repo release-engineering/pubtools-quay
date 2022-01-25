@@ -612,7 +612,9 @@ class PushDocker:
         ii_manifest_claims = []
         if operator_push_items:
             # Build index images
-            operator_pusher = OperatorPusher(operator_push_items, self.target_settings)
+            operator_pusher = OperatorPusher(
+                operator_push_items, self.task_id, self.target_settings
+            )
             existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
             iib_results = operator_pusher.build_index_images()
             # Sign operator images
