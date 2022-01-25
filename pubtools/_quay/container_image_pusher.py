@@ -116,7 +116,7 @@ class ContainerImagePusher:
         Construct destination references based on tags and repo of push item.
 
         Args:
-            push_item(ContainerPushItem): container push item
+            push_item(ContainerPushItem): Container push item.
 
         Returns (list(str)):
             List of destination references for the push.
