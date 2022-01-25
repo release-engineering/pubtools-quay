@@ -701,7 +701,7 @@
 <span class="sd">            iib_results ({str:dict}):</span>
 <span class="sd">                IIB results for each version the push was performed for.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">@</span><span class="si">{digest}</span><span class="s2">&quot;</span>
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="s2">&quot;docker_container_signing_enabled&quot;</span><span class="p">,</span> <span class="kc">False</span>
         <span class="p">):</span>
@@ -712,18 +712,17 @@
         <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">iib_details</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">iib_result</span> <span class="o">=</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]</span>
             <span class="n">signing_keys</span> <span class="o">=</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;signing_keys&quot;</span><span class="p">]</span>
-            <span class="c1"># Using intermediate index image to ensure that it doesn&#39;t get overwritten</span>
+            <span class="c1"># Index image used to fetch manifest list. This image will never be overwritten</span>
             <span class="n">iib_namespace</span> <span class="o">=</span> <span class="n">iib_result</span><span class="o">.</span><span class="n">index_image_resolved</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">image_digest</span> <span class="o">=</span> <span class="n">iib_result</span><span class="o">.</span><span class="n">index_image_resolved</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-            <span class="n">intermediate_index_image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">permanent_index_image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
                 <span class="n">namespace</span><span class="o">=</span><span class="n">iib_namespace</span><span class="p">,</span>
                 <span class="n">repo</span><span class="o">=</span><span class="s2">&quot;iib&quot;</span><span class="p">,</span>
-                <span class="n">digest</span><span class="o">=</span><span class="n">image_digest</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="n">iib_result</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="c1"># Version acts as a tag of the index image</span>
             <span class="n">claim_messages</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_index_image_claim_messages</span><span class="p">(</span>
-                <span class="n">intermediate_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">version</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)],</span> <span class="n">signing_keys</span>
+                <span class="n">permanent_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">version</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)],</span> <span class="n">signing_keys</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">claim_messages</span><span class="p">:</span>
