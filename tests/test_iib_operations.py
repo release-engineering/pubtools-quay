@@ -89,15 +89,24 @@ def test_task_iib_add_bundles(
         build_tags=["5-1"],
         target_settings=target_settings,
     )
-    mock_run_tag_images.assert_called_once_with(
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
         "some-registry.com/iib-namespace/new-index-image:8",
         [
             "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "quay.io/iib-namespace/iib:8-1",
+        [
             "quay.io/some-namespace/operators----index-image:8-timestamp",
         ],
         True,
         target_settings,
     )
+
     mock_operator_signature_handler.assert_called_once_with(
         mock_hub, "1", target_settings, "some-target"
     )
@@ -180,10 +189,18 @@ def test_task_iib_remove_operators(
         build_tags=["5-1"],
         target_settings=target_settings,
     )
-    mock_run_tag_images.assert_called_once_with(
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
         "some-registry.com/iib-namespace/new-index-image:8",
         [
             "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "quay.io/iib-namespace/iib:8-1",
+        [
             "quay.io/some-namespace/operators----index-image:8-timestamp",
         ],
         True,
@@ -254,10 +271,18 @@ def test_task_iib_build_from_scratch(
         build_tags=["12-1"],
         target_settings=target_settings,
     )
-    mock_run_tag_images.assert_called_once_with(
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
         "some-registry.com/iib-namespace/new-index-image:8",
         [
             "quay.io/some-namespace/operators----index-image:12",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "quay.io/iib-namespace/iib:8-1",
+        [
             "quay.io/some-namespace/operators----index-image:12-timestamp",
         ],
         True,

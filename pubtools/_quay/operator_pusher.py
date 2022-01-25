@@ -456,6 +456,7 @@ class OperatorPusher:
                 extra tag suffix applied to iib version tags if specified
         """
         image_schema = "{host}/{namespace}/{repo}"
+        image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
         index_image_repo = image_schema.format(
             host=self.quay_host,
             namespace=self.target_settings["quay_namespace"],
@@ -468,12 +469,20 @@ class OperatorPusher:
                 continue
 
             _, tag = build_details.index_image.split(":", 1)
+            permanent_index_image = image_schema_tag.format(
+                host=self.quay_host,
+                namespace=build_details.index_image_resolved.split("/")[1],
+                repo="iib",
+                tag=build_details.build_tags[0],
+            )
             dest_image = "{0}:{1}".format(index_image_repo, tag)
+            # We don't use permanent index image here because we always want to overwrite
+            # production tags with the latest index image (in case of parallel pushes)
             ContainerImagePusher.run_tag_images(
                 build_details.index_image, [dest_image], True, self.target_settings
             )
             if tag_suffix:
                 dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
                 ContainerImagePusher.run_tag_images(
-                    build_details.index_image_resolved, [dest_image], True, self.target_settings
+                    permanent_index_image, [dest_image], True, self.target_settings
                 )
