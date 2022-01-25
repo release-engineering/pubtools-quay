@@ -130,11 +130,13 @@ def test_push_docker_multiarch_merge_ml_operator(
         IIBRes(
             "registry.com/namespace/index-image@sha256:v4.5",
             "registry.com/namespace/index-image@sha256:a1a1a1",
+            ["v4.5-1"],
         ),
         # pubtools-iib-add-bundles (4.6)
         IIBRes(
             "registry.com/namespace/index-image@sha256:v4.6",
             "registry.com/namespace/index-image@sha256:b2b2b2",
+            ["v4.6-1"],
         ),
     ]
 
@@ -208,12 +210,12 @@ def test_push_docker_multiarch_merge_ml_operator(
         m.get("https://git-server.com/v4_5.yml/raw?ref=master")
         m.get("https://git-server.com/v4_6.yml/raw?ref=master")
         m.get(
-            "https://quay.io/v2/namespace/iib/manifests/sha256:a1a1a1",
+            "https://quay.io/v2/namespace/iib/manifests/v4.5-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         m.get(
-            "https://quay.io/v2/namespace/iib/manifests/sha256:b2b2b2",
+            "https://quay.io/v2/namespace/iib/manifests/v4.6-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1043,15 +1045,11 @@ def test_task_iib_add_bundles(
     src_manifest_list,
     fake_cert_key_paths,
 ):
-    class IIBRes:
-        def __init__(self, index_image, index_image_resolved):
-            self.index_image = index_image
-            self.index_image_resolved = index_image_resolved
-
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["8-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.side_effect = [("Login Succeeded", "err"), ("Login Succeeded", "err")]
@@ -1079,7 +1077,7 @@ def test_task_iib_add_bundles(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/8-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1124,6 +1122,7 @@ def test_task_iib_remove_operators(
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["8-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
@@ -1151,7 +1150,7 @@ def test_task_iib_remove_operators(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/8-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1192,8 +1191,9 @@ def test_task_iib_build_from_scratch(
     fake_cert_key_paths,
 ):
     build_details = IIBRes(
-        "some-registry.com/iib-namespace/new-index-image:8",
+        "some-registry.com/iib-namespace/new-index-image:12",
         "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        ["12-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
     mock_run_cmd.return_value = ("Login Succeeded", "err")
@@ -1204,7 +1204,7 @@ def test_task_iib_build_from_scratch(
 
     with requests_mock.Mocker() as m:
         m.get(
-            "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
+            "https://quay.io/v2/iib-namespace/iib/manifests/12-1",
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
