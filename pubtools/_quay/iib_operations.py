@@ -142,7 +142,10 @@ def task_iib_add_bundles(
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
+        build_details.index_image, [dest_image], True, target_settings
+    )
+    ContainerImagePusher.run_tag_images(
+        permanent_index_image, [dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -237,7 +240,10 @@ def task_iib_remove_operators(
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
+        build_details.index_image, [dest_image], True, target_settings
+    )
+    ContainerImagePusher.run_tag_images(
+        permanent_index_image, [dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -317,7 +323,10 @@ def task_iib_build_from_scratch(
 
     # Push image to Quay
     ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image, dest_image_stamp], True, target_settings
+        build_details.index_image, [dest_image], True, target_settings
+    )
+    ContainerImagePusher.run_tag_images(
+        permanent_index_image, [dest_image_stamp], True, target_settings
     )
 
 
