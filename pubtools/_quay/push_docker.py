@@ -469,7 +469,7 @@ class PushDocker:
             for version, iib_details in sorted(iib_results.items()):
                 iib_result = iib_details["iib_result"]
                 signing_keys = iib_details["signing_keys"]
-                image_schema = "{host}/{namespace}/{repo}@{tag}"
+                image_schema = "{host}/{namespace}/{repo}:{tag}"
                 # Index image used to fetch manifest list. This image will never be overwritten
                 iib_namespace = iib_result.index_image_resolved.split("/")[1]
                 permanent_index_image = image_schema.format(
