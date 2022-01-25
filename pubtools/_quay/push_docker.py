@@ -421,8 +421,10 @@ class PushDocker:
                 ContanerSignatureHandler instance.
             operator_signature_handler (SignatureRemover):
                 SignatureRemover instance.
-            claims_messages(list(dict)): claim messages created for new container items
-            ii_claims_message(list(dict)): claim messages created for new index image(s)
+            claims_messages (list(dict)):
+                claim messages created for new container items
+            ii_claims_message (list(dict)):
+                claim messages created for new index image(s)
 
         """
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
@@ -492,11 +494,14 @@ class PushDocker:
         """Fetch digest of repo and tag for given media type.
 
         Args:
-            repo(str): Repository name.
-            tag(str): Image tag.
-            mtype(str): Media type for requested digest.
-            (can be only application/vnd.docker.distribution.manifest.v2+json,
-            application/vnd.docker.distribution.manifest.v1+json)
+            repo(str):
+                Repository name.
+            tag(str): 
+                Image tag.
+            mtype(str): 
+                Media type for requested digest.
+                (can be only application/vnd.docker.distribution.manifest.v2+json,
+                application/vnd.docker.distribution.manifest.v1+json)
 
         Returns(str): Manifest digest of the container.
         """
