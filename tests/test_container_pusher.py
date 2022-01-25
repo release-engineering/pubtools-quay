@@ -427,7 +427,7 @@ def test_push_container_items_v1_item(
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_v1_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
-def test_push_container_items_v1_item_disabled(
+def test_push_container_items_single_arch(
     mock_quay_client,
     mock_copy_multiarch,
     mock_copy_src,
@@ -442,8 +442,7 @@ def test_push_container_items_v1_item_disabled(
     pusher = container_image_pusher.ContainerImagePusher(
         [container_multiarch_push_item], target_settings_allow_v1_containers_false
     )
-    with pytest.raises(exceptions.BadPushItem, match=".*contains a single-arch.*"):
-        pusher.push_container_images()
+    pusher.push_container_images()
 
 
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")

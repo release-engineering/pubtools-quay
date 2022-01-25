@@ -4,7 +4,6 @@ import logging
 import requests
 
 from .exceptions import (
-    BadPushItem,
     ManifestTypeError,
 )
 from .utils.misc import (
@@ -296,13 +295,7 @@ class ContainerImagePusher:
             )
             v1 = False
             if not sources_for_nvr and not source_ml:
-                if not self.target_settings.get("allow_v1_containers", True):
-                    raise BadPushItem(
-                        "Push item '{0}' contains a single-arch image that's not a "
-                        "source image. This use-case is not supported".format(item)
-                    )
-                else:
-                    v1 = True
+                v1 = True
             # Source image
             if sources_for_nvr:
                 self.copy_source_push_item(item)
