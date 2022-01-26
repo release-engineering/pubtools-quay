@@ -383,6 +383,7 @@ def test_push_docker_multiarch_simple_workflow(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.push_docker.PushDocker.fetch_missing_push_items_digests")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.tag_images.send_umb_message")
@@ -400,6 +401,7 @@ def test_push_docker_source(
     mock_send_umb_message,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
+    mock_fetch_missing_push_items_digests,
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
@@ -535,6 +537,19 @@ def test_push_docker_source(
             "some-target",
             target_settings,
         )
+
+        def mock_fetch_missing_push_items_digests_sf(push_items, target):
+            fake_digest_counter = 0
+            for item in push_items:
+                item.metadata["new_digests"] = {
+                    ("target----repo", "latest-test-tag"): {
+                        "application/vnd.docker.distribution.manifest.v2+json": "fake-digest-%s"
+                        % fake_digest_counter
+                    }
+                }
+                fake_digest_counter += 1
+
+        mock_fetch_missing_push_items_digests.side_effect = mock_fetch_missing_push_items_digests_sf
 
         push_docker.run()
 

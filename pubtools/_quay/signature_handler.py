@@ -12,7 +12,6 @@ from .utils.misc import (
     run_entrypoint,
     log_step,
     get_pyxis_ssl_paths,
-    get_internal_container_repo_name,
 )
 from .quay_client import QuayClient
 from .manifest_claims_handler import ManifestClaimsHandler
@@ -444,44 +443,6 @@ class ContainerSignatureHandler(SignatureHandler):
 
         return claim_messages
 
-    def construct_item_schema1_claim_messages(self, push_item):
-        """
-        Construct all the schema1 signature claim messages for RADAS for one push item.
-
-        The reason why these claims are created separately at a different stage is that
-        an image must already be in its destination in order to retrieve its schema1 manifest.
-        Thus, there will be a small time window where unsigned schema1 digests will be available
-        for customers.
-
-        NOTE: Only one schema1 manifest exists for every tag. This is true even for multiarch
-        images. The reason is that schema1 manifests predate the existence of manifest lists.
-
-        push_item (ContainerPushItem):
-            Container push item whose schema1 claim messages will be created.
-        Returns ([dict]):
-            Schema1 claim messages for a given push item.
-        """
-        LOG.info("Constructing schema1 claim messages for push item '{0}'".format(push_item))
-        claim_messages = []
-        image_schema = "{host}/{namespace}/{repo}:{tag}"
-
-        if push_item.claims_signing_key:
-            for repo, tags in sorted(push_item.metadata["tags"].items()):
-                internal_repo = get_internal_container_repo_name(repo)
-                for tag in tags:
-                    dest_ref = image_schema.format(
-                        host=self.quay_host,
-                        namespace=self.target_settings["quay_namespace"],
-                        repo=internal_repo,
-                        tag=tag,
-                    )
-                    digest = self.dest_quay_client.get_manifest_digest(dest_ref, v2s1_manifest=True)
-                    claim_messages += self.construct_variant_claim_messages(
-                        repo, tag, digest, [push_item.claims_signing_key]
-                    )
-
-        return claim_messages
-
     def construct_variant_claim_messages(self, repo, tag, digest, signing_keys):
         """
         Construct claim messages for all specified variations of a given image.
@@ -521,7 +482,7 @@ class ContainerSignatureHandler(SignatureHandler):
         return claim_messages
 
     @log_step("Sign container images")
-    def sign_container_images(self, push_items, only_v2s1_manifests=False):
+    def sign_container_images(self, push_items):
         """
         Perform all the steps needed to sign the images of specified push items.
 
@@ -531,39 +492,72 @@ class ContainerSignatureHandler(SignatureHandler):
         - send messages to RADAS and receive signatures (ManifestClaimsHandler class)
         - Upload new signatures to Pyxis
 
-        NOTE: The reason for separating the creation of schema1 and schema2 claim messages is that
-        they must happen in different stages of the push, schema2 before pushing to destination,
-        and schema1 after pushing to destination.
-
         Args:
             push_items (([ContainerPushItem])):
                 Container push items whose images will be signed.
-            only_v2s1_manifests (bool):
-                If True, only claim messages for schema1 manifests are created. If False,
-                only claim messages for schema2 manifests are created.
+        Returns (list(dict)):
+            List of claim message sent for signing
         """
         if not self.target_settings["docker_settings"].get(
             "docker_container_signing_enabled", False
         ):
             LOG.info("Container signing not allowed in target settings, skipping.")
-            return
+            return []
 
         claim_messages = []
         for item in push_items:
-            if only_v2s1_manifests:
-                claim_messages += self.construct_item_schema1_claim_messages(item)
-            else:
-                claim_messages += self.construct_item_claim_messages(item)
+            claim_messages += self.construct_item_claim_messages(item)
         claim_messages = self.remove_duplicate_claim_messages(claim_messages)
         claim_messages = self.filter_claim_messages(claim_messages)
         if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
-            return
+            return []
 
         LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
         self.upload_signatures_to_pyxis(claim_messages, signature_messages)
+        return claim_messages
+
+    @log_step("Sign container images")
+    def sign_container_images_new_digests(self, push_items):
+        """
+        Sign digests for manifest types which haven't existed before the push.
+
+        Manifest types which are not pushed in the push items can be fetched
+        from quay and then created dynamically on the fly. This method is meant
+        to create signatures for those.
+
+        Args:
+            push_items (([ContainerPushItem])):
+                Container push items whose images will be signed.
+        Returns (list(dict)):
+            List of claim message sent for signing
+        """
+        if not self.target_settings["docker_settings"].get(
+            "docker_container_signing_enabled", False
+        ):
+            LOG.info("Container signing not allowed in target settings, skipping.")
+            return []
+
+        claim_messages = []
+        for item in push_items:
+            for (repo, tag), digests_per_type in sorted(item.metadata["new_digests"].items()):
+                for digest in digests_per_type.values():
+                    claim_messages += self.construct_variant_claim_messages(
+                        repo, tag, digest, [item.claims_signing_key]
+                    )
+        claim_messages = self.remove_duplicate_claim_messages(claim_messages)
+        claim_messages = self.filter_claim_messages(claim_messages)
+        if not claim_messages:
+            LOG.info("No new claim messages will be uploaded")
+            return []
+
+        LOG.info("{0} claim messages will be uploaded".format(len(claim_messages)))
+        signature_messages = self.get_signatures_from_radas(claim_messages)
+        self.validate_radas_messages(claim_messages, signature_messages)
+        self.upload_signatures_to_pyxis(claim_messages, signature_messages)
+        return claim_messages
 
 
 class OperatorSignatureHandler(SignatureHandler):
