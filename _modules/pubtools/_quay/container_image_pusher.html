@@ -77,7 +77,6 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BadPushItem</span><span class="p">,</span>
     <span class="n">ManifestTypeError</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
@@ -183,20 +182,20 @@
             <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_wait_time_increase&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
+    <span class="k">def</span> <span class="nf">_prepare_dest_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Prepare destination references for push.</span>
+
+<span class="sd">        Construct destination references based on tags and repo of push item.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            push_item (ContainerPushItem):</span>
-<span class="sd">                Source container push item.</span>
+<span class="sd">            push_item(ContainerPushItem): Container push item.</span>
+
+<span class="sd">        Returns (list(str)):</span>
+<span class="sd">            List of destination references for the push.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a source image&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
-        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
         <span class="n">dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
         <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
-
         <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
@@ -207,8 +206,36 @@
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dest_refs</span>
 
+<div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Source container push item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a source image&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">dest_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dest_refs</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">copy_v1_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">is_source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the tagging operation for a push item containing a v1 image.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Container push item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as v1 container only&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">dest_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dest_refs</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -339,14 +366,15 @@
                 <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="p">{})</span>
                 <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sources_for_nvr&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="p">)</span>
+            <span class="n">v1</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">sources_for_nvr</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">source_ml</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
-                    <span class="s2">&quot;Push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; contains a single-arch image that&#39;s not a &quot;</span>
-                    <span class="s2">&quot;source image. This use-case is not supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">v1</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="c1"># Source image</span>
             <span class="k">if</span> <span class="n">sources_for_nvr</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">copy_source_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="c1"># v1 image</span>
+            <span class="k">elif</span> <span class="n">v1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_v1_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
             <span class="c1"># Multiarch images</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">copy_multiarch_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">)</span></div></div>

@@ -107,7 +107,8 @@
 - Generate backup mapping that will be used for rollback if something goes wrong.
 - Sign container images using RADAS and upload signatures to Pyxis
 - Push container images to their destinations
-- Sign V2S1 images (has to be done after pushing)
+- Fetching digests for missing media types of pushed items
+- Sign manifests for missing media types (has to be done after pushing)
 - Filter out push items to only include operator image items
 - Add operator bundles to index images by using IIB
 - Sign index images using RADAS and upload signatures to Pyxis
@@ -244,7 +245,7 @@ will be removed to preserve pre-push state.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.remove_old_signatures">
-<span class="sig-name descname"><span class="pre">remove_old_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existing_index_images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iib_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_signature_handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_signature_handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_remover</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.remove_old_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.remove_old_signatures" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_old_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existing_index_images</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iib_results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_signature_handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operator_signature_handler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signature_remover</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">claim_messages</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ii_claim_messages</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.remove_old_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.remove_old_signatures" title="Permalink to this definition"></a></dt>
 <dd><p>Remove signatures of containers for tags which were overwritten in the current push.</p>
 <p>Method fetches all existing signatures for digests in backup tags. Only signatures with
 repo, tag pairs  matching to backup tags are then processes forward as also signatures
@@ -269,6 +270,10 @@ holding containers which were overwritten in the currently running task</p>
 <dt>operator_signature_handler (OperatorSignatureHandler):</dt><dd><p>ContanerSignatureHandler instance.</p>
 </dd>
 <dt>operator_signature_handler (SignatureRemover):</dt><dd><p>SignatureRemover instance.</p>
+</dd>
+<dt>claims_messages (list(dict)):</dt><dd><p>claim messages created for new container items</p>
+</dd>
+<dt>ii_claims_message (list(dict)):</dt><dd><p>claim messages created for new index image(s)</p>
 </dd>
 </dl>
 </dd>
