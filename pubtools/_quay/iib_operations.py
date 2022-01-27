@@ -144,8 +144,16 @@ def task_iib_add_bundles(
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
     )
+    # Permanent index image with proxy as a host must be used because skopeo cannot handle
+    # login to two Quay namespaces at the same time
+    permanent_index_image_proxy = image_schema_tag.format(
+        host=build_details.index_image.split("/")[0],
+        namespace=iib_namespace,
+        repo="iib",
+        tag=build_details.build_tags[0],
+    )
     ContainerImagePusher.run_tag_images(
-        permanent_index_image, [dest_image_stamp], True, target_settings
+        permanent_index_image_proxy, [dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -242,8 +250,16 @@ def task_iib_remove_operators(
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
     )
+    # Permanent index image with proxy as a host must be used because skopeo cannot handle
+    # login to two Quay namespaces at the same time
+    permanent_index_image_proxy = image_schema_tag.format(
+        host=build_details.index_image.split("/")[0],
+        namespace=iib_namespace,
+        repo="iib",
+        tag=build_details.build_tags[0],
+    )
     ContainerImagePusher.run_tag_images(
-        permanent_index_image, [dest_image_stamp], True, target_settings
+        permanent_index_image_proxy, [dest_image_stamp], True, target_settings
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
@@ -325,8 +341,16 @@ def task_iib_build_from_scratch(
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, target_settings
     )
+    # Permanent index image with proxy as a host must be used because skopeo cannot handle
+    # login to two Quay namespaces at the same time
+    permanent_index_image_proxy = image_schema_tag.format(
+        host=build_details.index_image.split("/")[0],
+        namespace=iib_namespace,
+        repo="iib",
+        tag=build_details.build_tags[0],
+    )
     ContainerImagePusher.run_tag_images(
-        permanent_index_image, [dest_image_stamp], True, target_settings
+        permanent_index_image_proxy, [dest_image_stamp], True, target_settings
     )
 
 
