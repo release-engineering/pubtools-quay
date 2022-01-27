@@ -99,7 +99,7 @@ def test_task_iib_add_bundles(
         target_settings,
     )
     assert mock_run_tag_images.call_args_list[1] == mock.call(
-        "quay.io/iib-namespace/iib:8-1",
+        "some-registry.com/iib-namespace/iib:8-1",
         [
             "quay.io/some-namespace/operators----index-image:8-timestamp",
         ],
@@ -199,7 +199,7 @@ def test_task_iib_remove_operators(
         target_settings,
     )
     assert mock_run_tag_images.call_args_list[1] == mock.call(
-        "quay.io/iib-namespace/iib:8-1",
+        "some-registry.com/iib-namespace/iib:8-1",
         [
             "quay.io/some-namespace/operators----index-image:8-timestamp",
         ],
@@ -281,7 +281,7 @@ def test_task_iib_build_from_scratch(
         target_settings,
     )
     assert mock_run_tag_images.call_args_list[1] == mock.call(
-        "quay.io/iib-namespace/iib:8-1",
+        "some-registry.com/iib-namespace/iib:8-1",
         [
             "quay.io/some-namespace/operators----index-image:12-timestamp",
         ],

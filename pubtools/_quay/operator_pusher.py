@@ -470,7 +470,7 @@ class OperatorPusher:
 
             _, tag = build_details.index_image.split(":", 1)
             permanent_index_image = image_schema_tag.format(
-                host=self.quay_host,
+                host=build_details.index_image_resolved.split("/")[0],
                 namespace=build_details.index_image_resolved.split("/")[1],
                 repo="iib",
                 tag=build_details.build_tags[0],
