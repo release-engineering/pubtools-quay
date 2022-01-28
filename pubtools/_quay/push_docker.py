@@ -330,7 +330,7 @@ class PushDocker:
                         )
                         digest = self.dest_quay_client.get_manifest_digest(image_tag)
                         v2s1_digest = self.dest_quay_client.get_manifest_digest(
-                            image_tag, v2s1_manifest=True
+                            image_tag, media_type=QuayClient.MANIFEST_V2S1_TYPE
                         )
                         # for backup tags store also digest
                         image_data = PushDocker.ImageData(full_repo, tag, digest, v2s1_digest)
@@ -512,8 +512,7 @@ class PushDocker:
             repo=repo,
             tag=tag,
         )
-        v2s1_manifest = True if media_type == QuayClient.MANIFEST_V2S1_TYPE else False
-        digest = self.dest_quay_client.get_manifest_digest(dest_ref, v2s1_manifest=v2s1_manifest)
+        digest = self.dest_quay_client.get_manifest_digest(dest_ref, media_type=media_type)
         return digest
 
     def fetch_missing_push_items_digests(self, push_items, target_settings):

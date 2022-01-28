@@ -2,6 +2,7 @@ import functools
 import logging
 
 import requests
+import requests.exceptions
 
 from .exceptions import (
     ManifestTypeError,
@@ -285,6 +286,12 @@ class ContainerImagePusher:
                 )
             except ManifestTypeError:
                 source_ml = None
+            # some registries can return 404 instead of v2ch2
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                    source_ml = None
+                else:
+                    raise
 
             # this metadata field indicates a source image
             sources_for_nvr = (
