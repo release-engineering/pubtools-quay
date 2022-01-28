@@ -1,6 +1,19 @@
 ChangeLog
 =========
 
+0.9.0 (2022-28-1)
+------------------
+
+* Support v2ch2 single arch containers
+* Support v2ch1 containers
+* Run rollback only when all index image builds fail
+* Add retries to image tagging as a part of pushes
+* Skip checking for repo deprecation based on value in target settings
+* Support extra source host for quay operations
+* Sign V2S1 manifests
+* Tag index image timestamps with permanent index image as a source
+
+
 0.8.3 (2021-10-6)
 ------------------
 
