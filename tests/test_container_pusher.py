@@ -381,6 +381,56 @@ def test_push_container_items_src_item(
     mock_copy_src.assert_called_once()
 
 
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_push_container_items_src_item_external_registry(
+    mock_quay_client,
+    mock_copy_multiarch,
+    mock_copy_src,
+    target_settings,
+    container_source_push_item,
+):
+    mock_get_manifest = mock.MagicMock()
+
+    response_404 = requests.Response()
+    response_404.status_code = 404
+    mock_get_manifest.side_effect = requests.exceptions.HTTPError(response=response_404)
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    pusher = container_image_pusher.ContainerImagePusher(
+        [container_source_push_item], target_settings
+    )
+    pusher.push_container_images()
+
+    mock_copy_multiarch.assert_not_called()
+    mock_copy_src.assert_called_once()
+
+
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_push_container_items_src_item_500_error(
+    mock_quay_client,
+    mock_copy_multiarch,
+    mock_copy_src,
+    target_settings,
+    container_source_push_item,
+):
+    mock_get_manifest = mock.MagicMock()
+
+    response_500 = requests.Response()
+    response_500.status_code = 500
+    mock_get_manifest.side_effect = requests.exceptions.HTTPError(response=response_500)
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    pusher = container_image_pusher.ContainerImagePusher(
+        [container_source_push_item], target_settings
+    )
+    with pytest.raises(requests.exceptions.HTTPError):
+        pusher.push_container_images()
+
+
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_v1_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")

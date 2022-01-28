@@ -1073,7 +1073,86 @@ def container_signing_push_item():
             "tags": {"target/repo1": ["tag1", "tag2"], "target/repo2": ["tag3"]},
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:1",
-            "build": {},
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                }
+            },
+        },
+    )
+
+
+@pytest.fixture
+def container_signing_push_item_v1():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"namespace/repo1": [], "namespace/repo2": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo1": ["tag1", "tag2"], "target/repo2": ["tag3"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:1",
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v1+json"]
+                    }
+                }
+            },
+        },
+    )
+
+
+@pytest.fixture
+def container_signing_push_item_ml():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"namespace/repo1": [], "namespace/repo2": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo1": ["tag1", "tag2"], "target/repo2": ["tag3"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:1",
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": [
+                            "application/vnd.docker.distribution.manifest.v2+json",
+                            "application/vnd.docker.distribution.manifest.list.v2+json",
+                        ]
+                    }
+                }
+            },
         },
     )
 
@@ -1351,7 +1430,10 @@ def container_multiarch_push_item_integration():
             "build": {
                 "extra": {
                     "image": {
-                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                        "media_types": [
+                            "application/vnd.docker.distribution.manifest.v2+json",
+                            "application/vnd.docker.distribution.manifest.list.v2+json",
+                        ]
                     }
                 }
             },

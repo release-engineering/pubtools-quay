@@ -129,7 +129,7 @@ class SignatureHandler:
         }
         return message
 
-    def get_tagged_image_digests(self, image_ref):
+    def get_tagged_image_digests(self, image_ref, media_type):
         """
         Get all digests referenced by a tagged image.
 
@@ -144,11 +144,12 @@ class SignatureHandler:
             List of manifest digests referenced by the tag.
         """
         digests = []
-
-        manifest = self.src_quay_client.get_manifest(image_ref)
+        manifest = self.src_quay_client.get_manifest(image_ref, media_type=media_type)
         # If V2S2 manifest, we only want its digest
         if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
-            digests.append(self.src_quay_client.get_manifest_digest(image_ref))
+            digests.append(
+                self.src_quay_client.get_manifest_digest(image_ref, media_type=media_type)
+            )
         # If manifest list, we want digests of all its arch images
         else:
             for arch_manifest in manifest["manifests"]:
@@ -431,7 +432,19 @@ class ContainerSignatureHandler(SignatureHandler):
         claim_messages = []
 
         if push_item.claims_signing_key:
-            digests = self.get_tagged_image_digests(push_item.metadata["pull_url"])
+            if (
+                QuayClient.MANIFEST_LIST_TYPE
+                in push_item.metadata["build"]["extra"]["image"]["media_types"]
+            ):
+                mtype = None
+            elif (
+                QuayClient.MANIFEST_V2S2_TYPE
+                in push_item.metadata["build"]["extra"]["image"]["media_types"]
+            ):
+                mtype = QuayClient.MANIFEST_V2S2_TYPE
+            else:
+                mtype = QuayClient.MANIFEST_V2S1_TYPE
+            digests = self.get_tagged_image_digests(push_item.metadata["pull_url"], mtype)
             # each image digest needs its own signature
             for digest in digests:
                 # each destination image reference needs its own signature
