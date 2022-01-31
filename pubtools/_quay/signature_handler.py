@@ -139,6 +139,8 @@ class SignatureHandler:
         Args:
             image_ref (str):
                 Image reference URL. Must be specified via tag.
+            media_type (str):
+                Requested Media type of the manifest.
 
         Returns ([str]):
             List of manifest digests referenced by the tag.
@@ -436,7 +438,7 @@ class ContainerSignatureHandler(SignatureHandler):
                 QuayClient.MANIFEST_LIST_TYPE
                 in push_item.metadata["build"]["extra"]["image"]["media_types"]
             ):
-                mtype = None
+                mtype = QuayClient.MANIFEST_LIST_TYPE
             elif (
                 QuayClient.MANIFEST_V2S2_TYPE
                 in push_item.metadata["build"]["extra"]["image"]["media_types"]

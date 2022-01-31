@@ -2,7 +2,6 @@ import functools
 import logging
 
 import requests
-import requests.exceptions
 
 from .exceptions import (
     ManifestTypeError,
