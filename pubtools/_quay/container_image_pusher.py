@@ -183,7 +183,9 @@ class ContainerImagePusher:
 
         # get unique destination repositories
         dest_repos = sorted(list(set([ref.split(":")[0] for ref in dest_refs])))
-        source_ml = self.src_quay_client.get_manifest(source_ref, manifest_list=True)
+        source_ml = self.src_quay_client.get_manifest(
+            source_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
+        )
 
         # copy each arch source image to all destination repos
         for manifest in source_ml["manifests"]:
@@ -235,7 +237,9 @@ class ContainerImagePusher:
                     tag=tag,
                 )
                 try:
-                    dest_ml = self.dest_quay_client.get_manifest(dest_ref, manifest_list=True)
+                    dest_ml = self.dest_quay_client.get_manifest(
+                        dest_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
+                    )
                     LOG.info(
                         "Getting missing archs between images '{0}' and '{1}'".format(
                             source_ref, dest_ref
@@ -282,7 +286,7 @@ class ContainerImagePusher:
         for item in self.push_items:
             try:
                 source_ml = self.src_quay_client.get_manifest(
-                    item.metadata["pull_url"], manifest_list=True
+                    item.metadata["pull_url"], media_type=QuayClient.MANIFEST_LIST_TYPE
                 )
             except ManifestTypeError:
                 source_ml = None

@@ -732,7 +732,8 @@ def test_get_index_image_signatures_no_claims(
     )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/index-repo----index-image:1", manifest_list=True
+        "quay.io/internal-namespace/index-repo----index-image:1",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -842,7 +843,8 @@ def test_get_index_image_signatures_claims(
     )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/index-repo----index-image:1", manifest_list=True
+        "quay.io/internal-namespace/index-repo----index-image:1",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_get_signatures.assert_called_once_with(
         [
@@ -922,7 +924,8 @@ def test_get_index_image_signatures_no_manifest(
     )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/index-repo----index-image:1", manifest_list=True
+        "quay.io/internal-namespace/index-repo----index-image:1",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_get_signatures.assert_not_called()
     assert signatures == []
@@ -954,6 +957,7 @@ def test_get_index_image_signatures_server_error(
         )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/internal-namespace/index-repo----index-image:1", manifest_list=True
+        "quay.io/internal-namespace/index-repo----index-image:1",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_get_signatures.assert_not_called()

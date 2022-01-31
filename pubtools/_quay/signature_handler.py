@@ -601,7 +601,9 @@ class OperatorSignatureHandler(SignatureHandler):
             index_image_credential[1],
             self.quay_host,
         )
-        manifest_list = index_image_quay_client.get_manifest(index_image, manifest_list=True)
+        manifest_list = index_image_quay_client.get_manifest(
+            index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        )
         digests = [m["digest"] for m in manifest_list["manifests"]]
         for registry in self.dest_registries:
             for signing_key in signing_keys:

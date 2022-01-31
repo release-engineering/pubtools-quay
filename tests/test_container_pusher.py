@@ -199,7 +199,9 @@ def test_merge_workflow(
     pusher.run_merge_workflow(
         "registry/src/image:1", ["registry/dest1/image:1", "registry/dest2/image:2"]
     )
-    mock_get_manifest.assert_called_once_with("registry/src/image:1", manifest_list=True)
+    mock_get_manifest.assert_called_once_with(
+        "registry/src/image:1", media_type=mock_quay_client.MANIFEST_LIST_TYPE
+    )
     # test that src digests are copied to all dest repos
     assert mock_tag_images.call_args_list[0][0][1] == [
         "registry/dest1/image@digest1",
@@ -241,7 +243,8 @@ def test_copy_multiarch_item_no_extra_archs(
     pusher.copy_multiarch_push_item(container_multiarch_push_item, {"manifest_list": "first_ml"})
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/target----repo:latest-test-tag", manifest_list=True
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     assert mock_tag_images.call_count == 1
     assert mock_tag_images.call_args_list[0][0] == (
@@ -279,7 +282,8 @@ def test_copy_multiarch_item_no_dest_ml(
     )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/target----repo:latest-test-tag", manifest_list=True
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
 
     assert mock_tag_images.call_count == 1
@@ -345,7 +349,8 @@ def test_copy_multiarch_item_missing_archs(
     pusher.copy_multiarch_push_item(container_multiarch_push_item, {"manifest_list": "first_ml"})
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/target----repo:latest-test-tag", manifest_list=True
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
 
     assert mock_merge_workflow.call_count == 1

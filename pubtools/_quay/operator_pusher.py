@@ -13,6 +13,7 @@ from .utils.misc import (
     log_step,
     get_pyxis_ssl_paths,
 )
+from .quay_client import QuayClient
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -379,7 +380,9 @@ class OperatorPusher:
         for version in sorted(self.version_items_mapping.keys()):
             image_ref = "{0}:{1}".format(index_image_repo, version)
             try:
-                manifest_list = quay_client.get_manifest(image_ref, manifest_list=True)
+                manifest_list = quay_client.get_manifest(
+                    image_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
+                )
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 404 or e.response.status_code == 401:
                     continue

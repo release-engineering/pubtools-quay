@@ -209,7 +209,10 @@ def test_get_manifest_list_success():
         )
 
         client = quay_client.QuayClient("user", "pass")
-        ret_ml = client.get_manifest("quay.io/namespace/image:1", manifest_list=True)
+        ret_ml = client.get_manifest(
+            "quay.io/namespace/image:1",
+            media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+        )
         assert m.call_count == 1
 
     assert ml == ret_ml
@@ -237,7 +240,11 @@ def test_get_manifest_list_raw_success():
         )
 
         client = quay_client.QuayClient("user", "pass")
-        ret_ml = client.get_manifest("quay.io/namespace/image:1", raw=True, manifest_list=True)
+        ret_ml = client.get_manifest(
+            "quay.io/namespace/image:1",
+            raw=True,
+            media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+        )
         assert m.call_count == 1
 
     assert json.dumps(ml) == ret_ml
@@ -260,7 +267,10 @@ def test_get_manifest_list_wrong_type():
 
         client = quay_client.QuayClient("user", "pass")
         with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a manifest list"):
-            client.get_manifest("quay.io/namespace/image:1", manifest_list=True)
+            client.get_manifest(
+                "quay.io/namespace/image:1",
+                media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+            )
         assert m.call_count == 1
 
 
@@ -466,17 +476,6 @@ def test_get_v2s1_manifest_raw():
         assert m.call_count == 1
 
     assert v2s1_manifest == ret_manifest
-
-
-def test_get_manifest_v2s1_list_same_time():
-
-    client = quay_client.QuayClient("user", "pass")
-    with pytest.raises(ValueError, match=".*at the same time"):
-        client.get_manifest(
-            "quay.io/namespace/image:1",
-            media_type="application/vnd.docker.distribution.manifest.list.v2+json",
-            manifest_list=True,
-        )
 
 
 def test_upload_manifest_list_success():
