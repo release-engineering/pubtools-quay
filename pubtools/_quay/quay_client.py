@@ -42,7 +42,7 @@ class QuayClient:
 
     def get_manifest(self, image, raw=False, media_type=None):
         """
-        Get manifest of given media type
+        Get manifest of given media type.
 
         Args:
             image (str):
