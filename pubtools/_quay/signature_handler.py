@@ -148,7 +148,7 @@ class SignatureHandler:
         digests = []
         manifest = self.src_quay_client.get_manifest(image_ref, media_type=media_type)
         # If V2S2 manifest, we only want its digest
-        if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
+        if manifest.get("mediaType") != "application/vnd.docker.distribution.manifest.list.v2+json":
             digests.append(
                 self.src_quay_client.get_manifest_digest(image_ref, media_type=media_type)
             )
