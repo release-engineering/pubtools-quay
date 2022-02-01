@@ -490,15 +490,16 @@ def test_push_docker_source(
         m.get(
             "https://quay.io/v2/src/repo/manifests/1",
             json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
             [
+                # get manifest for back-up mapping
                 {
                     "text": json.dumps(src_manifest_list, sort_keys=True),
                     "headers": {
-                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
+                        "Content-Type": "application/vnd.docker.distribution.manifest.v2+json"
                     },
                 },
                 {

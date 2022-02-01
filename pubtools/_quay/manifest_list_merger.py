@@ -79,9 +79,11 @@ class ManifestListMerger:
                 self.src_image, self.dest_image
             )
         )
-        src_manifest_list = self._src_quay_client.get_manifest(self.src_image, manifest_list=True)
+        src_manifest_list = self._src_quay_client.get_manifest(
+            self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        )
         dest_manifest_list = self._dest_quay_client.get_manifest(
-            self.dest_image, manifest_list=True
+            self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
         )
 
         missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)
@@ -153,12 +155,14 @@ class ManifestListMerger:
         if not self._src_quay_client or not self._dest_quay_client:
             raise RuntimeError("QuayClient instance must be set for both source and dest images")
 
-        src_manifest_list = self._src_quay_client.get_manifest(self.src_image, manifest_list=True)
+        src_manifest_list = self._src_quay_client.get_manifest(
+            self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        )
         # It's possible that destination doesn't exist in this workflow. ML merging logic is still
         # necessary due to only some archs being eligible
         try:
             dest_manifest_list = self._dest_quay_client.get_manifest(
-                self.dest_image, manifest_list=True
+                self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
             )
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404 or e.response.status_code == 401:

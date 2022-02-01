@@ -536,10 +536,20 @@ def test_get_existing_index_images(
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     existing_index_images = pusher.get_existing_index_images(mock_quay_client)
     mock_quay_client.get_manifest.assert_has_calls(
-        [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
+        [
+            mock.call(
+                "quay.io/some-namespace/operators----index-image:v4.5",
+                media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+            )
+        ]
     )
     mock_quay_client.get_manifest.assert_has_calls(
-        [mock.call("quay.io/some-namespace/operators----index-image:v4.6", manifest_list=True)]
+        [
+            mock.call(
+                "quay.io/some-namespace/operators----index-image:v4.6",
+                media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+            )
+        ]
     )
     assert sorted(existing_index_images) == [
         (
@@ -616,11 +626,22 @@ def test_get_existing_index_images_raises_401(
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     existing_index_images = pusher.get_existing_index_images(mock_quay_client)
     mock_quay_client.get_manifest.assert_has_calls(
-        [mock.call("quay.io/some-namespace/operators----index-image:v4.5", manifest_list=True)]
+        [
+            mock.call(
+                "quay.io/some-namespace/operators----index-image:v4.5",
+                media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+            )
+        ]
     )
     mock_quay_client.get_manifest.assert_has_calls(
-        [mock.call("quay.io/some-namespace/operators----index-image:v4.6", manifest_list=True)]
+        [
+            mock.call(
+                "quay.io/some-namespace/operators----index-image:v4.6",
+                media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+            )
+        ]
     )
+
     assert sorted(existing_index_images) == [
         (
             "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",

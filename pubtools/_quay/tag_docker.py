@@ -584,7 +584,9 @@ class TagDocker:
 
         signature_handler.sign_claim_messages(claim_messages, True, True)
 
-        raw_src_manifest = self.quay_client.get_manifest(source_image, manifest_list=True, raw=True)
+        raw_src_manifest = self.quay_client.get_manifest(
+            source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
+        )
 
         # Special case: if the source manifest and the merged manifest are the same, upload the
         # raw source manifest. The reason is that otherwise the digests of the copied manifests
@@ -672,7 +674,9 @@ class TagDocker:
             host=self.quay_host, namespace=namespace, repo=internal_repo
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
-        manifest_list = self.quay_client.get_manifest(dest_image, manifest_list=True)
+        manifest_list = self.quay_client.get_manifest(
+            dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        )
         keep_manifests = []
 
         for manifest in manifest_list["manifests"]:

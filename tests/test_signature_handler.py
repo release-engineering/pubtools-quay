@@ -93,11 +93,20 @@ def test_get_tagged_image_digests_no_manifest_list(
     mock_quay_client.return_value.get_manifest_digest = mock_get_manifest_digest
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
-    digests = sig_handler.get_tagged_image_digests("registry.com/namespace/image:3")
+    digests = sig_handler.get_tagged_image_digests(
+        "registry.com/namespace/image:3",
+        "application/vnd.docker.distribution.manifest.list.v2+json",
+    )
 
     assert digests == ["sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb"]
-    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:3")
-    mock_get_manifest_digest.assert_called_once_with("registry.com/namespace/image:3")
+    mock_get_manifest.assert_called_once_with(
+        "registry.com/namespace/image:3",
+        media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+    )
+    mock_get_manifest_digest.assert_called_once_with(
+        "registry.com/namespace/image:3",
+        media_type="application/vnd.docker.distribution.manifest.list.v2+json",
+    )
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -110,7 +119,7 @@ def test_get_tagged_image_digests_manifest_list(
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
-    digests = sig_handler.get_tagged_image_digests("registry.com/namespace/image:1")
+    digests = sig_handler.get_tagged_image_digests("registry.com/namespace/image:1", None)
 
     assert digests == [
         "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
@@ -119,7 +128,7 @@ def test_get_tagged_image_digests_manifest_list(
         "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
         "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
     ]
-    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1")
+    mock_get_manifest.assert_called_once_with("registry.com/namespace/image:1", media_type=None)
 
 
 @mock.patch("json.dump")
@@ -399,6 +408,7 @@ def test_construct_item_claim_messages(
         "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
     ]
+    mock_quay_client.MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 
     sig_handler = signature_handler.ContainerSignatureHandler(
         hub, "1", target_settings, "some-target"
@@ -409,58 +419,90 @@ def test_construct_item_claim_messages(
         expected_claim_messages = json.loads(f.read())
 
     assert claim_messages == expected_claim_messages
-    mock_get_tagged_digests.assert_called_once_with("some-registry/src/repo:1")
+    mock_get_tagged_digests.assert_called_once_with(
+        "some-registry/src/repo:1", mock_quay_client.MANIFEST_V2S2_TYPE
+    )
     assert mock_uuid.call_count == 12
 
 
-# @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
-# @mock.patch("pubtools._quay.signature_handler.datetime")
-# @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
-# @mock.patch("pubtools._quay.signature_handler.QuayClient")
-# def test_construct_item_schema1_claim_messages(
-# mock_quay_client,
-# mock_get_tagged_digests,
-# mock_uuid,
-# mock_datetime,
-# mock_encode,
-# target_settings,
-# container_signing_push_item,
-# ):
-# hub = mock.MagicMock()
-# mock_uuid.side_effect = range(100)
-# mock_encode.return_value = b"some-encode"
-# mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
-# mock_get_tagged_digests.return_value = [
-# "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-# "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
-# ]
-# mock_quay_client.return_value.get_manifest_digest.side_effect = [
-# "sha256:a1a1a1a1",
-# "sha256:b2b2b2b2",
-# "sha256:c3c3c3c3",
-# ]
+@mock.patch("pubtools._quay.signature_handler.base64.b64encode")
+@mock.patch("pubtools._quay.signature_handler.datetime")
+@mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+def test_construct_item_claim_messages_v1(
+    mock_quay_client,
+    mock_get_tagged_digests,
+    mock_uuid,
+    mock_datetime,
+    mock_encode,
+    target_settings,
+    container_signing_push_item_v1,
+):
+    hub = mock.MagicMock()
+    mock_uuid.side_effect = range(100)
+    mock_encode.return_value = b"some-encode"
+    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
+    mock_get_tagged_digests.return_value = [
+        "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
+        "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+    ]
+    mock_quay_client.MANIFEST_V2S1_TYPE = "application/vnd.docker.distribution.manifest.v1+json"
 
-# sig_handler = signature_handler.ContainerSignatureHandler(
-# hub, "1", target_settings, "some-target"
-# )
+    sig_handler = signature_handler.ContainerSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
 
-# claim_messages = sig_handler.construct_item_schema1_claim_messages(container_signing_push_item)
-# with open("tests/test_data/test_expected_schema1_claim_messages.json", "r") as f:
-# expected_claim_messages = json.loads(f.read())
+    claim_messages = sig_handler.construct_item_claim_messages(container_signing_push_item_v1)
+    with open("tests/test_data/test_expected_claim_messages.json", "r") as f:
+        expected_claim_messages = json.loads(f.read())
 
-# assert mock_quay_client.return_value.get_manifest_digest.call_count == 3
-# assert mock_quay_client.return_value.get_manifest_digest.call_args_list[0] == mock.call(
-# "quay.io/some-namespace/target----repo1:tag1", v2s1_manifest=True
-# )
-# assert mock_quay_client.return_value.get_manifest_digest.call_args_list[1] == mock.call(
-# "quay.io/some-namespace/target----repo1:tag2", v2s1_manifest=True
-# )
-# assert mock_quay_client.return_value.get_manifest_digest.call_args_list[2] == mock.call(
-# "quay.io/some-namespace/target----repo2:tag3", v2s1_manifest=True
-# )
-# assert claim_messages == expconstruct_item_schema1_claim_messagesected_claim_messages
-# assert mock_uuid.call_count == 6
+    assert claim_messages == expected_claim_messages
+    mock_get_tagged_digests.assert_called_once_with(
+        "some-registry/src/repo:1", mock_quay_client.MANIFEST_V2S1_TYPE
+    )
+    assert mock_uuid.call_count == 12
+
+
+@mock.patch("pubtools._quay.signature_handler.base64.b64encode")
+@mock.patch("pubtools._quay.signature_handler.datetime")
+@mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+def test_construct_item_claim_messages_ml(
+    mock_quay_client,
+    mock_get_tagged_digests,
+    mock_uuid,
+    mock_datetime,
+    mock_encode,
+    target_settings,
+    container_signing_push_item_ml,
+):
+    hub = mock.MagicMock()
+    mock_uuid.side_effect = range(100)
+    mock_encode.return_value = b"some-encode"
+    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
+    mock_get_tagged_digests.return_value = [
+        "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
+        "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+    ]
+    mock_quay_client.MANIFEST_LIST_TYPE = (
+        "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
+
+    sig_handler = signature_handler.ContainerSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
+
+    claim_messages = sig_handler.construct_item_claim_messages(container_signing_push_item_ml)
+    with open("tests/test_data/test_expected_claim_messages.json", "r") as f:
+        expected_claim_messages = json.loads(f.read())
+
+    assert claim_messages == expected_claim_messages
+    mock_get_tagged_digests.assert_called_once_with(
+        "some-registry/src/repo:1", "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
+    assert mock_uuid.call_count == 12
 
 
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -538,48 +580,6 @@ def test_sign_container_images(
     mock_get_radas_signatures.assert_called_once_with(["msg2", "msg3"])
     mock_validate_radas_msgs.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
     mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
-
-
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages")
-# @mock.patch("pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages")
-# @mock.patch(
-#    "pubtools._quay.signature_handler.ContainerSignatureHandler"
-#    ".construct_item_schema1_claim_messages"
-# )
-# @mock.patch("pubtools._quay.signature_handler.QuayClient")
-# def test_sign_container_images_v2s1(
-# mock_quay_client,
-# #mock_construct_claim_msgs_v2s1,
-# mock_remove_duplicate_claim_msgs,
-# mock_filter_claim_msgs,
-# mock_get_radas_signatures,
-# mock_validate_radas_msgs,
-# mock_upload_signatures_to_pyxis,
-# target_settings,
-# container_signing_push_item,
-# container_multiarch_push_item,
-# ):
-# hub = mock.MagicMock()
-# #mock_construct_claim_msgs_v2s1.side_effect = [["msg1", "msg2"], ["msg3", "msg4"]]
-# mock_remove_duplicate_claim_msgs.return_value = ["msg1", "msg2", "msg3", "msg4"]
-# mock_filter_claim_msgs.return_value = ["msg2", "msg3"]
-# mock_get_radas_signatures.return_value = ["sig2", "sig3"]
-
-# sig_handler = signature_handler.ContainerSignatureHandler(
-# hub, "1", target_settings, "some-target"
-# )
-# sig_handler.sign_container_images(
-# [container_signing_push_item, container_multiarch_push_item], only_v2s1_manifests=True
-# )
-# assert mock_construct_claim_msgs_v2s1.call_count == 2
-# mock_remove_duplicate_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
-# mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
-# mock_get_radas_signatures.assert_called_once_with(["msg2", "msg3"])
-# mock_validate_radas_msgs.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
-# mock_upload_signatures_to_pyxis.assert_called_once_with(["msg2", "msg3"], ["sig2", "sig3"])
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")

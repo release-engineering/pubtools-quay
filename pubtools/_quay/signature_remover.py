@@ -363,7 +363,9 @@ class SignatureRemover:
 
         # We'll assume manifest list, since it's an index image
         try:
-            manifest = self.quay_client.get_manifest(image, manifest_list=True)
+            manifest = self.quay_client.get_manifest(
+                image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            )
         except requests.exceptions.HTTPError as e:
             # Perhaps destination index image doesn't exist, tolerate 404
             if e.response.status_code == 404 or e.response.status_code == 401:

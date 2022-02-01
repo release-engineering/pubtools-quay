@@ -1722,7 +1722,9 @@ def test_merge_manifest_lists_sign_images(
     )
     mock_merge_manifest_lists.assert_called_once_with(["arm64", "amd64"])
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo:v1.5", manifest_list=True, raw=True
+        "quay.io/some-namespace/namespace----test_repo:v1.5",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
+        raw=True,
     )
 
     assert mock_create_claim_message.call_count == 4
@@ -1837,7 +1839,9 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     )
     mock_merge_manifest_lists.assert_called_once_with(["arm64", "amd64"])
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo:v1.5", manifest_list=True, raw=True
+        "quay.io/some-namespace/namespace----test_repo:v1.5",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
+        raw=True,
     )
 
     mock_sign_claim_messages.assert_called_once_with(["msg0", "msg1", "msg2", "msg3"], True, True)
@@ -1958,7 +1962,8 @@ def test_manifest_list_remove_archs(
     )
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/namespace----test_repo2:v1.8", manifest_list=True
+        "quay.io/some-namespace/namespace----test_repo2:v1.8",
+        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_upload_manifest.assert_called_once_with(
         expected_manifest_list, "quay.io/some-namespace/namespace----test_repo2:v1.8"

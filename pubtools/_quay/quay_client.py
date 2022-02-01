@@ -40,14 +40,9 @@ class QuayClient:
         self.password = password
         self.session = QuaySession(hostname=host, api="docker")
 
-    def get_manifest(self, image, raw=False, manifest_list=False, v2s1_manifest=False):
+    def get_manifest(self, image, raw=False, media_type=None):
         """
-        Get manifest of a given image along with its type.
-
-        Manifest type order of preference is:
-        1. manifest list
-        2. V2S2 manifest
-        3. anything else
+        Get manifest of given media type.
 
         Args:
             image (str):
@@ -56,9 +51,13 @@ class QuayClient:
                 Whether to return the manifest as raw JSON.
             manifest_list (bool):
                 Whether to only return a manifest list and raise an exception otherwise.
-            v2s1_manifest (bool):
-                Whether to only return v2s1 manifest and raise an exception otherwise. Cannot be
-                used at the same time as "manifest_list" parameter.
+            media_type (str):
+                Can be application/vnd.docker.distribution.manifest.list.v2+json,
+                application/vnd.docker.distribution.manifest.v2+json,
+                application/vnd.docker.distribution.manifest.v1+json or None
+                indicating which manifest type is requested. If it's None,
+                manifest list is prefered, but if v2s2 is returned instead, v2s2
+                is returned as final result.
         Returns (dict|str):
             Image manifest
         Raises:
@@ -67,24 +66,21 @@ class QuayClient:
             ValueError:
                 If Manifest list and V2S1 manifest are requested at the same time.
         """
-        if manifest_list and v2s1_manifest:
-            raise ValueError("Cannot request a manifest list and V2S1 manifest at the same time")
-
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
-        # if V2S1 was requested, it takes precedence over the default order
-        if v2s1_manifest:
-            kwargs = {"headers": {"Accept": QuayClient.MANIFEST_V2S1_TYPE}}
+        if media_type not in ("application/vnd.docker.distribution.manifest.list.v2+json", None):
+            kwargs = {"headers": {"Accept": media_type}}
             response = self._request_quay("GET", endpoint, kwargs)
 
             # text/plain may be returned for V2S1 by our CDN
             if (
-                response.headers["Content-Type"] != QuayClient.MANIFEST_V2S1_TYPE
+                response.headers["Content-Type"] != media_type
                 and "text/plain" not in response.headers["Content-Type"]
             ):
-                raise ManifestTypeError("Image {0} doesn't have a V2S1 manifest".format(image))
-
+                raise ManifestTypeError(
+                    "Image {0} doesn't have a {1} manifest".format(image, media_type)
+                )
             if raw:
                 return response.text
             else:
@@ -93,9 +89,11 @@ class QuayClient:
         # request 'Content-Type' to be manifest list
         kwargs = {"headers": {"Accept": QuayClient.MANIFEST_LIST_TYPE}}
         response = self._request_quay("GET", endpoint, kwargs)
-        if manifest_list and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE:
+        if (
+            media_type == QuayClient.MANIFEST_LIST_TYPE
+            and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
+        ):
             raise ManifestTypeError("Image {0} doesn't have a manifest list".format(image))
-
         # We asked for ML but received neither ML nor V2S2. Let's ask again for V2S2
         if (
             response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
@@ -109,19 +107,20 @@ class QuayClient:
         else:
             return response.json()
 
-    def get_manifest_digest(self, image, v2s1_manifest=False):
+    def get_manifest_digest(self, image, media_type=None):
         """
         Get manifest of the specified image and calculate its digest by hashing it.
 
         Args:
             image (str):
                 Image address for which to calculate the digest.
-            v2s1_manifest (bool):
-                Whether to calculate digest of image's V2S1 manifest.
+            media_type (str):
+                Type of manifest can be application/vnd.docker.distribution.manifest.v2+json
+                or application/vnd.docker.distribution.manifest.v1+json
         Returns (str):
             Manifest digest of the image.
         """
-        manifest = self.get_manifest(image, raw=True, v2s1_manifest=v2s1_manifest)
+        manifest = self.get_manifest(image, raw=True, media_type=media_type)
         # SHA 256 is pretty much the standard for container images
         hasher = hashlib.sha256()
         hasher.update(manifest.encode("utf-8"))
