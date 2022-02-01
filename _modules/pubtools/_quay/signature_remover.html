@@ -436,7 +436,9 @@
 
         <span class="c1"># We&#39;ll assume manifest list, since it&#39;s an index image</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+                <span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+            <span class="p">)</span>
         <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># Perhaps destination index image doesn&#39;t exist, tolerate 404</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>

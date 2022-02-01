@@ -403,7 +403,7 @@
                         <span class="p">)</span>
                         <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
                         <span class="n">v2s1_digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span>
-                            <span class="n">image_tag</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="kc">True</span>
+                            <span class="n">image_tag</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span>
                         <span class="p">)</span>
                         <span class="c1"># for backup tags store also digest</span>
                         <span class="n">image_data</span> <span class="o">=</span> <span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">digest</span><span class="p">,</span> <span class="n">v2s1_digest</span><span class="p">)</span>
@@ -585,8 +585,7 @@
             <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
             <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">v2s1_manifest</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">media_type</span> <span class="o">==</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span> <span class="k">else</span> <span class="kc">False</span>
-        <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="n">v2s1_manifest</span><span class="p">)</span>
+        <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">media_type</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">digest</span>
 
     <span class="k">def</span> <span class="nf">fetch_missing_push_items_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>

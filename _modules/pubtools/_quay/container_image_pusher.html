@@ -255,7 +255,9 @@
 
         <span class="c1"># get unique destination repositories</span>
         <span class="n">dest_repos</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">])))</span>
-        <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+            <span class="n">source_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+        <span class="p">)</span>
 
         <span class="c1"># copy each arch source image to all destination repos</span>
         <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">source_ml</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
@@ -307,7 +309,9 @@
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+                        <span class="n">dest_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+                    <span class="p">)</span>
                     <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                         <span class="s2">&quot;Getting missing archs between images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                             <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
@@ -354,10 +358,16 @@
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
-                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">],</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">],</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="n">ManifestTypeError</span><span class="p">:</span>
                 <span class="n">source_ml</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># some registries can return 404 instead of v2s2</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="n">source_ml</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span>
 
             <span class="c1"># this metadata field indicates a source image</span>
             <span class="n">sources_for_nvr</span> <span class="o">=</span> <span class="p">(</span>

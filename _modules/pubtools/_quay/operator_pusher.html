@@ -86,6 +86,7 @@
     <span class="n">log_step</span><span class="p">,</span>
     <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -452,7 +453,9 @@
         <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="n">image_ref</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image_ref</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+                    <span class="n">image_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+                <span class="p">)</span>
             <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
                     <span class="k">continue</span>

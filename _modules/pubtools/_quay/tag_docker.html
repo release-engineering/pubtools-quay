@@ -657,7 +657,9 @@
 
         <span class="n">signature_handler</span><span class="o">.</span><span class="n">sign_claim_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
 
-        <span class="n">raw_src_manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">raw_src_manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+            <span class="n">source_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
 
         <span class="c1"># Special case: if the source manifest and the merged manifest are the same, upload the</span>
         <span class="c1"># raw source manifest. The reason is that otherwise the digests of the copied manifests</span>
@@ -745,7 +747,9 @@
             <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
         <span class="p">)</span>
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">manifest_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">manifest_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+            <span class="n">dest_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+        <span class="p">)</span>
         <span class="n">keep_manifests</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>

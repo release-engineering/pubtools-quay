@@ -113,14 +113,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">QuaySession</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="QuayClient.get_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">manifest_list</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.get_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get manifest of a given image along with its type.</span>
-
-<span class="sd">        Manifest type order of preference is:</span>
-<span class="sd">        1. manifest list</span>
-<span class="sd">        2. V2S2 manifest</span>
-<span class="sd">        3. anything else</span>
+<span class="sd">        Get manifest of given media type.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            image (str):</span>
@@ -129,9 +124,13 @@
 <span class="sd">                Whether to return the manifest as raw JSON.</span>
 <span class="sd">            manifest_list (bool):</span>
 <span class="sd">                Whether to only return a manifest list and raise an exception otherwise.</span>
-<span class="sd">            v2s1_manifest (bool):</span>
-<span class="sd">                Whether to only return v2s1 manifest and raise an exception otherwise. Cannot be</span>
-<span class="sd">                used at the same time as &quot;manifest_list&quot; parameter.</span>
+<span class="sd">            media_type (str):</span>
+<span class="sd">                Can be application/vnd.docker.distribution.manifest.list.v2+json,</span>
+<span class="sd">                application/vnd.docker.distribution.manifest.v2+json,</span>
+<span class="sd">                application/vnd.docker.distribution.manifest.v1+json or None</span>
+<span class="sd">                indicating which manifest type is requested. If it&#39;s None,</span>
+<span class="sd">                manifest list is prefered, but if v2s2 is returned instead, v2s2</span>
+<span class="sd">                is returned as final result.</span>
 <span class="sd">        Returns (dict|str):</span>
 <span class="sd">            Image manifest</span>
 <span class="sd">        Raises:</span>
@@ -140,24 +139,21 @@
 <span class="sd">            ValueError:</span>
 <span class="sd">                If Manifest list and V2S1 manifest are requested at the same time.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">manifest_list</span> <span class="ow">and</span> <span class="n">v2s1_manifest</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot request a manifest list and V2S1 manifest at the same time&quot;</span><span class="p">)</span>
-
         <span class="n">repo</span><span class="p">,</span> <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_and_validate_image_url</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
         <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/manifests/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
 
-        <span class="c1"># if V2S1 was requested, it takes precedence over the default order</span>
-        <span class="k">if</span> <span class="n">v2s1_manifest</span><span class="p">:</span>
-            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span><span class="p">}}</span>
+        <span class="k">if</span> <span class="n">media_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">media_type</span><span class="p">}}</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
 
             <span class="c1"># text/plain may be returned for V2S1 by our CDN</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">media_type</span>
                 <span class="ow">and</span> <span class="s2">&quot;text/plain&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span>
             <span class="p">):</span>
-                <span class="k">raise</span> <span class="n">ManifestTypeError</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a V2S1 manifest&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
-
+                <span class="k">raise</span> <span class="n">ManifestTypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a </span><span class="si">{1}</span><span class="s2"> manifest&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
             <span class="k">else</span><span class="p">:</span>
@@ -166,9 +162,11 @@
         <span class="c1"># request &#39;Content-Type&#39; to be manifest list</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">}}</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">manifest_list</span> <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">media_type</span> <span class="o">==</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+            <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ManifestTypeError</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a manifest list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
-
         <span class="c1"># We asked for ML but received neither ML nor V2S2. Let&#39;s ask again for V2S2</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
@@ -182,19 +180,20 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="QuayClient.get_manifest_digest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest_digest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.get_manifest_digest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest_digest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get manifest of the specified image and calculate its digest by hashing it.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            image (str):</span>
 <span class="sd">                Image address for which to calculate the digest.</span>
-<span class="sd">            v2s1_manifest (bool):</span>
-<span class="sd">                Whether to calculate digest of image&#39;s V2S1 manifest.</span>
+<span class="sd">            media_type (str):</span>
+<span class="sd">                Type of manifest can be application/vnd.docker.distribution.manifest.v2+json</span>
+<span class="sd">                or application/vnd.docker.distribution.manifest.v1+json</span>
 <span class="sd">        Returns (str):</span>
 <span class="sd">            Manifest digest of the image.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">v2s1_manifest</span><span class="o">=</span><span class="n">v2s1_manifest</span><span class="p">)</span>
+        <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">media_type</span><span class="p">)</span>
         <span class="c1"># SHA 256 is pretty much the standard for container images</span>
         <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
         <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
