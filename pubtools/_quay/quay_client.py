@@ -56,7 +56,7 @@ class QuayClient:
                 application/vnd.docker.distribution.manifest.v2+json,
                 application/vnd.docker.distribution.manifest.v1+json or None
                 indicating which manifest type is requested. If it's None,
-                manifest list is prefered, but if v2ch2 is returned instead, v2ch2
+                manifest list is prefered, but if v2s2 is returned instead, v2s2
                 is returned as final result.
         Returns (dict|str):
             Image manifest
