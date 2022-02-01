@@ -115,7 +115,7 @@ class QuayClient:
             image (str):
                 Image address for which to calculate the digest.
             media_type (str):
-                Type of manifest Can be application/vnd.docker.distribution.manifest.v2+json
+                Type of manifest can be application/vnd.docker.distribution.manifest.v2+json
                 or application/vnd.docker.distribution.manifest.v1+json
         Returns (str):
             Manifest digest of the image.
