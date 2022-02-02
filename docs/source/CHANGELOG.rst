@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.9.1 (2022-02-02)
+------------------
+
+* Fixed creating manifests for v2ch2 single arch containers
+
 0.9.0 (2022-28-1)
 ------------------
 
