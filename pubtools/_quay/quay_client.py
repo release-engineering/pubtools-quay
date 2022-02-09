@@ -266,7 +266,7 @@ class QuayClient:
         session.mount("https://", adapter)
         # Make an authentication request to the specified realm with the provided REST parameters.
         # Basic username + password authentication is expected.
-        r = session.get(host, params=params, auth=(self.username, self.password))
+        r = session.get(host, params=params, auth=(self.username, self.password), timeout=10)
         r.raise_for_status()
 
         if "token" not in r.json():

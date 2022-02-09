@@ -193,7 +193,7 @@ class OperatorPusher:
 
         LOG.info("Getting the deprecation list for OCP version {0}".format(version))
         session = _get_requests_session()
-        response = session.get(url=deprecation_list_url)
+        response = session.get(url=deprecation_list_url, timeout=10)
         if not response.ok:
             LOG.error(
                 "Could not retrieve deprecation list after multiple attempts."
