@@ -62,7 +62,7 @@ Connect to a remote host via ssh (using password) and perform the copying to mul
     --ssh-remote-host-port 2222 \
     --ssh-username user
 
-Connect to a remote host via ssh (using private key), perform the copying, and send a UMB message.
+Connect to a remote host via ssh (using private key), perform the copying
 ::
 
   $ export QUAY_PASSWORD=token
@@ -76,11 +76,6 @@ Connect to a remote host via ssh (using private key), perform the copying, and s
     --ssh-remote-host-port 2222 \
     --ssh-username user \
     --ssh-key-filename /path/to/file.key \
-    --send-umb-msg \
-    --umb-url amqps://url:5671 \
-    --umb-url amqps://url2:5671 \
-    --umb-cert /path/to/file.crt \
-    --umb-topic VirtualTopic.eng.pub.some_topic
 
 Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the result.
 ::
@@ -91,7 +86,7 @@ Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the 
     --dest-ref quay.io/dest/image:1 \
     --quay-user quay+username
 
-Untag multiple images and send a UMB message.
+Untag multiple images
 ::
 
   $ export QUAY_PASSWORD=token
@@ -105,11 +100,6 @@ Untag multiple images and send a UMB message.
     --ssh-remote-host-port 2222 \
     --ssh-username user \
     --ssh-key-filename /path/to/file.key \
-    --send-umb-msg \
-    --umb-url amqps://url:5671 \
-    --umb-url amqps://url2:5671 \
-    --umb-cert /path/to/file.crt \
-    --umb-topic VirtualTopic.eng.pub.some_topic
 
 Untag an image and force the operation in case the tag is a last reference of some digest.
 ::

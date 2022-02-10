@@ -99,7 +99,6 @@ class ContainerImagePusher:
             docker_cert_path=target_settings.get("docker_cert_path") or None,
             registry_username=target_settings.get("skopeo_executor_username") or None,
             registry_password=target_settings.get("skopeo_executor_password") or None,
-            send_umb_msg=False,
         )
 
         run_with_retries(

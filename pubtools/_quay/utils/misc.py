@@ -1,7 +1,6 @@
 import argparse
 import contextlib
 import functools
-import json
 import logging
 import os
 import pkg_resources
@@ -72,40 +71,6 @@ def add_args_env_variables(parsed_args, args):
             if not getattr(parsed_args, named_alias) and os.environ.get(arg_data["env_variable"]):
                 setattr(parsed_args, named_alias, os.environ.get(arg_data["env_variable"]))
     return parsed_args
-
-
-def send_umb_message(urls, props, cert, topic, body=None, client_key=None, ca_cert=None):
-    """
-    Send a UMB message.
-
-    Args:
-        urls ([str]):
-            URLs to send the message to.
-        props (dict):
-            Message properties dictionary.
-        cert (str):
-            Path to certificate for SSL authentication.
-        topic (str):
-            Topic to send the message to.
-        body (str):
-            Body of the message.
-        client_key (str):
-            Path to a private key for accessing the certificate.
-        ca_cert (str):
-            Path to CA certificate.
-    """
-    from rhmsg.activemq.producer import AMQProducer
-
-    producer = AMQProducer(
-        urls=urls,
-        certificate=cert,
-        private_key=client_key,
-        topic=topic,
-        trusted_certificates=ca_cert,
-    )
-    if not body:
-        body = json.dumps(props).encode("utf-8")
-    producer.send_msg(props, body)
 
 
 @contextlib.contextmanager

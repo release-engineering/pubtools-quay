@@ -619,7 +619,6 @@ class TagDocker:
             remove_last=remove_last,
             quay_user=target_settings["dest_quay_user"],
             quay_password=target_settings["dest_quay_password"],
-            send_umb_msg=False,
         )
 
     def untag_image(self, push_item, tag):

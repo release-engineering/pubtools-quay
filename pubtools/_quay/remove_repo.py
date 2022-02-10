@@ -7,7 +7,6 @@ from .quay_api_client import QuayApiClient
 from .utils.misc import (
     setup_arg_parser,
     add_args_env_variables,
-    send_umb_message,
     get_internal_container_repo_name,
 )
 
@@ -56,86 +55,7 @@ REMOVE_REPO_ARGS = {
         "required": True,
         "type": str,
     },
-    ("--send-umb-msg",): {
-        "help": "Flag of whether to send a UMB message",
-        "required": False,
-        "type": bool,
-    },
-    ("--umb-url",): {
-        "help": "UMB URL. More than one can be specified.",
-        "required": False,
-        "type": str,
-        "action": "append",
-    },
-    ("--umb-cert",): {
-        "help": "Path to the UMB certificate for SSL authentication.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-client-key",): {
-        "help": "Path to the UMB private key for accessing the certificate.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-ca-cert",): {
-        "help": "Path to the UMB CA certificate.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-topic",): {
-        "help": "UMB topic to send the message to.",
-        "required": False,
-        "type": str,
-        "default": "VirtualTopic.eng.pub.quay_remove_repositories",
-    },
 }
-
-
-def construct_kwargs(args):
-    """
-    Construct a kwargs dictionary based on the entered command line arguments.
-
-    Args:
-        args (argparse.Namespace):
-            Parsed command line arguments.
-
-    Returns (dict):
-        Keyword arguments for the 'remove_repository' function.
-    """
-    kwargs = args.__dict__
-
-    # in args.__dict__ unspecified bool values have 'None' instead of 'False'
-    for name, attributes in REMOVE_REPO_ARGS.items():
-        if attributes["type"] is bool:
-            bool_var = name[0].lstrip("-").replace("-", "_")
-            if kwargs[bool_var] is None:
-                kwargs[bool_var] = False
-
-    # some exceptions have to be remapped
-    kwargs["umb_urls"] = kwargs.pop("umb_url")
-
-    return kwargs
-
-
-def verify_remove_repo_args(send_umb_msg, umb_urls, umb_cert):
-    """
-    Verify the presence and correctness of input parameters.
-
-    Args:
-        send_umb_msg (bool):
-            Whether to send UMB messages about the untagged images.
-        umb_urls ([str]):
-            AMQP broker URLs to connect to.
-        umb_cert (str):
-            Path to a certificate used for UMB authentication.
-    """
-    if send_umb_msg:
-        if not umb_urls:
-            raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
-        if not umb_cert:
-            raise ValueError(
-                "A path to a client certificate must be provided when sending a UMB message."
-            )
 
 
 def remove_repositories(
@@ -147,12 +67,6 @@ def remove_repositories(
     pyxis_server,
     pyxis_ssl_crtfile,
     pyxis_ssl_keyfile,
-    send_umb_msg=False,
-    umb_urls=[],
-    umb_cert=None,
-    umb_client_key=None,
-    umb_ca_cert=None,
-    umb_topic="VirtualTopic.eng.pub.quay_remove_repository",
 ):
     """
     Remove Quay repository.
@@ -174,21 +88,8 @@ def remove_repositories(
             Path to .crt file for SSL authentication.
         pyxis_ssl_keyfile (str):
             Path to .key file for SSL authentication.
-        send_umb_msg (bool):
-            Whether to send UMB messages about the untagged images.
-        umb_urls ([str]):
-            AMQP broker URLs to connect to.
-        umb_cert (str):
-            Path to a certificate used for UMB authentication.
-        umb_client_key (str):
-            Path to a client key to decrypt the certificate (if necessary).
-        umb_ca_cert (str):
-            Path to a CA certificate (for mutual authentication).
-        umb_topic (str):
-            Topic to send the UMB messages to.
     """
     parsed_repositories = repositories.split(",")
-    verify_remove_repo_args(send_umb_msg, umb_urls, umb_cert)
 
     LOG.info("Removing repositories '{0}'".format(repositories))
     quay_api_client = QuayApiClient(quay_api_token)
@@ -209,18 +110,6 @@ def remove_repositories(
 
     LOG.info("Repositories have been removed")
     pm.hook.quay_repositories_removed(repository_ids=sorted(parsed_repositories))
-
-    if send_umb_msg:
-        LOG.info("Sending a UMB message")
-        props = {"removed_repositories": parsed_repositories}
-        send_umb_message(
-            umb_urls,
-            props,
-            umb_cert,
-            umb_topic,
-            client_key=umb_client_key,
-            ca_cert=umb_ca_cert,
-        )
 
 
 def setup_args():
@@ -244,7 +133,7 @@ def remove_repositories_main(sysargs=None):
     if not args.quay_password:
         raise ValueError("--quay-password must be specified")
 
-    kwargs = construct_kwargs(args)
+    kwargs = args.__dict__
 
     with task_context():
         remove_repositories(**kwargs)
