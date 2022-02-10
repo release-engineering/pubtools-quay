@@ -3,7 +3,7 @@ import logging
 
 from pubtools.pluggy import pm, task_context
 
-from .utils.misc import setup_arg_parser, add_args_env_variables, send_umb_message
+from .utils.misc import setup_arg_parser, add_args_env_variables
 from .command_executor import LocalExecutor, RemoteExecutor, ContainerExecutor
 
 LOG = logging.getLogger("pubtools.quay")
@@ -131,38 +131,6 @@ TAG_IMAGES_ARGS = {
         "type": str,
         "env_variable": "REGISTRY_PASSWORD",
     },
-    ("--send-umb-msg",): {
-        "help": "Flag of whether to send a UMB message",
-        "required": False,
-        "type": bool,
-    },
-    ("--umb-url",): {
-        "help": "UMB URL. More than one can be specified.",
-        "required": False,
-        "type": str,
-        "action": "append",
-    },
-    ("--umb-cert",): {
-        "help": "Path to the UMB certificate for SSL authentication.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-client-key",): {
-        "help": "Path to the UMB private key for accessing the certificate.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-ca-cert",): {
-        "help": "Path to the UMB CA certificate.",
-        "required": False,
-        "type": str,
-    },
-    ("--umb-topic",): {
-        "help": "UMB topic to send the message to.",
-        "required": False,
-        "type": str,
-        "default": "VirtualTopic.eng.pub.quay_tag_image",
-    },
 }
 
 
@@ -187,7 +155,6 @@ def construct_kwargs(args):
 
     # some exceptions have to be remapped
     kwargs["dest_refs"] = kwargs.pop("dest_ref")
-    kwargs["umb_urls"] = kwargs.pop("umb_url")
 
     return kwargs
 
@@ -215,12 +182,6 @@ def tag_images(
     docker_cert_path=None,
     registry_username=None,
     registry_password=None,
-    send_umb_msg=False,
-    umb_urls=[],
-    umb_cert=None,
-    umb_client_key=None,
-    umb_ca_cert=None,
-    umb_topic="VirtualTopic.eng.pub.quay_tag_image",
 ):
     """
     Tag images in Quay.
@@ -273,18 +234,6 @@ def tag_images(
         registry_password (str):
             Password to login to registry containing the specified image. If not provided,
             login will be assumed to not be needed.
-        send_umb_msg (bool):
-            Whether to send UMB messages about the untagged images.
-        umb_urls ([str]):
-            AMQP broker URLs to connect to.
-        umb_cert (str):
-            Path to a certificate used for UMB authentication.
-        umb_client_key (str):
-            Path to a client key to decrypt the certificate (if necessary).
-        umb_ca_cert (str):
-            Path to a CA certificate (for mutual authentication).
-        umb_topic (str):
-            Topic to send the UMB messages to.
     """
     verify_tag_images_args(
         quay_user,
@@ -295,9 +244,6 @@ def tag_images(
         ssh_remote_host,
         container_exec,
         container_image,
-        send_umb_msg,
-        umb_urls,
-        umb_cert,
     )
 
     if remote_exec:
@@ -337,17 +283,6 @@ def tag_images(
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
 
-    if send_umb_msg:
-        props = {"source_ref": source_ref, "dest_refs": dest_refs}
-        send_umb_message(
-            umb_urls,
-            props,
-            umb_cert,
-            umb_topic,
-            client_key=umb_client_key,
-            ca_cert=umb_ca_cert,
-        )
-
 
 def verify_tag_images_args(
     quay_user,
@@ -358,9 +293,6 @@ def verify_tag_images_args(
     ssh_remote_host,
     container_exec,
     container_image,
-    send_umb_msg,
-    umb_urls,
-    umb_cert,
 ):
     """Verify the presence of input parameters."""
     if remote_exec:
@@ -380,14 +312,6 @@ def verify_tag_images_args(
         raise ValueError(
             "Both source quay user and password must be present when attempting to log in."
         )
-
-    if send_umb_msg:
-        if not umb_urls:
-            raise ValueError("UMB URL must be specified if sending a UMB message was requested.")
-        if not umb_cert:
-            raise ValueError(
-                "A path to a client certificate must be provided when sending a UMB message."
-            )
 
 
 def setup_args():

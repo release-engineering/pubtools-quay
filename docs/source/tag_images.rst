@@ -3,7 +3,7 @@ Tag images
 
 .. py:module:: pubtools._quay.tag_images
 
-Entrypoint used for copying an image to a destination/multiple destinations. If specified, copying operation may be performed on a remote machine via SSH. Optionally, a UMB message may be sent containing the information of tagged images.
+Entrypoint used for copying an image to a destination/multiple destinations. If specified, copying operation may be performed on a remote machine via SSH.
 
 
 CLI reference
@@ -58,7 +58,7 @@ Connect to a remote host via ssh (using password) and perform the copying to mul
     --ssh-remote-host-port 2222 \
     --ssh-username user
 
-Connect to a remote host via ssh (using private key), perform the copying, and send a UMB message.
+Connect to a remote host via ssh (using private key), perform the copying
 ::
 
   $ export QUAY_PASSWORD=token
@@ -72,11 +72,6 @@ Connect to a remote host via ssh (using private key), perform the copying, and s
     --ssh-remote-host-port 2222 \
     --ssh-username user \
     --ssh-key-filename /path/to/file.key \
-    --send-umb-msg \
-    --umb-url amqps://url:5671 \
-    --umb-url amqps://url2:5671 \
-    --umb-cert /path/to/file.crt \
-    --umb-topic VirtualTopic.eng.pub.some_topic
 
 Copy to multiple destination inside a specified container.
 ::

@@ -3,7 +3,7 @@ Untag images
 
 .. py:module:: pubtools._quay.untag_images
 
-Entrypoint used for removing tags (images) from Quay. The script will refuse to perform the removal if a last reference of an image is to be removed. This may be overruled by specifying the --remove-last flag. Optionally, an UMB message may be send notifying of the removed image tags.
+Entrypoint used for removing tags (images) from Quay. The script will refuse to perform the removal if a last reference of an image is to be removed. This may be overruled by specifying the --remove-last flag.
 
 CLI reference
 -------------
@@ -21,7 +21,7 @@ API reference
 Examples
 -------------
 
-Untag multiple images and send a UMB message.
+Untag multiple images
 ::
 
   $ export QUAY_PASSWORD=token
@@ -35,11 +35,6 @@ Untag multiple images and send a UMB message.
     --ssh-remote-host-port 2222 \
     --ssh-username user \
     --ssh-key-filename /path/to/file.key \
-    --send-umb-msg \
-    --umb-url amqps://url:5671 \
-    --umb-url amqps://url2:5671 \
-    --umb-cert /path/to/file.crt \
-    --umb-topic VirtualTopic.eng.pub.some_topic
 
 Untag an image and force the operation in case the tag is a last reference of some digest.
 ::

@@ -19,7 +19,6 @@ Requirements
 - Python 2.6+
 - Python 3.5+
 - Skopeo is required for the tagging operation
-- Internal Python library 'rhmsg' is required for sending UMB messages
 
 Setup
 =====
