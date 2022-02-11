@@ -90,7 +90,7 @@
              
   <div class="section" id="module-pubtools._quay.remove_repo">
 <span id="remove-repo"></span><h1>Remove repo<a class="headerlink" href="#module-pubtools._quay.remove_repo" title="Permalink to this headline"></a></h1>
-<p>Entrypoint used for removing Quay repositories. All the images along with the repository itself will be removed. Signatures of the deleted images will be removed. Optionally, a UMB message will be sent notifying of the removed repositories.</p>
+<p>Entrypoint used for removing Quay repositories. All the images along with the repository itself will be removed. Signatures of the deleted images will be removed.</p>
 <div class="section" id="cli-reference">
 <h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">remove</span><span class="o">-</span><span class="n">repo</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">repositories</span> <span class="n">REPOSITORIES</span> <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">org</span>
@@ -100,11 +100,6 @@
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">server</span> <span class="n">PYXIS_SERVER</span>
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">crtfile</span> <span class="n">PYXIS_SSL_CRTFILE</span>
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">keyfile</span> <span class="n">PYXIS_SSL_KEYFILE</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">send</span><span class="o">-</span><span class="n">umb</span><span class="o">-</span><span class="n">msg</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">url</span> <span class="n">UMB_URL</span><span class="p">]</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CERT</span><span class="p">]</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">client</span><span class="o">-</span><span class="n">key</span> <span class="n">UMB_CLIENT_KEY</span><span class="p">]</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">ca</span><span class="o">-</span><span class="n">cert</span> <span class="n">UMB_CA_CERT</span><span class="p">]</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">umb</span><span class="o">-</span><span class="n">topic</span> <span class="n">UMB_TOPIC</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="section" id="Named Arguments">
@@ -134,25 +129,6 @@
 <dt><kbd>--pyxis-ssl-keyfile</kbd></dt>
 <dd><p>Path to .key file for the SSL authentication</p>
 </dd>
-<dt><kbd>--send-umb-msg</kbd></dt>
-<dd><p>Flag of whether to send a UMB message</p>
-</dd>
-<dt><kbd>--umb-url</kbd></dt>
-<dd><p>UMB URL. More than one can be specified.</p>
-</dd>
-<dt><kbd>--umb-cert</kbd></dt>
-<dd><p>Path to the UMB certificate for SSL authentication.</p>
-</dd>
-<dt><kbd>--umb-client-key</kbd></dt>
-<dd><p>Path to the UMB private key for accessing the certificate.</p>
-</dd>
-<dt><kbd>--umb-ca-cert</kbd></dt>
-<dd><p>Path to the UMB CA certificate.</p>
-</dd>
-<dt><kbd>--umb-topic</kbd></dt>
-<dd><p>UMB topic to send the message to.</p>
-<p>Default: “VirtualTopic.eng.pub.quay_remove_repositories”</p>
-</dd>
 </dl>
 </div>
 </div>
@@ -160,7 +136,7 @@
 <h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.remove_repo.remove_repositories">
-<span class="sig-prename descclassname"><span class="pre">pubtools._quay.remove_repo.</span></span><span class="sig-name descname"><span class="pre">remove_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">send_umb_msg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_urls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_client_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_ca_cert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umb_topic</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'VirtualTopic.eng.pub.quay_remove_repository'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/remove_repo.html#remove_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.remove_repo.remove_repositories" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.remove_repo.</span></span><span class="sig-name descname"><span class="pre">remove_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/remove_repo.html#remove_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.remove_repo.remove_repositories" title="Permalink to this definition"></a></dt>
 <dd><p>Remove Quay repository.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -180,18 +156,6 @@
 </dd>
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
 </dd>
-<dt>send_umb_msg (bool):</dt><dd><p>Whether to send UMB messages about the untagged images.</p>
-</dd>
-<dt>umb_urls ([str]):</dt><dd><p>AMQP broker URLs to connect to.</p>
-</dd>
-<dt>umb_cert (str):</dt><dd><p>Path to a certificate used for UMB authentication.</p>
-</dd>
-<dt>umb_client_key (str):</dt><dd><p>Path to a client key to decrypt the certificate (if necessary).</p>
-</dd>
-<dt>umb_ca_cert (str):</dt><dd><p>Path to a CA certificate (for mutual authentication).</p>
-</dd>
-<dt>umb_topic (str):</dt><dd><p>Topic to send the UMB messages to.</p>
-</dd>
 </dl>
 </dd>
 </dl>
@@ -200,7 +164,7 @@
 </div>
 <div class="section" id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
-<p>Clear multiple repos and send a UMB message.</p>
+<p>Clear multiple repos</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
 $ export QUAY_API_TOKEN=oauth_token
 $ pubtools-quay-clear-repo \
@@ -209,11 +173,6 @@ $ pubtools-quay-clear-repo \
   --quay-user quay+username \
   --pyxis-server https://pyxis-server.com/ \
   --pyxis-krb-principal pyxis-principal \
-  --send-umb-msg \
-  --umb-url amqps://url:5671 \
-  --umb-url amqps://url2:5671 \
-  --umb-cert /path/to/file.crt \
-  --umb-topic VirtualTopic.eng.pub.some_topic
 </pre></div>
 </div>
 </div>

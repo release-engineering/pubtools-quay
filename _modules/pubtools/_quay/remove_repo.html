@@ -80,7 +80,6 @@
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">setup_arg_parser</span><span class="p">,</span>
     <span class="n">add_args_env_variables</span><span class="p">,</span>
-    <span class="n">send_umb_message</span><span class="p">,</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -129,86 +128,7 @@
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--send-umb-msg&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to send a UMB message&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-url&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB URL. More than one can be specified.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB certificate for SSL authentication.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-client-key&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB private key for accessing the certificate.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-ca-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB CA certificate.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-topic&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB topic to send the message to.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;VirtualTopic.eng.pub.quay_remove_repositories&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
 <span class="p">}</span>
-
-
-<span class="k">def</span> <span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Construct a kwargs dictionary based on the entered command line arguments.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        args (argparse.Namespace):</span>
-<span class="sd">            Parsed command line arguments.</span>
-
-<span class="sd">    Returns (dict):</span>
-<span class="sd">        Keyword arguments for the &#39;remove_repository&#39; function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="vm">__dict__</span>
-
-    <span class="c1"># in args.__dict__ unspecified bool values have &#39;None&#39; instead of &#39;False&#39;</span>
-    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attributes</span> <span class="ow">in</span> <span class="n">REMOVE_REPO_ARGS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
-            <span class="n">bool_var</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
-
-    <span class="c1"># some exceptions have to be remapped</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;umb_url&quot;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">kwargs</span>
-
-
-<span class="k">def</span> <span class="nf">verify_remove_repo_args</span><span class="p">(</span><span class="n">send_umb_msg</span><span class="p">,</span> <span class="n">umb_urls</span><span class="p">,</span> <span class="n">umb_cert</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Verify the presence and correctness of input parameters.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        send_umb_msg (bool):</span>
-<span class="sd">            Whether to send UMB messages about the untagged images.</span>
-<span class="sd">        umb_urls ([str]):</span>
-<span class="sd">            AMQP broker URLs to connect to.</span>
-<span class="sd">        umb_cert (str):</span>
-<span class="sd">            Path to a certificate used for UMB authentication.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_urls</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;UMB URL must be specified if sending a UMB message was requested.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_cert</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;A path to a client certificate must be provided when sending a UMB message.&quot;</span>
-            <span class="p">)</span>
 
 
 <div class="viewcode-block" id="remove_repositories"><a class="viewcode-back" href="../../../remove_repo.html#pubtools._quay.remove_repo.remove_repositories">[docs]</a><span class="k">def</span> <span class="nf">remove_repositories</span><span class="p">(</span>
@@ -220,12 +140,6 @@
     <span class="n">pyxis_server</span><span class="p">,</span>
     <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
     <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
-    <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
-    <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_client_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_ca_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_topic</span><span class="o">=</span><span class="s2">&quot;VirtualTopic.eng.pub.quay_remove_repository&quot;</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove Quay repository.</span>
@@ -247,21 +161,8 @@
 <span class="sd">            Path to .crt file for SSL authentication.</span>
 <span class="sd">        pyxis_ssl_keyfile (str):</span>
 <span class="sd">            Path to .key file for SSL authentication.</span>
-<span class="sd">        send_umb_msg (bool):</span>
-<span class="sd">            Whether to send UMB messages about the untagged images.</span>
-<span class="sd">        umb_urls ([str]):</span>
-<span class="sd">            AMQP broker URLs to connect to.</span>
-<span class="sd">        umb_cert (str):</span>
-<span class="sd">            Path to a certificate used for UMB authentication.</span>
-<span class="sd">        umb_client_key (str):</span>
-<span class="sd">            Path to a client key to decrypt the certificate (if necessary).</span>
-<span class="sd">        umb_ca_cert (str):</span>
-<span class="sd">            Path to a CA certificate (for mutual authentication).</span>
-<span class="sd">        umb_topic (str):</span>
-<span class="sd">            Topic to send the UMB messages to.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parsed_repositories</span> <span class="o">=</span> <span class="n">repositories</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
-    <span class="n">verify_remove_repo_args</span><span class="p">(</span><span class="n">send_umb_msg</span><span class="p">,</span> <span class="n">umb_urls</span><span class="p">,</span> <span class="n">umb_cert</span><span class="p">)</span>
 
     <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing repositories &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repositories</span><span class="p">))</span>
     <span class="n">quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span><span class="n">quay_api_token</span><span class="p">)</span>
@@ -281,19 +182,7 @@
         <span class="n">quay_api_client</span><span class="o">.</span><span class="n">delete_repository</span><span class="p">(</span><span class="n">internal_repo</span><span class="p">)</span>
 
     <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Repositories have been removed&quot;</span><span class="p">)</span>
-    <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_repositories_removed</span><span class="p">(</span><span class="n">repository_ids</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">parsed_repositories</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending a UMB message&quot;</span><span class="p">)</span>
-        <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;removed_repositories&quot;</span><span class="p">:</span> <span class="n">parsed_repositories</span><span class="p">}</span>
-        <span class="n">send_umb_message</span><span class="p">(</span>
-            <span class="n">umb_urls</span><span class="p">,</span>
-            <span class="n">props</span><span class="p">,</span>
-            <span class="n">umb_cert</span><span class="p">,</span>
-            <span class="n">umb_topic</span><span class="p">,</span>
-            <span class="n">client_key</span><span class="o">=</span><span class="n">umb_client_key</span><span class="p">,</span>
-            <span class="n">ca_cert</span><span class="o">=</span><span class="n">umb_ca_cert</span><span class="p">,</span>
-        <span class="p">)</span></div>
+    <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_repositories_removed</span><span class="p">(</span><span class="n">repository_ids</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">parsed_repositories</span><span class="p">))</span></div>
 
 
 <span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
@@ -317,7 +206,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">quay_password</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;--quay-password must be specified&quot;</span><span class="p">)</span>
 
-    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="vm">__dict__</span>
 
     <span class="k">with</span> <span class="n">task_context</span><span class="p">():</span>
         <span class="n">remove_repositories</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>

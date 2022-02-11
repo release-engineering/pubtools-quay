@@ -76,7 +76,7 @@
 
 <span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
 
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">setup_arg_parser</span><span class="p">,</span> <span class="n">add_args_env_variables</span><span class="p">,</span> <span class="n">send_umb_message</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">setup_arg_parser</span><span class="p">,</span> <span class="n">add_args_env_variables</span>
 <span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">LocalExecutor</span><span class="p">,</span> <span class="n">RemoteExecutor</span><span class="p">,</span> <span class="n">ContainerExecutor</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
@@ -204,38 +204,6 @@
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;REGISTRY_PASSWORD&quot;</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--send-umb-msg&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to send a UMB message&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-url&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB URL. More than one can be specified.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB certificate for SSL authentication.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-client-key&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB private key for accessing the certificate.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-ca-cert&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the UMB CA certificate.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--umb-topic&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;UMB topic to send the message to.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;VirtualTopic.eng.pub.quay_tag_image&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
 <span class="p">}</span>
 
 
@@ -260,7 +228,6 @@
 
     <span class="c1"># some exceptions have to be remapped</span>
     <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dest_refs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;dest_ref&quot;</span><span class="p">)</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;umb_url&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kwargs</span>
 
@@ -288,12 +255,6 @@
     <span class="n">docker_cert_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">registry_username</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">registry_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">send_umb_msg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">umb_urls</span><span class="o">=</span><span class="p">[],</span>
-    <span class="n">umb_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_client_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_ca_cert</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">umb_topic</span><span class="o">=</span><span class="s2">&quot;VirtualTopic.eng.pub.quay_tag_image&quot;</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tag images in Quay.</span>
@@ -346,18 +307,6 @@
 <span class="sd">        registry_password (str):</span>
 <span class="sd">            Password to login to registry containing the specified image. If not provided,</span>
 <span class="sd">            login will be assumed to not be needed.</span>
-<span class="sd">        send_umb_msg (bool):</span>
-<span class="sd">            Whether to send UMB messages about the untagged images.</span>
-<span class="sd">        umb_urls ([str]):</span>
-<span class="sd">            AMQP broker URLs to connect to.</span>
-<span class="sd">        umb_cert (str):</span>
-<span class="sd">            Path to a certificate used for UMB authentication.</span>
-<span class="sd">        umb_client_key (str):</span>
-<span class="sd">            Path to a client key to decrypt the certificate (if necessary).</span>
-<span class="sd">        umb_ca_cert (str):</span>
-<span class="sd">            Path to a CA certificate (for mutual authentication).</span>
-<span class="sd">        umb_topic (str):</span>
-<span class="sd">            Topic to send the UMB messages to.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">verify_tag_images_args</span><span class="p">(</span>
         <span class="n">quay_user</span><span class="p">,</span>
@@ -368,9 +317,6 @@
         <span class="n">ssh_remote_host</span><span class="p">,</span>
         <span class="n">container_exec</span><span class="p">,</span>
         <span class="n">container_image</span><span class="p">,</span>
-        <span class="n">send_umb_msg</span><span class="p">,</span>
-        <span class="n">umb_urls</span><span class="p">,</span>
-        <span class="n">umb_cert</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">remote_exec</span><span class="p">:</span>
@@ -408,18 +354,7 @@
             <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span><span class="n">source_host</span><span class="p">,</span> <span class="n">source_quay_user</span><span class="p">,</span> <span class="n">source_quay_password</span><span class="p">)</span>
         <span class="n">executor</span><span class="o">.</span><span class="n">tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">)</span>
 
-    <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_images_tagged</span><span class="p">(</span><span class="n">source_ref</span><span class="o">=</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dest_refs</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
-        <span class="n">props</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;source_ref&quot;</span><span class="p">:</span> <span class="n">source_ref</span><span class="p">,</span> <span class="s2">&quot;dest_refs&quot;</span><span class="p">:</span> <span class="n">dest_refs</span><span class="p">}</span>
-        <span class="n">send_umb_message</span><span class="p">(</span>
-            <span class="n">umb_urls</span><span class="p">,</span>
-            <span class="n">props</span><span class="p">,</span>
-            <span class="n">umb_cert</span><span class="p">,</span>
-            <span class="n">umb_topic</span><span class="p">,</span>
-            <span class="n">client_key</span><span class="o">=</span><span class="n">umb_client_key</span><span class="p">,</span>
-            <span class="n">ca_cert</span><span class="o">=</span><span class="n">umb_ca_cert</span><span class="p">,</span>
-        <span class="p">)</span></div>
+    <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_images_tagged</span><span class="p">(</span><span class="n">source_ref</span><span class="o">=</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dest_refs</span><span class="p">))</span></div>
 
 
 <span class="k">def</span> <span class="nf">verify_tag_images_args</span><span class="p">(</span>
@@ -431,9 +366,6 @@
     <span class="n">ssh_remote_host</span><span class="p">,</span>
     <span class="n">container_exec</span><span class="p">,</span>
     <span class="n">container_image</span><span class="p">,</span>
-    <span class="n">send_umb_msg</span><span class="p">,</span>
-    <span class="n">umb_urls</span><span class="p">,</span>
-    <span class="n">umb_cert</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Verify the presence of input parameters.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">remote_exec</span><span class="p">:</span>
@@ -453,14 +385,6 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">&quot;Both source quay user and password must be present when attempting to log in.&quot;</span>
         <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">send_umb_msg</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_urls</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;UMB URL must be specified if sending a UMB message was requested.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">umb_cert</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;A path to a client certificate must be provided when sending a UMB message.&quot;</span>
-            <span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
