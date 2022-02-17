@@ -19,15 +19,13 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.proton")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_multiarch_merge_ml_operator(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
-    mock_claims_handler,
-    mock_proton,
+    mock_claims_runner,
     mock_run_cmd,
     mock_run_entrypoint_operator_pusher,
     mock_api_client,
@@ -234,15 +232,13 @@ def test_push_docker_multiarch_merge_ml_operator(
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.proton")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_multiarch_simple_workflow(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
-    mock_claims_handler,
-    mock_proton,
+    mock_claims_runner,
     mock_run_cmd,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
@@ -383,15 +379,13 @@ def test_push_docker_multiarch_simple_workflow(
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.proton")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_source(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
-    mock_claims_handler,
-    mock_proton,
+    mock_claims_runner,
     mock_run_cmd,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
@@ -551,15 +545,13 @@ def test_push_docker_source(
 
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.proton")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_multiarch_rollback(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
-    mock_claims_handler,
-    mock_proton,
+    mock_claims_runner,
     mock_run_cmd,
     mock_run_entrypoint_signature_remover,
     target_settings,
@@ -668,7 +660,7 @@ def test_push_docker_multiarch_rollback(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
@@ -676,7 +668,7 @@ def test_tag_docker_multiarch_merge_ml(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
-    mock_claims_handler,
+    mock_claims_runner,
     mock_api_client,
     target_settings,
     tag_docker_push_item_add_integration,
@@ -842,7 +834,7 @@ def test_tag_docker_multiarch_merge_ml(
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.push_docker.run_entrypoint")
@@ -850,7 +842,7 @@ def test_tag_docker_source_copy_untag(
     mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
-    mock_claims_handler,
+    mock_claims_runner,
     mock_run_cmd,
     mock_api_client,
     target_settings,
@@ -1017,13 +1009,13 @@ def test_tag_docker_source_copy_untag(
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.utils.misc.timestamp")
 def test_task_iib_add_bundles(
     mock_timestamp,
     mock_run_entrypoint_operator_pusher,
-    mock_manifest_claims_handler,
+    mock_manifest_claims_runner,
     mock_run_entrypoint_signature_handler,
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
@@ -1091,11 +1083,11 @@ def test_task_iib_add_bundles(
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_task_iib_remove_operators(
     mock_run_entrypoint_operator_pusher,
-    mock_manifest_claims_handler,
+    mock_manifest_claims_runner,
     mock_run_entrypoint_signature_handler,
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
@@ -1161,11 +1153,11 @@ def test_task_iib_remove_operators(
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_task_iib_build_from_scratch(
     mock_run_entrypoint_operator_pusher,
-    mock_manifest_claims_handler,
+    mock_manifest_claims_runner,
     mock_run_entrypoint_signature_handler,
     mock_run_cmd,
     mock_api_client,

@@ -229,13 +229,13 @@ def test_filter_claim_messages(
     ]
 
 
-@mock.patch("pubtools._quay.signature_handler.proton")
-@mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
+@mock.patch("pubtools._quay.signature_handler.UMBSettings")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 def test_get_signatures_from_radas(
     mock_quay_client,
-    mock_claim_handler,
-    mock_proton,
+    mock_claim_runner,
+    mock_umb_settings,
     target_settings,
     claim_messages,
 ):
@@ -244,10 +244,8 @@ def test_get_signatures_from_radas(
 
     sig_handler.get_signatures_from_radas(claim_messages)
 
-    assert mock_claim_handler.call_args[1]["umb_urls"] == ["some-url1", "some-url2"]
-    radas_addr = "queue://Consumer.msg-producer-pub.1.VirtualTopic.eng.robosignatory.container.sign"
-    assert mock_claim_handler.call_args[1]["radas_address"] == radas_addr
-    assert mock_claim_handler.call_args[1]["claim_messages"] == [
+    assert mock_claim_runner.call_args[0][0] == mock_umb_settings.return_value
+    assert mock_claim_runner.call_args[0][1] == [
         {
             "sig_key_id": "00000000",
             "claim_file": "some-encode",
@@ -293,13 +291,8 @@ def test_get_signatures_from_radas(
             "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
-    assert mock_claim_handler.call_args[1]["pub_cert"] == "/etc/pub/umb-pub-cert-key.pem"
-    assert mock_claim_handler.call_args[1]["ca_cert"] == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert mock_claim_handler.call_args[1]["timeout"] == 600
-    assert mock_claim_handler.call_args[1]["throttle"] == 100
-    assert mock_claim_handler.call_args[1]["retry"] == 3
 
-    assert len(mock_proton.mock_calls) == 2
+    mock_claim_runner.return_value.start.assert_called_once_with()
 
 
 @mock.patch("json.dump")
