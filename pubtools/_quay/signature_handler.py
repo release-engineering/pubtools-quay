@@ -5,8 +5,6 @@ import logging
 import uuid
 import tempfile
 
-import proton
-
 from .exceptions import SigningError
 from .utils.misc import (
     run_entrypoint,
@@ -14,7 +12,7 @@ from .utils.misc import (
     get_pyxis_ssl_paths,
 )
 from .quay_client import QuayClient
-from .manifest_claims_handler import ManifestClaimsHandler
+from .manifest_claims_handler import _ManifestClaimsRunner, UMBSettings
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -307,23 +305,20 @@ class SignatureHandler:
             "queue://Consumer.msg-producer-pub"
             ".{task_id}.VirtualTopic.eng.robosignatory.container.sign".format(task_id=self.task_id)
         )
-
         docker_settings = self.target_settings["docker_settings"]
-        claims_handler = ManifestClaimsHandler(
-            umb_urls=docker_settings["umb_urls"],
+        umb_settings = UMBSettings(
+            broker_urls=docker_settings["umb_urls"],
             radas_address=docker_settings.get("umb_radas_address", address),
-            claim_messages=claim_messages,
             pub_cert=docker_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
             ca_cert=docker_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
-            timeout=docker_settings.get("umb_signing_timeout", 600),
-            throttle=docker_settings.get("umb_signing_throttle", 100),
-            retry=docker_settings.get("umb_signing_retry", 3),
-            message_sender_callback=message_sender_callback,
+            signing_timeout=docker_settings.get("umb_signing_timeout", 600),
+            signing_throttle=docker_settings.get("umb_signing_throttle", 100),
+            signing_retry=docker_settings.get("umb_signing_retry", 3),
         )
-        container = proton.reactor.Container(claims_handler)
-        container.run()
 
-        return claims_handler.received_messages
+        runner = _ManifestClaimsRunner(umb_settings, claim_messages, message_sender_callback)
+        runner.start()
+        return runner.received_messages
 
     def upload_signatures_to_pyxis(self, claim_mesages, signature_messages):
         """
