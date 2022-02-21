@@ -204,7 +204,7 @@ class ManifestClaimsHandler(MessagingHandler):
                     self.awaiting_response.pop(request_id)
                 else:
                     LOG.warning("Stopping message event loop due to timeout %s", request_id)
-                    event.container.container.stop()
+                    event.container.stop()
                     raise MessageHandlerTimeoutException()
 
         # send more requests if number of waiting < throttle
