@@ -6,6 +6,7 @@ import uuid
 
 import pytest
 from hamcrest import assert_that, contains_string, equal_to
+from proton.reactor import Container
 
 from pubtools._quay.manifest_claims_handler import (
     ManifestClaimsHandler,
@@ -137,10 +138,12 @@ def test_awaiting_response_time_out(fake_timer, handler, caplog):
     # assume it's been tried three times
     fake_timer.return_value = 43210
 
-    event = Mock()
+    event = MagicMock(container=MagicMock(spec=Container))
 
     with pytest.raises(MessageHandlerTimeoutException):
         handler.on_timer_task(event)
+
+    event.container.stop.assert_called_once()
 
     logs = caplog.text
 
