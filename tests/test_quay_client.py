@@ -94,6 +94,7 @@ def test_authenticate_quay_success(mock_session, mock_quay_session):
         "https://quay.io/v2/auth",
         auth=("user", "pass"),
         params={"service": "quay.io", "scope": "repository:namespace/some-repo:pull"},
+        timeout=10,
     )
     mocked_quay_session.set_auth_token.assert_called_once_with("abcdef")
 

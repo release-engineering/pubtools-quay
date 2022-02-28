@@ -71,6 +71,7 @@ def test_get(mock_session):
 
     kwargs = {"headers": {"Accept": "application/json"}}
     session.get("get/data/1", **kwargs)
+    kwargs["timeout"] = 10
     mocked_session.get.assert_called_with("https://quay.io/v2/get/data/1", **kwargs)
 
 
@@ -83,6 +84,7 @@ def test_post(mock_session):
 
     kwargs = {"headers": {"Accept": "application/json"}, "data": "some data"}
     session.post("post/data/2", **kwargs)
+    kwargs["timeout"] = 10
     mocked_session.post.assert_called_with("https://quay.io/v2/post/data/2", **kwargs)
 
 
@@ -95,6 +97,7 @@ def test_put(mock_session):
 
     kwargs = {"data": "new data"}
     session.put("put/data/3", **kwargs)
+    kwargs["timeout"] = 10
     mocked_session.put.assert_called_with("https://quay.io/v2/put/data/3", **kwargs)
 
 
@@ -107,6 +110,7 @@ def test_delete(mock_session):
 
     kwargs = {"data": "old data"}
     session.delete("delete/data/4", **kwargs)
+    kwargs["timeout"] = 10
     mocked_session.delete.assert_called_with("https://quay.io/v2/delete/data/4", **kwargs)
 
 
@@ -119,4 +123,5 @@ def test_request(mock_session):
 
     kwargs = {"headers": {"Accept": "application/json"}, "data": "some data"}
     session.request("POST", "post/data/2", **kwargs)
+    kwargs["timeout"] = 10
     mocked_session.request.assert_called_with("POST", "https://quay.io/v2/post/data/2", **kwargs)

@@ -1872,7 +1872,6 @@ def test_run_untag_images_remove_last(mock_untag_images, target_settings):
         remove_last=True,
         quay_user="dest-quay-user",
         quay_password="dest-quay-pass",
-        send_umb_msg=False,
     )
 
 
@@ -1888,7 +1887,6 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
         remove_last=False,
         quay_user="dest-quay-user",
         quay_password="dest-quay-pass",
-        send_umb_msg=False,
     )
 
 

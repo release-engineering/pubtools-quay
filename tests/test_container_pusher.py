@@ -62,7 +62,6 @@ def test_tag_images(
         docker_cert_path=None,
         registry_username="quay-executor-user",
         registry_password="quay-executor-password",
-        send_umb_msg=False,
     )
 
 
@@ -102,7 +101,6 @@ def test_tag_images_retry(
         docker_cert_path=None,
         registry_username="quay-executor-user",
         registry_password="quay-executor-password",
-        send_umb_msg=False,
     )
 
     assert mock_tag_images.call_count == 3
@@ -140,7 +138,6 @@ def test_copy_src_item(
         docker_cert_path=None,
         registry_username="quay-executor-user",
         registry_password="quay-executor-password",
-        send_umb_msg=False,
         source_quay_password="src-quay-pass",
         source_quay_user="src-quay-user",
     )
@@ -175,7 +172,6 @@ def test_copy_v1_item(
         docker_cert_path=None,
         registry_username="quay-executor-user",
         registry_password="quay-executor-password",
-        send_umb_msg=False,
     )
 
 

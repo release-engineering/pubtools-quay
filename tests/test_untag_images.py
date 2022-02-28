@@ -24,7 +24,6 @@ def test_arg_constructor_required_args(mock_untag_images):
 
     assert called_args["references"] == ["quay.io/repo/some-image:1"]
     assert called_args["quay_api_token"] == "some-token"
-    assert called_args["umb_topic"] == "VirtualTopic.eng.pub.quay_untag_image"
 
 
 @mock.patch.dict("os.environ", {"QUAY_PASSWORD": "robot_token", "QUAY_API_TOKEN": "api_token"})
@@ -37,19 +36,6 @@ def test_arg_constructor_all_args(mock_untag_images):
         "--remove-last",
         "--quay-user",
         "some_user",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-        "--umb-url",
-        "amqps://url:5672",
-        "--umb-cert",
-        "/path/to/file.crt",
-        "--umb-client-key",
-        "/path/to/umb.key",
-        "--umb-ca-cert",
-        "/path/to/ca_cert.crt",
-        "--umb-topic",
-        "VirtualTopic.eng.pub.untag_image_new",
     ]
     untag_images.untag_images_main(all_args)
     _, called_args = mock_untag_images.call_args
@@ -58,13 +44,7 @@ def test_arg_constructor_all_args(mock_untag_images):
     assert called_args["remove_last"] == True
     assert called_args["quay_user"] == "some_user"
     assert called_args["quay_password"] == "robot_token"
-    assert called_args["send_umb_msg"] == True
-    assert called_args["umb_urls"] == ["amqps://url:5671", "amqps://url:5672"]
-    assert called_args["umb_cert"] == "/path/to/file.crt"
-    assert called_args["umb_client_key"] == "/path/to/umb.key"
-    assert called_args["umb_ca_cert"] == "/path/to/ca_cert.crt"
     assert called_args["quay_api_token"] == "api_token"
-    assert called_args["umb_topic"] == "VirtualTopic.eng.pub.untag_image_new"
 
 
 @mock.patch("pubtools._quay.untag_images.untag_images")
@@ -131,104 +111,7 @@ def test_args_missing_quay_credential(mock_image_untagger):
     mock_image_untagger.assert_not_called()
 
 
-@mock.patch("pubtools._quay.untag_images.ImageUntagger")
-def test_args_missing_umb_url(mock_image_untagger):
-    wrong_args = [
-        "dummy",
-        "--reference",
-        "quay.io/repo/some-image:1",
-        "--quay-api-token",
-        "some-token",
-        "--send-umb-msg",
-        "--umb-cert",
-        "/path/to/file.crt",
-    ]
-
-    with pytest.raises(ValueError, match="UMB URL must be specified.*"):
-        untag_images.untag_images_main(wrong_args)
-
-    mock_image_untagger.assert_not_called()
-
-
-@mock.patch("pubtools._quay.untag_images.ImageUntagger")
-def test_args_missing_umb_url(mock_image_untagger):
-    wrong_args = [
-        "dummy",
-        "--reference",
-        "quay.io/repo/some-image:1",
-        "--quay-api-token",
-        "some-token",
-        "--send-umb-msg",
-        "--umb-cert",
-        "/path/to/file.crt",
-    ]
-
-    with pytest.raises(ValueError, match="UMB URL must be specified.*"):
-        untag_images.untag_images_main(wrong_args)
-
-    mock_image_untagger.assert_not_called()
-
-
-@mock.patch("pubtools._quay.untag_images.ImageUntagger")
-def test_args_missing_umb_cert(mock_image_untagger):
-    wrong_args = [
-        "dummy",
-        "--reference",
-        "quay.io/repo/some-image:1",
-        "--quay-api-token",
-        "some-token",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-    ]
-
-    with pytest.raises(ValueError, match="A path to a client certificate.*"):
-        untag_images.untag_images_main(wrong_args)
-
-    mock_image_untagger.assert_not_called()
-
-
-@mock.patch("pubtools._quay.untag_images.ImageUntagger")
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_send_umb_message(mock_send_umb_message, mock_image_untagger):
-    args = [
-        "dummy",
-        "--reference",
-        "quay.io/repo/some-image:1",
-        "--quay-api-token",
-        "some-token",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-        "--umb-cert",
-        "/path/to/file.crt",
-        "--umb-client-key",
-        "/path/to/umb.key",
-        "--umb-ca-cert",
-        "/path/to/ca_cert.crt",
-        "--umb-topic",
-        "VirtualTopic.eng.pub.untag_image_new",
-    ]
-    mock_image_untagger.return_value.untag_images.return_value = ["quay.io/repo/some-image:1"]
-    untag_images.untag_images_main(args)
-
-    mock_send_umb_message.assert_called_once_with(
-        ["amqps://url:5671"],
-        {
-            "lost_refs": ["quay.io/repo/some-image:1"],
-            "untag_refs": ["quay.io/repo/some-image:1"],
-        },
-        "/path/to/file.crt",
-        "VirtualTopic.eng.pub.untag_image_new",
-        ca_cert="/path/to/ca_cert.crt",
-        client_key="/path/to/umb.key",
-    )
-
-
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_remove_last(
-    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog, hookspy
-):
+def test_full_run_remove_last(manifest_list_data, v2s2_manifest_data, caplog, hookspy):
     args = [
         "dummy",
         "--reference",
@@ -242,17 +125,6 @@ def test_full_run_remove_last(
         "some-user",
         "--quay-password",
         "some-password",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-        "--umb-cert",
-        "/path/to/file.crt",
-        "--umb-client-key",
-        "/path/to/umb.key",
-        "--umb-ca-cert",
-        "/path/to/ca_cert.crt",
-        "--umb-topic",
-        "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
@@ -310,21 +182,8 @@ def test_full_run_remove_last(
             "Removing tag '1' from repository 'name/repo1'",
             "Removing tag '2' from repository 'name/repo1'",
             "Untagging operation succeeded",
-            "Sending a UMB message",
         ]
         compare_logs(caplog, expected_logs)
-
-        mock_send_umb_message.assert_called_once_with(
-            ["amqps://url:5671"],
-            {
-                "lost_refs": expected_lost_images,
-                "untag_refs": ["quay.io/name/repo1:1", "quay.io/name/repo1:2"],
-            },
-            "/path/to/file.crt",
-            "VirtualTopic.eng.pub.untag_image_new",
-            ca_cert="/path/to/ca_cert.crt",
-            client_key="/path/to/umb.key",
-        )
 
     assert hookspy == [
         ("task_start", {}),
@@ -346,10 +205,7 @@ def test_full_run_remove_last(
     ]
 
 
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_no_lost_digests(
-    mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog
-):
+def test_full_run_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -360,17 +216,6 @@ def test_full_run_no_lost_digests(
         "some-user",
         "--quay-password",
         "some-password",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-        "--umb-cert",
-        "/path/to/file.crt",
-        "--umb-client-key",
-        "/path/to/umb.key",
-        "--umb-ca-cert",
-        "/path/to/ca_cert.crt",
-        "--umb-topic",
-        "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
@@ -411,25 +256,11 @@ def test_full_run_no_lost_digests(
             "No images will be lost by this untagging operation",
             "Removing tag '1' from repository 'name/repo1'",
             "Untagging operation succeeded",
-            "Sending a UMB message",
         ]
         compare_logs(caplog, expected_logs)
 
-        mock_send_umb_message.assert_called_once_with(
-            ["amqps://url:5671"],
-            {
-                "lost_refs": [],
-                "untag_refs": ["quay.io/name/repo1:1"],
-            },
-            "/path/to/file.crt",
-            "VirtualTopic.eng.pub.untag_image_new",
-            ca_cert="/path/to/ca_cert.crt",
-            client_key="/path/to/umb.key",
-        )
 
-
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-def test_full_run_last_error(mock_send_umb_message, manifest_list_data, v2s2_manifest_data, caplog):
+def test_full_run_last_error(manifest_list_data, v2s2_manifest_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -442,17 +273,6 @@ def test_full_run_last_error(mock_send_umb_message, manifest_list_data, v2s2_man
         "some-user",
         "--quay-password",
         "some-password",
-        "--send-umb-msg",
-        "--umb-url",
-        "amqps://url:5671",
-        "--umb-cert",
-        "/path/to/file.crt",
-        "--umb-client-key",
-        "/path/to/umb.key",
-        "--umb-ca-cert",
-        "/path/to/ca_cert.crt",
-        "--umb-topic",
-        "VirtualTopic.eng.pub.untag_image_new",
     ]
     caplog.set_level(logging.INFO)
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
@@ -503,5 +323,3 @@ def test_full_run_last_error(mock_send_umb_message, manifest_list_data, v2s2_man
             "Gathering tags and digests of repository 'name/repo1'",
         ]
         compare_logs(caplog, expected_logs)
-
-        mock_send_umb_message.assert_not_called()

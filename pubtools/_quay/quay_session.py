@@ -55,6 +55,8 @@ class QuaySession(object):
         Returns:
             requests.Response: A response object.
         """
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10
         return self.session.get(self._api_url(endpoint), **kwargs)
 
     def post(self, endpoint, **kwargs):
@@ -69,6 +71,8 @@ class QuaySession(object):
         Returns:
             requests.Response: A response object.
         """
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10
         return self.session.post(self._api_url(endpoint), **kwargs)
 
     def put(self, endpoint, **kwargs):
@@ -83,6 +87,8 @@ class QuaySession(object):
         Returns:
             requests.Response: A response object.
         """
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10
         return self.session.put(self._api_url(endpoint), **kwargs)
 
     def delete(self, endpoint, **kwargs):
@@ -97,6 +103,8 @@ class QuaySession(object):
         Returns:
             requests.Response: A response object.
         """
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10
         return self.session.delete(self._api_url(endpoint), **kwargs)
 
     def request(self, method, endpoint, **kwargs):
@@ -113,6 +121,8 @@ class QuaySession(object):
         Returns:
             requests.Response: A response object.
         """
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = 10
         return self.session.request(method, self._api_url(endpoint), **kwargs)
 
     def _api_url(self, endpoint):

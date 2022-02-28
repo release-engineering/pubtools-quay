@@ -18,7 +18,6 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
@@ -30,7 +29,6 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_claims_handler,
     mock_proton,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_run_entrypoint_operator_pusher,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
@@ -235,7 +233,6 @@ def test_push_docker_multiarch_merge_ml_operator(
 
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
@@ -247,7 +244,6 @@ def test_push_docker_multiarch_simple_workflow(
     mock_claims_handler,
     mock_proton,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
     target_settings,
@@ -386,7 +382,6 @@ def test_push_docker_multiarch_simple_workflow(
 @mock.patch("pubtools._quay.push_docker.PushDocker.fetch_missing_push_items_digests")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
@@ -398,7 +393,6 @@ def test_push_docker_source(
     mock_claims_handler,
     mock_proton,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
     mock_fetch_missing_push_items_digests,
@@ -556,7 +550,6 @@ def test_push_docker_source(
 
 
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.proton")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
@@ -568,7 +561,6 @@ def test_push_docker_multiarch_rollback(
     mock_claims_handler,
     mock_proton,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_run_entrypoint_signature_remover,
     target_settings,
     container_multiarch_push_item_integration,
@@ -849,8 +841,6 @@ def test_tag_docker_multiarch_merge_ml(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
@@ -862,8 +852,6 @@ def test_tag_docker_source_copy_untag(
     mock_run_entrypoint_sig_remover,
     mock_claims_handler,
     mock_run_cmd,
-    mock_send_umb_message_tag,
-    mock_send_umb_message_untag,
     mock_api_client,
     target_settings,
     tag_docker_push_item_add_integration,
@@ -1026,7 +1014,6 @@ def test_tag_docker_source_copy_untag(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -1040,7 +1027,6 @@ def test_task_iib_add_bundles(
     mock_run_entrypoint_signature_handler,
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_api_client,
     target_settings,
     src_manifest_list,
@@ -1102,7 +1088,6 @@ def test_task_iib_add_bundles(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -1114,7 +1099,6 @@ def test_task_iib_remove_operators(
     mock_run_entrypoint_signature_handler,
     mock_run_entrypoint_signature_remover,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_api_client,
     target_settings,
     src_manifest_list,
@@ -1175,7 +1159,6 @@ def test_task_iib_remove_operators(
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
-@mock.patch("pubtools._quay.tag_images.send_umb_message")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.ManifestClaimsHandler")
@@ -1185,7 +1168,6 @@ def test_task_iib_build_from_scratch(
     mock_manifest_claims_handler,
     mock_run_entrypoint_signature_handler,
     mock_run_cmd,
-    mock_send_umb_message,
     mock_api_client,
     target_settings,
     src_manifest_list,
@@ -1222,13 +1204,9 @@ def test_task_iib_build_from_scratch(
         )
 
 
-@mock.patch("pubtools._quay.untag_images.send_umb_message")
-@mock.patch("pubtools._quay.clear_repo.send_umb_message")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 def test_clear_repo(
     mock_run_entrypoint_signature_remover,
-    mock_send_umb_message_clear_repo,
-    mock_send_umb_message_untag_images,
     src_manifest_list,
 ):
 
@@ -1303,15 +1281,12 @@ def test_clear_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
-            send_umb_msg=False,
         )
 
 
-@mock.patch("pubtools._quay.remove_repo.send_umb_message")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 def test_remove_repo(
     mock_run_entrypoint_signature_remover,
-    mock_send_umb_message_clear_repo,
     src_manifest_list,
 ):
 
@@ -1383,5 +1358,4 @@ def test_remove_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
-            send_umb_msg=False,
         )

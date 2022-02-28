@@ -13,4 +13,3 @@ iiblib
 pubtools-iib
 kerberos
 
-# -e git+https://code.engineering.redhat.com/gerrit/rhmsg#egg=rhmsg-0.9

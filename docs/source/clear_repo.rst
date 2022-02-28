@@ -3,7 +3,7 @@ Clear repo
 
 .. py:module:: pubtools._quay.clear_repo
 
-Entrypoint used for clearing Quay repositories. All images will be removed from the specified repo, while the repo will not be deleted. Signatures of the deleted images will be removed. Optionally, a UMB message will be sent notifying of the cleared repositories.
+Entrypoint used for clearing Quay repositories. All images will be removed from the specified repo, while the repo will not be deleted. Signatures of the deleted images will be removed.
 
 CLI reference
 -------------
@@ -21,7 +21,7 @@ API reference
 Examples
 -------------
 
-Clear multiple repos and send a UMB message.
+Clear multiple repos
 ::
 
   $ export QUAY_PASSWORD=token
@@ -32,8 +32,3 @@ Clear multiple repos and send a UMB message.
     --quay-user quay+username \
     --pyxis-server https://pyxis-server.com/ \
     --pyxis-krb-principal pyxis-principal \
-    --send-umb-msg \
-    --umb-url amqps://url:5671 \
-    --umb-url amqps://url2:5671 \
-    --umb-cert /path/to/file.crt \
-    --umb-topic VirtualTopic.eng.pub.some_topic
