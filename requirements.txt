@@ -11,4 +11,5 @@ docker
 pubtools>=0.3.0
 iiblib
 pubtools-iib
-pykerberos
+kerberos
+
