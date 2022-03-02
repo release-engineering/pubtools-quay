@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.9.2 (2022-03-02)
+--------------------
+* Add a timeout to all HTTP requests
+* Removed the option for entrypoints to send UMB messages
+
 0.9.1 (2022-02-02)
 ------------------
 
