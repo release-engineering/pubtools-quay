@@ -697,6 +697,7 @@ def test_generate_backup_mapping(
     target_settings,
     container_multiarch_push_item,
     container_signing_push_item,
+    container_push_item_ok,
 ):
     hub = mock.MagicMock()
 
@@ -707,6 +708,7 @@ def test_generate_backup_mapping(
         {"name": "target----repo", "tags": ["latest-test-tag"]},
         requests.exceptions.HTTPError("missing", response=response),
         {"name": "target----repo", "tags": ["some-other-tag"]},
+        {"name": "test-repo", "tags": ["latest-test-tag", "1.0"]},
     ]
     mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest_digest = mock.MagicMock()
@@ -723,23 +725,34 @@ def test_generate_backup_mapping(
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     push_docker_instance = push_docker.PushDocker(
-        [container_multiarch_push_item, container_signing_push_item],
+        [container_multiarch_push_item, container_signing_push_item, container_push_item_ok],
         hub,
         "1",
         "some-target",
         target_settings,
     )
     backup_tags, rollback_tags = push_docker_instance.generate_backup_mapping(
-        [container_multiarch_push_item, container_signing_push_item]
+        [container_multiarch_push_item, container_signing_push_item, container_push_item_ok]
     )
-    print(backup_tags)
     assert backup_tags == {
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo",
             tag="latest-test-tag",
             digest="sha256:a1a1a1a1a1a1",
             v2s1_digest="sha256:a3a3a3a3a3a3",
-        ): "some-manifest-list"
+        ): "some-manifest-list",
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/test-repo",
+            tag="latest-test-tag",
+            digest="sha256:b2b2b2b2b2b2",
+            v2s1_digest=None,
+        ): "some-manifest-list",
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/test-repo",
+            tag="1.0",
+            digest="sha256:b4b4b4b4b4b4",
+            v2s1_digest=None,
+        ): "some-manifest-list",
     }
     assert rollback_tags == [
         push_docker.PushDocker.ImageData(
@@ -761,13 +774,21 @@ def test_generate_backup_mapping(
             v2s1_digest=None,
         ),
     ]
-    assert mock_get_repository_tags.call_count == 3
+    assert mock_get_repository_tags.call_count == 4
     assert mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/target----repo")
     assert mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/target----repo1")
     assert mock_get_repository_tags.call_args_list[2] == mock.call("some-namespace/target----repo2")
+    assert mock_get_repository_tags.call_args_list[3] == mock.call("some-namespace/test-repo")
 
-    mock_get_manifest.assert_called_once_with(
+    assert mock_get_manifest.call_count == 3
+    assert mock_get_manifest.call_args_list[0] == mock.call(
         "quay.io/some-namespace/target----repo@sha256:a1a1a1a1a1a1"
+    )
+    assert mock_get_manifest.call_args_list[1] == mock.call(
+        "quay.io/some-namespace/test-repo@sha256:b2b2b2b2b2b2"
+    )
+    assert mock_get_manifest.call_args_list[2] == mock.call(
+        "quay.io/some-namespace/test-repo@sha256:b4b4b4b4b4b4"
     )
 
 

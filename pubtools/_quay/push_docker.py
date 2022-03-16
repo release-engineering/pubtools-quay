@@ -135,8 +135,15 @@ class PushDocker:
                 url_items[pull_url].append(item)
             else:
                 url_items[pull_url] = [item]
-        for _, items in sorted(url_items.items()):
-            docker_push_items.append(items[0])
+        for _, items in url_items.items():
+            non_amd64 = True
+            for item in items:
+                if item.metadata["arch"] == "amd64":
+                    docker_push_items.append(item)
+                    non_amd64 = False
+                    break
+            if non_amd64:
+                docker_push_items.append(items[0])
 
         return docker_push_items
 
@@ -329,9 +336,13 @@ class PushDocker:
                             host=self.quay_host, repo=full_repo, tag=tag
                         )
                         digest = self.dest_quay_client.get_manifest_digest(image_tag)
-                        v2s1_digest = self.dest_quay_client.get_manifest_digest(
-                            image_tag, media_type=QuayClient.MANIFEST_V2S1_TYPE
-                        )
+                        # skip getting v2s1 for non-amd64 image
+                        if item.metadata["arch"] == "amd64":
+                            v2s1_digest = self.dest_quay_client.get_manifest_digest(
+                                image_tag, media_type=QuayClient.MANIFEST_V2S1_TYPE
+                            )
+                        else:
+                            v2s1_digest = None
                         # for backup tags store also digest
                         image_data = PushDocker.ImageData(full_repo, tag, digest, v2s1_digest)
                         image = image_schema.format(
@@ -438,7 +449,8 @@ class PushDocker:
             else:
                 outdated_signatures.append((image_data.digest, image_data.tag, ext_repo))
             # also add V2S1 signature (only one per tag)
-            outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
+            if image_data.v2s1_digest:
+                outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
 
         signatures_to_remove = []
         for existing_signature in container_signature_handler.get_signatures_from_pyxis(
@@ -546,7 +558,8 @@ class PushDocker:
                             item.metadata["new_digests"].setdefault((repo, tag), {})[
                                 mtype
                             ] = v2_sch2_cache[repo]
-                        else:
+                        # Fetch v2s1 only for amd64 image
+                        elif item.metadata["arch"] == "amd64":
                             item.metadata["new_digests"].setdefault((repo, tag), {})[
                                 mtype
                             ] = self._fetch_digest(internal_repo, tag, mtype)
