@@ -36,6 +36,11 @@ TAG_IMAGES_ARGS = {
         "type": str,
         "env_variable": "QUAY_PASSWORD",
     },
+    ("--source-quay-host",): {
+        "help": "Host of source_ref.",
+        "required": False,
+        "type": str,
+    },
     ("--source-quay-user",): {
         "help": "Username for source_ref registry login.",
         "required": False,
@@ -165,6 +170,7 @@ def tag_images(
     all_arch=False,
     quay_user=None,
     quay_password=None,
+    source_quay_host=None,
     source_quay_user=None,
     source_quay_password=None,
     remote_exec=False,
@@ -197,6 +203,8 @@ def tag_images(
             Quay username for Docker HTTP API.
         quay_password (str):
             Quay password for Docker HTTP API.
+        source_quay_host (str):
+            Host of source ref.
         source_quay_user (str):
             Quay username for Docker HTTP API for the source ref.
         source_quay_password (str):
@@ -275,10 +283,9 @@ def tag_images(
 
     with executor_class() as executor:
         dest_host = dest_refs[0].split("/", 1)[0]
-        source_host = source_ref.split("/", 1)[0]
         executor.skopeo_login(dest_host, quay_user, quay_password)
-        if source_quay_user and source_quay_password and dest_host != source_host:
-            executor.skopeo_login(source_host, source_quay_user, source_quay_password)
+        if source_quay_host and source_quay_user and source_quay_password:
+            executor.skopeo_login(source_quay_host, source_quay_user, source_quay_password)
         executor.tag_images(source_ref, dest_refs, all_arch)
 
     pm.hook.quay_images_tagged(source_ref=source_ref, dest_refs=sorted(dest_refs))
