@@ -115,6 +115,7 @@ def container_push_item_ok():
             "destination": {"tags": {"repo": ["tag1"]}},
             "tags": {"test-repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",
+            "arch": "some-arch",
         },
     )
 
@@ -154,6 +155,7 @@ def container_push_item_external_repos():
                 "external/repo": ["latest-test-tag", "1.0"],
             },
             "v_r": "1.0",
+            "arch": "some-arch",
         },
     )
 
@@ -652,6 +654,7 @@ def container_source_push_item():
             "v_r": "1.0",
             "pull_url": "some-registry/src/repo:2",
             "build": {"extra": {"image": {"sources_for_nvr": "some-src"}}},
+            "arch": "some-arch",
         },
     )
 
@@ -722,6 +725,7 @@ def container_multiarch_push_item():
                     }
                 }
             },
+            "arch": "amd64",
         },
     )
 
@@ -1437,6 +1441,7 @@ def container_multiarch_push_item_integration():
                     }
                 }
             },
+            "arch": "amd64",
         },
     )
 
@@ -1473,6 +1478,7 @@ def container_source_push_item_integration():
                     }
                 }
             },
+            "arch": "amd64",
         },
     )
 
