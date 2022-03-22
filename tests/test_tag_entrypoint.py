@@ -51,10 +51,16 @@ def test_run_tag_entrypoint_local_success_all_arch(mock_local_executor):
     args = [
         "dummy",
         "--source-ref",
-        "quay.io/repo/souce-image:1",
+        "src.quay.io/repo/souce-image:1",
         "--dest-ref",
         "quay.io/repo/target-image:1",
         "--all-arch",
+        "--source-quay-host",
+        "src.quay.io",
+        "--source-quay-user",
+        "src-user",
+        "--source-quay-password",
+        "src-password",
     ]
     mock_skopeo_login = mock.MagicMock()
     mock_local_executor.return_value.skopeo_login = mock_skopeo_login
@@ -65,9 +71,13 @@ def test_run_tag_entrypoint_local_success_all_arch(mock_local_executor):
     tag_images.tag_images_main(args)
 
     mock_local_executor.assert_called_once_with()
-    mock_skopeo_login.assert_called_once_with("quay.io", None, None)
+    assert len(mock_skopeo_login.mock_calls) == 2
+    assert mock_skopeo_login.call_args_list == [
+        mock.call("quay.io", None, None),
+        mock.call("src.quay.io", "src-user", "src-password"),
+    ]
     mock_tag_images.assert_called_once_with(
-        "quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], True
+        "src.quay.io/repo/souce-image:1", ["quay.io/repo/target-image:1"], True
     )
 
 

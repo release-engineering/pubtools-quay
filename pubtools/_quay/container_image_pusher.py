@@ -89,6 +89,7 @@ class ContainerImagePusher:
             all_arch=all_arch,
             quay_user=target_settings["dest_quay_user"],
             quay_password=target_settings["dest_quay_password"],
+            source_quay_host=target_settings.get("source_quay_host"),
             source_quay_user=target_settings.get("source_quay_user"),
             source_quay_password=target_settings.get("source_quay_password"),
             container_exec=True,
