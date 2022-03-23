@@ -1,4 +1,5 @@
 import logging
+import requests
 
 from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
@@ -104,7 +105,14 @@ class ImageUntagger:
 
         for tag in repo_tags["tags"]:
             image = image_schema.format(self.host, repository, tag)
-            manifest = self._quay_client.get_manifest(image)
+            try:
+                manifest = self._quay_client.get_manifest(image)
+            except requests.exceptions.HTTPError as e:
+                # Just removed tags could still be in tags list while manifests are removed
+                if e.response.status_code == 404:
+                    continue
+                else:
+                    raise
             digest = self._quay_client.get_manifest_digest(image)
 
             # Option 1: No manifest list, only manifest
