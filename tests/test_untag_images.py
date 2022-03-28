@@ -3,6 +3,7 @@ import logging
 import mock
 import pytest
 import requests_mock
+import requests
 
 from pubtools._quay import untag_images
 from .utils.misc import compare_logs
@@ -218,7 +219,7 @@ def test_full_run_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog
         "some-password",
     ]
     caplog.set_level(logging.INFO)
-    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4", "5"]}
 
     with requests_mock.Mocker() as m:
         m.get(
@@ -245,10 +246,17 @@ def test_full_run_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog
             text=json.dumps(v2s2_manifest_data, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
+        response = mock.MagicMock()
+        response.status_code = 404
+        m.register_uri(
+            "GET",
+            "https://quay.io/v2/name/repo1/manifests/5",
+            exc=requests.exceptions.HTTPError("not found", response=response),
+        )
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         untag_images.untag_images_main(args)
 
-        assert m.call_count == 10
+        assert m.call_count == 11
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*",
@@ -323,3 +331,33 @@ def test_full_run_last_error(manifest_list_data, v2s2_manifest_data, caplog):
             "Gathering tags and digests of repository 'name/repo1'",
         ]
         compare_logs(caplog, expected_logs)
+
+
+def test_full_run_get_manifest_error():
+    args = [
+        "dummy",
+        "--reference",
+        "quay.io/name/repo1:1",
+        "--quay-api-token",
+        "some-token",
+        "--quay-user",
+        "some-user",
+        "--quay-password",
+        "some-password",
+    ]
+    repo_tags = {"name": "repo1", "tags": ["1"]}
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/name/repo1/tags/list",
+            json=repo_tags,
+        )
+        response = mock.MagicMock()
+        response.status_code = 500
+        m.register_uri(
+            "GET",
+            "https://quay.io/v2/name/repo1/manifests/1",
+            exc=requests.exceptions.HTTPError("server error", response=response),
+        )
+        with pytest.raises(requests.exceptions.HTTPError, match="server error"):
+            untag_images.untag_images_main(args)
