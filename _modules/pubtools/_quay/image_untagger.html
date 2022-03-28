@@ -72,6 +72,7 @@
              
   <h1>Source code for pubtools._quay.image_untagger</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">requests</span>
 
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.quay_api_client</span> <span class="kn">import</span> <span class="n">QuayApiClient</span>
@@ -177,7 +178,14 @@
 
         <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">repo_tags</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]:</span>
             <span class="n">image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># Just removed tags could still be in tags list while manifests are removed</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span>
             <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
 
             <span class="c1"># Option 1: No manifest list, only manifest</span>
