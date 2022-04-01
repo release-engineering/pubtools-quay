@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.9.3 (2022-04-01)
+--------------------
+* Fixing signing issues
+* Skip getting v2s1 digest for non-amd64 images
+* Less skopeo login to source registry
+* Tolerate get_manifest 404 in image untagger
+
 0.9.2 (2022-03-02)
 --------------------
 * Add a timeout to all HTTP requests
