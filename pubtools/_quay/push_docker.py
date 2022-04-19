@@ -138,7 +138,7 @@ class PushDocker:
         for _, items in url_items.items():
             non_amd64 = True
             for item in items:
-                if item.metadata["arch"] == "amd64":
+                if item.metadata["arch"] in ["amd64", "x86_64"]:
                     docker_push_items.append(item)
                     non_amd64 = False
                     break
@@ -337,7 +337,7 @@ class PushDocker:
                         )
                         digest = self.dest_quay_client.get_manifest_digest(image_tag)
                         # skip getting v2s1 for non-amd64 image
-                        if item.metadata["arch"] == "amd64":
+                        if item.metadata["arch"] in ["amd64", "x86_64"]:
                             v2s1_digest = self.dest_quay_client.get_manifest_digest(
                                 image_tag, media_type=QuayClient.MANIFEST_V2S1_TYPE
                             )
@@ -559,7 +559,7 @@ class PushDocker:
                                 mtype
                             ] = v2_sch2_cache[repo]
                         # Fetch v2s1 only for amd64 image
-                        elif item.metadata["arch"] == "amd64":
+                        elif item.metadata["arch"] in ["amd64", "x86_64"]:
                             item.metadata["new_digests"].setdefault((repo, tag), {})[
                                 mtype
                             ] = self._fetch_digest(internal_repo, tag, mtype)
