@@ -211,7 +211,7 @@
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="n">url_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">non_amd64</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;amd64&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]:</span>
                     <span class="n">docker_push_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
                     <span class="n">non_amd64</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="k">break</span>
@@ -410,7 +410,7 @@
                         <span class="p">)</span>
                         <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
                         <span class="c1"># skip getting v2s1 for non-amd64 image</span>
-                        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;amd64&quot;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]:</span>
                             <span class="n">v2s1_digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span>
                                 <span class="n">image_tag</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span>
                             <span class="p">)</span>
@@ -632,7 +632,7 @@
                                 <span class="n">mtype</span>
                             <span class="p">]</span> <span class="o">=</span> <span class="n">v2_sch2_cache</span><span class="p">[</span><span class="n">repo</span><span class="p">]</span>
                         <span class="c1"># Fetch v2s1 only for amd64 image</span>
-                        <span class="k">elif</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;amd64&quot;</span><span class="p">:</span>
+                        <span class="k">elif</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]:</span>
                             <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_digests&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">),</span> <span class="p">{})[</span>
                                 <span class="n">mtype</span>
                             <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_digest</span><span class="p">(</span><span class="n">internal_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mtype</span><span class="p">)</span>
