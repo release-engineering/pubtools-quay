@@ -857,7 +857,8 @@ def test_sign_operator_images_not_allowed(
     sig_handler = signature_handler.OperatorSignatureHandler(
         hub, "1", target_settings, "some-target"
     )
-    sig_handler.sign_operator_images({"nothing": "here"}, "stamp-tag")
+    ret = sig_handler.sign_operator_images({"nothing": "here"}, "stamp-tag")
+    assert ret == []
     mock_construct_index_claim_msgs.assert_not_called()
     mock_get_radas_signatures.assert_not_called()
     mock_validate_radas_msgs.assert_not_called()
