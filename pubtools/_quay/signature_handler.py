@@ -639,7 +639,7 @@ class OperatorSignatureHandler(SignatureHandler):
             "docker_container_signing_enabled", False
         ):
             LOG.info("Container signing not allowed in target settings, skipping.")
-            return
+            return []
 
         claim_messages = []
         for version, iib_details in sorted(iib_results.items()):
@@ -660,7 +660,7 @@ class OperatorSignatureHandler(SignatureHandler):
 
         if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
-            return
+            return []
 
         signature_messages = self.get_signatures_from_radas(claim_messages)
         self.validate_radas_messages(claim_messages, signature_messages)
