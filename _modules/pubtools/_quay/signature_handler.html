@@ -712,7 +712,7 @@
             <span class="s2">&quot;docker_container_signing_enabled&quot;</span><span class="p">,</span> <span class="kc">False</span>
         <span class="p">):</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Container signing not allowed in target settings, skipping.&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">claim_messages</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">iib_details</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
@@ -733,7 +733,7 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">claim_messages</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No new claim messages will be uploaded&quot;</span><span class="p">)</span>
-            <span class="k">return</span>
+            <span class="k">return</span> <span class="p">[]</span>
 
         <span class="n">signature_messages</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_signatures_from_radas</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_radas_messages</span><span class="p">(</span><span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">)</span>
