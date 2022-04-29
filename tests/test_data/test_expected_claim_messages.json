@@ -7,8 +7,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry1.com/target/repo1:tag1",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo1:tag1"
    },
    {
       "sig_key_id":"some-key",
@@ -18,8 +17,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry2.com/target/repo1:tag1",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo1:tag1"
    },
    {
       "sig_key_id":"some-key",
@@ -29,8 +27,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry1.com/target/repo1:tag2",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo1:tag2"
    },
    {
       "sig_key_id":"some-key",
@@ -40,8 +37,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry2.com/target/repo1:tag2",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo1:tag2"
    },
    {
       "sig_key_id":"some-key",
@@ -51,8 +47,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo2",
       "image_name":"target/repo2",
-      "docker_reference":"some-registry1.com/target/repo2:tag3",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo2:tag3"
    },
    {
       "sig_key_id":"some-key",
@@ -62,8 +57,7 @@
       "manifest_digest":"sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
       "repo":"target/repo2",
       "image_name":"target/repo2",
-      "docker_reference":"some-registry2.com/target/repo2:tag3",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo2:tag3"
    },
    {
       "sig_key_id":"some-key",
@@ -73,8 +67,7 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry1.com/target/repo1:tag1",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo1:tag1"
    },
    {
       "sig_key_id":"some-key",
@@ -84,8 +77,7 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry2.com/target/repo1:tag1",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo1:tag1"
    },
    {
       "sig_key_id":"some-key",
@@ -95,8 +87,7 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry1.com/target/repo1:tag2",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo1:tag2"
    },
    {
       "sig_key_id":"some-key",
@@ -106,8 +97,7 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo1",
       "image_name":"target/repo1",
-      "docker_reference":"some-registry2.com/target/repo1:tag2",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo1:tag2"
    },
    {
       "sig_key_id":"some-key",
@@ -117,8 +107,7 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo2",
       "image_name":"target/repo2",
-      "docker_reference":"some-registry1.com/target/repo2:tag3",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry1.com/target/repo2:tag3"
    },
    {
       "sig_key_id":"some-key",
@@ -128,7 +117,6 @@
       "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
       "repo":"target/repo2",
       "image_name":"target/repo2",
-      "docker_reference":"some-registry2.com/target/repo2:tag3",
-      "created":"2021-03-19T14:45:23.128632Z"
+      "docker_reference":"some-registry2.com/target/repo2:tag3"
    }
 ]

@@ -37,16 +37,12 @@ def test_init(mock_quay_client, target_settings):
 
 
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
-@mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
-def test_create_claim_message(
-    mock_quay_client, mock_encode, mock_datetime, mock_uuid, target_settings
-):
+def test_create_claim_message(mock_quay_client, mock_encode, mock_uuid, target_settings):
     hub = mock.MagicMock()
     mock_encode.return_value = b"some-encode"
     mock_uuid.return_value = "7ed1d8fb-77bc-4222-ad6a-89f508f02d75"
-    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
 
     claim_msg = sig_handler.create_manifest_claim_message(
@@ -73,7 +69,6 @@ def test_create_claim_message(
         "repo": "some-dest-repo",
         "image_name": "image",
         "docker_reference": "registry.com/image:1",
-        "created": "2021-03-19T14:45:23.128632Z",
     }
 
 
@@ -224,7 +219,6 @@ def test_filter_claim_messages(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:2",
-            "created": "2021-03-19T14:45:23.128632Z",
         }
     ]
 
@@ -255,7 +249,6 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "00000001",
@@ -266,7 +259,6 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "00000002",
@@ -277,7 +269,6 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:2",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "1234567800000003",
@@ -288,7 +279,6 @@ def test_get_signatures_from_radas(
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
 
@@ -380,7 +370,6 @@ def test_validate_radas_msgs(
 
 
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
-@mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -388,7 +377,6 @@ def test_construct_item_claim_messages(
     mock_quay_client,
     mock_get_tagged_digests,
     mock_uuid,
-    mock_datetime,
     mock_encode,
     target_settings,
     container_signing_push_item,
@@ -396,7 +384,6 @@ def test_construct_item_claim_messages(
     hub = mock.MagicMock()
     mock_uuid.side_effect = range(100)
     mock_encode.return_value = b"some-encode"
-    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
     mock_get_tagged_digests.return_value = [
         "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
@@ -419,7 +406,6 @@ def test_construct_item_claim_messages(
 
 
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
-@mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -427,7 +413,6 @@ def test_construct_item_claim_messages_v1(
     mock_quay_client,
     mock_get_tagged_digests,
     mock_uuid,
-    mock_datetime,
     mock_encode,
     target_settings,
     container_signing_push_item_v1,
@@ -435,7 +420,6 @@ def test_construct_item_claim_messages_v1(
     hub = mock.MagicMock()
     mock_uuid.side_effect = range(100)
     mock_encode.return_value = b"some-encode"
-    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
     mock_get_tagged_digests.return_value = [
         "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
@@ -458,7 +442,6 @@ def test_construct_item_claim_messages_v1(
 
 
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
-@mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
@@ -466,7 +449,6 @@ def test_construct_item_claim_messages_ml(
     mock_quay_client,
     mock_get_tagged_digests,
     mock_uuid,
-    mock_datetime,
     mock_encode,
     target_settings,
     container_signing_push_item_ml,
@@ -474,7 +456,6 @@ def test_construct_item_claim_messages_ml(
     hub = mock.MagicMock()
     mock_uuid.side_effect = range(100)
     mock_encode.return_value = b"some-encode"
-    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
     mock_get_tagged_digests.return_value = [
         "sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
         "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
@@ -517,7 +498,6 @@ def test_remove_duplicate_claim_messages(
             "repo": "some-namespace/target----repo1",
             "image_name": "target/repo1",
             "docker_reference": "some-registry1.com/target/repo1:tag1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "some-key",
@@ -528,7 +508,6 @@ def test_remove_duplicate_claim_messages(
             "repo": "some-namespace/target----repo1",
             "image_name": "target/repo1",
             "docker_reference": "some-registry1.com/target/repo1:tag1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
     result_messages = sig_handler.remove_duplicate_claim_messages(messages)
@@ -742,13 +721,11 @@ def test_sign_container_images_new_digests_nothing_to_sign(
 
 
 @mock.patch("pubtools._quay.signature_handler.base64.b64encode")
-@mock.patch("pubtools._quay.signature_handler.datetime")
 @mock.patch("pubtools._quay.signature_handler.uuid.uuid4")
 @mock.patch("pubtools._quay.signature_handler.QuayClient")
 def test_construct_operator_item_claim_messages(
     mock_quay_client,
     mock_uuid,
-    mock_datetime,
     mock_encode,
     target_settings,
     operator_signing_push_item,
@@ -759,7 +736,6 @@ def test_construct_operator_item_claim_messages(
     mock_get_manifest.return_value = signing_manifest_list_data
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_uuid.side_effect = range(100)
-    mock_datetime.utcnow.return_value.isoformat.return_value = "2021-03-19T14:45:23.128632"
     mock_encode.return_value = b"some-encode"
 
     sig_handler = signature_handler.OperatorSignatureHandler(

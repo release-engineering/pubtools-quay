@@ -1,5 +1,4 @@
 import base64
-from datetime import datetime
 import json
 import logging
 import uuid
@@ -123,7 +122,6 @@ class SignatureHandler:
             "repo": destination_repo,
             "image_name": image_name,
             "docker_reference": docker_reference,
-            "created": datetime.utcnow().isoformat() + "Z",
         }
         return message
 

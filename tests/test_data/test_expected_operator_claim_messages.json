@@ -7,8 +7,7 @@
        "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key1",
@@ -18,8 +17,7 @@
        "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key2",
@@ -29,8 +27,7 @@
        "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key2",
@@ -40,8 +37,7 @@
        "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry1.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry1.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key1",
@@ -51,8 +47,7 @@
        "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key1",
@@ -62,8 +57,7 @@
        "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key2",
@@ -73,8 +67,7 @@
        "manifest_digest":"sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5"
     },
     {
        "sig_key_id":"key2",
@@ -84,7 +77,6 @@
        "manifest_digest":"sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
        "repo":"operators/index-image",
        "image_name":"operators/index-image",
-       "docker_reference":"some-registry2.com/operators/index-image:v4.5",
-       "created":"2021-03-19T14:45:23.128632Z"
+       "docker_reference":"some-registry2.com/operators/index-image:v4.5"
     }
  ]
