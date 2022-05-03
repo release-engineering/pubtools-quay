@@ -539,7 +539,7 @@ class PushDocker:
             push_items(list): List of push items.
             target_settings(dict): Target settings.
         """
-        for item in sorted(push_items):
+        for item in push_items:
             item.metadata["new_digests"] = {}
             missing_media_types = set(
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
