@@ -612,7 +612,7 @@
 <span class="sd">            push_items(list): List of push items.</span>
 <span class="sd">            target_settings(dict): Target settings.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_items</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">push_items</span><span class="p">:</span>
             <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_digests&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">missing_media_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span><span class="p">]</span>
