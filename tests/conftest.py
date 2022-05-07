@@ -833,7 +833,6 @@ def claim_messages():
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "00000001",
@@ -844,7 +843,6 @@ def claim_messages():
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "00000002",
@@ -855,7 +853,6 @@ def claim_messages():
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:2",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
         {
             "sig_key_id": "1234567800000003",
@@ -866,7 +863,6 @@ def claim_messages():
             "repo": "some-dest-repo",
             "image_name": "image",
             "docker_reference": "registry.com/image:1",
-            "created": "2021-03-19T14:45:23.128632Z",
         },
     ]
 
