@@ -639,7 +639,7 @@ class PushDocker:
             # Push index images to Quay
             operator_pusher.push_index_images(successful_iib_results, index_stamp)
             # Rollback only when all index image builds fails
-            if set([x["iib_result"] for x in iib_results.values()]) == set([False]):
+            if not any([x["iib_result"] for x in iib_results.values()]):
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
                 failed = True
