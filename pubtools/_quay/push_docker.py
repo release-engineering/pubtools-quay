@@ -1,6 +1,7 @@
 from collections import namedtuple
 import logging
 import sys
+from time import sleep
 
 import requests
 
@@ -335,7 +336,21 @@ class PushDocker:
                         image_tag = image_schema_tag.format(
                             host=self.quay_host, repo=full_repo, tag=tag
                         )
-                        digest = self.dest_quay_client.get_manifest_digest(image_tag)
+                        # it's possible that there will be a mismatch between the two calls
+                        try:
+                            digest = self.dest_quay_client.get_manifest_digest(image_tag)
+                        except requests.exceptions.HTTPError as e:
+                            # When robot account is used, 401 may be returned instead of 404
+                            if e.response.status_code == 404 or e.response.status_code == 401:
+                                digest = self._poll_tag_inconsistency(full_repo, tag)
+                            else:
+                                raise
+
+                        # It was determined that the image doesn't actually exist
+                        if not digest:
+                            rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
+                            continue
+
                         # skip getting v2s1 for non-amd64 image
                         if item.metadata["arch"] in ["amd64", "x86_64"]:
                             v2s1_digest = self.dest_quay_client.get_manifest_digest(
@@ -360,6 +375,56 @@ class PushDocker:
         # it's possible that rollback tags will contain duplicate entries
         rollback_tags = sorted(list(set(rollback_tags)))
         return (backup_tags, rollback_tags)
+
+    def _poll_tag_inconsistency(self, full_repo, tag, poll_rate=30, timeout=120):
+        """
+        Resolve an inconsistency between repo tags reported by Docker API and tag actually existing.
+
+        This scenario occurs when Docker API claims that a tag exists, but attempting to get the
+        tag's digest results in a 404. It could be caused by a delay between two data sources
+        becoming consistent, or by repo tag being removed between the two calls. Attempt to
+        reconcile the difference by periodically calling the two sources. If the data is still
+        inconsistent after timeout, assume that the image doesn't exist and continue.
+
+        Args:
+            full_repo (str):
+                Repo name to poll for tags
+            tag (str):
+                Tag to poll for manifest digest.
+            poll_rate (int, optional):
+                How many seconds to wait between polling. Defaults to 30.
+            timeout (int, optional):
+                How many seconds to poll before giving up and assuming that the image doesn't exist.
+                Defaults to 120.
+
+        Returns (str, None):
+            Image digest, or None if digest doesn't exist (or timeout is reached).
+        """
+        image_schema_tag = "{host}/{repo}:{tag}"
+        image_tag = image_schema_tag.format(host=self.quay_host, repo=full_repo, tag=tag)
+
+        for i in range(timeout // poll_rate):
+            sleep(poll_rate)
+            repo_tags = self.dest_quay_client.get_repository_tags(full_repo)
+
+            try:
+                digest = self.dest_quay_client.get_manifest_digest(image_tag)
+            except requests.exceptions.HTTPError as e:
+                # When robot account is used, 401 may be returned instead of 404
+                if e.response.status_code == 404 or e.response.status_code == 401:
+                    digest = None
+                else:
+                    raise
+
+            if tag in repo_tags.get("tags", {}) and digest:
+                return digest
+            if tag not in repo_tags.get("tags", {}) and digest is None:
+                return None
+
+        LOG.warning(
+            "Unable to determine if image '{0}' exists, assuming it doesn't.".format(image_tag)
+        )
+        return None
 
     @log_step("Perform rollback")
     def rollback(self, backup_tags, rollback_tags):
