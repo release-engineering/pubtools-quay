@@ -243,8 +243,7 @@ def test_copy_multiarch_item_no_extra_archs(
     pusher.copy_multiarch_push_item(container_multiarch_push_item, {"manifest_list": "first_ml"})
 
     mock_get_manifest.assert_called_once_with(
-        "quay.io/some-namespace/target----repo:latest-test-tag",
-        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
+        "quay.io/some-namespace/target----repo:latest-test-tag"
     )
     assert mock_tag_images.call_count == 1
     assert mock_tag_images.call_args_list[0][0] == (
@@ -283,7 +282,6 @@ def test_copy_multiarch_item_no_dest_ml(
 
     mock_get_manifest.assert_called_once_with(
         "quay.io/some-namespace/target----repo:latest-test-tag",
-        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
 
     assert mock_tag_images.call_count == 1
@@ -339,7 +337,13 @@ def test_copy_multiarch_item_missing_archs(
 ):
     mock_get_manifest = mock.MagicMock()
 
-    mock_get_manifest.side_effect = {"manifest_list": "second_ml"}
+    mock_get_manifest.return_value = {
+        "manifest_list": "second_ml",
+        "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+    }
+    mock_quay_client.MANIFEST_LIST_TYPE = (
+        "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_get_missing_archs.return_value = [{"arch": "x86_64"}, {"arch": "amd64"}]
 
@@ -350,7 +354,6 @@ def test_copy_multiarch_item_missing_archs(
 
     mock_get_manifest.assert_called_once_with(
         "quay.io/some-namespace/target----repo:latest-test-tag",
-        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
 
     assert mock_merge_workflow.call_count == 1
@@ -360,6 +363,53 @@ def test_copy_multiarch_item_missing_archs(
     )
 
     mock_tag_images.assert_not_called()
+
+
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow")
+@mock.patch("pubtools._quay.container_image_pusher.ManifestListMerger.get_missing_architectures")
+@mock.patch("pubtools._quay.container_image_pusher.tag_images")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_copy_multiarch_item_existing_dest_not_manifest_list(
+    mock_quay_client,
+    mock_tag_images,
+    mock_get_missing_archs,
+    mock_merge_workflow,
+    target_settings,
+    container_multiarch_push_item,
+    caplog,
+):
+    caplog.set_level(logging.WARNING)
+    mock_get_manifest = mock.MagicMock()
+
+    mock_get_manifest.return_value = {
+        "manifest_list": "v2s2_manifest",
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+    }
+    mock_quay_client.MANIFEST_LIST_TYPE = (
+        "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    pusher = container_image_pusher.ContainerImagePusher(
+        [container_multiarch_push_item], target_settings
+    )
+    pusher.copy_multiarch_push_item(container_multiarch_push_item, {"manifest_list": "first_ml"})
+
+    mock_get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+    )
+
+    mock_merge_workflow.assert_not_called()
+    assert mock_tag_images.call_count == 1
+    assert mock_tag_images.call_args_list[0][0] == (
+        "some-registry/src/repo:1",
+        ["quay.io/some-namespace/target----repo:latest-test-tag"],
+    )
+
+    expected_logs = [
+        "Image quay.io/some-namespace/target----repo:latest-test-tag doesn't have a manifest.*",
+    ]
+    compare_logs(caplog, expected_logs)
 
 
 @mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")

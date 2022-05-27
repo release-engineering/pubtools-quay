@@ -236,21 +236,29 @@ class ContainerImagePusher:
                     tag=tag,
                 )
                 try:
-                    dest_ml = self.dest_quay_client.get_manifest(
-                        dest_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
-                    )
-                    LOG.info(
-                        "Getting missing archs between images '{0}' and '{1}'".format(
-                            source_ref, dest_ref
+                    dest_ml = self.dest_quay_client.get_manifest(dest_ref)
+                    if dest_ml.get("mediaType") != QuayClient.MANIFEST_LIST_TYPE:
+                        LOG.warning(
+                            "Image {0} doesn't have a manifest list, it will be overwritten".format(
+                                dest_ref
+                            )
                         )
-                    )
-                    missing_archs = ManifestListMerger.get_missing_architectures(source_ml, dest_ml)
-                    # Option 1: Destination doesn't contain extra archs, ML merging is unnecessary
-                    if not missing_archs:
                         simple_dest_refs.append(dest_ref)
-                    # Option 2: Destination has extra archs, MLs will be merged
                     else:
-                        merge_mls_dest_refs.append(dest_ref)
+                        LOG.info(
+                            "Getting missing archs between images '{0}' and '{1}'".format(
+                                source_ref, dest_ref
+                            )
+                        )
+                        missing_archs = ManifestListMerger.get_missing_architectures(
+                            source_ml, dest_ml
+                        )
+                        # Option 1: Dest doesn't contain extra archs, ML merging is unnecessary
+                        if not missing_archs:
+                            simple_dest_refs.append(dest_ref)
+                        # Option 2: Destination has extra archs, MLs will be merged
+                        else:
+                            merge_mls_dest_refs.append(dest_ref)
                 except requests.exceptions.HTTPError as e:
                     # Option 3: Destination tag doesn't exist, no ML merging
                     if e.response.status_code == 404 or e.response.status_code == 401:
