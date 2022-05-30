@@ -230,6 +230,33 @@ will be removed to preserve pre-push state.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker._poll_tag_inconsistency">
+<span class="sig-name descname"><span class="pre">_poll_tag_inconsistency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_repo</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">120</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker._poll_tag_inconsistency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker._poll_tag_inconsistency" title="Permalink to this definition"></a></dt>
+<dd><p>Resolve an inconsistency between repo tags reported by Docker API and tag actually existing.</p>
+<p>This scenario occurs when Docker API claims that a tag exists, but attempting to get the
+tag’s digest results in a 404. It could be caused by a delay between two data sources
+becoming consistent, or by repo tag being removed between the two calls. Attempt to
+reconcile the difference by periodically calling the two sources. If the data is still
+inconsistent after timeout, assume that the image doesn’t exist and continue.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>full_repo (str):</dt><dd><p>Repo name to poll for tags</p>
+</dd>
+<dt>tag (str):</dt><dd><p>Tag to poll for manifest digest.</p>
+</dd>
+<dt>poll_rate (int, optional):</dt><dd><p>How many seconds to wait between polling. Defaults to 30.</p>
+</dd>
+<dt>timeout (int, optional):</dt><dd><p>How many seconds to poll before giving up and assuming that the image doesn’t exist.
+Defaults to 120.</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (str, None):</dt><dd><p>Image digest, or None if digest doesn’t exist (or timeout is reached).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.rollback">
 <span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backup_tags</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_tags</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.rollback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.rollback" title="Permalink to this definition"></a></dt>
 <dd><p>Perform a rollback.</p>

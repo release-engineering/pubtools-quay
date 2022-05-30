@@ -75,6 +75,7 @@
 <span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
@@ -409,7 +410,21 @@
                         <span class="n">image_tag</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                             <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
                         <span class="p">)</span>
-                        <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
+                        <span class="c1"># it&#39;s possible that there will be a mismatch between the two calls</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="c1"># When robot account is used, 401 may be returned instead of 404</span>
+                            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                                <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_poll_tag_inconsistency</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">raise</span>
+
+                        <span class="c1"># It was determined that the image doesn&#39;t actually exist</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">digest</span><span class="p">:</span>
+                            <span class="n">rollback_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PushDocker</span><span class="o">.</span><span class="n">ImageData</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+                            <span class="k">continue</span>
+
                         <span class="c1"># skip getting v2s1 for non-amd64 image</span>
                         <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]:</span>
                             <span class="n">v2s1_digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span>
@@ -434,6 +449,56 @@
         <span class="c1"># it&#39;s possible that rollback tags will contain duplicate entries</span>
         <span class="n">rollback_tags</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">rollback_tags</span><span class="p">)))</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PushDocker._poll_tag_inconsistency"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker._poll_tag_inconsistency">[docs]</a>    <span class="k">def</span> <span class="nf">_poll_tag_inconsistency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">poll_rate</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve an inconsistency between repo tags reported by Docker API and tag actually existing.</span>
+
+<span class="sd">        This scenario occurs when Docker API claims that a tag exists, but attempting to get the</span>
+<span class="sd">        tag&#39;s digest results in a 404. It could be caused by a delay between two data sources</span>
+<span class="sd">        becoming consistent, or by repo tag being removed between the two calls. Attempt to</span>
+<span class="sd">        reconcile the difference by periodically calling the two sources. If the data is still</span>
+<span class="sd">        inconsistent after timeout, assume that the image doesn&#39;t exist and continue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            full_repo (str):</span>
+<span class="sd">                Repo name to poll for tags</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag to poll for manifest digest.</span>
+<span class="sd">            poll_rate (int, optional):</span>
+<span class="sd">                How many seconds to wait between polling. Defaults to 30.</span>
+<span class="sd">            timeout (int, optional):</span>
+<span class="sd">                How many seconds to poll before giving up and assuming that the image doesn&#39;t exist.</span>
+<span class="sd">                Defaults to 120.</span>
+
+<span class="sd">        Returns (str, None):</span>
+<span class="sd">            Image digest, or None if digest doesn&#39;t exist (or timeout is reached).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">image_schema_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
+        <span class="n">image_tag</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">timeout</span> <span class="o">//</span> <span class="n">poll_rate</span><span class="p">):</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="n">poll_rate</span><span class="p">)</span>
+            <span class="n">repo_tags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_repository_tags</span><span class="p">(</span><span class="n">full_repo</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># When robot account is used, 401 may be returned instead of 404</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                    <span class="n">digest</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span>
+
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">repo_tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">and</span> <span class="n">digest</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">digest</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">repo_tags</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tags&quot;</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">and</span> <span class="n">digest</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Unable to determine if image &#39;</span><span class="si">{0}</span><span class="s2">&#39; exists, assuming it doesn&#39;t.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_tag</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="PushDocker.rollback"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.rollback">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Perform rollback&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">):</span>
