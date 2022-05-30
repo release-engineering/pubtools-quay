@@ -13,6 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -89,10 +90,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="module-pubtools._quay.tag_images">
-<span id="tag-images"></span><h1>Tag images<a class="headerlink" href="#module-pubtools._quay.tag_images" title="Permalink to this headline"></a></h1>
+<span id="tag-images"></span><h1>Tag images<a class="headerlink" href="#module-pubtools._quay.tag_images" title="Permalink to this heading"></a></h1>
 <p>Entrypoint used for copying an image to a destination/multiple destinations. If specified, copying operation may be performed on a remote machine via SSH.</p>
 <div class="section" id="cli-reference">
-<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline"></a></h2>
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">tag</span><span class="o">-</span><span class="n">image</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">ref</span> <span class="n">SOURCE_REF</span> <span class="o">--</span><span class="n">dest</span><span class="o">-</span><span class="n">ref</span>
                                <span class="n">DEST_REF</span> <span class="p">[</span><span class="o">--</span><span class="nb">all</span><span class="o">-</span><span class="n">arch</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span><span class="p">]</span>
                                <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">password</span> <span class="n">QUAY_PASSWORD</span><span class="p">]</span>
@@ -117,7 +118,7 @@
 </pre></div>
 </div>
 <div class="section" id="Named Arguments">
-<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline"></a></h3>
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this heading"></a></h3>
 <dl class="option-list">
 <dt><kbd>--source-ref</kbd></dt>
 <dd><p>Source image reference.</p>
@@ -193,7 +194,7 @@
 </div>
 </div>
 <div class="section" id="api-reference">
-<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h2>
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.tag_images.tag_images">
 <span class="sig-prename descclassname"><span class="pre">pubtools._quay.tag_images.</span></span><span class="sig-name descname"><span class="pre">tag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_quay_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_remote_host_port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_reject_unknown_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ssh_key_filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_exec</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">container_image</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'unix://var/run/docker.sock'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_verify_tls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_cert_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_username</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">registry_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/tag_images.html#tag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.tag_images.tag_images" title="Permalink to this definition"></a></dt>
@@ -256,7 +257,7 @@ login will be assumed to not be needed.</p>
 
 </div>
 <div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Locally copy an image from source to destination. Quay password is injected
 from the environment variable.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token

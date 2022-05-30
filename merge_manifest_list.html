@@ -13,6 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -88,10 +89,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="module-pubtools._quay.merge_manifest_list">
-<span id="merge-manifest-lists"></span><h1>Merge manifest lists<a class="headerlink" href="#module-pubtools._quay.merge_manifest_list" title="Permalink to this headline"></a></h1>
+<span id="merge-manifest-lists"></span><h1>Merge manifest lists<a class="headerlink" href="#module-pubtools._quay.merge_manifest_list" title="Permalink to this heading"></a></h1>
 <p>Entrypoint used for merging manifest lists of two images in Quay. ManifestListMerger class is invoked and used.</p>
 <div class="section" id="cli-reference">
-<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline"></a></h2>
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">merge</span><span class="o">-</span><span class="n">manifest</span><span class="o">-</span><span class="nb">list</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">ref</span> <span class="n">SOURCE_REF</span>
                                          <span class="o">--</span><span class="n">dest</span><span class="o">-</span><span class="n">ref</span> <span class="n">DEST_REF</span>
                                          <span class="o">--</span><span class="n">source</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">SOURCE_QUAY_USER</span>
@@ -101,7 +102,7 @@
 </pre></div>
 </div>
 <div class="section" id="Named Arguments">
-<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline"></a></h3>
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this heading"></a></h3>
 <dl class="option-list">
 <dt><kbd>--source-ref</kbd></dt>
 <dd><p>Source image reference. Manifest list data of this image will overwrite destination’s manifest list</p>
@@ -125,7 +126,7 @@
 </div>
 </div>
 <div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Merge manifest lists of source-ref and dest-ref and overwrite dest-ref with the result.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
 $ pubtools-quay-merge-manifest-list \

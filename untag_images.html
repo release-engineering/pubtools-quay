@@ -13,6 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -89,10 +90,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="module-pubtools._quay.untag_images">
-<span id="untag-images"></span><h1>Untag images<a class="headerlink" href="#module-pubtools._quay.untag_images" title="Permalink to this headline"></a></h1>
+<span id="untag-images"></span><h1>Untag images<a class="headerlink" href="#module-pubtools._quay.untag_images" title="Permalink to this heading"></a></h1>
 <p>Entrypoint used for removing tags (images) from Quay. The script will refuse to perform the removal if a last reference of an image is to be removed. This may be overruled by specifying the –remove-last flag.</p>
 <div class="section" id="cli-reference">
-<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline"></a></h2>
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">untag</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">reference</span> <span class="n">REFERENCE</span> <span class="p">[</span><span class="o">--</span><span class="n">remove</span><span class="o">-</span><span class="n">last</span><span class="p">]</span>
                            <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">token</span> <span class="n">QUAY_API_TOKEN</span><span class="p">]</span>
                            <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span><span class="p">]</span>
@@ -100,7 +101,7 @@
 </pre></div>
 </div>
 <div class="section" id="Named Arguments">
-<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline"></a></h3>
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this heading"></a></h3>
 <dl class="option-list">
 <dt><kbd>--reference</kbd></dt>
 <dd><p>Image reference to untag. Must be specified by tag. Multiple can be specified.</p>
@@ -121,7 +122,7 @@
 </div>
 </div>
 <div class="section" id="api-reference">
-<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h2>
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.untag_images.untag_images">
 <span class="sig-prename descclassname"><span class="pre">pubtools._quay.untag_images.</span></span><span class="sig-name descname"><span class="pre">untag_images</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">references</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_last</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/untag_images.html#untag_images"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.untag_images.untag_images" title="Permalink to this definition"></a></dt>
@@ -145,7 +146,7 @@
 
 </div>
 <div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Untag multiple images</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
 $ export QUAY_API_TOKEN=oauth_token

@@ -13,6 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -95,10 +96,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="module-pubtools._quay.command_executor">
-<span id="command-executor"></span><h1>Command Executor<a class="headerlink" href="#module-pubtools._quay.command_executor" title="Permalink to this headline"></a></h1>
+<span id="command-executor"></span><h1>Command Executor<a class="headerlink" href="#module-pubtools._quay.command_executor" title="Permalink to this heading"></a></h1>
 <p>Classes used for executing shell commands. Main class Executor contains a concrete implementation of various shell commands that are used throughout pubtools-quay. The logic of a command execution is not implemented in this class. The children classes (LocalExecutor, RemoteExecutor) contain the logic for generic command execution based on the environment type (remote or local). New classes may be implemented if a new execution style is required.</p>
 <div class="section" id="base-class">
-<h2>Base class<a class="headerlink" href="#base-class" title="Permalink to this headline"></a></h2>
+<h2>Base class<a class="headerlink" href="#base-class" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="pubtools._quay.command_executor.Executor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.command_executor.</span></span><span class="sig-name descname"><span class="pre">Executor</span></span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#Executor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.Executor" title="Permalink to this definition"></a></dt>
@@ -176,7 +177,7 @@ denotes if the result should be parsed or returned raw.</p>
 
 </div>
 <div class="section" id="children-classes">
-<h2>Children classes<a class="headerlink" href="#children-classes" title="Permalink to this headline"></a></h2>
+<h2>Children classes<a class="headerlink" href="#children-classes" title="Permalink to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="pubtools._quay.command_executor.LocalExecutor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.command_executor.</span></span><span class="sig-name descname"><span class="pre">LocalExecutor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#LocalExecutor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.LocalExecutor" title="Permalink to this definition"></a></dt>

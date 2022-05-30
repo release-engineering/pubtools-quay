@@ -13,6 +13,7 @@
         <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
         <script src="../../../_static/jquery.js"></script>
         <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../../../_static/doctools.js"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -309,21 +310,29 @@
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
-                        <span class="n">dest_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
-                    <span class="p">)</span>
-                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                        <span class="s2">&quot;Getting missing archs between images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                            <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
+                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">dest_ml</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mediaType&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                            <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a manifest list, it will be overwritten&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">dest_ref</span>
+                            <span class="p">)</span>
                         <span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="n">missing_archs</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span><span class="n">source_ml</span><span class="p">,</span> <span class="n">dest_ml</span><span class="p">)</span>
-                    <span class="c1"># Option 1: Destination doesn&#39;t contain extra archs, ML merging is unnecessary</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_archs</span><span class="p">:</span>
                         <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                    <span class="c1"># Option 2: Destination has extra archs, MLs will be merged</span>
                     <span class="k">else</span><span class="p">:</span>
-                        <span class="n">merge_mls_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                            <span class="s2">&quot;Getting missing archs between images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span>
+                        <span class="n">missing_archs</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span>
+                            <span class="n">source_ml</span><span class="p">,</span> <span class="n">dest_ml</span>
+                        <span class="p">)</span>
+                        <span class="c1"># Option 1: Dest doesn&#39;t contain extra archs, ML merging is unnecessary</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_archs</span><span class="p">:</span>
+                            <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                        <span class="c1"># Option 2: Destination has extra archs, MLs will be merged</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">merge_mls_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                     <span class="c1"># Option 3: Destination tag doesn&#39;t exist, no ML merging</span>
                     <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>

@@ -13,6 +13,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -89,10 +90,10 @@
            <div itemprop="articleBody">
              
   <div class="section" id="module-pubtools._quay.clear_repo">
-<span id="clear-repo"></span><h1>Clear repo<a class="headerlink" href="#module-pubtools._quay.clear_repo" title="Permalink to this headline"></a></h1>
+<span id="clear-repo"></span><h1>Clear repo<a class="headerlink" href="#module-pubtools._quay.clear_repo" title="Permalink to this heading"></a></h1>
 <p>Entrypoint used for clearing Quay repositories. All images will be removed from the specified repo, while the repo will not be deleted. Signatures of the deleted images will be removed.</p>
 <div class="section" id="cli-reference">
-<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this headline"></a></h2>
+<h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this heading"></a></h2>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">clear</span><span class="o">-</span><span class="n">repo</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">repositories</span> <span class="n">REPOSITORIES</span> <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">org</span>
                                 <span class="n">QUAY_ORG</span> <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">token</span> <span class="n">QUAY_API_TOKEN</span><span class="p">]</span>
                                 <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span>
@@ -103,7 +104,7 @@
 </pre></div>
 </div>
 <div class="section" id="Named Arguments">
-<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this headline"></a></h3>
+<h3>Named Arguments<a class="headerlink" href="#Named Arguments" title="Permalink to this heading"></a></h3>
 <dl class="option-list">
 <dt><kbd>--repositories</kbd></dt>
 <dd><p>External repositories to clear as CSV.</p>
@@ -133,7 +134,7 @@
 </div>
 </div>
 <div class="section" id="api-reference">
-<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline"></a></h2>
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.clear_repo.clear_repositories">
 <span class="sig-prename descclassname"><span class="pre">pubtools._quay.clear_repo.</span></span><span class="sig-name descname"><span class="pre">clear_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/clear_repo.html#clear_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.clear_repo.clear_repositories" title="Permalink to this definition"></a></dt>
@@ -163,7 +164,7 @@
 
 </div>
 <div class="section" id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
 <p>Clear multiple repos</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export QUAY_PASSWORD=token
 $ export QUAY_API_TOKEN=oauth_token
