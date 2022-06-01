@@ -57,10 +57,12 @@ classifiers = [
 PY26_BLACKLISTED_DEPENDENCIES = ["docker"]
 PY26_EXTRA_DEPENDENCIES = ["docker-py"]
 
+
 def building_rpm():
     """True when running within RPM build environment, which tweaks
     the build a little."""
-    return 'RPM_PACKAGE_VERSION' in os.environ
+    return "RPM_PACKAGE_VERSION" in os.environ
+
 
 def get_requirements():
     """
@@ -71,7 +73,7 @@ def get_requirements():
     """
     with open("requirements.txt") as f:
         reqs = f.read().splitlines()
-    
+
     if sys.version_info < (2, 7):
         reqs = [d for d in reqs if d not in PY26_BLACKLISTED_DEPENDENCIES]
         reqs.extend(PY26_EXTRA_DEPENDENCIES)
@@ -83,14 +85,15 @@ def get_requirements():
         pip_version = [0, 0, 0]
     else:
         import pip
-        pip_version = [int(i) for i in pip.__version__.split('.')]
 
-    reqs = [req for req in reqs if req != '']
+        pip_version = [int(i) for i in pip.__version__.split(".")]
+
+    reqs = [req for req in reqs if req != ""]
     for i in range(len(reqs)):
         if pip_version < [19, 0, 0]:
-            reqs[i] = re.sub(r'-e .*#egg=(.*)-.*', r'\1', reqs[i])
+            reqs[i] = re.sub(r"-e .*#egg=(.*)-.*", r"\1", reqs[i])
         else:
-            reqs[i] = re.sub(r'-e (.*#egg=(.*)-.*)', r'\2 @ \1', reqs[i])
+            reqs[i] = re.sub(r"-e (.*#egg=(.*)-.*)", r"\2 @ \1", reqs[i])
 
     return reqs
 
@@ -103,7 +106,7 @@ def get_dependency_links():
         reqs = f.read().splitlines()
     dependency_links = []
     for req in reqs:
-        link = re.subn(r'-e (.*#egg=.*-.*)', r'\1', req)
+        link = re.subn(r"-e (.*#egg=.*-.*)", r"\1", req)
         if link[1] == 1:
             dependency_links.append(link[0])
 
@@ -120,10 +123,10 @@ if os.environ.get("READTHEDOCS", None):
 
 setup(
     name="pubtools-quay",
-    version="0.9.3",
+    version="0.10.0",
     description="Pubtools-quay",
     long_description=long_description,
-    long_description_content_type='text/x-rst',
+    long_description_content_type="text/x-rst",
     author="Lubomir Gallovic",
     author_email="lgallovi@redhat.com",
     url="https://github.com/release-engineering/pubtools-quay",
@@ -147,7 +150,7 @@ setup(
             "iib-add-bundles = pubtools._quay.iib_operations:iib_add_entrypoint",
             "iib-remove-operators = pubtools._quay.iib_operations:iib_remove_entrypoint",
             "iib-build-from-scratch = pubtools._quay.iib_operations:iib_from_scratch_entrypoint",
-        ]
+        ],
     },
     include_package_data=True,
     extras_require=extras_require,

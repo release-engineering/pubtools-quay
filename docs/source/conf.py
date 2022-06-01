@@ -25,9 +25,9 @@ copyright = u"2021, Red Hat"
 author = u"Red Hat"
 
 # The short X.Y version
-version = u"0.9.3"
+version = u"0.10.0"
 # The full version, including alpha/beta/rc tags
-release = u"0.9.3"
+release = u"0.10.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -139,9 +139,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    (master_doc, "pubtools-quay", u"pubtools-quay Documentation", [author], 1)
-]
+man_pages = [(master_doc, "pubtools-quay", u"pubtools-quay Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -160,4 +158,3 @@ texinfo_documents = [
         "Miscellaneous",
     )
 ]
-
