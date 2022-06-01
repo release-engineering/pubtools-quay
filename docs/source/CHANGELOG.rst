@@ -1,6 +1,17 @@
 ChangeLog
 =========
 
+0.10.0 (2022-6-01)
+--------------------
+* Fix arch of amd64 image
+* Return empty manifest claims when there's nothing to sign
+* Remove sorting of Push items
+* Unpin the version of python-qpid-proton
+* Remove created from claim message
+* Change condition to not require hashing
+* Push multiarch image when the current destination doesn't have a ML
+* Poll for consistent results of whether a tag exists
+
 0.9.3 (2022-04-01)
 --------------------
 * Fixing signing issues
