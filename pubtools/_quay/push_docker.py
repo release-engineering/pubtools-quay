@@ -5,7 +5,7 @@ from time import sleep
 
 import requests
 
-from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
+from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository, ManifestNotFoundError
 from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
@@ -617,12 +617,21 @@ class PushDocker:
                 v2_sch2_cache = {}
                 for tag in tags:
                     for mtype in missing_media_types:
+                        print(item, repo, tag, mtype)
                         if mtype == QuayClient.MANIFEST_V2S2_TYPE:
                             if repo not in v2_sch2_cache:
-                                v2_sch2_cache[repo] = self._fetch_digest(internal_repo, tag, mtype)
-                            item.metadata["new_digests"].setdefault((repo, tag), {})[
-                                mtype
-                            ] = v2_sch2_cache[repo]
+                                try:
+                                    v2_sch2_cache[repo] = self._fetch_digest(
+                                        internal_repo, tag, mtype
+                                    )
+                                # Tolarate missing v2ch2 manifest in the case repo is
+                                # no amd64 arch and has only manifest list and sch2v1
+                                except ManifestNotFoundError:
+                                    pass
+                                else:
+                                    item.metadata["new_digests"].setdefault((repo, tag), {})[
+                                        mtype
+                                    ] = v2_sch2_cache[repo]
                         # Fetch v2s1 only for amd64 image
                         elif item.metadata["arch"] in ["amd64", "x86_64"]:
                             item.metadata["new_digests"].setdefault((repo, tag), {})[

@@ -20,3 +20,7 @@ class InvalidRepository(Exception):
 
 class SigningError(Exception):
     """Occurs when there was an issue in the container signing process done by RADAS."""
+
+
+class ManifestNotFoundError(Exception):
+    """Occurs when manifest is not found on the server."""

@@ -11,7 +11,7 @@ try:
 except ImportError:  # pragma: no cover
     from urllib import request
 
-from .exceptions import ManifestTypeError, RegistryAuthError
+from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
 
 LOG = logging.getLogger("pubtools.quay")
@@ -120,7 +120,13 @@ class QuayClient:
         Returns (str):
             Manifest digest of the image.
         """
-        manifest = self.get_manifest(image, raw=True, media_type=media_type)
+        try:
+            manifest = self.get_manifest(image, raw=True, media_type=media_type)
+        except requests.exceptions.HTTPError as exc:
+            if exc.response.status_code == 404:
+                raise ManifestNotFoundError()
+            else:
+                raise exc
         # SHA 256 is pretty much the standard for container images
         hasher = hashlib.sha256()
         hasher.update(manifest.encode("utf-8"))
