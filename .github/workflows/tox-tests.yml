@@ -12,7 +12,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 2.7
       - name: Install Tox
@@ -28,7 +28,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install Tox
@@ -44,7 +44,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install Tox
@@ -60,7 +60,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install Tox
@@ -76,7 +76,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install Tox
@@ -92,7 +92,7 @@ jobs:
       - name: Install system dependencies
         run: sudo apt-get install -y libkrb5-dev
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Install Tox
