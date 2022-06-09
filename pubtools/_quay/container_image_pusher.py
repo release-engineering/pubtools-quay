@@ -269,10 +269,10 @@ class ContainerImagePusher:
         if simple_dest_refs:
             LOG.info(
                 "Copying image {0} to {1} destinations without merging manifest lists".format(
-                    source_ref, len(simple_dest_refs)
+                    source_ref, len(set(simple_dest_refs))
                 )
             )
-            self.run_tag_images(source_ref, simple_dest_refs, True, self.target_settings)
+            self.run_tag_images(source_ref, list(set(simple_dest_refs)), True, self.target_settings)
         if merge_mls_dest_refs:
             LOG.info(
                 "Copying image {0} to {1} destinations and merging manifest lists".format(
