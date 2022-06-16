@@ -343,10 +343,10 @@
         <span class="k">if</span> <span class="n">simple_dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations without merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)</span>
+                    <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">))</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">simple_dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)),</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">merge_mls_dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations and merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
