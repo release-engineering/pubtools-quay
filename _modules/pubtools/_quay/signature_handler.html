@@ -375,7 +375,9 @@
 
         <span class="n">address</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;queue://Consumer.msg-producer-pub&quot;</span>
-            <span class="s2">&quot;.</span><span class="si">{task_id}</span><span class="s2">.VirtualTopic.eng.robosignatory.container.sign&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+            <span class="s2">&quot;.</span><span class="si">{task_id}</span><span class="s2">.VirtualTopic.eng.robosignatory.container.sign.</span><span class="si">{task_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">docker_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span>
         <span class="n">umb_settings</span> <span class="o">=</span> <span class="n">UMBSettings</span><span class="p">(</span>
