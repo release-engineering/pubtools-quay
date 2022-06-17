@@ -301,7 +301,9 @@ class SignatureHandler:
 
         address = (
             "queue://Consumer.msg-producer-pub"
-            ".{task_id}.VirtualTopic.eng.robosignatory.container.sign".format(task_id=self.task_id)
+            ".{task_id}.VirtualTopic.eng.robosignatory.container.sign.{task_id}".format(
+                task_id=self.task_id
+            )
         )
         docker_settings = self.target_settings["docker_settings"]
         umb_settings = UMBSettings(
