@@ -472,10 +472,12 @@ class OperatorPusher:
                 continue
 
             _, tag = build_details.index_image.split(":", 1)
+            iib_path = build_details.internal_index_image_copy_resolved.split("@")[0]
+            iib_feed, iib_namespace, iib_intermediate_repo = iib_path.split("/")
             permanent_index_image = image_schema_tag.format(
-                host=build_details.index_image_resolved.split("/")[0],
-                namespace=build_details.index_image_resolved.split("/")[1],
-                repo="iib",
+                host=iib_feed,
+                namespace=iib_namespace,
+                repo=iib_intermediate_repo,
                 tag=build_details.build_tags[0],
             )
             dest_image = "{0}:{1}".format(index_image_repo, tag)

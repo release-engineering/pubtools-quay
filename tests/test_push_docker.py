@@ -1352,7 +1352,7 @@ def test_push_docker_full_success(
         },
         ["item1", "item2"],
     )
-    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    iib_result = mock.MagicMock(internal_index_image_copy_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
 
     push_docker_instance = push_docker.PushDocker(
@@ -1475,7 +1475,7 @@ def test_push_docker_full_success_repush(
         },
         ["item1", "item2"],
     )
-    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    iib_result = mock.MagicMock(internal_index_image_copy_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {"v4.5": {"iib_result": iib_result, "signing_keys": []}}
 
     push_docker_instance = push_docker.PushDocker(
@@ -1661,7 +1661,7 @@ def test_push_docker_failure_no_rollback(
     )
 
     mock_build_index_images = mock.MagicMock()
-    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    iib_result = mock.MagicMock(internal_index_image_copy_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {
         "v4.5": {"iib_result": iib_result, "signing_keys": []},
         "v4.6": {"iib_result": False, "signing_keys": []},
@@ -1762,7 +1762,7 @@ def test_push_docker_failure_rollback(
         mock_sign_container_images_new_digests
     )
     mock_build_index_images = mock.MagicMock()
-    iib_result = mock.MagicMock(index_image_resolved="registry/ns/iib@digest")
+    iib_result = mock.MagicMock(internal_index_image_copy_resolved="registry/ns/iib@digest")
     mock_build_index_images.return_value = {
         "v4.5": {"iib_result": False, "signing_keys": []},
         "v4.6": {"iib_result": False, "signing_keys": []},
@@ -2024,7 +2024,9 @@ def test_remove_old_signatures_operator_signatures(
         existing_index_images,
         {
             "v4.5": {
-                "iib_result": mock.MagicMock(index_image_resolved="registy/ns/iib@digest"),
+                "iib_result": mock.MagicMock(
+                    internal_index_image_copy_resolved="registy/ns/iib@digest"
+                ),
                 "signing_keys": ["sig_key1"],
             }
         },
