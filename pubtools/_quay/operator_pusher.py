@@ -218,7 +218,7 @@ class OperatorPusher:
         return sorted(deprecation_list)
 
     @classmethod
-    def pubtools_iib_get_common_args(cls, target_settings):
+    def pubtools_iib_get_common_args(cls, target_settings, override_settings):
         """
         Create an argument list common for all pubtools-iib operations.
 
@@ -230,6 +230,12 @@ class OperatorPusher:
         Returns (([str]), {str:str}):
             Tuple of arguments and environment variables to be used when calling pubtools-iib.
         """
+        settings = target_settings.copy()
+        for key in ["iib_overwrite_from_index_token"]:
+            settings[key] = (
+                override_settings[key] if key in override_settings else target_settings.get(key)
+            )
+
         args = ["--skip-pulp"]
 
         args += ["--iib-server", target_settings["iib_server"]]
@@ -257,6 +263,7 @@ class OperatorPusher:
         deprecation_list=None,
         build_tags=None,
         target_settings={},
+        override_settings={},
     ):
         """
         Construct and execute pubtools-iib command to add bundles to index image.
@@ -274,6 +281,8 @@ class OperatorPusher:
                 Extra tags that the new index image should be tagged with.
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
+            override_settings (dict):
+                Optional settings to override target settings
 
         Returns (dict):
             Build details provided by IIB.
@@ -281,7 +290,7 @@ class OperatorPusher:
         LOG.info(
             "Requesting IIB to add bundles '{0}' to index image '{1}'".format(bundles, index_image)
         )
-        args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings, override_settings)
 
         if index_image:
             args += ["--index-image", index_image]
@@ -337,7 +346,7 @@ class OperatorPusher:
                 operators, index_image
             )
         )
-        args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings, {})
 
         if index_image:
             args += ["--index-image", index_image]
@@ -421,30 +430,64 @@ class OperatorPusher:
         iib_results = {}
 
         for version, items in sorted(self.version_items_mapping.items()):
-            bundles = [self.public_bundle_ref(i) for i in items]
-            all_archs = [
-                i.metadata["arch"] if i.metadata["arch"] != "x86_64" else "amd64" for i in items
-            ]
-            archs = sorted(list(set(all_archs)))
-            signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
-
-            # Get deprecation list
-            deprecation_list = self.get_deprecation_list(version)
-
-            # build index image in IIB
-            index_image = "{image_repo}:{tag}".format(
-                image_repo=self.target_settings["iib_index_image"], tag=version
+            is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in items])
+            is_advisory_source = all(
+                [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in items]
             )
-            build_details = self.iib_add_bundles(
-                bundles=bundles,
-                archs=archs,
-                index_image=index_image,
-                deprecation_list=deprecation_list,
-                build_tags=["{0}-{1}".format(index_image.split(":")[1], self.task_id)],
-                target_settings=self.target_settings,
-            )
+            print([item.metadata.get("com.redhat.hotfix") for item in items])
+            print([item.origin for item in items])
+            item_groups = {}
+            if is_hotfix and not is_advisory_source:
+                raise ValueError("Cannot push hotfixes without an advisory")
+            if is_hotfix:
+                for item in items:
+                    item_groups.setdefault(item.origin, []).append(item)
+            else:
+                item_groups["default"] = items
 
-            iib_results[version] = {"iib_result": build_details, "signing_keys": signing_keys}
+            for group, g_items in item_groups.items():
+                if is_hotfix:
+                    tag = "{0}-{1}-{2}".format(
+                        version,
+                        items[0].metadata["com.redhat.hotfix"],
+                        items[0].origin.replace(":", "-"),
+                    )
+                    index_image = "{image_repo}:{tag}".format(
+                        image_repo=self.target_settings["iib_index_image"], tag=tag
+                    )
+                else:
+                    tag = version
+                    index_image = "{image_repo}:{tag}".format(
+                        image_repo=self.target_settings["iib_index_image"], tag=tag
+                    )
+
+                bundles = [self.public_bundle_ref(i) for i in g_items]
+                all_archs = [
+                    i.metadata["arch"] if i.metadata["arch"] != "x86_64" else "amd64"
+                    for i in g_items
+                ]
+                archs = sorted(list(set(all_archs)))
+                signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
+
+                # Get deprecation list
+                deprecation_list = self.get_deprecation_list(version)
+
+                # build index image in IIB
+                if is_hotfix:
+                    override_settings = {"iib_overwrite_from_index": False}
+                else:
+                    override_settings = {}
+                build_details = self.iib_add_bundles(
+                    bundles=bundles,
+                    archs=archs,
+                    index_image=index_image,
+                    deprecation_list=deprecation_list,
+                    build_tags=["{0}-{1}".format(index_image.split(":")[1], self.task_id)],
+                    target_settings=self.target_settings,
+                    override_settings=override_settings,
+                )
+
+                iib_results[tag] = {"iib_result": build_details, "signing_keys": signing_keys}
 
         return iib_results
 
@@ -467,8 +510,8 @@ class OperatorPusher:
             repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
         )
 
-        for version in self.version_items_mapping:
-            build_details = iib_results.get(version, {}).get("iib_result", None)
+        for version, results in iib_results.items():
+            build_details = results.get("iib_result", None)
             if not build_details:
                 continue
 
