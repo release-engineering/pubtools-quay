@@ -14,6 +14,7 @@ from .utils.misc import (
     get_pyxis_ssl_paths,
 )
 from .quay_client import QuayClient
+from .utils.misc import parse_index_image
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -472,8 +473,7 @@ class OperatorPusher:
                 continue
 
             _, tag = build_details.index_image.split(":", 1)
-            iib_path = build_details.internal_index_image_copy_resolved.split("@")[0]
-            iib_feed, iib_namespace, iib_intermediate_repo = iib_path.split("/")
+            iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
             permanent_index_image = image_schema_tag.format(
                 host=iib_feed,
                 namespace=iib_namespace,

@@ -5,7 +5,12 @@ from .exceptions import InvalidTargetSettings
 from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
 from .signature_remover import SignatureRemover
-from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths, timestamp
+from .utils.misc import (
+    get_internal_container_repo_name,
+    get_pyxis_ssl_paths,
+    timestamp,
+    parse_index_image,
+)
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -104,8 +109,7 @@ def task_iib_add_bundles(
         tag=tag,
     )
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_path = build_details.internal_index_image_copy_resolved.split("@")[0]
-    iib_feed, iib_namespace, iib_intermediate_repo = iib_path.split("/")
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
@@ -211,8 +215,7 @@ def task_iib_remove_operators(
     )
 
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_path = build_details.internal_index_image_copy_resolved.split("@")[0]
-    iib_feed, iib_namespace, iib_intermediate_repo = iib_path.split("/")
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
@@ -316,8 +319,7 @@ def task_iib_build_from_scratch(
     )
 
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_path = build_details.internal_index_image_copy_resolved.split("@")[0]
-    iib_feed, iib_namespace, iib_intermediate_repo = iib_path.split("/")
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,

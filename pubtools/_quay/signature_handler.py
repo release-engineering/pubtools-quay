@@ -12,6 +12,7 @@ from .utils.misc import (
 )
 from .quay_client import QuayClient
 from .manifest_claims_handler import _ManifestClaimsRunner, UMBSettings
+from .utils.misc import parse_index_image
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -646,8 +647,7 @@ class OperatorSignatureHandler(SignatureHandler):
             iib_result = iib_details["iib_result"]
             signing_keys = iib_details["signing_keys"]
             # Index image used to fetch manifest list. This image will never be overwritten
-            iib_path = iib_result.internal_index_image_copy_resolved.split("@")[0]
-            _, iib_namespace, iib_intermediate_repo = iib_path.split("/")
+            _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
             permanent_index_image = image_schema.format(
                 host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
                 namespace=iib_namespace,
