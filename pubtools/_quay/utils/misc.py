@@ -351,3 +351,19 @@ def retry(message, tries=4, wait_time_increase=10):
         return wrapper_func
 
     return inner_retry
+
+
+def parse_index_image(build_details):
+    """
+    Get registry, namespace and repository of a resolved internal index image.
+
+    Args:
+        build_details (dict):
+            Dictionary of IIB build details.
+    Returns ((str, str, str)):
+        Registry, namespace, repository of an image.
+    """
+    image_path = build_details.internal_index_image_copy_resolved.split("@")[0]
+    registry, namespace, repo = image_path.split("/")
+
+    return (registry, namespace, repo)

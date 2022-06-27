@@ -125,13 +125,13 @@ def test_push_docker_multiarch_merge_ml_operator(
         # pubtools-iib-add-bundles (4.5)
         IIBRes(
             "registry.com/namespace/index-image@sha256:v4.5",
-            "registry.com/namespace/index-image@sha256:a1a1a1",
+            "registry.com/namespace/iib@sha256:a1a1a1",
             ["v4.5-1"],
         ),
         # pubtools-iib-add-bundles (4.6)
         IIBRes(
             "registry.com/namespace/index-image@sha256:v4.6",
-            "registry.com/namespace/index-image@sha256:b2b2b2",
+            "registry.com/namespace/iib@sha256:b2b2b2",
             ["v4.6-1"],
         ),
     ]
@@ -1027,7 +1027,7 @@ def test_task_iib_add_bundles(
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
@@ -1098,7 +1098,7 @@ def test_task_iib_remove_operators(
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details
@@ -1167,7 +1167,7 @@ def test_task_iib_build_from_scratch(
 ):
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:12",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["12-1"],
     )
     mock_run_entrypoint_operator_pusher.return_value = build_details

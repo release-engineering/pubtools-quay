@@ -5,7 +5,12 @@ from .exceptions import InvalidTargetSettings
 from .operator_pusher import OperatorPusher
 from .signature_handler import OperatorSignatureHandler
 from .signature_remover import SignatureRemover
-from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths, timestamp
+from .utils.misc import (
+    get_internal_container_repo_name,
+    get_pyxis_ssl_paths,
+    timestamp,
+    parse_index_image,
+)
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -104,11 +109,11 @@ def task_iib_add_bundles(
         tag=tag,
     )
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
 
@@ -147,9 +152,9 @@ def task_iib_add_bundles(
     # Permanent index image with proxy as a host must be used because skopeo cannot handle
     # login to two Quay namespaces at the same time
     permanent_index_image_proxy = image_schema_tag.format(
-        host=build_details.index_image.split("/")[0],
+        host=iib_feed,
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
     ContainerImagePusher.run_tag_images(
@@ -210,11 +215,11 @@ def task_iib_remove_operators(
     )
 
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
 
@@ -253,9 +258,9 @@ def task_iib_remove_operators(
     # Permanent index image with proxy as a host must be used because skopeo cannot handle
     # login to two Quay namespaces at the same time
     permanent_index_image_proxy = image_schema_tag.format(
-        host=build_details.index_image.split("/")[0],
+        host=iib_feed,
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
     ContainerImagePusher.run_tag_images(
@@ -314,11 +319,11 @@ def task_iib_build_from_scratch(
     )
 
     # Index image used to fetch manifest list. This image will never be overwritten
-    iib_namespace = build_details.index_image_resolved.split("/")[1]
+    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
     permanent_index_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
     index_stamp = timestamp()
@@ -344,9 +349,9 @@ def task_iib_build_from_scratch(
     # Permanent index image with proxy as a host must be used because skopeo cannot handle
     # login to two Quay namespaces at the same time
     permanent_index_image_proxy = image_schema_tag.format(
-        host=build_details.index_image.split("/")[0],
+        host=iib_feed,
         namespace=iib_namespace,
-        repo="iib",
+        repo=iib_intermediate_repo,
         tag=build_details.build_tags[0],
     )
     ContainerImagePusher.run_tag_images(

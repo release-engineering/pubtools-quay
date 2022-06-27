@@ -324,18 +324,18 @@ def test_push_operators(
     ]
     iib_results = [
         IIBRes(
-            "some-registry.com/index-image:5",
-            "some-registry.com/index-image@sha256:a1a1",
+            "some-registry.com/ns/index-image:5",
+            "some-registry.com/ns/iib@sha256:a1a1",
             ["v4.5-3"],
         ),
         IIBRes(
-            "some-registry.com/index-image:6",
-            "some-registry.com/index-image@sha256:b2b2",
+            "some-registry.com/ns/index-image:6",
+            "some-registry.com/ns/iib@sha256:b2b2",
             ["v4.6-3"],
         ),
         IIBRes(
-            "some-registry.com/index-image:7",
-            "some-registry.com/index-image@sha256:c3c3",
+            "some-registry.com/ns/index-image:7",
+            "some-registry.com/ns/iib@sha256:c3c3",
             ["v4.7-3"],
         ),
     ]
@@ -388,7 +388,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:5",
+                "some-registry.com/ns/index-image:5",
                 ["quay.io/some-namespace/operators----index-image:5"],
                 True,
                 target_settings,
@@ -398,7 +398,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:6",
+                "some-registry.com/ns/index-image:6",
                 ["quay.io/some-namespace/operators----index-image:6"],
                 True,
                 target_settings,
@@ -408,7 +408,7 @@ def test_push_operators(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:7",
+                "some-registry.com/ns/index-image:7",
                 ["quay.io/some-namespace/operators----index-image:7"],
                 True,
                 target_settings,
@@ -439,14 +439,14 @@ def test_push_operators_not_all_successful(
     ]
     iib_results = [
         IIBRes(
-            "some-registry.com/index-image:5",
-            "some-registry.com/index-image@sha256:a1a1",
+            "some-registry.com/ns/index-image:5",
+            "some-registry.com/ns/iib@sha256:a1a1",
             ["v4.5-3"],
         ),
         None,
         IIBRes(
-            "some-registry.com/index-image:7",
-            "some-registry.com/index-image@sha256:c3c3",
+            "some-registry.com/ns/index-image:7",
+            "some-registry.com/ns/iib@sha256:c3c3",
             ["v4.7-3"],
         ),
     ]
@@ -499,7 +499,7 @@ def test_push_operators_not_all_successful(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:5",
+                "some-registry.com/ns/index-image:5",
                 ["quay.io/some-namespace/operators----index-image:5"],
                 True,
                 target_settings,
@@ -509,7 +509,7 @@ def test_push_operators_not_all_successful(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:7",
+                "some-registry.com/ns/index-image:7",
                 ["quay.io/some-namespace/operators----index-image:7"],
                 True,
                 target_settings,

@@ -105,7 +105,7 @@ def mock_entry_point(dist, group, name):
 
 
 class IIBRes:
-    def __init__(self, index_image, index_image_resolved, build_tags):
+    def __init__(self, index_image, internal_index_image_copy_resolved, build_tags):
         self.index_image = index_image
-        self.index_image_resolved = index_image_resolved
+        self.internal_index_image_copy_resolved = internal_index_image_copy_resolved
         self.build_tags = build_tags

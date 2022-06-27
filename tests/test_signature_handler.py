@@ -776,7 +776,7 @@ def test_sign_operator_images(
         "v4.5": {
             "iib_result": IIBRes(
                 "registry1/iib-namespace/image:v4.5",
-                "registry1/iib-namespace/image@sha256:a1a1a1",
+                "registry1/iib-namespace/iib@sha256:a1a1a1",
                 ["v4.5-1"],
             ),
             "signing_keys": ["key1"],
@@ -784,7 +784,7 @@ def test_sign_operator_images(
         "v4.6": {
             "iib_result": IIBRes(
                 "registry1/iib-namespace/image:v4.6",
-                "registry1/iib-namespace/image@sha256:b2b2b2",
+                "registry1/iib-namespace/iib@sha256:b2b2b2",
                 ["v4.6-1"],
             ),
             "signing_keys": ["key2"],
@@ -1043,7 +1043,7 @@ def test_sign_operator_images_no_signatures(
         "v4.5": {
             "iib_result": IIBRes(
                 "registry1/iib-namespace/image:v4.5",
-                "registry1/iib-namespace/image@sha256:a1a1a1",
+                "registry1/iib-namespace/iib@sha256:a1a1a1",
                 ["v4.5-1"],
             ),
             "signing_keys": [None],
