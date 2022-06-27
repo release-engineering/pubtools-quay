@@ -86,6 +86,7 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.manifest_claims_handler</span> <span class="kn">import</span> <span class="n">_ManifestClaimsRunner</span><span class="p">,</span> <span class="n">UMBSettings</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">parse_index_image</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -720,11 +721,11 @@
             <span class="n">iib_result</span> <span class="o">=</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]</span>
             <span class="n">signing_keys</span> <span class="o">=</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;signing_keys&quot;</span><span class="p">]</span>
             <span class="c1"># Index image used to fetch manifest list. This image will never be overwritten</span>
-            <span class="n">iib_namespace</span> <span class="o">=</span> <span class="n">iib_result</span><span class="o">.</span><span class="n">index_image_resolved</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">iib_result</span><span class="p">)</span>
             <span class="n">permanent_index_image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
                 <span class="n">namespace</span><span class="o">=</span><span class="n">iib_namespace</span><span class="p">,</span>
-                <span class="n">repo</span><span class="o">=</span><span class="s2">&quot;iib&quot;</span><span class="p">,</span>
+                <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
                 <span class="n">tag</span><span class="o">=</span><span class="n">iib_result</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">)</span>
             <span class="c1"># Version acts as a tag of the index image</span>
