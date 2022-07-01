@@ -879,22 +879,6 @@ def test_sign_task_index_image(
     assert claims == ["msg1", "msg2"]
 
 
-@mock.patch("pubtools._quay.signature_handler.QuayClient")
-def test_basic_signature_handler_init(mock_quay_client, target_settings):
-    hub = mock.MagicMock()
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
-
-    assert sig_handler.hub == hub
-    assert sig_handler.task_id == "1"
-    assert sig_handler.dest_registries == ["some-registry1.com", "some-registry2.com"]
-    assert sig_handler.target_settings == target_settings
-    assert sig_handler.quay_host == "quay.io"
-    mock_quay_client.assert_not_called()
-
-    assert sig_handler.src_quay_client == mock_quay_client.return_value
-    mock_quay_client.assert_called_once_with("src-quay-user", "src-quay-pass", "quay.io")
-
-
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
@@ -917,7 +901,7 @@ def test_sign_claim_messages(
     mock_filter_claim_msgs.return_value = ["msg2", "msg3"]
     mock_get_radas_signatures.return_value = ["sig2", "sig3"]
 
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
+    sig_handler = signature_handler.BasicSignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
     mock_remove_duplicate_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
@@ -942,7 +926,7 @@ def test_sign_claim_messages_not_allowed(
 ):
     hub = mock.MagicMock()
     target_settings["docker_settings"]["docker_container_signing_enabled"] = False
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
+    sig_handler = signature_handler.BasicSignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
     mock_filter_claim_msgs.assert_not_called()
     mock_get_radas_signatures.assert_not_called()
@@ -971,7 +955,7 @@ def test_sign_claim_messages_no_signatures(
     mock_remove_duplicate_claim_msgs.return_value = ["msg1", "msg2", "msg3", "msg4"]
     mock_filter_claim_msgs.return_value = []
 
-    sig_handler = signature_handler.BasicSignatureHandler(hub, target_settings, "some-target")
+    sig_handler = signature_handler.BasicSignatureHandler(hub, "1", target_settings, "some-target")
     sig_handler.sign_claim_messages(["msg1", "msg2", "msg3", "msg4"])
     mock_remove_duplicate_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
     mock_filter_claim_msgs.assert_called_once_with(["msg1", "msg2", "msg3", "msg4"])
