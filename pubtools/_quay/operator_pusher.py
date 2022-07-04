@@ -227,6 +227,8 @@ class OperatorPusher:
         Args:
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
+            override_settings (dict):
+                Extra settings to override target settings.
         Returns (([str]), {str:str}):
             Tuple of arguments and environment variables to be used when calling pubtools-iib.
         """
@@ -470,7 +472,7 @@ class OperatorPusher:
                 # build index image in IIB
                 if is_hotfix:
                     override_settings = {"iib_overwrite_from_index": False}
-                    override_settings.pop("iib_overwrite_from_index_token")
+                    override_settings["iib_overwrite_from_index_token"] = ""
                 else:
                     override_settings = {}
                 build_details = self.iib_add_bundles(
