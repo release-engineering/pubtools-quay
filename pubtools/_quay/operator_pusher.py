@@ -434,8 +434,6 @@ class OperatorPusher:
             is_advisory_source = all(
                 [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in items]
             )
-            print([item.metadata.get("com.redhat.hotfix") for item in items])
-            print([item.origin for item in items])
             item_groups = {}
             if is_hotfix and not is_advisory_source:
                 raise ValueError("Cannot push hotfixes without an advisory")
@@ -445,21 +443,21 @@ class OperatorPusher:
             else:
                 item_groups["default"] = items
 
+            # Get deprecation list
+            deprecation_list = self.get_deprecation_list(version)
+
             for group, g_items in item_groups.items():
                 if is_hotfix:
                     tag = "{0}-{1}-{2}".format(
                         version,
-                        items[0].metadata["com.redhat.hotfix"],
-                        items[0].origin.replace(":", "-"),
-                    )
-                    index_image = "{image_repo}:{tag}".format(
-                        image_repo=self.target_settings["iib_index_image"], tag=tag
+                        g_items[0].metadata["com.redhat.hotfix"],
+                        g_items[0].origin.replace(":", "-"),
                     )
                 else:
                     tag = version
-                    index_image = "{image_repo}:{tag}".format(
-                        image_repo=self.target_settings["iib_index_image"], tag=tag
-                    )
+                index_image = "{image_repo}:{tag}".format(
+                    image_repo=self.target_settings["iib_index_image"], tag=tag
+                )
 
                 bundles = [self.public_bundle_ref(i) for i in g_items]
                 all_archs = [
@@ -467,14 +465,12 @@ class OperatorPusher:
                     for i in g_items
                 ]
                 archs = sorted(list(set(all_archs)))
-                signing_keys = sorted(list(set([item.claims_signing_key for item in items])))
-
-                # Get deprecation list
-                deprecation_list = self.get_deprecation_list(version)
+                signing_keys = sorted(list(set([item.claims_signing_key for item in g_items])))
 
                 # build index image in IIB
                 if is_hotfix:
                     override_settings = {"iib_overwrite_from_index": False}
+                    override_settings.pop("iib_overwrite_from_index_token")
                 else:
                     override_settings = {}
                 build_details = self.iib_add_bundles(
