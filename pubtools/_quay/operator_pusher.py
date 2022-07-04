@@ -323,7 +323,13 @@ class OperatorPusher:
 
     @classmethod
     def iib_remove_operators(
-        cls, operators=None, archs=None, index_image=None, build_tags=None, target_settings={}
+        cls,
+        operators=None,
+        archs=None,
+        index_image=None,
+        build_tags=None,
+        target_settings={},
+        override_settings={},
     ):
         """
         Construct and execute pubtools-iib command to remove operators from index image.
@@ -339,6 +345,8 @@ class OperatorPusher:
                 Extra tags that the new index image should be tagged with.
             target_settings (dict):
                 Settings used for setting the value of pubtools-iib parameters.
+            override_settings (dict):
+                Optional settings to override target settings
 
         Returns (dict):
             Build details provided by IIB.
@@ -348,7 +356,7 @@ class OperatorPusher:
                 operators, index_image
             )
         )
-        args, env_vars = cls.pubtools_iib_get_common_args(target_settings, {})
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings, override_settings)
 
         if index_image:
             args += ["--index-image", index_image]

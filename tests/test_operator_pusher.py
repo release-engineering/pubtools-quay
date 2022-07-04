@@ -581,7 +581,7 @@ def test_push_operators_hotfix(
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-test-hotfix-RHBA-1234-4567-3"],
         target_settings=target_settings,
-        override_settings={"iib_overwrite_from_index": False},
+        override_settings={"iib_overwrite_from_index": False, "iib_overwrite_from_index_token": ""},
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
@@ -590,7 +590,7 @@ def test_push_operators_hotfix(
         deprecation_list=["bundle3"],
         build_tags=["v4.6-test-hotfix-RHBA-1234-4567-3"],
         target_settings=target_settings,
-        override_settings={"iib_overwrite_from_index": False},
+        override_settings={"iib_overwrite_from_index": False, "iib_overwrite_from_index_token": ""},
     )
 
     pusher.push_index_images(results)
