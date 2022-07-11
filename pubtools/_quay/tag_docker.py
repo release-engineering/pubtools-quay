@@ -720,7 +720,9 @@ class TagDocker:
         PushDocker.check_repos_validity(self.push_items, self.hub, self.target_settings)
         # perform tag-docker-specific checks
         self.check_input_validity()
-        signature_handler = BasicSignatureHandler(self.hub, self.target_settings, self.target_name)
+        signature_handler = BasicSignatureHandler(
+            self.hub, self.task_id, self.target_settings, self.target_name
+        )
 
         with ContainerExecutor(
             self.target_settings["skopeo_image"],

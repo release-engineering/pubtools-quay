@@ -702,22 +702,6 @@ class OperatorSignatureHandler(SignatureHandler):
 class BasicSignatureHandler(SignatureHandler):
     """Class that handles signing claims which were constructed by user."""
 
-    def __init__(self, hub, target_settings, target_name):
-        """
-        Initialize.
-
-        NOTE: "task_id" is not needed for this workflow
-
-        Args:
-            hub (HubProxy):
-                Instance of XMLRPC pub-hub proxy.
-            target_settings (dict):
-                Target settings.
-            target_name (str):
-                Name of the target.
-        """
-        SignatureHandler.__init__(self, hub, "1", target_settings, target_name)
-
     def sign_claim_messages(self, claim_messages, remove_duplicates=True, filter_existing=True):
         """
         Sign claim messages that were provided by the user and upload them to Pyxis.
