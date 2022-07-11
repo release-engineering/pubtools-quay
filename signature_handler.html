@@ -399,16 +399,17 @@ newly constructed image.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="pubtools._quay.signature_handler.BasicSignatureHandler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signature_handler.</span></span><span class="sig-name descname"><span class="pre">BasicSignatureHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#BasicSignatureHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.BasicSignatureHandler" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signature_handler.</span></span><span class="sig-name descname"><span class="pre">BasicSignatureHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#BasicSignatureHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.BasicSignatureHandler" title="Permalink to this definition"></a></dt>
 <dd><p>Class that handles signing claims which were constructed by user.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_handler.BasicSignatureHandler.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_handler.html#BasicSignatureHandler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_handler.BasicSignatureHandler.__init__" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hub</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pubtools._quay.signature_handler.BasicSignatureHandler.__init__" title="Permalink to this definition"></a></dt>
 <dd><p>Initialize.</p>
-<p>NOTE: “task_id” is not needed for this workflow</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>hub (HubProxy):</dt><dd><p>Instance of XMLRPC pub-hub proxy.</p>
+</dd>
+<dt>task_id (str):</dt><dd><p>ID of the pub task</p>
 </dd>
 <dt>target_settings (dict):</dt><dd><p>Target settings.</p>
 </dd>

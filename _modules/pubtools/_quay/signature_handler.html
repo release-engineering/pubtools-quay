@@ -776,22 +776,6 @@
 <div class="viewcode-block" id="BasicSignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">BasicSignatureHandler</span><span class="p">(</span><span class="n">SignatureHandler</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class that handles signing claims which were constructed by user.&quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="BasicSignatureHandler.__init__"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initialize.</span>
-
-<span class="sd">        NOTE: &quot;task_id&quot; is not needed for this workflow</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            hub (HubProxy):</span>
-<span class="sd">                Instance of XMLRPC pub-hub proxy.</span>
-<span class="sd">            target_settings (dict):</span>
-<span class="sd">                Target settings.</span>
-<span class="sd">            target_name (str):</span>
-<span class="sd">                Name of the target.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">SignatureHandler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">)</span></div>
-
 <div class="viewcode-block" id="BasicSignatureHandler.sign_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler.sign_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">sign_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">,</span> <span class="n">remove_duplicates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sign claim messages that were provided by the user and upload them to Pyxis.</span>

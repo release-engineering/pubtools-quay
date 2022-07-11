@@ -794,7 +794,9 @@
         <span class="n">PushDocker</span><span class="o">.</span><span class="n">check_repos_validity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
         <span class="c1"># perform tag-docker-specific checks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">check_input_validity</span><span class="p">()</span>
-        <span class="n">signature_handler</span> <span class="o">=</span> <span class="n">BasicSignatureHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span><span class="p">)</span>
+        <span class="n">signature_handler</span> <span class="o">=</span> <span class="n">BasicSignatureHandler</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span>
+        <span class="p">)</span>
 
         <span class="k">with</span> <span class="n">ContainerExecutor</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;skopeo_image&quot;</span><span class="p">],</span>
