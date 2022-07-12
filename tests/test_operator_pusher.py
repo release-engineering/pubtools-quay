@@ -544,13 +544,13 @@ def test_push_operators_hotfix(
     ]
     iib_results = [
         IIBRes(
-            "some-registry.com/index-image:5",
-            "some-registry.com/index-image@sha256:a1a1",
+            "some-registry.com/index/image:5",
+            "some-registry.com/index/image@sha256:a1a1",
             ["v4.5-test-hotfix-RHBA-1234-4567-3"],
         ),
         IIBRes(
-            "some-registry.com/index-image:6",
-            "some-registry.com/index-image@sha256:b2b2",
+            "some-registry.com/index/image:6",
+            "some-registry.com/index/image@sha256:b2b2",
             ["v4.6-test-hotfix-RHBA-1234-4567-3"],
         ),
     ]
@@ -599,7 +599,7 @@ def test_push_operators_hotfix(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:5",
+                "some-registry.com/index/image:5",
                 ["quay.io/some-namespace/operators----index-image:5"],
                 True,
                 target_settings,
@@ -609,7 +609,7 @@ def test_push_operators_hotfix(
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
-                "some-registry.com/index-image:6",
+                "some-registry.com/index/image:6",
                 ["quay.io/some-namespace/operators----index-image:6"],
                 True,
                 target_settings,
