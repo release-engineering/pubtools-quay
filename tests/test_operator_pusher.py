@@ -364,7 +364,6 @@ def test_push_operators(
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-3"],
         target_settings=target_settings,
-        override_settings={},
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
@@ -373,7 +372,6 @@ def test_push_operators(
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3"],
         target_settings=target_settings,
-        override_settings={},
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
@@ -382,7 +380,6 @@ def test_push_operators(
         deprecation_list=[],
         build_tags=["v4.7-3"],
         target_settings=target_settings,
-        override_settings={},
     )
 
     pusher.push_index_images(results)
@@ -478,7 +475,6 @@ def test_push_operators_not_all_successful(
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-3"],
         target_settings=target_settings,
-        override_settings={},
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
@@ -487,7 +483,6 @@ def test_push_operators_not_all_successful(
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3"],
         target_settings=target_settings,
-        override_settings={},
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
@@ -496,7 +491,6 @@ def test_push_operators_not_all_successful(
         deprecation_list=[],
         build_tags=["v4.7-3"],
         target_settings=target_settings,
-        override_settings={},
     )
 
     pusher.push_index_images(results)
@@ -573,6 +567,9 @@ def test_push_operators_hotfix(
             "signing_keys": ["some-key"],
         },
     }
+    expected_target_settings = target_settings.copy()
+    expected_target_settings["iib_overwrite_from_index"] = False
+    expected_target_settings["iib_overwrite_from_index_token"] = ""
     assert mock_add_bundles.call_count == 2
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
@@ -580,8 +577,7 @@ def test_push_operators_hotfix(
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5-test-hotfix-RHBA-1234-4567",
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-test-hotfix-RHBA-1234-4567-3"],
-        target_settings=target_settings,
-        override_settings={"iib_overwrite_from_index": False, "iib_overwrite_from_index_token": ""},
+        target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
@@ -589,8 +585,7 @@ def test_push_operators_hotfix(
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6-test-hotfix-RHBA-1234-4567",
         deprecation_list=["bundle3"],
         build_tags=["v4.6-test-hotfix-RHBA-1234-4567-3"],
-        target_settings=target_settings,
-        override_settings={"iib_overwrite_from_index": False, "iib_overwrite_from_index_token": ""},
+        target_settings=expected_target_settings,
     )
 
     pusher.push_index_images(results)
