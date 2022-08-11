@@ -55,7 +55,7 @@ def test_get_signatures_from_pyxis(mock_run_entrypoint, mock_tempfile, mock_json
     expected_data2 = [{"some-other": "data"}]
     mock_run_entrypoint.side_effect = [iter(expected_data1), iter(expected_data2)]
 
-    temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
+    temp_filename = "/var/pubtools_quay_get_signatures_ABC123"
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     sig_remover = signature_remover.SignatureRemover()
@@ -82,7 +82,7 @@ def test_get_signatures_from_pyxis(mock_run_entrypoint, mock_tempfile, mock_json
             "--pyxis-ssl-keyfile",
             "some-keytab",
             "--manifest-digest",
-            "@/tmp/pubtools_quay_get_signatures_ABC123",
+            "@/var/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -97,7 +97,7 @@ def test_get_signatures_from_pyxis(mock_run_entrypoint, mock_tempfile, mock_json
             "--pyxis-ssl-keyfile",
             "some-keytab",
             "--manifest-digest",
-            "@/tmp/pubtools_quay_get_signatures_ABC123",
+            "@/var/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )

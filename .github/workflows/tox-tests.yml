@@ -104,3 +104,19 @@ jobs:
         with:
           fail_ci_if_error: true
           verbose: true
+  bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Update existing dependencies
+        run: sudo apt-get update -y
+      - name: Install system dependencies
+        run: sudo apt-get install -y libkrb5-dev
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - name: Install Tox
+        run: pip install tox
+      - name: Run Tox
+        run: tox -e py3-bandit -vv
