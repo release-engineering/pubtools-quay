@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.10.2 (2022-08-16)
+--------------------
+* Use real task ID for tag docker signing
+* Get intermediate repo from build details
+
 0.10.1 (2022-6-17)
 --------------------
 * Remove duplicate destinations when pushing docker
