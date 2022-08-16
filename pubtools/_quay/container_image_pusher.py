@@ -301,7 +301,6 @@ class ContainerImagePusher:
                 item (ContainerPushItem):
                     Multiarch container push item.
             """
-
             try:
                 source_ml = self.src_quay_client.get_manifest(
                     item.metadata["pull_url"], media_type=QuayClient.MANIFEST_LIST_TYPE
