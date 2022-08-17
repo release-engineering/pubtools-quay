@@ -330,7 +330,7 @@
                 <span class="n">key_filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+            <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>  <span class="c1"># nosec B601</span>
             <span class="k">if</span> <span class="n">stdin</span><span class="p">:</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">stdin</span><span class="p">)</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">shutdown_write</span><span class="p">()</span>
@@ -458,7 +458,8 @@
 <span class="sd">        Add a text file to the running container.</span>
 
 <span class="sd">        The primary use-case is to store a secret which will be accessed from inside the container.</span>
-<span class="sd">        File will be stored in the path /tmp/&lt;file_name&gt;.</span>
+<span class="sd">        File will be stored in the path /var/&lt;file_name&gt;. The reason /var instead of /tmp is</span>
+<span class="sd">        that putting files with predefined names to /tmp is a security concern.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (str):</span>
@@ -477,7 +478,7 @@
 
         <span class="n">data_stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">put_archive</span><span class="p">(</span>
-            <span class="n">container</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_stream</span>
+            <span class="n">container</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/var&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_stream</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
@@ -513,7 +514,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">password_file</span><span class="p">)</span>
 
         <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot; sh -c &#39;cat /tmp/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json&quot;</span>
+            <span class="s2">&quot; sh -c &#39;cat /var/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json&quot;</span>
             <span class="s1">&#39; -u &quot;</span><span class="si">{0}</span><span class="s1">&quot; --password-stdin </span><span class="si">%s</span><span class="se">\&#39;</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">host</span>
         <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">username</span><span class="p">),</span> <span class="n">password_file</span><span class="p">)</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">)</span>

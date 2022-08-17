@@ -337,7 +337,8 @@ to containers is not supported.</p>
 <span class="sig-name descname"><span class="pre">_add_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/command_executor.html#ContainerExecutor._add_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.command_executor.ContainerExecutor._add_file" title="Permalink to this definition"></a></dt>
 <dd><p>Add a text file to the running container.</p>
 <p>The primary use-case is to store a secret which will be accessed from inside the container.
-File will be stored in the path /tmp/&lt;file_name&gt;.</p>
+File will be stored in the path /var/&lt;file_name&gt;. The reason /var instead of /tmp is
+that putting files with predefined names to /tmp is a security concern.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>data (str):</dt><dd><p>Data that should be stored in the container.</p>
