@@ -36,7 +36,7 @@ def test_parse_image(mock_session):
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
 def test_authenticate_quay_header_error(mock_session):
-    client = quay_client.QuayClient("user", "pass")
+    authenticator = quay_client.RegistryAuthenticator("user", "pass", mock_session, {})
 
     header1 = {
         "Server": "nginx/1.12.1",
@@ -47,7 +47,7 @@ def test_authenticate_quay_header_error(mock_session):
         "Docker-Distribution-API-Version": "registry/2.0",
     }
     with pytest.raises(exceptions.RegistryAuthError, match="'WWW-Authenticate' is not in the.*"):
-        client._authenticate_quay(header1)
+        authenticator.authenticate(header1)
 
     header2 = {
         "Server": "nginx/1.12.1",
@@ -60,7 +60,7 @@ def test_authenticate_quay_header_error(mock_session):
         'scope="repository:namespace/some-repo:pull"',
     }
     with pytest.raises(exceptions.RegistryAuthError, match="Different than the Bearer.*"):
-        client._authenticate_quay(header2)
+        authenticator.authenticate(header2)
 
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
@@ -77,7 +77,7 @@ def test_authenticate_quay_success(mock_session, mock_quay_session):
     mocked_quay_session = mock.MagicMock()
     mock_quay_session.return_value = mocked_quay_session
 
-    client = quay_client.QuayClient("user", "pass")
+    authenticator = quay_client.RegistryAuthenticator("user", "pass", mocked_quay_session, {})
     header = {
         "Server": "nginx/1.12.1",
         "Date": "Tue, 02 Feb 2021 13:03:35 GMT",
@@ -88,7 +88,44 @@ def test_authenticate_quay_success(mock_session, mock_quay_session):
         "WWW-Authenticate": 'Bearer realm="https://quay.io/v2/auth",service="quay.io",'
         'scope="repository:namespace/some-repo:pull"',
     }
-    client._authenticate_quay(header)
+    authenticator.authenticate(header)
+
+    mocked_session.get.assert_called_once_with(
+        "https://quay.io/v2/auth",
+        auth=("user", "pass"),
+        params={"service": "quay.io", "scope": "repository:namespace/some-repo:pull"},
+        timeout=10,
+    )
+    mocked_quay_session.set_auth_token.assert_called_once_with("abcdef")
+
+
+@mock.patch("pubtools._quay.quay_client.QuaySession")
+@mock.patch("pubtools._quay.quay_client.requests.Session")
+def test_authenticate_quay_success_override(mock_session, mock_quay_session):
+    mock_response = mock.MagicMock()
+    mock_response.json.return_value = {"token": "abcdef"}
+    mock_get = mock.MagicMock()
+    mock_get.return_value = mock_response
+    mocked_session = mock.MagicMock()
+    mocked_session.get = mock_get
+    mock_session.return_value = mocked_session
+
+    mocked_quay_session = mock.MagicMock()
+    mock_quay_session.return_value = mocked_quay_session
+
+    authenticator = quay_client.RegistryAuthenticator(
+        "user", "pass", mocked_quay_session, {"scope": "repository:namespace/some-repo:pull"}
+    )
+    header = {
+        "Server": "nginx/1.12.1",
+        "Date": "Tue, 02 Feb 2021 13:03:35 GMT",
+        "Content-Type": "application/json",
+        "Content-Length": "112",
+        "Connection": "close",
+        "Docker-Distribution-API-Version": "registry/2.0",
+        "WWW-Authenticate": 'Bearer realm="https://quay.io/v2/auth",service="quay.io",',
+    }
+    authenticator.authenticate(header)
 
     mocked_session.get.assert_called_once_with(
         "https://quay.io/v2/auth",
@@ -113,7 +150,7 @@ def test_authenticate_quay_missing_token(mock_session, mock_quay_session):
     mocked_quay_session = mock.MagicMock()
     mock_quay_session.return_value = mocked_quay_session
 
-    client = quay_client.QuayClient("user", "pass")
+    authenticator = quay_client.RegistryAuthenticator("user", "pass", mock_quay_session, {})
     header = {
         "Server": "nginx/1.12.1",
         "Date": "Tue, 02 Feb 2021 13:03:35 GMT",
@@ -126,10 +163,10 @@ def test_authenticate_quay_missing_token(mock_session, mock_quay_session):
     }
 
     with pytest.raises(exceptions.RegistryAuthError, match="Authentication server response.*"):
-        client._authenticate_quay(header)
+        authenticator.authenticate(header)
 
 
-@mock.patch("pubtools._quay.quay_client.QuayClient._authenticate_quay")
+@mock.patch("pubtools._quay.quay_client.RegistryAuthenticator.authenticate")
 def test_request_quay_success(mock_authenticate):
     with requests_mock.Mocker() as m:
         m.get("https://quay.io/v2/get/data/1", text="data")
@@ -151,7 +188,7 @@ def test_request_quay_bad_status_code():
             client._request_quay("GET", "get/data/1")
 
 
-@mock.patch("pubtools._quay.quay_client.QuayClient._authenticate_quay")
+@mock.patch("pubtools._quay.quay_client.RegistryAuthenticator.authenticate")
 def test_request_quay_authenticate_success(mock_authenticate):
     with requests_mock.Mocker() as m:
         m.get(
@@ -162,15 +199,33 @@ def test_request_quay_authenticate_success(mock_authenticate):
             ],
         )
 
+        authenticator = quay_client.RegistryAuthenticator("user", "pass", mock.MagicMock(), {})
+
         client = quay_client.QuayClient("user", "pass")
-        r = client._request_quay("GET", "get/data/1")
+        r = client._request_quay("GET", "get/data/1", {}, authenticator=authenticator)
 
         assert r.text == "data"
         assert r.status_code == 200
         mock_authenticate.assert_called_once_with({"some-header": "value"})
 
 
-@mock.patch("pubtools._quay.quay_client.QuayClient._authenticate_quay")
+@mock.patch("pubtools._quay.quay_client.RegistryAuthenticator.authenticate")
+def test_request_quay_authenticate_missing_authenticator(mock_authenticate):
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/get/data/1",
+            [
+                {"headers": {"some-header": "value"}, "status_code": 401},
+                {"text": "data", "status_code": 200},
+            ],
+        )
+        client = quay_client.QuayClient("user", "pass")
+        with pytest.raises(requests.exceptions.HTTPError) as ex:
+            client._request_quay("GET", "get/data/1", {})
+            assert ex.exf_info.status_code == 404
+
+
+@mock.patch("pubtools._quay.quay_client.RegistryAuthenticator.authenticate")
 def test_request_quay_authenticate_missing(mock_authenticate):
     with requests_mock.Mocker() as m:
         m.get(
@@ -181,10 +236,11 @@ def test_request_quay_authenticate_missing(mock_authenticate):
             ],
         )
 
+        authenticator = quay_client.RegistryAuthenticator("user", "pass", mock.MagicMock(), {})
         client = quay_client.QuayClient("user", "pass")
 
         with pytest.raises(requests.HTTPError, match="404 Client Error.*"):
-            client._request_quay("GET", "get/data/1")
+            client._request_quay("GET", "get/data/1", authenticator=authenticator)
         mock_authenticate.assert_called_once_with({"some-header": "value"})
 
 

@@ -17,6 +17,83 @@ from .quay_session import QuaySession
 LOG = logging.getLogger("pubtools.quay")
 
 
+class RegistryAuthenticator:
+    """Helper class to get authentication token form registry."""
+
+    def __init__(self, username, password, session, params):
+        """
+        Initialize the class.
+
+        Args:
+            username (str):
+                Registry username
+            password (str):
+                Registry password
+            session (QuaySession):
+                Quay session instance
+            params (dict):
+                override params for registry authentication request
+        """
+        self.username = username
+        self.password = password
+        self.session = session
+        self.params = params
+
+    def authenticate(self, headers):
+        """
+        Attempt to perform an authentication with registry's authentication server.
+
+        Once authentication is complete, add the token to the Session object.
+        Specifics can be found at https://docs.docker.com/registry/spec/auth/token/
+
+        Args:
+            headers (dict):
+                Headers of the 401 response received from the registry.
+        Raises:
+            RegistryAuthError:
+                When there's an issue with the authentication procedure.
+        """
+        if "WWW-Authenticate" not in headers:
+            raise RegistryAuthError(
+                "'WWW-Authenticate' is not in the 401 response's header. "
+                "Authentication cannot continue."
+            )
+        if "Bearer " not in headers["WWW-Authenticate"]:
+            raise RegistryAuthError(
+                "Different than the Bearer authentication type was requested. "
+                "Only Bearer is supported."
+            )
+
+        # parse header to get a dictionary
+        params = request.parse_keqv_list(
+            request.parse_http_list(headers["WWW-Authenticate"][len("Bearer ") :])  # noqa: E203
+        )
+        for key, val in self.params.items():
+            if key not in params:
+                params[key] = val
+
+        host = params.pop("realm")
+        session = requests.Session()
+        retry = Retry(
+            total=3,
+            read=3,
+            connect=3,
+            backoff_factor=2,
+            status_forcelist=set(range(500, 512)),
+        )
+        adapter = requests.adapters.HTTPAdapter(max_retries=retry)
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        # Make an authentication request to the specified realm with the provided REST parameters.
+        # Basic username + password authentication is expected.
+        r = session.get(host, params=params, auth=(self.username, self.password), timeout=10)
+        r.raise_for_status()
+
+        if "token" not in r.json():
+            raise RegistryAuthError("Authentication server response doesn't contain a token.")
+        self.session.set_auth_token(r.json()["token"])
+
+
 class QuayClient:
     """Class for performing Docker HTTP API operations with the Quay registry."""
 
@@ -69,9 +146,13 @@ class QuayClient:
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
+        authenticator = RegistryAuthenticator(
+            self.username, self.password, self.session, {"scope": "repository:%s:pull" % repo}
+        )
+
         if media_type not in ("application/vnd.docker.distribution.manifest.list.v2+json", None):
             kwargs = {"headers": {"Accept": media_type}}
-            response = self._request_quay("GET", endpoint, kwargs)
+            response = self._request_quay("GET", endpoint, kwargs, authenticator=authenticator)
 
             # text/plain may be returned for V2S1 by our CDN
             if (
@@ -88,7 +169,7 @@ class QuayClient:
 
         # request 'Content-Type' to be manifest list
         kwargs = {"headers": {"Accept": QuayClient.MANIFEST_LIST_TYPE}}
-        response = self._request_quay("GET", endpoint, kwargs)
+        response = self._request_quay("GET", endpoint, kwargs, authenticator=authenticator)
         if (
             media_type == QuayClient.MANIFEST_LIST_TYPE
             and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
@@ -100,7 +181,7 @@ class QuayClient:
             and response.headers["Content-Type"] != QuayClient.MANIFEST_V2S2_TYPE
         ):
             kwargs = {"headers": {"Accept": QuayClient.MANIFEST_V2S2_TYPE}}
-            response = self._request_quay("GET", endpoint, kwargs)
+            response = self._request_quay("GET", endpoint, kwargs, authenticator=authenticator)
 
         if raw:
             return response.text
@@ -145,6 +226,10 @@ class QuayClient:
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
+        authenticator = RegistryAuthenticator(
+            self.username, self.password, self.session, {"scope": "repository:%s:push" % repo}
+        )
+
         if raw:
             manifest_type = json.loads(manifest)["mediaType"]
             kwargs = {
@@ -157,7 +242,7 @@ class QuayClient:
                 "headers": {"Content-Type": manifest_type},
                 "data": json.dumps(manifest, sort_keys=True, indent=4),
             }
-        self._request_quay("PUT", endpoint, kwargs)
+        self._request_quay("PUT", endpoint, kwargs, authenticator=authenticator)
 
     def get_repository_tags(self, repository, raw=False):
         """
@@ -171,8 +256,11 @@ class QuayClient:
         Returns (list):
             Tags which the repository contains.
         """
+        authenticator = RegistryAuthenticator(
+            self.username, self.password, self.session, {"scope": "repository:%s:pull" % repository}
+        )
         endpoint = "{0}/tags/list".format(repository)
-        response = self._request_quay("GET", endpoint)
+        response = self._request_quay("GET", endpoint, authenticator=authenticator)
         tags = response.json()
 
         while "Link" in response.headers:
@@ -192,7 +280,7 @@ class QuayClient:
         else:
             return tags
 
-    def _request_quay(self, method, endpoint, kwargs={}):
+    def _request_quay(self, method, endpoint, kwargs={}, authenticator=None):
         """
         Perform a Docker HTTP API request on Quay registry. Handle authentication.
 
@@ -214,7 +302,9 @@ class QuayClient:
             r.raise_for_status()
         if r.status_code == 401:
             LOG.debug("Unauthorized request, attempting to authenticate.")
-            self._authenticate_quay(r.headers)
+            if not authenticator:
+                r.raise_for_status()
+            authenticator.authenticate(r.headers)
         else:
             return r
 
@@ -222,56 +312,6 @@ class QuayClient:
         r.raise_for_status()
 
         return r
-
-    def _authenticate_quay(self, headers):
-        """
-        Attempt to perform an authentication with registry's authentication server.
-
-        Once authentication is complete, add the token to the Session object.
-        Specifics can be found at https://docs.docker.com/registry/spec/auth/token/
-
-        Args:
-            headers (dict):
-                Headers of the 401 response received from the registry.
-        Raises:
-            RegistryAuthError:
-                When there's an issue with the authentication procedure.
-        """
-        if "WWW-Authenticate" not in headers:
-            raise RegistryAuthError(
-                "'WWW-Authenticate' is not in the 401 response's header. "
-                "Authentication cannot continue."
-            )
-        if "Bearer " not in headers["WWW-Authenticate"]:
-            raise RegistryAuthError(
-                "Different than the Bearer authentication type was requested. "
-                "Only Bearer is supported."
-            )
-
-        # parse header to get a dictionary
-        params = request.parse_keqv_list(
-            request.parse_http_list(headers["WWW-Authenticate"][len("Bearer ") :])  # noqa: E203
-        )
-        host = params.pop("realm")
-        session = requests.Session()
-        retry = Retry(
-            total=3,
-            read=3,
-            connect=3,
-            backoff_factor=2,
-            status_forcelist=set(range(500, 512)),
-        )
-        adapter = requests.adapters.HTTPAdapter(max_retries=retry)
-        session.mount("http://", adapter)
-        session.mount("https://", adapter)
-        # Make an authentication request to the specified realm with the provided REST parameters.
-        # Basic username + password authentication is expected.
-        r = session.get(host, params=params, auth=(self.username, self.password), timeout=10)
-        r.raise_for_status()
-
-        if "token" not in r.json():
-            raise RegistryAuthError("Authentication server response doesn't contain a token.")
-        self.session.set_auth_token(r.json()["token"])
 
     def _parse_and_validate_image_url(self, image):
         """

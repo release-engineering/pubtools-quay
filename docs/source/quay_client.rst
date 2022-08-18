@@ -17,5 +17,5 @@ Full Docker HTTP API reference can be found at https://docs.docker.com/registry/
    .. automethod:: upload_manifest
    .. automethod:: get_repository_tags
    .. automethod:: _request_quay
-   .. automethod:: _authenticate_quay
    .. automethod:: _parse_and_validate_image_url
+
