@@ -1,3 +1,4 @@
+import copy
 import logging
 import mock
 import pytest
@@ -572,3 +573,26 @@ def test_push_container_items_multiarch_item(
 
     mock_copy_src.assert_not_called()
     mock_copy_multiarch.assert_called_once()
+
+
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item")
+@mock.patch("pubtools._quay.container_image_pusher.QuayClient")
+def test_push_container_items_multiple_items(
+    mock_quay_client,
+    mock_copy_multiarch,
+    mock_copy_src,
+    target_settings,
+    container_multiarch_push_item,
+):
+    mock_get_manifest = mock.MagicMock()
+
+    mock_get_manifest.return_value = {"some-manifest": "manifest-list"}
+    mock_quay_client.return_value.get_manifest = mock_get_manifest
+
+    push_items = [copy.deepcopy(container_multiarch_push_item) for i in range(10)]
+
+    pusher = container_image_pusher.ContainerImagePusher(push_items, target_settings)
+    pusher.push_container_images()
+
+    assert mock_copy_multiarch.call_count == 10
