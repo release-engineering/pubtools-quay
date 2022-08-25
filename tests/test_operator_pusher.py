@@ -352,9 +352,24 @@ def test_push_operators(
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
 
     assert results == {
-        "v4.5": {"iib_result": iib_results[0], "signing_keys": ["some-key"]},
-        "v4.6": {"iib_result": iib_results[1], "signing_keys": ["some-key"]},
-        "v4.7": {"iib_result": iib_results[2], "signing_keys": ["some-key"]},
+        "v4.5": {
+            "iib_result": iib_results[0],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+        "v4.6": {
+            "iib_result": iib_results[1],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+        "v4.7": {
+            "iib_result": iib_results[2],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
@@ -463,9 +478,24 @@ def test_push_operators_not_all_successful(
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
 
     assert results == {
-        "v4.5": {"iib_result": iib_results[0], "signing_keys": ["some-key"]},
-        "v4.6": {"iib_result": None, "signing_keys": ["some-key"]},
-        "v4.7": {"iib_result": iib_results[2], "signing_keys": ["some-key"]},
+        "v4.5": {
+            "iib_result": iib_results[0],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+        "v4.6": {
+            "iib_result": None,
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+        "v4.7": {
+            "iib_result": iib_results[2],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
     }
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
@@ -540,12 +570,12 @@ def test_push_operators_hotfix(
         IIBRes(
             "some-registry.com/index/image:5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-test-hotfix-RHBA-1234-4567-3"],
+            ["v4.5-test-hotfix-RHBA-1234-4567"],
         ),
         IIBRes(
             "some-registry.com/index/image:6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-test-hotfix-RHBA-1234-4567-3"],
+            ["v4.6-test-hotfix-RHBA-1234-4567"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
@@ -558,13 +588,17 @@ def test_push_operators_hotfix(
     assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
 
     assert results == {
-        "v4.5-test-hotfix-RHBA-1234-4567": {
+        "v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
+            "is_hotfix": True,
+            "hotfix_tag": "v4.5-test-hotfix-1234-4567",
         },
-        "v4.6-test-hotfix-RHBA-1234-4567": {
+        "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
+            "is_hotfix": True,
+            "hotfix_tag": "v4.6-test-hotfix-1234-4567",
         },
     }
     expected_target_settings = target_settings.copy()
@@ -574,17 +608,17 @@ def test_push_operators_hotfix(
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         archs=["some-arch"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5-test-hotfix-RHBA-1234-4567",
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5-test-hotfix-RHBA-1234-4567-3"],
+        build_tags=["v4.5-3", "v4.5-test-hotfix-1234-4567"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         archs=["some-arch"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6-test-hotfix-RHBA-1234-4567",
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6-test-hotfix-RHBA-1234-4567-3"],
+        build_tags=["v4.6-3", "v4.6-test-hotfix-1234-4567"],
         target_settings=expected_target_settings,
     )
 
@@ -595,7 +629,7 @@ def test_push_operators_hotfix(
         [
             mock.call(
                 "some-registry.com/index/image:5",
-                ["quay.io/some-namespace/operators----index-image:5"],
+                ["quay.io/some-namespace/operators----index-image:v4.5-test-hotfix-1234-4567"],
                 True,
                 target_settings,
             )
@@ -605,7 +639,7 @@ def test_push_operators_hotfix(
         [
             mock.call(
                 "some-registry.com/index/image:6",
-                ["quay.io/some-namespace/operators----index-image:6"],
+                ["quay.io/some-namespace/operators----index-image:v4.6-test-hotfix-1234-4567"],
                 True,
                 target_settings,
             )

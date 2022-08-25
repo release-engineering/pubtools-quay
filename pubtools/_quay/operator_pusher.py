@@ -438,17 +438,19 @@ class OperatorPusher:
             deprecation_list = self.get_deprecation_list(version)
 
             for group, g_items in item_groups.items():
-                if is_hotfix:
-                    tag = "{0}-{1}-{2}".format(
-                        version,
-                        g_items[0].metadata["com.redhat.hotfix"],
-                        g_items[0].origin.replace(":", "-"),
-                    )
-                else:
-                    tag = version
+                tag = version
                 index_image = "{image_repo}:{tag}".format(
                     image_repo=self.target_settings["iib_index_image"], tag=tag
                 )
+
+                build_tags = ["{0}-{1}".format(index_image.split(":")[1], self.task_id)]
+                if is_hotfix:
+                    hotfix_tag = "{0}-{1}-{2}".format(
+                        version,
+                        g_items[0].metadata["com.redhat.hotfix"],
+                        g_items[0].origin.split("-")[1].replace(":", "-"),
+                    )
+                    build_tags.append(hotfix_tag)
 
                 bundles = [self.public_bundle_ref(i) for i in g_items]
                 all_archs = [
@@ -470,11 +472,15 @@ class OperatorPusher:
                     archs=archs,
                     index_image=index_image,
                     deprecation_list=deprecation_list,
-                    build_tags=["{0}-{1}".format(index_image.split(":")[1], self.task_id)],
+                    build_tags=build_tags,
                     target_settings=target_settings,
                 )
-
-                iib_results[tag] = {"iib_result": build_details, "signing_keys": signing_keys}
+                iib_results[tag] = {
+                    "iib_result": build_details,
+                    "signing_keys": signing_keys,
+                    "is_hotfix": is_hotfix,
+                    "hotfix_tag": "" if not is_hotfix else hotfix_tag,
+                }
 
         return iib_results
 
@@ -510,7 +516,10 @@ class OperatorPusher:
                 repo=iib_intermediate_repo,
                 tag=build_details.build_tags[0],
             )
-            dest_image = "{0}:{1}".format(index_image_repo, tag)
+            if not results["is_hotfix"]:
+                dest_image = "{0}:{1}".format(index_image_repo, tag)
+            else:
+                dest_image = "{0}:{1}".format(index_image_repo, results["hotfix_tag"])
             # We don't use permanent index image here because we always want to overwrite
             # production tags with the latest index image (in case of parallel pushes)
             ContainerImagePusher.run_tag_images(
