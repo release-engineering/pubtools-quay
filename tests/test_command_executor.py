@@ -458,7 +458,7 @@ def test_container_executor_add_file(
     mock_add_file.assert_called_once_with(mock_tarinfo.return_value, mock_bytesio2)
     mock_close.assert_called_once_with()
     mock_seek.assert_called_once_with(0)
-    mock_put_archive.assert_called_once_with(container="123", path="/tmp", data=mock_bytesio1)
+    mock_put_archive.assert_called_once_with(container="123", path="/var", data=mock_bytesio1)
 
 
 @mock.patch("pubtools._quay.command_executor.time.time")
@@ -543,7 +543,7 @@ def test_container_executor_skopeo_login(
         "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
-        " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
+        " sh -c 'cat /var/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
         '-u "some-name" --password-stdin some-host\''
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
@@ -648,7 +648,7 @@ def test_container_executor_skopeo_login_fail(
         "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
-        " sh -c 'cat /tmp/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
+        " sh -c 'cat /var/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
         '-u "some-name" --password-stdin some-host\''
     )
     mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")

@@ -1,5 +1,7 @@
 import functools
 import logging
+from concurrent import futures
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import requests
 
@@ -290,7 +292,15 @@ class ContainerImagePusher:
         images are not supported. In case of multiarch images, manifest list merging is performed if
         destination image contains more architectures than source.
         """
-        for item in self.push_items:
+
+        def push_container_image(item):
+            """
+            Push container images to Quay.
+
+            Args:
+                item (ContainerPushItem):
+                    Multiarch container push item.
+            """
             try:
                 source_ml = self.src_quay_client.get_manifest(
                     item.metadata["pull_url"], media_type=QuayClient.MANIFEST_LIST_TYPE
@@ -323,3 +333,13 @@ class ContainerImagePusher:
             # Multiarch images
             else:
                 self.copy_multiarch_push_item(item, source_ml)
+
+        num_thread_container_push = self.target_settings.get("num_thread_container_push", 5)
+
+        with ThreadPoolExecutor(max_workers=num_thread_container_push) as executor:
+            future_results = [
+                executor.submit(push_container_image, item) for item in self.push_items
+            ]
+            for future in futures.as_completed(future_results):
+                if future.exception():
+                    raise future.exception()

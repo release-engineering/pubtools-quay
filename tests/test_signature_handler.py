@@ -139,7 +139,7 @@ def test_get_pyxis_signature(
     fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
-    temp_filename = "/tmp/pubtools_quay_get_signatures_ABC123"
+    temp_filename = "/var/pubtools_quay_get_signatures_ABC123"
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     expected_data1 = [{"some": "data"}, {"other": "data"}]
@@ -166,7 +166,7 @@ def test_get_pyxis_signature(
             "--pyxis-ssl-keyfile",
             "/path/to/file.key",
             "--manifest-digest",
-            "@/tmp/pubtools_quay_get_signatures_ABC123",
+            "@/var/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -181,7 +181,7 @@ def test_get_pyxis_signature(
             "--pyxis-ssl-keyfile",
             "/path/to/file.key",
             "--manifest-digest",
-            "@/tmp/pubtools_quay_get_signatures_ABC123",
+            "@/var/pubtools_quay_get_signatures_ABC123",
         ],
         {},
     )
@@ -300,7 +300,7 @@ def test_upload_signatures_pyxis(
     fake_cert_key_paths,
 ):
     hub = mock.MagicMock()
-    temp_filename = "/tmp/pubtools_quay_upload_signatures_ABC123"
+    temp_filename = "/var/pubtools_quay_upload_signatures_ABC123"
     mock_tempfile.return_value.__enter__.return_value.name = temp_filename
 
     sig_handler = signature_handler.SignatureHandler(hub, "1", target_settings, "some-target")
@@ -348,7 +348,7 @@ def test_upload_signatures_pyxis(
             "--pyxis-ssl-keyfile",
             "/path/to/file.key",
             "--signatures",
-            "@/tmp/pubtools_quay_upload_signatures_ABC123",
+            "@/var/pubtools_quay_upload_signatures_ABC123",
         ],
         {},
     )
