@@ -495,30 +495,66 @@
         <span class="n">iib_results</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-            <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
-            <span class="n">all_archs</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;x86_64&quot;</span> <span class="k">else</span> <span class="s2">&quot;amd64&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span>
-            <span class="p">]</span>
-            <span class="n">archs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_archs</span><span class="p">)))</span>
-            <span class="n">signing_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">claims_signing_key</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">])))</span>
+            <span class="n">is_hotfix</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">])</span>
+            <span class="n">is_advisory_source</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Z0-9:\-]{4,40}$&quot;</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">item_groups</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">is_hotfix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_advisory_source</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot push hotfixes without an advisory&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                    <span class="n">item_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">item_groups</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">items</span>
 
             <span class="c1"># Get deprecation list</span>
             <span class="n">deprecation_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_deprecation_list</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
 
-            <span class="c1"># build index image in IIB</span>
-            <span class="n">index_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{image_repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">image_repo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_index_image&quot;</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="n">version</span>
-            <span class="p">)</span>
-            <span class="n">build_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
-                <span class="n">bundles</span><span class="o">=</span><span class="n">bundles</span><span class="p">,</span>
-                <span class="n">archs</span><span class="o">=</span><span class="n">archs</span><span class="p">,</span>
-                <span class="n">index_image</span><span class="o">=</span><span class="n">index_image</span><span class="p">,</span>
-                <span class="n">deprecation_list</span><span class="o">=</span><span class="n">deprecation_list</span><span class="p">,</span>
-                <span class="n">build_tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)],</span>
-                <span class="n">target_settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">g_items</span> <span class="ow">in</span> <span class="n">item_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">version</span>
+                <span class="n">index_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{image_repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">image_repo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_index_image&quot;</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
+                <span class="p">)</span>
 
-            <span class="n">iib_results</span><span class="p">[</span><span class="n">version</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span> <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">signing_keys</span><span class="p">}</span>
+                <span class="n">build_tags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
+                    <span class="n">hotfix_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">version</span><span class="p">,</span>
+                        <span class="n">g_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">],</span>
+                        <span class="n">g_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">),</span>
+                    <span class="p">)</span>
+                    <span class="n">build_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hotfix_tag</span><span class="p">)</span>
+
+                <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">]</span>
+                <span class="n">all_archs</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;x86_64&quot;</span> <span class="k">else</span> <span class="s2">&quot;amd64&quot;</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">g_items</span>
+                <span class="p">]</span>
+                <span class="n">archs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_archs</span><span class="p">)))</span>
+                <span class="n">signing_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">claims_signing_key</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">])))</span>
+
+                <span class="c1"># build index image in IIB</span>
+                <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
+                    <span class="n">target_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">target_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                <span class="n">build_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
+                    <span class="n">bundles</span><span class="o">=</span><span class="n">bundles</span><span class="p">,</span>
+                    <span class="n">archs</span><span class="o">=</span><span class="n">archs</span><span class="p">,</span>
+                    <span class="n">index_image</span><span class="o">=</span><span class="n">index_image</span><span class="p">,</span>
+                    <span class="n">deprecation_list</span><span class="o">=</span><span class="n">deprecation_list</span><span class="p">,</span>
+                    <span class="n">build_tags</span><span class="o">=</span><span class="n">build_tags</span><span class="p">,</span>
+                    <span class="n">target_settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">iib_results</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span>
+                    <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">signing_keys</span><span class="p">,</span>
+                    <span class="s2">&quot;is_hotfix&quot;</span><span class="p">:</span> <span class="n">is_hotfix</span><span class="p">,</span>
+                    <span class="s2">&quot;hotfix_tag&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_hotfix</span> <span class="k">else</span> <span class="n">hotfix_tag</span><span class="p">,</span>
+                <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">iib_results</span></div>
 
@@ -541,8 +577,8 @@
             <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="p">:</span>
-            <span class="n">build_details</span> <span class="o">=</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_result&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">build_details</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_result&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">build_details</span><span class="p">:</span>
                 <span class="k">continue</span>
 
@@ -554,7 +590,10 @@
                 <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
                 <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">)</span>
-            <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_hotfix&quot;</span><span class="p">]:</span>
+                <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;hotfix_tag&quot;</span><span class="p">])</span>
             <span class="c1"># We don&#39;t use permanent index image here because we always want to overwrite</span>
             <span class="c1"># production tags with the latest index image (in case of parallel pushes)</span>
             <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
