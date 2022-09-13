@@ -3,7 +3,9 @@ import io
 import json
 import logging
 import os
+import random
 import shlex
+import string
 import subprocess
 import tarfile
 import time
@@ -384,8 +386,7 @@ class ContainerExecutor(Executor):
         Add a text file to the running container.
 
         The primary use-case is to store a secret which will be accessed from inside the container.
-        File will be stored in the path /var/<file_name>. The reason /var instead of /tmp is
-        that putting files with predefined names to /tmp is a security concern.
+        File will be stored in the path /tmp/<file_name>.
 
         Args:
             data (str):
@@ -404,7 +405,7 @@ class ContainerExecutor(Executor):
 
         data_stream.seek(0)
         success = self.client.put_archive(
-            container=self.container["Id"], path="/var", data=data_stream
+            container=self.container["Id"], path="/tmp", data=data_stream  # nosec B108
         )
 
         if not success:
@@ -436,11 +437,14 @@ class ContainerExecutor(Executor):
             )
         LOG.info("Logging in to Quay with provided credentials")
 
-        password_file = "skopeo_password.txt"
+        suffix = "".join(
+            random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(10)
+        )
+        password_file = "skopeo_password-{0}.txt".format(suffix)
         self._add_file(password, password_file)
 
         cmd_login = (
-            " sh -c 'cat /var/{1} | skopeo login --authfile $HOME/.docker/config.json"
+            " sh -c 'cat /tmp/{1} | skopeo login --authfile $HOME/.docker/config.json"
             ' -u "{0}" --password-stdin %s\'' % host
         ).format(shlex_quote(username), password_file)
         out, err = self._run_cmd(cmd_login)

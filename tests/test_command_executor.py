@@ -458,7 +458,9 @@ def test_container_executor_add_file(
     mock_add_file.assert_called_once_with(mock_tarinfo.return_value, mock_bytesio2)
     mock_close.assert_called_once_with()
     mock_seek.assert_called_once_with(0)
-    mock_put_archive.assert_called_once_with(container="123", path="/var", data=mock_bytesio1)
+    mock_put_archive.assert_called_once_with(
+        container="123", path="/tmp", data=mock_bytesio1  # nosec B108
+    )
 
 
 @mock.patch("pubtools._quay.command_executor.time.time")
@@ -510,13 +512,14 @@ def test_container_executor_add_file_fail(
             executor._add_file("abcdefg", "some-file.txt")
 
 
+@mock.patch("random.SystemRandom.choice")
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._add_file")
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 def test_container_executor_skopeo_login(
-    mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file
+    mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file, mock_choice
 ):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -528,6 +531,7 @@ def test_container_executor_skopeo_login(
     mock_isdir.return_value = True
 
     mock_run_cmd.side_effect = [("not logged in", "nothing"), ("Login Succeeded", "nothing")]
+    mock_choice.return_value = "0"
 
     with command_executor.ContainerExecutor(
         "quay.io/some/image:1",
@@ -543,10 +547,11 @@ def test_container_executor_skopeo_login(
         "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
-        " sh -c 'cat /var/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
+        " sh -c 'cat /tmp/skopeo_password-0000000000.txt | skopeo login --authfile "
+        "$HOME/.docker/config.json "
         '-u "some-name" --password-stdin some-host\''
     )
-    mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
+    mock_add_file.assert_called_once_with("some-password", "skopeo_password-0000000000.txt")
 
 
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._add_file")
@@ -614,13 +619,14 @@ def test_container_executor_skopeo_login_missing_credential(
     mock_add_file.assert_not_called()
 
 
+@mock.patch("random.SystemRandom.choice")
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._add_file")
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 def test_container_executor_skopeo_login_fail(
-    mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file
+    mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file, mock_choice
 ):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -630,6 +636,7 @@ def test_container_executor_skopeo_login_fail(
     mock_remove_container = mock.MagicMock()
     mock_api_client.return_value.remove_container = mock_remove_container
     mock_isdir.return_value = True
+    mock_choice.return_value = "0"
 
     mock_run_cmd.side_effect = [("not logged in", "nothing"), ("Login Failed", "nothing")]
 
@@ -648,10 +655,11 @@ def test_container_executor_skopeo_login_fail(
         "skopeo login --get-login some-host", tolerate_err=True
     )
     assert mock_run_cmd.call_args_list[1] == mock.call(
-        " sh -c 'cat /var/skopeo_password.txt | skopeo login --authfile $HOME/.docker/config.json "
+        " sh -c 'cat /tmp/skopeo_password-0000000000.txt | skopeo login --authfile "
+        "$HOME/.docker/config.json "
         '-u "some-name" --password-stdin some-host\''
     )
-    mock_add_file.assert_called_once_with("some-password", "skopeo_password.txt")
+    mock_add_file.assert_called_once_with("some-password", "skopeo_password-0000000000.txt")
 
 
 @mock.patch("pubtools._quay.command_executor.LocalExecutor._run_cmd")
