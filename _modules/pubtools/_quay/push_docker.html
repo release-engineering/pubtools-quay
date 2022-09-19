@@ -79,7 +79,7 @@
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">BadPushItem</span><span class="p">,</span> <span class="n">InvalidTargetSettings</span><span class="p">,</span> <span class="n">InvalidRepository</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">BadPushItem</span><span class="p">,</span> <span class="n">InvalidTargetSettings</span><span class="p">,</span> <span class="n">InvalidRepository</span><span class="p">,</span> <span class="n">ManifestNotFoundError</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">run_entrypoint</span><span class="p">,</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span>
 <span class="kn">from</span> <span class="nn">.quay_api_client</span> <span class="kn">import</span> <span class="n">QuayApiClient</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
@@ -693,10 +693,17 @@
                     <span class="k">for</span> <span class="n">mtype</span> <span class="ow">in</span> <span class="n">missing_media_types</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">mtype</span> <span class="o">==</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
                             <span class="k">if</span> <span class="n">repo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v2_sch2_cache</span><span class="p">:</span>
-                                <span class="n">v2_sch2_cache</span><span class="p">[</span><span class="n">repo</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_digest</span><span class="p">(</span><span class="n">internal_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mtype</span><span class="p">)</span>
-                            <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_digests&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">),</span> <span class="p">{})[</span>
-                                <span class="n">mtype</span>
-                            <span class="p">]</span> <span class="o">=</span> <span class="n">v2_sch2_cache</span><span class="p">[</span><span class="n">repo</span><span class="p">]</span>
+                                <span class="k">try</span><span class="p">:</span>
+                                    <span class="n">v2_sch2_cache</span><span class="p">[</span><span class="n">repo</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_digest</span><span class="p">(</span>
+                                        <span class="n">internal_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mtype</span>
+                                    <span class="p">)</span>
+                                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_digests&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">),</span> <span class="p">{})[</span>
+                                        <span class="n">mtype</span>
+                                    <span class="p">]</span> <span class="o">=</span> <span class="n">v2_sch2_cache</span><span class="p">[</span><span class="n">repo</span><span class="p">]</span>
+                                <span class="c1"># Tolarate missing v2ch2 manifest in the case repo has</span>
+                                <span class="c1"># no amd64 arch and has only manifest list and sch2v1</span>
+                                <span class="k">except</span> <span class="n">ManifestNotFoundError</span><span class="p">:</span>
+                                    <span class="k">pass</span>
                         <span class="c1"># Fetch v2s1 only for amd64 image</span>
                         <span class="k">elif</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]:</span>
                             <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_digests&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">),</span> <span class="p">{})[</span>
