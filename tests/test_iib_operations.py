@@ -46,7 +46,7 @@ def test_task_iib_add_bundles(
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
     mock_iib_add_bundles.return_value = build_details
@@ -148,7 +148,7 @@ def test_task_iib_remove_operators(
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
     mock_iib_remove_operators.return_value = build_details
@@ -244,7 +244,7 @@ def test_task_iib_build_from_scratch(
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
-        "some-registry.com/iib-namespace/new-index-image@sha256:a1a1a1",
+        "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
     mock_iib_add_bundles.return_value = build_details

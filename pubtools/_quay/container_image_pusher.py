@@ -1,5 +1,7 @@
 import functools
 import logging
+from concurrent import futures
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import requests
 
@@ -269,10 +271,10 @@ class ContainerImagePusher:
         if simple_dest_refs:
             LOG.info(
                 "Copying image {0} to {1} destinations without merging manifest lists".format(
-                    source_ref, len(simple_dest_refs)
+                    source_ref, len(set(simple_dest_refs))
                 )
             )
-            self.run_tag_images(source_ref, simple_dest_refs, True, self.target_settings)
+            self.run_tag_images(source_ref, list(set(simple_dest_refs)), True, self.target_settings)
         if merge_mls_dest_refs:
             LOG.info(
                 "Copying image {0} to {1} destinations and merging manifest lists".format(
@@ -290,7 +292,15 @@ class ContainerImagePusher:
         images are not supported. In case of multiarch images, manifest list merging is performed if
         destination image contains more architectures than source.
         """
-        for item in self.push_items:
+
+        def push_container_image(item):
+            """
+            Push container images to Quay.
+
+            Args:
+                item (ContainerPushItem):
+                    Multiarch container push item.
+            """
             try:
                 source_ml = self.src_quay_client.get_manifest(
                     item.metadata["pull_url"], media_type=QuayClient.MANIFEST_LIST_TYPE
@@ -323,3 +333,13 @@ class ContainerImagePusher:
             # Multiarch images
             else:
                 self.copy_multiarch_push_item(item, source_ml)
+
+        num_thread_container_push = self.target_settings.get("num_thread_container_push", 5)
+
+        with ThreadPoolExecutor(max_workers=num_thread_container_push) as executor:
+            future_results = [
+                executor.submit(push_container_image, item) for item in self.push_items
+            ]
+            for future in futures.as_completed(future_results):
+                if future.exception():
+                    raise future.exception()
