@@ -2,9 +2,11 @@ import json
 import mock
 import pytest
 import requests
+import requests.exceptions
 import requests_mock
 
 from pubtools._quay import quay_client, exceptions
+from pubtools._quay.exceptions import ManifestNotFoundError
 
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
@@ -634,3 +636,29 @@ def test_get_manifest_digest():
         assert m.call_count == 1
 
         assert digest == "sha256:b9742c91f353022604e8ed4cf4ab1d688114fc4b133f0e11cbf7dd6272753ac8"
+
+
+def test_get_manifest_digest_not_found():
+    client = quay_client.QuayClient("user", "pass")
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            status_code=404,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        with pytest.raises(ManifestNotFoundError):
+            client.get_manifest_digest("quay.io/namespace/image:1")
+
+
+def test_get_manifest_digest_unkown_error():
+    client = quay_client.QuayClient("user", "pass")
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/namespace/image/manifests/1",
+            status_code=500,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        with pytest.raises(requests.exceptions.HTTPError):
+            client.get_manifest_digest("quay.io/namespace/image:1")
