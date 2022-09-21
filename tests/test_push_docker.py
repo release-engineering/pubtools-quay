@@ -2057,7 +2057,6 @@ def test_remove_old_signatures_container_signatures(
     patched_verify_target_settings,
     container_push_item_external_repos,
     fake_cert_key_paths,
-    claim_messages,
 ):
     mock_get_signatures_from_pyxis = mock.MagicMock(
         return_value=(
@@ -2071,6 +2070,12 @@ def test_remove_old_signatures_container_signatures(
             ]
         )
     )
+    claim_messages = [
+        {
+            "manifest_digest": "other-digest",
+            "docker_reference": "registry/some-product/some-repo:sometag",
+        }
+    ]
     mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
     backup_tags = {}
     image_data = push_docker.PushDocker.ImageData(

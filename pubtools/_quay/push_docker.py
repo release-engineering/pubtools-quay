@@ -522,13 +522,19 @@ class PushDocker:
             [sig[0] for sig in outdated_signatures]
         ):
             if (
-                existing_signature["manifest_digest"],
-                existing_signature["reference"].split(":")[-1],
-                existing_signature["repository"],
-            ) in outdated_signatures and (
-                existing_signature["manifest_digest"],
-                existing_signature["reference"],
-            ) not in new_signatures:
+                (
+                    existing_signature["manifest_digest"],
+                    existing_signature["reference"].split(":")[-1],
+                    existing_signature["repository"],
+                )
+                in outdated_signatures
+                and existing_signature["reference"] in [s[1] for s in new_signatures]
+                and (
+                    existing_signature["manifest_digest"],
+                    existing_signature["reference"],
+                )
+                not in new_signatures
+            ):
                 signatures_to_remove.append(existing_signature["_id"])
 
         cert, key = get_pyxis_ssl_paths(self.target_settings)
