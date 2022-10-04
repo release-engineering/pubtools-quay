@@ -6,7 +6,7 @@ jobs:
   py27:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -22,7 +22,7 @@ jobs:
   py37:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -38,7 +38,7 @@ jobs:
   black:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -54,7 +54,7 @@ jobs:
   flake8:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -70,7 +70,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -86,7 +86,7 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
@@ -107,7 +107,7 @@ jobs:
   bandit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Update existing dependencies
         run: sudo apt-get update -y
       - name: Install system dependencies
