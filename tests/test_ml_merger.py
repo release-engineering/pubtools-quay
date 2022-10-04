@@ -306,7 +306,7 @@ def test_merge_selected_architectures():
         assert created_ml == expected_ml
 
 
-@mock.patch("pubtools._quay.quay_client.QuayClient._authenticate_quay")
+@mock.patch("pubtools._quay.quay_client.RegistryAuthenticator.authenticate")
 def test_merge_selected_architectures_no_dest_manifest(mock_authenticate):
     merger = manifest_list_merger.ManifestListMerger(
         "quay.io/src/image:1",
