@@ -15,6 +15,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -47,7 +48,18 @@
 <li class="toctree-l2"><a class="reference internal" href="command_executor.html">Command Executor</a></li>
 <li class="toctree-l2"><a class="reference internal" href="container_image_pusher.html">Container image pusher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="iib_operations.html">IIB operations</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Image untagger</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Image untagger</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger"><code class="docutils literal notranslate"><span class="pre">ImageUntagger</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.__init__"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.set_quay_client"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.set_quay_client()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.get_repository_tags_mapping"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.get_repository_tags_mapping()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.construct_tag_digest_mappings"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.construct_tag_digest_mappings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.get_lost_digests"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.get_lost_digests()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.image_untagger.ImageUntagger.untag_images"><code class="docutils literal notranslate"><span class="pre">ImageUntagger.untag_images()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>

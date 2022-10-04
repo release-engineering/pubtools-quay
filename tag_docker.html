@@ -15,6 +15,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -56,7 +57,29 @@
 <li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
 <li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
 <li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Tag Docker</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tag Docker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker"><code class="docutils literal notranslate"><span class="pre">TagDocker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.__init__"><code class="docutils literal notranslate"><span class="pre">TagDocker.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.run"><code class="docutils literal notranslate"><span class="pre">TagDocker.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.quay_client"><code class="docutils literal notranslate"><span class="pre">TagDocker.quay_client()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.verify_target_settings"><code class="docutils literal notranslate"><span class="pre">TagDocker.verify_target_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.verify_input_data"><code class="docutils literal notranslate"><span class="pre">TagDocker.verify_input_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.check_input_validity"><code class="docutils literal notranslate"><span class="pre">TagDocker.check_input_validity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.get_image_details"><code class="docutils literal notranslate"><span class="pre">TagDocker.get_image_details()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.is_arch_relevant"><code class="docutils literal notranslate"><span class="pre">TagDocker.is_arch_relevant()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs"><code class="docutils literal notranslate"><span class="pre">TagDocker.tag_remove_calculate_archs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image"><code class="docutils literal notranslate"><span class="pre">TagDocker.tag_remove_calculate_archs_source_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_multiarch_image"><code class="docutils literal notranslate"><span class="pre">TagDocker.tag_remove_calculate_archs_multiarch_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs"><code class="docutils literal notranslate"><span class="pre">TagDocker.tag_add_calculate_archs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images"><code class="docutils literal notranslate"><span class="pre">TagDocker.copy_tag_sign_images()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images"><code class="docutils literal notranslate"><span class="pre">TagDocker.merge_manifest_lists_sign_images()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.run_untag_images"><code class="docutils literal notranslate"><span class="pre">TagDocker.run_untag_images()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.untag_image"><code class="docutils literal notranslate"><span class="pre">TagDocker.untag_image()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs"><code class="docutils literal notranslate"><span class="pre">TagDocker.manifest_list_remove_archs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
 </ul>

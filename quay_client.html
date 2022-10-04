@@ -15,6 +15,7 @@
         <script src="_static/underscore.js"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -52,7 +53,20 @@
 <li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Quay Client</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quay Client</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient"><code class="docutils literal notranslate"><span class="pre">QuayClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient.__init__"><code class="docutils literal notranslate"><span class="pre">QuayClient.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient.get_manifest"><code class="docutils literal notranslate"><span class="pre">QuayClient.get_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient.get_manifest_digest"><code class="docutils literal notranslate"><span class="pre">QuayClient.get_manifest_digest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient.upload_manifest"><code class="docutils literal notranslate"><span class="pre">QuayClient.upload_manifest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient.get_repository_tags"><code class="docutils literal notranslate"><span class="pre">QuayClient.get_repository_tags()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient._request_quay"><code class="docutils literal notranslate"><span class="pre">QuayClient._request_quay()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient._authenticate_quay"><code class="docutils literal notranslate"><span class="pre">QuayClient._authenticate_quay()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url"><code class="docutils literal notranslate"><span class="pre">QuayClient._parse_and_validate_image_url()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
 <li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
 <li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
