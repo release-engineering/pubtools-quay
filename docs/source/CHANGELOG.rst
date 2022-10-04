@@ -1,6 +1,14 @@
 ChangeLog
 =========
 
+0.10.3 (2022-10-04)
+-------------------
+
+* Push images to quay in multi-threads
+* Added support for hotfix operators
+* Use a random filename for the password file in containers
+* Fix signatures removal
+
 0.10.2 (2022-08-16)
 --------------------
 * Use real task ID for tag docker signing
