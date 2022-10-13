@@ -1,3 +1,4 @@
+import functools
 import logging
 import re
 import yaml
@@ -12,6 +13,8 @@ from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
     get_pyxis_ssl_paths,
+    run_with_retries,
+    get_basic_auth,
 )
 from .quay_client import QuayClient
 from .utils.misc import parse_index_image
@@ -394,6 +397,33 @@ class OperatorPusher:
                     (manifest["digest"], version, self.target_settings["quay_operator_repository"])
                 )
         return list(set(current_index_images))
+
+    @log_step("Verify bundles presence")
+    def ensure_bundles_present(self):
+        """
+        Make sure bundles are present in Quay.
+
+        Wait until pushed images become present in Quay,
+        and return False if too much time has passed.
+        """
+        bundles = [self.public_bundle_ref(i) for i in self.push_items]
+        for bundle in bundles:
+            registry = bundle.split("/", 1)[0]
+            username, password = get_basic_auth(registry)
+            quay_client = QuayClient(username, password, registry)
+            try:
+                get_manifest_partial = functools.partial(quay_client.get_manifest, bundle)
+                run_with_retries(
+                    get_manifest_partial,
+                    "Verify bundle presence",
+                    self.target_settings.get("verify_bundle_tries", 5),
+                    self.target_settings.get("verify_bundle_wait_time_increase", 20),
+                )
+            except Exception:
+                LOG.error("Bundle {0} cannot be reached".format(bundle))
+                return False
+            LOG.info("Bundle {0} is present".format(bundle))
+        return True
 
     @log_step("Build index images")
     def build_index_images(self):

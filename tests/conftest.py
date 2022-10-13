@@ -698,6 +698,8 @@ def target_settings():
         "skopeo_image": "registry.com/some/image:1",
         "skopeo_executor_username": "quay-executor-user",
         "skopeo_executor_password": "quay-executor-password",
+        "verify_bundle_tries": 2,
+        "verify_bundle_wait_time_increase": 1,
     }
 
 

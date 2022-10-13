@@ -706,7 +706,10 @@ class PushDocker:
                 operator_push_items, self.task_id, self.target_settings
             )
             existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
-            iib_results = operator_pusher.build_index_images()
+            if operator_pusher.ensure_bundles_present():
+                iib_results = operator_pusher.build_index_images()
+            else:
+                iib_results = {}
             # Sign operator images
             successful_iib_results = dict(
                 [(key, val) for key, val in iib_results.items() if val["iib_result"]]
@@ -720,7 +723,7 @@ class PushDocker:
             if not any([x["iib_result"] for x in iib_results.values()]):
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
-                failed = True
+                sys.exit(1)
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
                 failed = True

@@ -1,6 +1,8 @@
 import argparse
+import base64
 import contextlib
 import functools
+import json
 import logging
 import os
 import pkg_resources
@@ -367,3 +369,24 @@ def parse_index_image(build_details):
     registry, namespace, repo = image_path.split("/")
 
     return (registry, namespace, repo)
+
+
+def get_basic_auth(host):
+    """
+    Look for container config file for username and password.
+
+    Args:
+        host (str):
+            Hostname of a container registry.
+    Returns ((str, str)):
+        Username, password of a registry.
+    """
+    home_dir = os.path.expanduser("~")
+    conf_file = os.path.join(home_dir, ".docker/config.json")
+    if os.path.isfile(conf_file):
+        with open(conf_file) as f:
+            config = json.load(f)
+        auth = config.get("auths", {}).get(host, {}).get("auth")
+        if auth:
+            return base64.b64decode(auth).decode().split(":")
+    return None, None
