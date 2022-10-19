@@ -217,6 +217,11 @@ def test_push_docker_multiarch_merge_ml_operator(
         )
         m.delete("https://pyxis-url.com/v1/signatures/id/some-id1")
         m.delete("https://pyxis-url.com/v1/signatures/id/some-id2")
+        m.get(
+            "https://some-registry1.com/v2/repo/manifests/1.0",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
 
         push_docker = PushDocker(
             [container_multiarch_push_item_integration, operator_push_item_ok],
@@ -541,122 +546,6 @@ def test_push_docker_source(
         mock_fetch_missing_push_items_digests.side_effect = mock_fetch_missing_push_items_digests_sf
 
         push_docker.run()
-
-
-@mock.patch("pubtools._quay.signature_remover.run_entrypoint")
-@mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
-@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
-@mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
-def test_push_docker_multiarch_rollback(
-    mock_run_entrypoint_push_docker,
-    mock_run_entrypoint_sig_handler,
-    mock_claims_runner,
-    mock_run_cmd,
-    mock_run_entrypoint_signature_remover,
-    target_settings,
-    container_multiarch_push_item_integration,
-    src_manifest_list,
-    v2s1_manifest,
-    fake_cert_key_paths,
-):
-    # hub usage has to be mocked
-    hub = mock.MagicMock()
-    mock_get_target_info = mock.MagicMock()
-    mock_get_target_info.return_value = {
-        "settings": {
-            "quay_namespace": "stage-namespace",
-            "dest_quay_user": "stage-user",
-            "dest_quay_password": "stage-password",
-        }
-    }
-    hub.worker.get_target_info = mock_get_target_info
-    target_settings["propagated_from"] = "test-target"
-
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
-    mock_run_entrypoint_sig_handler.side_effect = [
-        # pubtools-pyxis-get-signatures (containers)
-        [
-            {
-                "reference": "registry.com/namespace/repo:1",
-                "manifest_digest": "e5e5e5",
-                "sig_key_id": "some-key",
-            }
-        ],
-        # pubtools-pyxis-upload-signatures
-        ValueError("something went wrong"),
-    ]
-
-    mock_run_cmd.return_value = ("out", "err")
-
-    with requests_mock.Mocker() as m:
-        m.get(
-            "https://quay.io/v2/stage-namespace/test_namespace----test_repo/tags/list",
-            json={"some-data": "value"},
-        )
-        m.get(
-            "https://quay.io/v2/some-namespace/target----repo/tags/list",
-            json={"name": "target-repo", "tags": ["latest-test-tag"]},
-        )
-        m.get(
-            "https://quay.io/v2/some-namespace/target----repo/manifests/a1a1a1",
-            json={"mediaType": "manifest"},
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/api/v1/repository/src/repo?includeTags=True",
-            json={"tags": {"1": {"image_id": None}}},
-        )
-        m.get(
-            "https://quay.io/v2/src/repo/manifests/1",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-        m.get(
-            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
-            [
-                {
-                    "text": json.dumps(src_manifest_list, sort_keys=True),
-                    "headers": {
-                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-                    },
-                },
-                {
-                    "json": src_manifest_list,
-                    "headers": {
-                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
-                    },
-                },
-            ],
-        )
-        m.get(
-            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
-            text=json.dumps(v2s1_manifest, sort_keys=True),
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
-            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
-        )
-        m.put(
-            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
-        )
-        m.get(
-            "https://quay.io/v2/some-namespace/target----repo/manifests/sha256:8ce181d89b7bb7f1639d8df3d65d630b1322d0bb6daff5c492eec24ec53628d5",
-            json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        )
-
-        push_docker = PushDocker(
-            [container_multiarch_push_item_integration],
-            hub,
-            "1",
-            "some-target",
-            target_settings,
-        )
-
-        with pytest.raises(ValueError, match="something went wrong"):
-            push_docker.run()
 
 
 @mock.patch("pubtools._quay.command_executor.APIClient")
@@ -1351,3 +1240,144 @@ def test_remove_repo(
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
         )
+
+
+@mock.patch("pubtools._quay.signature_remover.run_entrypoint")
+@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
+@mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
+@mock.patch("pubtools._quay.signature_handler.run_entrypoint")
+@mock.patch("pubtools._quay.push_docker.run_entrypoint")
+def test_push_docker_operator_verify_bundle_fail(
+    mock_run_entrypoint_push_docker,
+    mock_run_entrypoint_sig_handler,
+    mock_claims_runner,
+    mock_run_cmd,
+    mock_run_entrypoint_operator_pusher,
+    mock_api_client,
+    mock_run_entrypoint_signature_remover,
+    target_settings,
+    container_multiarch_push_item_integration,
+    operator_push_item_ok,
+    src_manifest_list,
+    dest_manifest_list,
+    v2s1_manifest,
+    fake_cert_key_paths,
+):
+    # hub usage has to be mocked
+    hub = mock.MagicMock()
+    mock_run_entrypoint_push_docker.side_effect = [
+        # pubtools-pyxis-get-repo-metadata
+        {"release_categories": ["definitely-not-deprecated"]},
+    ]
+    mock_run_entrypoint_sig_handler.side_effect = [
+        # pubtools-pyxis-get-signatures (containers)
+        [
+            {
+                "reference": "registry.com/namespace/repo:1",
+                "manifest_digest": "e5e5e5",
+                "sig_key_id": "some-key",
+            }
+        ],
+        # pubtools-pyxis-upload-signatures
+        [],
+        # pubtools-pyxis-get-signatures (containers) (v2s1)
+        [
+            {
+                "reference": "registry.com/namespace/repo:1",
+                "manifest_digest": "e5e5e5",
+                "sig_key_id": "some-key",
+            }
+        ],
+        # pubtools-pyxis-upload-signatures (v2s1)
+        [],
+        # pubtools-pyxis-get-signatures (containers) (removing signatures)
+        [
+            {
+                "reference": "registry.com/namespace/target----repo:latest-test-tag",
+                "manifest_digest": "sha256:6666666666",
+                "sig_key_id": "some-key",
+                "repository": "target/repo",
+                "_id": "some-id1",
+            },
+            {
+                "reference": "registry.com/namespace/target----repo:latest-test-tag",
+                "manifest_digest": "sha256:7777777777",
+                "sig_key_id": "some-key",
+                "repository": "target/repo",
+                "_id": "some-id2",
+            },
+        ],
+    ]
+    mock_run_entrypoint_operator_pusher.side_effect = [
+        # pubtools-pyxis-get-operator-indices
+        [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}],
+    ]
+    mock_run_cmd.return_value = ("Login Succeeded", "err")
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/tags/list",
+            json={"name": "target-repo", "tags": ["latest-test-tag"]},
+        )
+        m.get(
+            "https://quay.io/v2/src/repo/manifests/1",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            [
+                {
+                    "text": json.dumps(dest_manifest_list, sort_keys=True),
+                    "headers": {
+                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
+                    },
+                },
+                {
+                    "json": dest_manifest_list,
+                    "headers": {
+                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
+                    },
+                },
+            ],
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo/manifests/sha256:9daac465523ce42a89e605151734e7b92c5ade2123055a6a2aeabbf60e5edfa4",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/v4.5",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/v4.6",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.put("https://quay.io/v2/some-namespace/target----repo/manifests/latest-test-tag")
+        m.delete("https://pyxis-url.com/v1/signatures/id/some-id1")
+        m.delete("https://pyxis-url.com/v1/signatures/id/some-id2")
+
+        push_docker = PushDocker(
+            [container_multiarch_push_item_integration, operator_push_item_ok],
+            hub,
+            "1",
+            "some-target",
+            target_settings,
+        )
+
+        with pytest.raises(SystemExit, match="1"):
+            push_docker.run()

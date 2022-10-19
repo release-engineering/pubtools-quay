@@ -5,6 +5,7 @@ import pytest
 import requests_mock
 import requests
 import os
+import six
 
 from pubtools._quay import exceptions
 from pubtools._quay.utils import misc
@@ -162,3 +163,14 @@ def test_retry(mock_timestamp, mock_sleep):
     assert mock_sleep.call_args_list[0] == mock.call(0)
     assert mock_sleep.call_args_list[1] == mock.call(10)
     assert mock_sleep.call_args_list[2] == mock.call(20)
+
+
+@mock.patch(
+    "six.moves.builtins.open",
+    new_callable=mock.mock_open,
+    read_data='{"auths": {"registry": {"auth": "dXNlcjpwYXNz"}}}',
+)
+@mock.patch("os.path.isfile")
+def test_get_basic_auth(mock_isfile, mock_file):
+    mock_isfile.return_value = True
+    assert misc.get_basic_auth("registry") == ["user", "pass"]
