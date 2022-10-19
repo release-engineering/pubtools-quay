@@ -73,7 +73,8 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.operator_pusher</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">yaml</span>
 
@@ -87,6 +88,8 @@
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
     <span class="n">log_step</span><span class="p">,</span>
     <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
+    <span class="n">run_with_retries</span><span class="p">,</span>
+    <span class="n">get_basic_auth</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">parse_index_image</span>
@@ -469,6 +472,33 @@
                     <span class="p">(</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">])</span>
                 <span class="p">)</span>
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">current_index_images</span><span class="p">))</span></div>
+
+    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Verify bundles presence&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">ensure_bundles_present</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make sure bundles are present in Quay.</span>
+
+<span class="sd">        Wait until pushed images become present in Quay,</span>
+<span class="sd">        and return False if too much time has passed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">bundle</span> <span class="ow">in</span> <span class="n">bundles</span><span class="p">:</span>
+            <span class="n">registry</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">username</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">get_basic_auth</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span>
+            <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">get_manifest_partial</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">,</span> <span class="n">bundle</span><span class="p">)</span>
+                <span class="n">run_with_retries</span><span class="p">(</span>
+                    <span class="n">get_manifest_partial</span><span class="p">,</span>
+                    <span class="s2">&quot;Verify bundle presence&quot;</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verify_bundle_tries&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;verify_bundle_wait_time_increase&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Bundle </span><span class="si">{0}</span><span class="s2"> cannot be reached&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bundle</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Bundle </span><span class="si">{0}</span><span class="s2"> is present&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bundle</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
 <div class="viewcode-block" id="OperatorPusher.build_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.build_index_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Build index images&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">build_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

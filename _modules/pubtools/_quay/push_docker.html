@@ -781,7 +781,10 @@
                 <span class="n">operator_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
             <span class="p">)</span>
             <span class="n">existing_index_images</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
-            <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">ensure_bundles_present</span><span class="p">():</span>
+                <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">iib_results</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="c1"># Sign operator images</span>
             <span class="n">successful_iib_results</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
                 <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]]</span>
@@ -795,7 +798,7 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;iib_result&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iib_results</span><span class="o">.</span><span class="n">values</span><span class="p">()]):</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of all index images failed, running rollback.&quot;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span>
-                <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">successful_iib_results</span> <span class="o">!=</span> <span class="n">iib_results</span><span class="p">:</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Push of some index images failed&quot;</span><span class="p">)</span>
                 <span class="n">failed</span> <span class="o">=</span> <span class="kc">True</span>
