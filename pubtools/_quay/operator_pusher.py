@@ -483,11 +483,6 @@ class OperatorPusher:
                     build_tags.append(hotfix_tag)
 
                 bundles = [self.public_bundle_ref(i) for i in g_items]
-                all_archs = [
-                    i.metadata["arch"] if i.metadata["arch"] != "x86_64" else "amd64"
-                    for i in g_items
-                ]
-                archs = sorted(list(set(all_archs)))
                 signing_keys = sorted(list(set([item.claims_signing_key for item in g_items])))
 
                 # build index image in IIB
@@ -499,7 +494,6 @@ class OperatorPusher:
                     target_settings = self.target_settings
                 build_details = self.iib_add_bundles(
                     bundles=bundles,
-                    archs=archs,
                     index_image=index_image,
                     deprecation_list=deprecation_list,
                     build_tags=build_tags,

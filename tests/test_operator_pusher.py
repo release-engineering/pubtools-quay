@@ -374,7 +374,6 @@ def test_push_operators(
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-3"],
@@ -382,7 +381,6 @@ def test_push_operators(
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3"],
@@ -390,7 +388,6 @@ def test_push_operators(
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
-        archs=["amd64", "some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
         deprecation_list=[],
         build_tags=["v4.7-3"],
@@ -500,7 +497,6 @@ def test_push_operators_not_all_successful(
     assert mock_add_bundles.call_count == 3
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-3"],
@@ -508,7 +504,6 @@ def test_push_operators_not_all_successful(
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3"],
@@ -516,7 +511,6 @@ def test_push_operators_not_all_successful(
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
-        archs=["amd64", "some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
         deprecation_list=[],
         build_tags=["v4.7-3"],
@@ -607,7 +601,6 @@ def test_push_operators_hotfix(
     assert mock_add_bundles.call_count == 2
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
         build_tags=["v4.5-3", "v4.5-test-hotfix-1234-4567"],
@@ -615,7 +608,6 @@ def test_push_operators_hotfix(
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
-        archs=["some-arch"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3", "v4.6-test-hotfix-1234-4567"],
