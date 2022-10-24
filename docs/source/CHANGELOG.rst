@@ -1,9 +1,13 @@
 ChangeLog
 =========
 
+0.10.4 (2022-10-24)
+-------------------
+* Remove arches in IIB request
+* Verify bundles presence
+
 0.10.3 (2022-10-04)
 -------------------
-
 * Push images to quay in multi-threads
 * Added support for hotfix operators
 * Use a random filename for the password file in containers
