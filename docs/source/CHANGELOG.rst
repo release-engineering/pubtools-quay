@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.10.4 (2022-10-04)
+-------------------
+
+* Verify bundles presence
+* Do not pass arches in IIB request
+
 0.10.3 (2022-10-04)
 -------------------
 
