@@ -558,11 +558,6 @@
                     <span class="n">build_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hotfix_tag</span><span class="p">)</span>
 
                 <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">]</span>
-                <span class="n">all_archs</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;arch&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;x86_64&quot;</span> <span class="k">else</span> <span class="s2">&quot;amd64&quot;</span>
-                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">g_items</span>
-                <span class="p">]</span>
-                <span class="n">archs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_archs</span><span class="p">)))</span>
                 <span class="n">signing_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">claims_signing_key</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">])))</span>
 
                 <span class="c1"># build index image in IIB</span>
@@ -574,7 +569,6 @@
                     <span class="n">target_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
                 <span class="n">build_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
                     <span class="n">bundles</span><span class="o">=</span><span class="n">bundles</span><span class="p">,</span>
-                    <span class="n">archs</span><span class="o">=</span><span class="n">archs</span><span class="p">,</span>
                     <span class="n">index_image</span><span class="o">=</span><span class="n">index_image</span><span class="p">,</span>
                     <span class="n">deprecation_list</span><span class="o">=</span><span class="n">deprecation_list</span><span class="p">,</span>
                     <span class="n">build_tags</span><span class="o">=</span><span class="n">build_tags</span><span class="p">,</span>
