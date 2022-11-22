@@ -186,7 +186,7 @@ class OperatorPusher:
 
             return session
 
-        if not self.target_settings["iib_deprecation_list_url"]:
+        if not self.target_settings.get("iib_deprecation_list_url"):
             return None
 
         deprecation_list = []
