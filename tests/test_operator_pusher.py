@@ -401,7 +401,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:5",
-                ["quay.io/some-namespace/operators----index-image:5"],
+                ["quay.io/index-image/operators----index-image:5"],
                 True,
                 target_settings,
             )
@@ -411,7 +411,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:6",
-                ["quay.io/some-namespace/operators----index-image:6"],
+                ["quay.io/index-image/operators----index-image:6"],
                 True,
                 target_settings,
             )
@@ -421,7 +421,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:7",
-                ["quay.io/some-namespace/operators----index-image:7"],
+                ["quay.io/index-image/operators----index-image:7"],
                 True,
                 target_settings,
             )
@@ -524,7 +524,7 @@ def test_push_operators_not_all_successful(
         [
             mock.call(
                 "some-registry.com/ns/index-image:5",
-                ["quay.io/some-namespace/operators----index-image:5"],
+                ["quay.io/index-image/operators----index-image:5"],
                 True,
                 target_settings,
             )
@@ -534,7 +534,7 @@ def test_push_operators_not_all_successful(
         [
             mock.call(
                 "some-registry.com/ns/index-image:7",
-                ["quay.io/some-namespace/operators----index-image:7"],
+                ["quay.io/index-image/operators----index-image:7"],
                 True,
                 target_settings,
             )
@@ -621,7 +621,7 @@ def test_push_operators_hotfix(
         [
             mock.call(
                 "some-registry.com/index/image:5",
-                ["quay.io/some-namespace/operators----index-image:v4.5-test-hotfix-1234-4567"],
+                ["quay.io/index-image/operators----index-image:v4.5-test-hotfix-1234-4567"],
                 True,
                 target_settings,
             )
@@ -631,7 +631,7 @@ def test_push_operators_hotfix(
         [
             mock.call(
                 "some-registry.com/index/image:6",
-                ["quay.io/some-namespace/operators----index-image:v4.6-test-hotfix-1234-4567"],
+                ["quay.io/index-image/operators----index-image:v4.6-test-hotfix-1234-4567"],
                 True,
                 target_settings,
             )

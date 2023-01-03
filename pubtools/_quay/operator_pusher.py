@@ -523,7 +523,7 @@ class OperatorPusher:
         image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
         index_image_repo = image_schema.format(
             host=self.quay_host,
-            namespace=self.target_settings["quay_namespace"],
+            namespace=self.target_settings["quay_operator_repository"].split("/")[-1],
             repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
         )
 
@@ -546,6 +546,14 @@ class OperatorPusher:
                 dest_image = "{0}:{1}".format(index_image_repo, results["hotfix_tag"])
             # We don't use permanent index image here because we always want to overwrite
             # production tags with the latest index image (in case of parallel pushes)
+            index_image_ts = self.target_settings.copy()
+            index_image_ts["dest_quay_user"] = index_image_ts.get(
+                "index_image_quay_user", index_image_ts["dest_quay_user"]
+            )
+            index_image_ts["dest_quay_password"] = index_image_ts.get(
+                "index_image_quay_password", index_image_ts["dest_quay_password"]
+            )
+
             ContainerImagePusher.run_tag_images(
                 build_details.index_image, [dest_image], True, self.target_settings
             )
