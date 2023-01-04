@@ -376,7 +376,11 @@ class OperatorPusher:
             self.target_settings["quay_operator_repository"]
         )
         index_image_repo = image_schema.format(
-            host=self.quay_host, namespace=self.target_settings["quay_namespace"], repo=iib_repo
+            host=self.quay_host,
+            namespace=self.target_settings.get(
+                "quay_operator_namespace", self.target_settings["quay_namespace"]
+            ),
+            repo=iib_repo,
         )
         current_index_images = []
 
@@ -523,7 +527,9 @@ class OperatorPusher:
         image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
         index_image_repo = image_schema.format(
             host=self.quay_host,
-            namespace=self.target_settings["quay_operator_repository"].split("/")[-1],
+            namespace=self.target_settings.get(
+                "quay_operator_namespace", self.target_settings["quay_namespace"]
+            ),
             repo=get_internal_container_repo_name(self.target_settings["quay_operator_repository"]),
         )
 
@@ -555,10 +561,10 @@ class OperatorPusher:
             )
 
             ContainerImagePusher.run_tag_images(
-                build_details.index_image, [dest_image], True, self.target_settings
+                build_details.index_image, [dest_image], True, index_image_ts
             )
             if tag_suffix:
                 dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
                 ContainerImagePusher.run_tag_images(
-                    permanent_index_image, [dest_image], True, self.target_settings
+                    permanent_index_image, [dest_image], True, index_image_ts
                 )

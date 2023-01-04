@@ -55,6 +55,7 @@ class PushDocker:
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
         self._dest_quay_client = None
+        self._dest_operator_quay_client = None
         self._dest_quay_api_client = None
 
     @property
@@ -67,6 +68,21 @@ class PushDocker:
                 self.quay_host,
             )
         return self._dest_quay_client
+
+    @property
+    def dest_operator_quay_client(self):
+        """Create and access QuayClient for dest image."""
+        if self._dest_operator_quay_client is None:
+            self._dest_operator_quay_client = QuayClient(
+                self.target_settings.get(
+                    "index_image_quay_user", self.target_settings["dest_quay_user"]
+                ),
+                self.target_settings.get(
+                    "index_image_quay_password", self.target_settings["dest_quay_password"]
+                ),
+                self.quay_host,
+            )
+        return self._dest_operator_quay_client
 
     @property
     def dest_quay_api_client(self):
@@ -705,7 +721,9 @@ class PushDocker:
             operator_pusher = OperatorPusher(
                 operator_push_items, self.task_id, self.target_settings
             )
-            existing_index_images = operator_pusher.get_existing_index_images(self.dest_quay_client)
+            existing_index_images = operator_pusher.get_existing_index_images(
+                self.dest_operator_quay_client
+            )
             if operator_pusher.ensure_bundles_present():
                 iib_results = operator_pusher.build_index_images()
             else:
