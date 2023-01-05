@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.remove_repo</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.remove_repo</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -143,7 +143,7 @@
     <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
     <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove Quay repository.</span>
 
 <span class="sd">    Args:</span>
@@ -188,12 +188,12 @@
 
 
 <span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">REMOVE_REPO_ARGS</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">remove_repositories_main</span><span class="p">(</span><span class="n">sysargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entrypoint for removing repositories.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for removing repositories.&quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">setup_args</span><span class="p">()</span>

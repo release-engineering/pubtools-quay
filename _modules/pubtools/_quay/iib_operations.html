@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.iib_operations</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.iib_operations</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -91,7 +91,7 @@
 
 
 <div class="viewcode-block" id="verify_target_settings"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.verify_target_settings">[docs]</a><span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="n">target_settings</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the presence and validity of target settings.</span>
 
 <span class="sd">    Args:</span>
@@ -140,7 +140,7 @@
     <span class="n">target_settings</span><span class="p">,</span>
     <span class="n">target_name</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushAddIIBBundles&#39; entrypoint.</span>
 
 <span class="sd">    Args:</span>
@@ -248,7 +248,7 @@
 <div class="viewcode-block" id="task_iib_remove_operators"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.task_iib_remove_operators">[docs]</a><span class="k">def</span> <span class="nf">task_iib_remove_operators</span><span class="p">(</span>
     <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushRemoveIIBOperators&#39; entrypoint.</span>
 
 <span class="sd">    Args:</span>
@@ -354,7 +354,7 @@
 <div class="viewcode-block" id="task_iib_build_from_scratch"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.task_iib_build_from_scratch">[docs]</a><span class="k">def</span> <span class="nf">task_iib_build_from_scratch</span><span class="p">(</span>
     <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushIIBBuildFromScratch&#39; entrypoint.</span>
 
 <span class="sd">    Args:</span>
@@ -445,7 +445,7 @@
     <span class="n">target_settings</span><span class="p">,</span>
     <span class="n">target_name</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_add_bundles</span><span class="p">(</span>
         <span class="n">bundles</span><span class="p">,</span>
         <span class="n">archs</span><span class="p">,</span>
@@ -462,7 +462,7 @@
 <span class="k">def</span> <span class="nf">iib_remove_entrypoint</span><span class="p">(</span>
     <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_remove_operators</span><span class="p">(</span>
         <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
     <span class="p">)</span>
@@ -471,7 +471,7 @@
 <span class="k">def</span> <span class="nf">iib_from_scratch_entrypoint</span><span class="p">(</span>
     <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_build_from_scratch</span><span class="p">(</span>
         <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
     <span class="p">)</span>

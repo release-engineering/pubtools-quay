@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.signature_remover</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.signature_remover</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -90,12 +90,12 @@
 
 
 <div class="viewcode-block" id="SignatureRemover"><a class="viewcode-back" href="../../../signature_remover.html#pubtools._quay.signature_remover.SignatureRemover">[docs]</a><span class="k">class</span> <span class="nc">SignatureRemover</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class used for finding the signatures that should be removed and removing them.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class used for finding the signatures that should be removed and removing them.&quot;&quot;&quot;</span>
 
     <span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span> <span class="o">=</span> <span class="mi">50</span>
 
 <div class="viewcode-block" id="SignatureRemover.__init__"><a class="viewcode-back" href="../../../signature_remover.html#pubtools._quay.signature_remover.SignatureRemover.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_api_token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quay_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">quay_host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -114,7 +114,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_user</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_password</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -126,7 +126,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span>
 
 <div class="viewcode-block" id="SignatureRemover.set_quay_client"><a class="viewcode-back" href="../../../signature_remover.html#pubtools._quay.signature_remover.SignatureRemover.set_quay_client">[docs]</a>    <span class="k">def</span> <span class="nf">set_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set a QuayClient instance.</span>
 
 <span class="sd">        Args:</span>
@@ -142,7 +142,7 @@
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get existing signatures from Pyxis based on the specified criteria (currently only digests).</span>
 
 <span class="sd">        NOTE: In the current implementation, only manifest digests are being used to search for</span>
@@ -202,7 +202,7 @@
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.</span>
 
 <span class="sd">        Args:</span>
@@ -236,7 +236,7 @@
             <span class="p">)</span></div>
 
 <div class="viewcode-block" id="SignatureRemover.get_repository_digests"><a class="viewcode-back" href="../../../signature_remover.html#pubtools._quay.signature_remover.SignatureRemover.get_repository_digests">[docs]</a>    <span class="k">def</span> <span class="nf">get_repository_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all digests of all images in a given repository.</span>
 
 <span class="sd">        NOTE: Digests of manifest lists are not returned, as signing is not performed on them.</span>
@@ -271,7 +271,7 @@
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove all signatures of all images in a given Quay repository.</span>
 
 <span class="sd">        Args:</span>
@@ -322,7 +322,7 @@
         <span class="n">exclude_by_claims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">remove_archs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove signatures of an image specified by a tag.</span>
 
 <span class="sd">        Source and multiarch images are supported. Signatures may be excluded from removal by</span>
@@ -413,7 +413,7 @@
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get existing signatures of an index image.</span>
 
 <span class="sd">        NOTE: Image is expected to be in an internal format.</span>

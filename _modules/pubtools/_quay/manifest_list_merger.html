@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.manifest_list_merger</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.manifest_list_merger</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -84,7 +84,7 @@
 
 
 <div class="viewcode-block" id="ManifestListMerger"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger">[docs]</a><span class="k">class</span> <span class="nc">ManifestListMerger</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class containing logic for merging manifest lists of two images.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class containing logic for merging manifest lists of two images.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ManifestListMerger.__init__"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -97,7 +97,7 @@
         <span class="n">dest_quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -132,7 +132,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.set_quay_clients"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.set_quay_clients">[docs]</a>    <span class="k">def</span> <span class="nf">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_quay_client</span><span class="p">,</span> <span class="n">dest_quay_client</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set client instances to be used for the HTTP API operations.</span>
 
 <span class="sd">        Args:</span>
@@ -145,7 +145,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">dest_quay_client</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.merge_manifest_lists"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists">[docs]</a>    <span class="k">def</span> <span class="nf">merge_manifest_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Merge manifest lists and upload to Quay. Main entrypoint method.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge manifest lists and upload to Quay. Main entrypoint method.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;QuayClient instance must be set for both source and dest images&quot;</span><span class="p">)</span>
 
@@ -170,7 +170,7 @@
 
 <div class="viewcode-block" id="ManifestListMerger.get_missing_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.get_missing_architectures">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">get_missing_architectures</span><span class="p">(</span><span class="n">src_manifest_list</span><span class="p">,</span> <span class="n">dest_manifest_list</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get architectures which are missing from the new source image.</span>
 
 <span class="sd">        NOTE: this method assumes that images are built only for one OS. The following logic</span>
@@ -199,7 +199,7 @@
         <span class="k">return</span> <span class="n">missing_archs</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger._add_missing_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger._add_missing_architectures">[docs]</a>    <span class="k">def</span> <span class="nf">_add_missing_architectures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_manifest_list</span><span class="p">,</span> <span class="n">missing_archs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Add missing architectures to the source manifest list.</span>
 
 <span class="sd">        Args:</span>
@@ -216,7 +216,7 @@
         <span class="k">return</span> <span class="n">new_manifest_list</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.merge_manifest_lists_selected_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists_selected_architectures">[docs]</a>    <span class="k">def</span> <span class="nf">merge_manifest_lists_selected_architectures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eligible_archs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Merge manifests lists. Only specified archs are eligible for merging.</span>
 
 <span class="sd">        This is an alternate workflow used in &#39;tag-docker&#39;.</span>

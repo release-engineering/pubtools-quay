@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.untag_images</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.untag_images</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -115,7 +115,7 @@
 
 
 <span class="k">def</span> <span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Construct a kwargs dictionary based on the entered command line arguments.</span>
 
 <span class="sd">    Args:</span>
@@ -141,7 +141,7 @@
 
 
 <span class="k">def</span> <span class="nf">verify_untag_images_args</span><span class="p">(</span><span class="n">references</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the presence and correctness of input parameters.</span>
 
 <span class="sd">    Args:</span>
@@ -167,7 +167,7 @@
     <span class="n">quay_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Untag images from Quay.</span>
 
 <span class="sd">    Args:</span>
@@ -193,12 +193,12 @@
 
 
 <span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">UNTAG_IMAGES_ARGS</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">untag_images_main</span><span class="p">(</span><span class="n">sysargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entrypoint for untagging images.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for untagging images.&quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">setup_args</span><span class="p">()</span>

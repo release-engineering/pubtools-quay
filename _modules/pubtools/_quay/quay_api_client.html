@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.quay_api_client</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.quay_api_client</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -81,10 +81,10 @@
 
 
 <div class="viewcode-block" id="QuayApiClient"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient">[docs]</a><span class="k">class</span> <span class="nc">QuayApiClient</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class for performing Quay REST API queries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for performing Quay REST API queries.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="QuayApiClient.__init__"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -98,7 +98,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">set_auth_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuayApiClient.delete_tag"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.delete_tag">[docs]</a>    <span class="k">def</span> <span class="nf">delete_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete a tag from a repository.</span>
 
 <span class="sd">        Args:</span>
@@ -122,7 +122,7 @@
         <span class="k">return</span> <span class="n">response</span></div>
 
 <div class="viewcode-block" id="QuayApiClient.delete_repository"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.delete_repository">[docs]</a>    <span class="k">def</span> <span class="nf">delete_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete a Quay repository.</span>
 
 <span class="sd">        Args:</span>

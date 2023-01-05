@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.image_untagger</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.image_untagger</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -83,7 +83,7 @@
 
 
 <div class="viewcode-block" id="ImageUntagger"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger">[docs]</a><span class="k">class</span> <span class="nc">ImageUntagger</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class containing logic for untagging images and deciding if they should be untagged.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class containing logic for untagging images and deciding if they should be untagged.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ImageUntagger.__init__"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -94,7 +94,7 @@
         <span class="n">quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -131,7 +131,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span><span class="n">quay_api_token</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ImageUntagger.set_quay_client"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.set_quay_client">[docs]</a>    <span class="k">def</span> <span class="nf">set_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set client instance to be used for the HTTP API operations.</span>
 
 <span class="sd">        Args:</span>
@@ -141,7 +141,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span> <span class="o">=</span> <span class="n">quay_client</span></div>
 
 <div class="viewcode-block" id="ImageUntagger.get_repository_tags_mapping"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.get_repository_tags_mapping">[docs]</a>    <span class="k">def</span> <span class="nf">get_repository_tags_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a mapping of which tags would be removed from given repos based on provided refs.</span>
 
 <span class="sd">        Returns ({str: [str]}):</span>
@@ -158,7 +158,7 @@
         <span class="k">return</span> <span class="n">repo_tag_mapping</span></div>
 
 <div class="viewcode-block" id="ImageUntagger.construct_tag_digest_mappings"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.construct_tag_digest_mappings">[docs]</a>    <span class="k">def</span> <span class="nf">construct_tag_digest_mappings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a mappings of tags-&gt;digests as well as digests-&gt;tags.</span>
 
 <span class="sd">        Tags-&gt;digests mapping answers the question &quot;Which digests does a given tag reference?&quot;.</span>
@@ -207,7 +207,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">tag_digest_mapping</span><span class="p">,</span> <span class="n">digest_tag_mapping</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ImageUntagger.get_lost_digests"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.get_lost_digests">[docs]</a>    <span class="k">def</span> <span class="nf">get_lost_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">,</span> <span class="n">tag_digest_mapping</span><span class="p">,</span> <span class="n">digest_tag_mapping</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Calculate a list of digests that would be lost if the provided tags were removed.</span>
 
 <span class="sd">        Args:</span>
@@ -237,7 +237,7 @@
         <span class="k">return</span> <span class="n">lost_digests</span></div>
 
 <div class="viewcode-block" id="ImageUntagger.untag_images"><a class="viewcode-back" href="../../../image_untagger.html#pubtools._quay.image_untagger.ImageUntagger.untag_images">[docs]</a>    <span class="k">def</span> <span class="nf">untag_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determine if the specified tags may be removed and remove them.</span>
 
 <span class="sd">        Returns ([str]):</span>

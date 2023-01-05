@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.push_docker</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.push_docker</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -99,12 +99,12 @@
 
 
 <div class="viewcode-block" id="PushDocker"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker">[docs]</a><span class="k">class</span> <span class="nc">PushDocker</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Handle full Docker push workflow.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle full Docker push workflow.&quot;&quot;&quot;</span>
 
     <span class="n">ImageData</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ImageData&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;tag&quot;</span><span class="p">,</span> <span class="s2">&quot;digest&quot;</span><span class="p">,</span> <span class="s2">&quot;v2s1_digest&quot;</span><span class="p">])</span>
 
 <div class="viewcode-block" id="PushDocker.__init__"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -134,7 +134,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
@@ -145,7 +145,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayApiClient for dest image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayApiClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span>
@@ -153,7 +153,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span>
 
 <div class="viewcode-block" id="PushDocker.verify_target_settings"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.verify_target_settings">[docs]</a>    <span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Verify that target settings contains all the necessary data.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify that target settings contains all the necessary data.&quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying the necessary target settings&quot;</span><span class="p">)</span>
         <span class="n">required_settings</span> <span class="o">=</span> <span class="p">[</span>
             <span class="s2">&quot;source_quay_user&quot;</span><span class="p">,</span>
@@ -185,7 +185,7 @@
 
 <div class="viewcode-block" id="PushDocker.get_docker_push_items"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_docker_push_items">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Get container push items&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_docker_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter push items to only include docker ones.</span>
 
 <span class="sd">        Also, Check the validity of these items and raise an exception in case of incorrect data.</span>
@@ -225,7 +225,7 @@
 
 <div class="viewcode-block" id="PushDocker.get_operator_push_items"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_operator_push_items">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Get operator push items&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">get_operator_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter out push items to only include operator ones.</span>
 
 <span class="sd">        Also, Check the validity of these items and raise an exception in case of incorrect data.</span>
@@ -262,7 +262,7 @@
 
 <div class="viewcode-block" id="PushDocker.get_repo_metadata"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_repo_metadata">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_repo_metadata</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Invoke the &#39;get-repo-metadata&#39; entrypoint from pubtools-pyxis.</span>
 
 <span class="sd">        Args:</span>
@@ -292,7 +292,7 @@
 
 <div class="viewcode-block" id="PushDocker.check_repos_validity"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.check_repos_validity">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">check_repos_validity</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check if specified repos are valid and pushing to them is allowed.</span>
 
 <span class="sd">        Specifically, this method checks if the repo exists in Comet and if it&#39;s not deprecated</span>
@@ -360,7 +360,7 @@
 
 <div class="viewcode-block" id="PushDocker.generate_backup_mapping"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.generate_backup_mapping">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Generate backup mapping&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">generate_backup_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create resources which will be used for rollback if something goes wrong during the push.</span>
 
 <span class="sd">        Specifically, create two resources: &#39;backup_tags&#39; and &#39;rollback_tags&#39;.</span>
@@ -452,7 +452,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PushDocker._poll_tag_inconsistency"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker._poll_tag_inconsistency">[docs]</a>    <span class="k">def</span> <span class="nf">_poll_tag_inconsistency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">poll_rate</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">120</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Resolve an inconsistency between repo tags reported by Docker API and tag actually existing.</span>
 
 <span class="sd">        This scenario occurs when Docker API claims that a tag exists, but attempting to get the</span>
@@ -503,7 +503,7 @@
 
 <div class="viewcode-block" id="PushDocker.rollback"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.rollback">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Perform rollback&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a rollback.</span>
 
 <span class="sd">        Args:</span>
@@ -545,7 +545,7 @@
         <span class="n">claim_messages</span><span class="p">,</span>
         <span class="n">ii_claim_messages</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove signatures of containers for tags which were overwritten in the current push.</span>
 
 <span class="sd">        Method fetches all existing signatures for digests in backup tags. Only signatures with</span>
@@ -649,7 +649,7 @@
                 <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_fetch_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">media_type</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fetch digest of repo and tag for given media type.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch digest of repo and tag for given media type.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            repo(str):</span>
@@ -674,7 +674,7 @@
         <span class="k">return</span> <span class="n">digest</span>
 
     <span class="k">def</span> <span class="nf">fetch_missing_push_items_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fetch digests for media types which weren&#39;t originally pushed.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch digests for media types which weren&#39;t originally pushed.</span>
 
 <span class="sd">        In order to be able to sign v2s1 for images which were pushed as</span>
 <span class="sd">        v2s2 or to sign v2s2 for images which were pushed as v2s1</span>
@@ -718,7 +718,7 @@
                             <span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_digest</span><span class="p">(</span><span class="n">internal_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mtype</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PushDocker.run"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the full push-docker workflow.</span>
 
 <span class="sd">        The workflow can be summarized as:</span>
@@ -821,7 +821,7 @@
 
 
 <span class="k">def</span> <span class="nf">mod_entry_point</span><span class="p">(</span><span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">push</span> <span class="o">=</span> <span class="n">PushDocker</span><span class="p">(</span><span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">)</span>
     <span class="n">push</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>

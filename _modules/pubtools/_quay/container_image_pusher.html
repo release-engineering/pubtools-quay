@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.container_image_pusher</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.container_image_pusher</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -96,14 +96,14 @@
 
 
 <div class="viewcode-block" id="ContainerImagePusher"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher">[docs]</a><span class="k">class</span> <span class="nc">ContainerImagePusher</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Push container images to Quay.</span>
 
 <span class="sd">    No validation is performed, push items are expected to be correct.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.__init__"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -121,7 +121,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_user&quot;</span><span class="p">],</span>
@@ -132,7 +132,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
@@ -143,7 +143,7 @@
 
 <div class="viewcode-block" id="ContainerImagePusher.run_tag_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_tag_images">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">run_tag_images</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prepare the &quot;tag images&quot; entrypoint with all the necessary arguments and run it.</span>
 
 <span class="sd">        NOTE: Tagging operation will run with retries to compensate for transient</span>
@@ -187,7 +187,7 @@
         <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_prepare_dest_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Prepare destination references for push.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare destination references for push.</span>
 
 <span class="sd">        Construct destination references based on tags and repo of push item.</span>
 
@@ -213,7 +213,7 @@
         <span class="k">return</span> <span class="n">dest_refs</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
 
 <span class="sd">        Args:</span>
@@ -227,7 +227,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">copy_v1_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">is_source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the tagging operation for a push item containing a v1 image.</span>
 
 <span class="sd">        Args:</span>
@@ -242,7 +242,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform Docker push and manifest list merge workflow.</span>
 
 <span class="sd">        The difference in this workflow is that all single arch images are first copied via</span>
@@ -283,7 +283,7 @@
             <span class="n">merger</span><span class="o">.</span><span class="n">merge_manifest_lists</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate the correct tagging and manifest list merging strategy of multiarch push item.</span>
 
 <span class="sd">        There are two workflows of multiarch images: Simple copying, or manifest list merging.</span>
@@ -360,7 +360,7 @@
 
 <div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push images to Quay&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Push container images to Quay.</span>
 
 <span class="sd">        Two image types are supported: source images and multiarch images. Non-source, single arch</span>
@@ -369,7 +369,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">def</span> <span class="nf">push_container_image</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
-            <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Push container images to Quay.</span>
 
 <span class="sd">            Args:</span>

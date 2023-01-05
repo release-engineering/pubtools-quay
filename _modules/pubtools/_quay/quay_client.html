@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.quay_client</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.quay_client</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -93,14 +93,14 @@
 
 
 <div class="viewcode-block" id="QuayClient"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient">[docs]</a><span class="k">class</span> <span class="nc">QuayClient</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class for performing Docker HTTP API operations with the Quay registry.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for performing Docker HTTP API operations with the Quay registry.&quot;&quot;&quot;</span>
 
     <span class="n">MANIFEST_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>
     <span class="n">MANIFEST_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>
     <span class="n">MANIFEST_V2S1_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v1+json&quot;</span>
 
 <div class="viewcode-block" id="QuayClient.__init__"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -116,7 +116,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">QuaySession</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuayClient.get_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get manifest of given media type.</span>
 
 <span class="sd">        Args:</span>
@@ -183,7 +183,7 @@
             <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="QuayClient.get_manifest_digest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest_digest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get manifest of the specified image and calculate its digest by hashing it.</span>
 
 <span class="sd">        Args:</span>
@@ -210,7 +210,7 @@
         <span class="k">return</span> <span class="s2">&quot;sha256:</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">digest</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuayClient.upload_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.upload_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">upload_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Upload manifest to a specified image.</span>
 
 <span class="sd">        All manifest types are supported (manifest, manifest list).</span>
@@ -241,7 +241,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuayClient.get_repository_tags"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_repository_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_repository_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get tags of a provided repository.</span>
 
 <span class="sd">        Args:</span>
@@ -274,7 +274,7 @@
             <span class="k">return</span> <span class="n">tags</span></div>
 
 <div class="viewcode-block" id="QuayClient._request_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._request_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_request_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{}):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a Docker HTTP API request on Quay registry. Handle authentication.</span>
 
 <span class="sd">        Args:</span>
@@ -305,7 +305,7 @@
         <span class="k">return</span> <span class="n">r</span></div>
 
 <div class="viewcode-block" id="QuayClient._authenticate_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._authenticate_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_authenticate_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Attempt to perform an authentication with registry&#39;s authentication server.</span>
 
 <span class="sd">        Once authentication is complete, add the token to the Session object.</span>
@@ -355,7 +355,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">set_auth_token</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;token&quot;</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="QuayClient._parse_and_validate_image_url"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url">[docs]</a>    <span class="k">def</span> <span class="nf">_parse_and_validate_image_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract image repository + reference from an image and validate its data.</span>
 
 <span class="sd">        Args:</span>

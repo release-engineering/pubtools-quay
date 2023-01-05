@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.signature_handler</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.signature_handler</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -93,12 +93,12 @@
 
 
 <div class="viewcode-block" id="SignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">SignatureHandler</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Base class implementing operations common for container and operator signing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class implementing operations common for container and operator signing.&quot;&quot;&quot;</span>
 
     <span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span> <span class="o">=</span> <span class="mi">50</span>
 
 <div class="viewcode-block" id="SignatureHandler.__init__"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -130,7 +130,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_user&quot;</span><span class="p">],</span>
@@ -141,7 +141,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
@@ -154,7 +154,7 @@
     <span class="k">def</span> <span class="nf">create_manifest_claim_message</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">destination_repo</span><span class="p">,</span> <span class="n">signature_key</span><span class="p">,</span> <span class="n">manifest_digest</span><span class="p">,</span> <span class="n">docker_reference</span><span class="p">,</span> <span class="n">image_name</span><span class="p">,</span> <span class="n">task_id</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct a manifest claim (image signature) as well as a message to send to RADAS.</span>
 
 <span class="sd">        Constructed signature adheres to the following standard:</span>
@@ -202,7 +202,7 @@
         <span class="k">return</span> <span class="n">message</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.get_tagged_image_digests"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.get_tagged_image_digests">[docs]</a>    <span class="k">def</span> <span class="nf">get_tagged_image_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get all digests referenced by a tagged image.</span>
 
 <span class="sd">        There will only be one digest in case of single-arch image (source image), or multiple</span>
@@ -232,7 +232,7 @@
         <span class="k">return</span> <span class="n">digests</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.get_signatures_from_pyxis"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_pyxis">[docs]</a>    <span class="k">def</span> <span class="nf">get_signatures_from_pyxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manifest_digests</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get existing signatures from Pyxis based on the specified criteria (currently only digests).</span>
 
 <span class="sd">        NOTE: In the current implementation, only manifest digests are being used to search for</span>
@@ -278,7 +278,7 @@
                 <span class="k">yield</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.remove_duplicate_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.remove_duplicate_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">remove_duplicate_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove claim messages which could be considered &#39;duplicates&#39;, containing the same data.</span>
 
 <span class="sd">        Args:</span>
@@ -306,7 +306,7 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">unique_message_mapping</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.filter_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.filter_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">filter_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter out the manifest claim messages which are already in the sigstore.</span>
 
 <span class="sd">        Args:</span>
@@ -353,7 +353,7 @@
         <span class="k">return</span> <span class="n">filtered_claim_messages</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.get_signatures_from_radas"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas">[docs]</a>    <span class="k">def</span> <span class="nf">get_signatures_from_radas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Send signature claims to RADAS via UMB and receive signed claims.</span>
 
 <span class="sd">        The messaging logic is handled by the ManifestClaimsHandler class.</span>
@@ -397,7 +397,7 @@
         <span class="k">return</span> <span class="n">runner</span><span class="o">.</span><span class="n">received_messages</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.upload_signatures_to_pyxis"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis">[docs]</a>    <span class="k">def</span> <span class="nf">upload_signatures_to_pyxis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_mesages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.</span>
 
 <span class="sd">        Data required for a Pyxis POST request:</span>
@@ -457,7 +457,7 @@
             <span class="p">)</span></div>
 
 <div class="viewcode-block" id="SignatureHandler.validate_radas_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages">[docs]</a>    <span class="k">def</span> <span class="nf">validate_radas_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">,</span> <span class="n">signature_messages</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check if messages received from RADAS contain any errors.</span>
 
 <span class="sd">        Args:</span>
@@ -490,10 +490,10 @@
 
 
 <div class="viewcode-block" id="ContainerSignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">ContainerSignatureHandler</span><span class="p">(</span><span class="n">SignatureHandler</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Class for handling the signing of container images.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for handling the signing of container images.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="ContainerSignatureHandler.construct_item_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler.construct_item_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">construct_item_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct all the signature claim messages for RADAS for one push item.</span>
 
 <span class="sd">        push_item (ContainerPushItem):</span>
@@ -530,7 +530,7 @@
         <span class="k">return</span> <span class="n">claim_messages</span></div>
 
 <div class="viewcode-block" id="ContainerSignatureHandler.construct_variant_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler.construct_variant_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">construct_variant_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">digest</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct claim messages for all specified variations of a given image.</span>
 
 <span class="sd">        The variations are customer visible destination registry and signing key.</span>
@@ -569,7 +569,7 @@
 
 <div class="viewcode-block" id="ContainerSignatureHandler.sign_container_images"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.ContainerSignatureHandler.sign_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Sign container images&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">sign_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform all the steps needed to sign the images of specified push items.</span>
 
 <span class="sd">        The workflow can be summarized as:</span>
@@ -607,7 +607,7 @@
 
     <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Sign container images&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">sign_container_images_new_digests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sign digests for manifest types which haven&#39;t existed before the push.</span>
 
 <span class="sd">        Manifest types which are not pushed in the push items can be fetched</span>
@@ -647,10 +647,10 @@
 
 
 <div class="viewcode-block" id="OperatorSignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">OperatorSignatureHandler</span><span class="p">(</span><span class="n">SignatureHandler</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Class for handling the signing of index images.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for handling the signing of index images.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="OperatorSignatureHandler.construct_index_image_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">construct_index_image_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">tags</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct signature claim messages for RADAS for the specified index image.</span>
 
 <span class="sd">        index_image (str):</span>
@@ -700,7 +700,7 @@
 
 <div class="viewcode-block" id="OperatorSignatureHandler.sign_operator_images"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.sign_operator_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Sign operator images&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">sign_operator_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iib_results</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform all the steps needed to sign the newly constructed index images.</span>
 
 <span class="sd">        Sigstore is not checked for existing signatures, as there&#39;s no way any could exist for a</span>
@@ -745,7 +745,7 @@
         <span class="k">return</span> <span class="n">claim_messages</span></div>
 
 <div class="viewcode-block" id="OperatorSignatureHandler.sign_task_index_image"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.OperatorSignatureHandler.sign_task_index_image">[docs]</a>    <span class="k">def</span> <span class="nf">sign_task_index_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform an alternatve signing workflow used by IIB methods in pub.</span>
 
 <span class="sd">        This workflow is used by methods &#39;PushAddIIBBundles&#39;, &#39;PushRemoveIIBOperators&#39;,</span>
@@ -775,10 +775,10 @@
 
 
 <div class="viewcode-block" id="BasicSignatureHandler"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler">[docs]</a><span class="k">class</span> <span class="nc">BasicSignatureHandler</span><span class="p">(</span><span class="n">SignatureHandler</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Class that handles signing claims which were constructed by user.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that handles signing claims which were constructed by user.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BasicSignatureHandler.sign_claim_messages"><a class="viewcode-back" href="../../../signature_handler.html#pubtools._quay.signature_handler.BasicSignatureHandler.sign_claim_messages">[docs]</a>    <span class="k">def</span> <span class="nf">sign_claim_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">claim_messages</span><span class="p">,</span> <span class="n">remove_duplicates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sign claim messages that were provided by the user and upload them to Pyxis.</span>
 
 <span class="sd">        Args:</span>

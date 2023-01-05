@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.utils.misc</li>
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.utils.misc</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -95,7 +95,7 @@
 
 
 <div class="viewcode-block" id="setup_arg_parser"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.setup_arg_parser">[docs]</a><span class="k">def</span> <span class="nf">setup_arg_parser</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up ArgumentParser with the provided arguments.</span>
 
 <span class="sd">    Args:</span>
@@ -131,7 +131,7 @@
 
 
 <div class="viewcode-block" id="add_args_env_variables"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.add_args_env_variables">[docs]</a><span class="k">def</span> <span class="nf">add_args_env_variables</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Add argument values from environment variables.</span>
 
 <span class="sd">    Args:</span>
@@ -152,7 +152,7 @@
 
 <div class="viewcode-block" id="capture_stdout"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.capture_stdout">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
 <span class="k">def</span> <span class="nf">capture_stdout</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Capture sys.stdout to stream buffer.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture sys.stdout to stream buffer.&quot;&quot;&quot;</span>
     <span class="n">old_stdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">new_stdout</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
 
@@ -164,7 +164,7 @@
 
 <div class="viewcode-block" id="setup_entry_point_cli"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.setup_entry_point_cli">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
 <span class="k">def</span> <span class="nf">setup_entry_point_cli</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Set up an entrypoint as a context manager.</span>
 
 <span class="sd">    Args:</span>
@@ -201,7 +201,7 @@
 
 
 <div class="viewcode-block" id="run_entrypoint"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.run_entrypoint">[docs]</a><span class="k">def</span> <span class="nf">run_entrypoint</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run an entrypoint function and return its return value.</span>
 
 <span class="sd">    Args:</span>
@@ -238,7 +238,7 @@
 
 
 <div class="viewcode-block" id="get_internal_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_internal_container_repo_name">[docs]</a><span class="k">def</span> <span class="nf">get_internal_container_repo_name</span><span class="p">(</span><span class="n">external_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Transform a repository name to an internal form in which it exists on Quay.io.</span>
 
 <span class="sd">    Expected input format: &lt;namespace&gt;/&lt;product&gt;</span>
@@ -267,7 +267,7 @@
 
 
 <div class="viewcode-block" id="get_external_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_external_container_repo_name">[docs]</a><span class="k">def</span> <span class="nf">get_external_container_repo_name</span><span class="p">(</span><span class="n">internal_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Transform a repository name to an external form in which it&#39;s visible to customers.</span>
 
 <span class="sd">    Expected input format: &lt;namespace&gt;----&lt;product&gt;</span>
@@ -300,12 +300,12 @@
 
 
 <div class="viewcode-block" id="task_status"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.task_status">[docs]</a><span class="k">def</span> <span class="nf">task_status</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper function. Expand as necessary.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function. Expand as necessary.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">event</span><span class="p">})</span></div>
 
 
 <div class="viewcode-block" id="log_step"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.log_step">[docs]</a><span class="k">def</span> <span class="nf">log_step</span><span class="p">(</span><span class="n">step_name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Log status for methods which constitute an entire task step.</span>
 
 <span class="sd">    Args:</span>
@@ -332,7 +332,7 @@
 
 
 <div class="viewcode-block" id="get_pyxis_ssl_paths"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_pyxis_ssl_paths">[docs]</a><span class="k">def</span> <span class="nf">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get certificate and key paths for Pyxis SSL authentication.</span>
 
 <span class="sd">    First attempt is made by invoking the hook implementation &#39;get_cert_key_paths&#39;.</span>
@@ -364,12 +364,12 @@
 
 
 <div class="viewcode-block" id="timestamp"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.timestamp">[docs]</a><span class="k">def</span> <span class="nf">timestamp</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Return now() timestamp.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return now() timestamp.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="run_with_retries"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.run_with_retries">[docs]</a><span class="k">def</span> <span class="nf">run_with_retries</span><span class="p">(</span><span class="n">function</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">tries</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">wait_time_increase</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run the specified function until it succeeds or maximum retries are reached.</span>
 
 <span class="sd">    Wait time will increase after every retry, up to a point defined by MAX_RETRY_WAIT.</span>
@@ -406,7 +406,7 @@
 
 
 <div class="viewcode-block" id="retry"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.retry">[docs]</a><span class="k">def</span> <span class="nf">retry</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">tries</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">wait_time_increase</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retry decorated function.</span>
 
 <span class="sd">    Args:</span>
@@ -431,7 +431,7 @@
 
 
 <span class="k">def</span> <span class="nf">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Get registry, namespace and repository of a resolved internal index image.</span>
 
 <span class="sd">    Args:</span>
@@ -447,7 +447,7 @@
 
 
 <span class="k">def</span> <span class="nf">get_basic_auth</span><span class="p">(</span><span class="n">host</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Look for container config file for username and password.</span>
 
 <span class="sd">    Args:</span>

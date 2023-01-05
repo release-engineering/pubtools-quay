@@ -61,9 +61,9 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
-          <li><a href="../../index.html">Module code</a> &raquo;</li>
-      <li>pubtools._quay.quay_session</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.quay_session</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -80,10 +80,10 @@
 
 <span class="c1"># pylint: disable=bad-option-value,useless-object-inheritance</span>
 <div class="viewcode-block" id="QuaySession"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession">[docs]</a><span class="k">class</span> <span class="nc">QuaySession</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Helper class to support Quay requests and authentication.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper class to support Quay requests and authentication.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="QuaySession.__init__"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hostname</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">retries</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">backoff_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">verify</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -119,7 +119,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.get"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        HTTP GET request against Quay server API.</span>
 
 <span class="sd">        Args:</span>
@@ -135,7 +135,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">(</span><span class="n">endpoint</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.post"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.post">[docs]</a>    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        HTTP POST request against Quay server API.</span>
 
 <span class="sd">        Args:</span>
@@ -151,7 +151,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">(</span><span class="n">endpoint</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.put"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.put">[docs]</a>    <span class="k">def</span> <span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        HTTP PUT request against Quay server API.</span>
 
 <span class="sd">        Args:</span>
@@ -167,7 +167,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">(</span><span class="n">endpoint</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.delete"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.delete">[docs]</a>    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        HTTP DELETE request against Quay server API.</span>
 
 <span class="sd">        Args:</span>
@@ -183,7 +183,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">(</span><span class="n">endpoint</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.request"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.request">[docs]</a>    <span class="k">def</span> <span class="nf">request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        HTTP generic request against Quay server API.</span>
 
 <span class="sd">        Args:</span>
@@ -201,7 +201,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_url</span><span class="p">(</span><span class="n">endpoint</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession._api_url"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession._api_url">[docs]</a>    <span class="k">def</span> <span class="nf">_api_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate full url of the API endpoint.</span>
 
 <span class="sd">        Args:</span>
@@ -221,7 +221,7 @@
             <span class="k">return</span> <span class="n">schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span> <span class="n">endpoint</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuaySession.set_auth_token"><a class="viewcode-back" href="../../../quay_session.html#pubtools._quay.quay_session.QuaySession.set_auth_token">[docs]</a>    <span class="k">def</span> <span class="nf">set_auth_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set a Bearer auth token for the authentication.</span>
 
 <span class="sd">        Args:</span>
