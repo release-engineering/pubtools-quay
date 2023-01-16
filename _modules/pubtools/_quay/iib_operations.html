@@ -179,7 +179,7 @@
     <span class="n">_</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
     <span class="p">)</span>
@@ -215,14 +215,23 @@
     <span class="p">)</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="c1"># Push image to Quay</span>
+    <span class="c1"># Copy target settings and override username and password for quay_operator_namespace</span>
+    <span class="n">index_image_ts</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_user&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_password&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
@@ -233,7 +242,7 @@
         <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
 
     <span class="n">signature_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">]</span>
@@ -284,7 +293,7 @@
     <span class="n">_</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
     <span class="p">)</span>
@@ -321,14 +330,23 @@
     <span class="p">)</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="c1"># Push image to Quay</span>
+    <span class="c1"># Copy target settings and override username and password for quay_operator_namespace</span>
+    <span class="n">index_image_ts</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_user&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_password&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
@@ -339,7 +357,7 @@
         <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
 
     <span class="n">signature_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">]</span>
@@ -388,7 +406,7 @@
 
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">index_image_tag</span><span class="p">,</span>
     <span class="p">)</span>
@@ -404,7 +422,7 @@
     <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
@@ -418,8 +436,15 @@
     <span class="p">)</span>
 
     <span class="c1"># Push image to Quay</span>
+    <span class="n">index_image_ts</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_user&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;index_image_quay_password&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
@@ -430,7 +455,7 @@
         <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">target_settings</span>
+        <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span></div>
 
 

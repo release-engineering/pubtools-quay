@@ -130,6 +130,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="o">=</span> <span class="kc">None</span></div>
 
     <span class="nd">@property</span>
@@ -142,6 +143,21 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dest_operator_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;index_image_quay_user&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="s2">&quot;index_image_quay_password&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
+                <span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -780,7 +796,9 @@
             <span class="n">operator_pusher</span> <span class="o">=</span> <span class="n">OperatorPusher</span><span class="p">(</span>
                 <span class="n">operator_push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
             <span class="p">)</span>
-            <span class="n">existing_index_images</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
+            <span class="n">existing_index_images</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">get_existing_index_images</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dest_operator_quay_client</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">ensure_bundles_present</span><span class="p">():</span>
                 <span class="n">iib_results</span> <span class="o">=</span> <span class="n">operator_pusher</span><span class="o">.</span><span class="n">build_index_images</span><span class="p">()</span>
             <span class="k">else</span><span class="p">:</span>
