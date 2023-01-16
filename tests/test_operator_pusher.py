@@ -433,6 +433,88 @@ def test_push_operators(
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+def test_push_operators_extra_ns(
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    mock_run_tag_images,
+    target_settings,
+    operator_push_item_ok,
+    operator_push_item_different_version,
+    fake_cert_key_paths,
+):
+    """Test if extra namespace is used in tagging when is set in target settings"""
+
+    target_settings["quay_operator_namespace"] = "quay-operator-ns"
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
+        [{"ocp_version": "4.7"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/ns/index-image:5",
+            "some-registry.com/ns/iib@sha256:a1a1",
+            ["v4.5-3"],
+        ),
+        IIBRes(
+            "some-registry.com/ns/index-image:6",
+            "some-registry.com/ns/iib@sha256:b2b2",
+            ["v4.6-3"],
+        ),
+        IIBRes(
+            "some-registry.com/ns/index-image:7",
+            "some-registry.com/ns/iib@sha256:c3c3",
+            ["v4.7-3"],
+        ),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_ok, operator_push_item_different_version], "3", target_settings
+    )
+
+    results = pusher.build_index_images()
+
+    pusher.push_index_images(results)
+
+    assert mock_run_tag_images.call_count == 3
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/ns/index-image:5",
+                ["quay.io/quay-operator-ns/operators----index-image:5"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/ns/index-image:6",
+                ["quay.io/quay-operator-ns/operators----index-image:6"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/ns/index-image:7",
+                ["quay.io/quay-operator-ns/operators----index-image:7"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+
+
+@mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 def test_push_operators_not_all_successful(
     mock_get_deprecation_list,
     mock_run_entrypoint,
