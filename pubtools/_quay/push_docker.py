@@ -6,14 +6,19 @@ from time import sleep
 import requests
 
 from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository, ManifestNotFoundError
-from .utils.misc import run_entrypoint, get_internal_container_repo_name, log_step
+from .utils.misc import get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
-from .utils.misc import get_external_container_repo_name, get_pyxis_ssl_paths, timestamp
+from .utils.misc import (
+    get_external_container_repo_name,
+    get_pyxis_ssl_paths,
+    timestamp,
+    pyxis_get_repo_metadata,
+)
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -202,36 +207,6 @@ class PushDocker:
         return operator_push_items
 
     @classmethod
-    def get_repo_metadata(cls, repo, target_settings):
-        """
-        Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.
-
-        Args:
-            repo (str):
-                Repository to get the metadata of.
-            target_settings (dict):
-                Settings used for setting the values of the entrypoint parameters.
-
-        Returns (dict):
-            Parsed response from Pyxis.
-        """
-        cert, key = get_pyxis_ssl_paths(target_settings)
-
-        args = ["--pyxis-server", target_settings["pyxis_server"]]
-        args += ["--pyxis-ssl-crtfile", cert]
-        args += ["--pyxis-ssl-keyfile", key]
-        args += ["--repo-name", repo]
-
-        env_vars = {}
-        metadata = run_entrypoint(
-            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
-            "pubtools-pyxis-get-repo-metadata",
-            args,
-            env_vars,
-        )
-        return metadata
-
-    @classmethod
     def check_repos_validity(cls, push_items, hub, target_settings):
         """
         Check if specified repos are valid and pushing to them is allowed.
@@ -272,7 +247,7 @@ class PushDocker:
                 LOG.info("Checking validity of repository metadata '{0}'".format(repo))
                 # Check if repo exists in Pyxis
                 try:
-                    metadata = cls.get_repo_metadata(repo, target_settings)
+                    metadata = pyxis_get_repo_metadata(repo, target_settings)
                     # Check if repo is not deprecated
                     if "Deprecated" in metadata.get("release_categories", []):
                         raise InvalidRepository("Repository {0} is deprecated".format(repo))
@@ -729,16 +704,21 @@ class PushDocker:
             else:
                 iib_results = {}
             # Sign operator images
+
+            failed_items = [item for item in operator_push_items if item.errors]
             successful_iib_results = dict(
                 [(key, val) for key, val in iib_results.items() if val["iib_result"]]
             )
             ii_manifest_claims += operator_signature_handler.sign_operator_images(
                 successful_iib_results, index_stamp
             )
-            # Push index images to Quay
-            operator_pusher.push_index_images(successful_iib_results, index_stamp)
-            # Rollback only when all index image builds fails
-            if not any([x["iib_result"] for x in iib_results.values()]):
+            # If there are any failed items, skip pushing
+            if not failed_items:
+                # Push index images to Quay
+                operator_pusher.push_index_images(successful_iib_results, index_stamp)
+
+            # Rollback only when all index image builds fails or there are failed items
+            if not any([x["iib_result"] for x in iib_results.values()]) or failed_items:
                 LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
                 sys.exit(1)
