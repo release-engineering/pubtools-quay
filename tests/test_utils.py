@@ -5,7 +5,6 @@ import pytest
 import requests_mock
 import requests
 import os
-import six
 
 from pubtools._quay import exceptions
 from pubtools._quay.utils import misc
@@ -166,7 +165,7 @@ def test_retry(mock_timestamp, mock_sleep):
 
 
 @mock.patch(
-    "six.moves.builtins.open",
+    "builtins.open",
     new_callable=mock.mock_open,
     read_data='{"auths": {"registry": {"auth": "dXNlcjpwYXNz"}}}',
 )
