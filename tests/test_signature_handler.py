@@ -825,7 +825,6 @@ def test_sign_operator_images_not_allowed(
     mock_upload_signatures_to_pyxis,
     target_settings,
 ):
-
     hub = mock.MagicMock()
     target_settings["docker_settings"]["docker_container_signing_enabled"] = False
 

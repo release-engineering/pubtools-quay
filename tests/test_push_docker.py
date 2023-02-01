@@ -944,7 +944,6 @@ def test_poll_tag_inconsistency_found_match(
     target_settings,
     container_multiarch_push_item,
 ):
-
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item],
@@ -983,7 +982,6 @@ def test_poll_tag_inconsistency_tag_doesnt_exist(
     target_settings,
     container_multiarch_push_item,
 ):
-
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item],
@@ -1073,7 +1071,6 @@ def test_poll_tag_inconsistency_server_error(
     target_settings,
     container_multiarch_push_item,
 ):
-
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
         [container_multiarch_push_item],
@@ -1440,6 +1437,7 @@ def test_push_docker_full_no_v2sch2(
     mock_container_signature_handler.return_value.sign_container_images_new_digests = (
         mock_sign_container_images_new_digests
     )
+
     # raise not-found error for v2sch2 manifest which simulates ppc64le only repos (for example)
     def get_manifest_sf(image, media_type):
         if media_type != mock_quay_client.MANIFEST_V2S2_TYPE:

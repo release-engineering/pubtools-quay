@@ -568,7 +568,6 @@ def test_StepSanitizeOperatorPushItems_unsupported_legacy(
     fixture_isodate_now,
     common_external_resources,
 ):  # pylint: disable=unused-argument
-
     shared_results = {}
     push_items = [
         operator_push_item_unkwown_op_type,
@@ -644,7 +643,6 @@ def test_StepSanitizeOperatorPushItems_skip(
 def test_StepSanitizeOperatorPushItems_no_ocp(
     operator_push_item_no_ocp, fixture_isodate_now, common_external_resources
 ):  # pylint: disable=unused-argument
-
     shared_results = {}
     push_items = [operator_push_item_no_ocp]
     common_external_resources.update({"push_items": push_items})

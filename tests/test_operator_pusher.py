@@ -90,7 +90,6 @@ def test_pyxis_generate_mapping(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
-
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
         [{"ocp_version": "4.7"}],

@@ -15,7 +15,6 @@ LOG = logging.getLogger("pubtools.quay")
 
 
 class MessageHandlerTimeoutException(Exception):
-
     pass
 
 
