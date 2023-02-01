@@ -87,7 +87,7 @@
 
 <span class="kn">import</span> <span class="nn">docker</span>
 <span class="kn">import</span> <span class="nn">paramiko</span>
-<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">shlex_quote</span>
+<span class="kn">from</span> <span class="nn">shlex</span> <span class="kn">import</span> <span class="n">quote</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -159,7 +159,7 @@
 
         <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;skopeo login --authfile $HOME/.docker/config.json -u </span><span class="si">{0}</span><span class="s2"> --password-stdin </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">host</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">username</span><span class="p">))</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">username</span><span class="p">))</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
@@ -189,7 +189,7 @@
 
         <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging source &#39;</span><span class="si">{0}</span><span class="s2">&#39; to destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">source_ref</span><span class="p">),</span> <span class="n">shlex_quote</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">source_ref</span><span class="p">),</span> <span class="n">quote</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)))</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Destination image </span><span class="si">{0}</span><span class="s2"> has been tagged.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">))</span>
 
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging complete.&quot;</span><span class="p">)</span></div>
@@ -333,7 +333,7 @@
                 <span class="n">key_filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>  <span class="c1"># nosec B601</span>
+            <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>  <span class="c1"># nosec B601</span>
             <span class="k">if</span> <span class="n">stdin</span><span class="p">:</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">stdin</span><span class="p">)</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">shutdown_write</span><span class="p">()</span>
@@ -521,7 +521,7 @@
         <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot; sh -c &#39;cat /tmp/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json&quot;</span>
             <span class="s1">&#39; -u &quot;</span><span class="si">{0}</span><span class="s1">&quot; --password-stdin </span><span class="si">%s</span><span class="se">\&#39;</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">host</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shlex_quote</span><span class="p">(</span><span class="n">username</span><span class="p">),</span> <span class="n">password_file</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">username</span><span class="p">),</span> <span class="n">password_file</span><span class="p">)</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>

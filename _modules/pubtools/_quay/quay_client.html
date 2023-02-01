@@ -79,12 +79,7 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">from</span> <span class="nn">requests.packages.urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
-
-<span class="c1"># Unfortunately, version of &#39;six&#39; available on RHEL 6 doesn&#39;t cover this redirect</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">urllib2</span> <span class="k">as</span> <span class="nn">request</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
-    <span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span>
 
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">ManifestTypeError</span><span class="p">,</span> <span class="n">RegistryAuthError</span><span class="p">,</span> <span class="n">ManifestNotFoundError</span>
 <span class="kn">from</span> <span class="nn">.quay_session</span> <span class="kn">import</span> <span class="n">QuaySession</span>
