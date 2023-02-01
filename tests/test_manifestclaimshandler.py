@@ -130,7 +130,6 @@ def test_logs_ignored_message(handler, debug_logs):
 
 @patch("monotonic.monotonic")
 def test_awaiting_response_time_out(fake_timer, handler, caplog):
-
     handler.timeout = 10
     handler.connected = True
     handler.awaiting_response = {"request_id1": 43190}
