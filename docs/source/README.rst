@@ -16,7 +16,6 @@ The internal service which utilizes this library is called "rcm-pub" (hence pubt
 Requirements
 ============
 
-- Python 2.6+
 - Python 3.5+
 - Skopeo is required for the tagging operation
 

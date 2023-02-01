@@ -11,7 +11,6 @@ from pubtools._quay.exceptions import ManifestNotFoundError
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
 def test_init(mock_session):
-
     client = quay_client.QuayClient("user", "pass", "stage.quay.io")
 
     assert client.username == "user"
@@ -21,7 +20,6 @@ def test_init(mock_session):
 
 @mock.patch("pubtools._quay.quay_client.QuaySession")
 def test_parse_image(mock_session):
-
     client = quay_client.QuayClient("user", "pass", "stage.quay.io")
 
     repo, ref = client._parse_and_validate_image_url("quay.io/name/image:1")

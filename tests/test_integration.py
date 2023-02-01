@@ -625,7 +625,6 @@ def test_tag_docker_multiarch_merge_ml(
     src_manifest_list_missing["manifests"] = src_manifest_list_missing["manifests"][:2]
 
     with requests_mock.Mocker() as m:
-
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.5",
             json=src_manifest_list,
@@ -785,7 +784,6 @@ def test_tag_docker_source_copy_untag(
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
 
     with requests_mock.Mocker() as m:
-
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.5",
             json=v2s2_manifest_data,
@@ -1090,7 +1088,6 @@ def test_clear_repo(
     mock_run_entrypoint_signature_remover,
     src_manifest_list,
 ):
-
     mock_run_entrypoint_signature_remover.return_value = [
         {
             "reference": "registry.com/namespace/namespace----repo1:1",
@@ -1170,7 +1167,6 @@ def test_remove_repo(
     mock_run_entrypoint_signature_remover,
     src_manifest_list,
 ):
-
     mock_run_entrypoint_signature_remover.return_value = [
         {
             "reference": "registry.com/namespace/namespace----repo1:1",
