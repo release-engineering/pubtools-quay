@@ -4,12 +4,7 @@ import logging
 import requests
 import re
 from requests.packages.urllib3.util.retry import Retry
-
-# Unfortunately, version of 'six' available on RHEL 6 doesn't cover this redirect
-try:
-    import urllib2 as request
-except ImportError:  # pragma: no cover
-    from urllib import request
+from urllib import request
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession

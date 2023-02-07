@@ -6,12 +6,10 @@ except ImportError:
     from unittest import mock
 
 import pytest
-from six import PY3
 
 from pubtools.pluggy import pm, hookimpl, hookspec
 
 from pubtools._quay.utils.logger import Logger
-from .utils.caplog_compat import CapturelogWrapper
 
 # flake8: noqa: E501
 
@@ -35,17 +33,7 @@ def hookspy():
 
 @pytest.fixture
 def caplog(caplog):
-    # Wrapper to make caplog behave the same on py2 and py3.
-
-    if PY3:
-        # In Python 3, you just get exactly the usual pytest caplog fixture
-        # with no changes.
-        return caplog
-
-    # In Python 2, we're using pytest-catchlog instead (due to no pytest version
-    # compatible with python 2.6 having caplog). The API is similar but not
-    # identical. In that case, wrap it to patch over some incompatibilities.
-    return CapturelogWrapper(caplog)
+    return caplog
 
 
 class MockContainerPushItem(object):

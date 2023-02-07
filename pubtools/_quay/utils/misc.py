@@ -10,7 +10,7 @@ import sys
 import textwrap
 import time
 
-from six import StringIO
+from io import StringIO
 from pubtools.pluggy import pm
 
 LOG = logging.getLogger("pubtools.quay")

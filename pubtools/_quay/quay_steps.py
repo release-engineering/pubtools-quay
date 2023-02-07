@@ -1,6 +1,5 @@
 from __future__ import print_function
 import re
-import six
 import pkg_resources
 
 from .utils.stepper import Step, StepFailedError
@@ -274,7 +273,7 @@ class StepBuildBackupMapping(Step):
 
         for index in indexes:
             item = push_items[index]
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 for tag in tags:
                     backup_tags.setdefault(repo, {})[tag] = None
                     rollback_tags.setdefault(repo, {})[tag] = None
@@ -291,7 +290,7 @@ class StepBuildBackupMapping(Step):
         indexes = self._shared_results[container_items_indexes_key].results
         for index in indexes:
             item = push_items[index]
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 log_info("Marking backup for %s" % str(item))
                 self.update_details({"repo": repo, "tags": tags})
                 on_update()
@@ -329,7 +328,7 @@ class StepPushContainerImgs(Step):
         indexes = self._shared_results[container_items_indexes_key].results
         for index in indexes:
             item = push_items[index]
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 items[repo] = {}
                 for tag in tags:
                     items[repo][tag] = {
@@ -380,7 +379,7 @@ class StepSignContainers(Step):
 
         for index in indexes:
             item = push_items[index]
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 items[repo] = {}
                 for tag in tags:
                     items[repo][tag] = {
@@ -406,7 +405,7 @@ class StepSignContainers(Step):
         sign_metadata = []
         for index in indexes:
             item = push_items[index]
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 sign_metadata.append((repo, tags, item.metadata["pull_data"]))
                 log_info("Signing %s %s", repo, tags)
         self._sign_container_items(sign_metadata)
@@ -573,7 +572,7 @@ class StepMergeManifestList(Step):
         items = {}
         self._details = {"items": items}
         for item in push_items:
-            for repo, tags in six.iteritems(item.metadata.get("tags", {})):
+            for repo, tags in item.metadata.get("tags", {}).items():
                 items[repo] = {}
                 for tag in tags:
                     items[repo][tag] = {
