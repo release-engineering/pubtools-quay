@@ -26,14 +26,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../../../../index.html" class="icon icon-home"> pubtools-quay
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            pubtools-quay
           </a>
               <div class="version">
                 0.10.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -61,7 +65,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
       <li class="breadcrumb-item active">pubtools._quay.utils.misc</li>
       <li class="wy-breadcrumbs-aside">
@@ -465,6 +469,36 @@
         <span class="k">if</span> <span class="n">auth</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">auth</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">pyxis_get_repo_metadata</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Invoke the &#39;get-repo-metadata&#39; entrypoint from pubtools-pyxis.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        repo (str):</span>
+<span class="sd">            Repository to get the metadata of.</span>
+<span class="sd">        target_settings (dict):</span>
+<span class="sd">            Settings used for setting the values of the entrypoint parameters.</span>
+
+<span class="sd">    Returns (dict):</span>
+<span class="sd">        Parsed response from Pyxis.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--repo-name&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="p">]</span>
+
+    <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">,</span>
+        <span class="n">args</span><span class="p">,</span>
+        <span class="n">env_vars</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">metadata</span>
 </pre></div>
 
            </div>
