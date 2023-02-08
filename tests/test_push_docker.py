@@ -259,48 +259,7 @@ def test_get_operator_push_item_no_ocp_versions(
         items = push_docker_instance.get_operator_push_items()
 
 
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.QuayClient")
-@mock.patch("pubtools._quay.push_docker.QuayApiClient")
-def test_get_repo_metadata(
-    mock_quay_api_client,
-    mock_quay_client,
-    mock_run_entrypoint,
-    target_settings,
-    container_multiarch_push_item,
-    operator_push_item_ok,
-    fake_cert_key_paths,
-):
-    hub = mock.MagicMock()
-    mock_run_entrypoint.return_value = {"key": "value"}
-    push_docker_instance = push_docker.PushDocker(
-        [container_multiarch_push_item, operator_push_item_ok],
-        hub,
-        "1",
-        "some-target",
-        target_settings,
-    )
-    res = push_docker_instance.get_repo_metadata("some_repo", target_settings)
-
-    assert res == {"key": "value"}
-    mock_run_entrypoint.assert_called_once_with(
-        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
-        "pubtools-pyxis-get-repo-metadata",
-        [
-            "--pyxis-server",
-            "pyxis-url.com",
-            "--pyxis-ssl-crtfile",
-            "/path/to/file.crt",
-            "--pyxis-ssl-keyfile",
-            "/path/to/file.key",
-            "--repo-name",
-            "some_repo",
-        ],
-        {},
-    )
-
-
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_success(
@@ -311,6 +270,7 @@ def test_check_repos_validity_success(
     container_push_item_correct_repos,
     container_signing_push_item,
     container_push_item_external_repos,
+    fake_cert_key_paths,
 ):
     target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
@@ -363,7 +323,7 @@ def test_check_repos_validity_success(
     mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_missing_repo(
@@ -420,7 +380,7 @@ def test_check_repos_validity_missing_repo(
     mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_get_repo_server_error(
@@ -472,7 +432,7 @@ def test_check_repos_validity_get_repo_server_error(
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_deprecated_repo(
@@ -482,6 +442,7 @@ def test_check_repos_validity_deprecated_repo(
     target_settings,
     container_push_item_ok,
     container_signing_push_item,
+    fake_cert_key_paths,
 ):
     target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
@@ -522,7 +483,7 @@ def test_check_repos_validity_deprecated_repo(
     mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.utils.misc.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_deprecated_repo_check_disabled(
@@ -565,7 +526,7 @@ def test_check_repos_validity_deprecated_repo_check_disabled(
     assert mock_get_repo_metadata.call_count == 0
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_missing_stage_repo(
@@ -575,6 +536,7 @@ def test_check_repos_validity_missing_stage_repo(
     target_settings,
     container_push_item_ok,
     container_signing_push_item,
+    fake_cert_key_paths,
 ):
     target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
@@ -627,7 +589,7 @@ def test_check_repos_validity_missing_stage_repo(
     mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
 
 
-@mock.patch("pubtools._quay.push_docker.PushDocker.get_repo_metadata")
+@mock.patch("pubtools._quay.push_docker.pyxis_get_repo_metadata")
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_check_repos_validity_get_stage_repo_server_error(
@@ -637,6 +599,7 @@ def test_check_repos_validity_get_stage_repo_server_error(
     target_settings,
     container_push_item_ok,
     container_signing_push_item,
+    fake_cert_key_paths,
 ):
     target_settings["do_repo_deprecation_check"] = True
     mock_get_target_info = mock.MagicMock()
@@ -682,11 +645,15 @@ def test_check_repos_validity_get_stage_repo_server_error(
 
     mock_get_target_info.assert_called_once_with("target_stage_quay")
     assert mock_get_repo_metadata.call_count == 2
-    mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1")
-    mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2")
+    assert mock_get_repo_metadata.call_args_list[0] == mock.call("namespace/repo1", target_settings)
+    assert mock_get_repo_metadata.call_args_list[1] == mock.call("namespace/repo2", target_settings)
     assert mock_get_repository_tags.call_count == 2
-    mock_get_repository_tags.call_args_list[0] == mock.call("some-namespace/namespace----repo1")
-    mock_get_repository_tags.call_args_list[1] == mock.call("some-namespace/namespace----repo2")
+    assert mock_get_repository_tags.call_args_list[0] == mock.call(
+        "stage_namespace/namespace----repo1"
+    )
+    assert mock_get_repository_tags.call_args_list[1] == mock.call(
+        "stage_namespace/namespace----repo2"
+    )
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")

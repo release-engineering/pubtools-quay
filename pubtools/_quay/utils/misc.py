@@ -390,3 +390,33 @@ def get_basic_auth(host):
         if auth:
             return base64.b64decode(auth).decode().split(":")
     return None, None
+
+
+def pyxis_get_repo_metadata(repo, target_settings):
+    """
+    Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.
+
+    Args:
+        repo (str):
+            Repository to get the metadata of.
+        target_settings (dict):
+            Settings used for setting the values of the entrypoint parameters.
+
+    Returns (dict):
+        Parsed response from Pyxis.
+    """
+    cert, key = get_pyxis_ssl_paths(target_settings)
+
+    args = ["--pyxis-server", target_settings["pyxis_server"]]
+    args += ["--pyxis-ssl-crtfile", cert]
+    args += ["--pyxis-ssl-keyfile", key]
+    args += ["--repo-name", repo]
+
+    env_vars = {}
+    metadata = run_entrypoint(
+        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
+        "pubtools-pyxis-get-repo-metadata",
+        args,
+        env_vars,
+    )
+    return metadata
