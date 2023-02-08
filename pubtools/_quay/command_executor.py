@@ -12,7 +12,7 @@ import time
 
 import docker
 import paramiko
-from six.moves import shlex_quote
+from shlex import quote
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -84,7 +84,7 @@ class Executor(object):
 
         cmd_login = (
             "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin %s" % host
-        ).format(shlex_quote(username))
+        ).format(quote(username))
         out, err = self._run_cmd(cmd_login, stdin=password)
 
         if "Login Succeeded" in out:
@@ -114,7 +114,7 @@ class Executor(object):
 
         for dest_ref in dest_refs:
             LOG.info("Tagging source '{0}' to destination '{1}'".format(source_ref, dest_ref))
-            self._run_cmd(cmd.format(shlex_quote(source_ref), shlex_quote(dest_ref)))
+            self._run_cmd(cmd.format(quote(source_ref), quote(dest_ref)))
             LOG.info("Destination image {0} has been tagged.".format(dest_ref))
 
         LOG.info("Tagging complete.")
@@ -258,7 +258,7 @@ class RemoteExecutor(Executor):
                 key_filename=self.key_filename,
             )
 
-            ssh_in, out, err = client.exec_command(shlex_quote(cmd))  # nosec B601
+            ssh_in, out, err = client.exec_command(quote(cmd))  # nosec B601
             if stdin:
                 ssh_in.channel.send(stdin)
                 ssh_in.channel.shutdown_write()
@@ -446,7 +446,7 @@ class ContainerExecutor(Executor):
         cmd_login = (
             " sh -c 'cat /tmp/{1} | skopeo login --authfile $HOME/.docker/config.json"
             ' -u "{0}" --password-stdin %s\'' % host
-        ).format(shlex_quote(username), password_file)
+        ).format(quote(username), password_file)
         out, err = self._run_cmd(cmd_login)
 
         if "Login Succeeded" in out:

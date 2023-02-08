@@ -4,7 +4,6 @@ import mock
 import pytest
 import requests_mock
 import requests
-import six
 
 from pubtools._quay import exceptions
 from pubtools._quay import quay_client

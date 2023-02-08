@@ -305,7 +305,9 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators(
+    mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
@@ -315,6 +317,12 @@ def test_push_operators(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
@@ -432,7 +440,9 @@ def test_push_operators(
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_extra_ns(
+    mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
@@ -443,6 +453,12 @@ def test_push_operators_extra_ns(
     fake_cert_key_paths,
 ):
     """Test if extra namespace is used in tagging when is set in target settings"""
+
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
 
     target_settings["quay_operator_namespace"] = "quay-operator-ns"
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
@@ -514,7 +530,9 @@ def test_push_operators_extra_ns(
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_not_all_successful(
+    mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
@@ -524,6 +542,12 @@ def test_push_operators_not_all_successful(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
@@ -627,7 +651,9 @@ def test_push_operators_not_all_successful(
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_hotfix(
+    mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
@@ -636,6 +662,12 @@ def test_push_operators_hotfix(
     operator_push_item_hotfix,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"]]
 
     mock_run_entrypoint.side_effect = [
@@ -724,7 +756,9 @@ def test_push_operators_hotfix(
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_hotfix_invalid_origin(
+    mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
     mock_add_bundles,
@@ -733,6 +767,12 @@ def test_push_operators_hotfix_invalid_origin(
     operator_push_item_hotfix_invalid_origin,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"]]
 
     mock_run_entrypoint.side_effect = [
@@ -934,3 +974,204 @@ def test_get_existing_index_images_raises_500(
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     with pytest.raises(requests.exceptions.HTTPError, match=".*500.*"):
         existing_index_images = pusher.get_existing_index_images(mock_quay_client)
+
+
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_push_operators_fbc_opted_in(
+    mock_get_repo_metadata,
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    target_settings,
+    operator_push_item_fbc,
+    operator_push_item_different_version,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": True},
+    ]
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
+        [{"ocp_version": "4.11"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/ns/index-image:6",
+            "some-registry.com/ns/iib@sha256:b2b2",
+            ["v4.6-3"],
+        ),
+        IIBRes(
+            "some-registry.com/ns/index-image:7",
+            "some-registry.com/ns/iib@sha256:c3c3",
+            ["v4.7-3"],
+        ),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_fbc, operator_push_item_different_version], "3", target_settings
+    )
+
+    results = pusher.build_index_images()
+
+    assert mock_get_deprecation_list.call_count == 3
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.11")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
+    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+
+    assert results == {
+        "v4.6": {
+            "hotfix_tag": "",
+            "iib_result": iib_results[0],
+            "is_hotfix": False,
+            "signing_keys": ["some-key"],
+        },
+        "v4.7": {
+            "hotfix_tag": "",
+            "iib_result": iib_results[1],
+            "is_hotfix": False,
+            "signing_keys": ["some-key"],
+        },
+    }
+    assert mock_add_bundles.call_count == 2
+
+
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_push_operators_fbc_opted_in_inconsistent(
+    mock_get_repo_metadata,
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    target_settings,
+    operator_push_item_fbc,
+    operator_push_item_different_version,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": True},
+    ]
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
+        [{"ocp_version": "4.10"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/ns/index-image:8",
+            "some-registry.com/ns/iib@sha256:c3c3",
+            ["v4.10-4"],
+        )
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_fbc, operator_push_item_different_version], "3", target_settings
+    )
+
+    results = pusher.build_index_images()
+
+    assert mock_get_deprecation_list.call_count == 3
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.10")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
+    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+
+    assert results == {
+        "v4.10": {
+            "hotfix_tag": "",
+            "iib_result": iib_results[0],
+            "is_hotfix": False,
+            "signing_keys": ["some-key"],
+        }
+    }
+    assert mock_add_bundles.call_count == 1
+    assert operator_push_item_fbc.state == "NOTPUSHED"
+
+
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_push_operators_fbc_4_9_to_4_11_opted_in(
+    mock_get_repo_metadata,
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    target_settings,
+    operator_push_item_fbc,
+    operator_push_item_different_version,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": True},
+    ]
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], [], [], []]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.11"}, {"ocp_version": "4.10"}, {"ocp_version": "4.9"}],
+        [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/ns/index-image:6",
+            "some-registry.com/ns/iib@sha256:b2b2",
+            ["v4.6-3"],
+        ),
+        IIBRes(
+            "some-registry.com/ns/index-image:7",
+            "some-registry.com/ns/iib@sha256:c3c3",
+            ["v4.7-3"],
+        ),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_fbc, operator_push_item_different_version], "3", target_settings
+    )
+
+    results = pusher.build_index_images()
+
+    assert results == {
+        "v4.6": {
+            "iib_result": iib_results[0],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+        "v4.7": {
+            "iib_result": iib_results[1],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "hotfix_tag": "",
+        },
+    }
+    assert mock_add_bundles.call_count == 2
+    assert mock_add_bundles.call_args_list[0] == mock.call(
+        bundles=["some-registry1.com/repo2:5.0.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+        deprecation_list=[],
+        build_tags=["v4.6-3"],
+        target_settings=target_settings,
+    )
+    assert mock_add_bundles.call_args_list[1] == mock.call(
+        bundles=["some-registry1.com/repo2:5.0.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
+        deprecation_list=[],
+        build_tags=["v4.7-3"],
+        target_settings=target_settings,
+    )
+    assert operator_push_item_fbc.state == "INVALIDFILE"

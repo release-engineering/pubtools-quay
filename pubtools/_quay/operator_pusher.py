@@ -17,7 +17,7 @@ from .utils.misc import (
     get_basic_auth,
 )
 from .quay_client import QuayClient
-from .utils.misc import parse_index_image
+from .utils.misc import parse_index_image, pyxis_get_repo_metadata
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -47,6 +47,7 @@ class OperatorPusher:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
         self._version_items_mapping = {}
+        self.ocp_versions_resolved = {}
 
     @staticmethod
     def _get_immutable_tag(push_item):
@@ -143,15 +144,14 @@ class OperatorPusher:
             Mapping of OCP version -> Push items
         """
         if not self._version_items_mapping:
-            ocp_versions_resolved = {}
-
             for item in self.push_items:
                 ocp_versions = item.metadata["com.redhat.openshift.versions"]
                 # we haven't yet encountered this pattern, contact Pyxis for resolution
-                if ocp_versions not in ocp_versions_resolved:
-                    ocp_versions_resolved[ocp_versions] = self.pyxis_get_ocp_versions(item)
 
-                for version in ocp_versions_resolved[ocp_versions]:
+                if ocp_versions not in self.ocp_versions_resolved:
+                    self.ocp_versions_resolved[ocp_versions] = self.pyxis_get_ocp_versions(item)
+
+                for version in self.ocp_versions_resolved[ocp_versions]:
                     self._version_items_mapping.setdefault(version, []).append(item)
 
         return self._version_items_mapping
@@ -450,28 +450,97 @@ class OperatorPusher:
                     "signing_keys": [...] (list of signing keys to be used for signing)
                 }
             }
-
         """
         iib_results = {}
+        repos_opted_in = {}
+        items_opted_in = {}
+        failed_items = {}
+
+        # We need to load pyxis resolved versions at this point
+
+        versions_mapping = self.version_items_mapping  # noqa: F841
+
+        for item in self.push_items:
+            for repo in item.metadata["tags"]:
+                if repo not in repos_opted_in:
+                    repos_opted_in[repo] = pyxis_get_repo_metadata(repo, self.target_settings).get(
+                        "fbc_opt_in", False
+                    )
+            item_fbc_opt_in = [repos_opted_in[repo] for repo in item.metadata["tags"]]
+            if not (all(item_fbc_opt_in) or not any(item_fbc_opt_in)):
+                failed_items[id(item)] = True
+                item.add_error("NOTPUSHED", "Inconsistent fbc opt in")
+                LOG.error("Inconsistent fbc opt in for item {i}".format(i=item))
+                continue
+            elif all(item_fbc_opt_in):
+                items_opted_in[id(item)] = True
+            else:
+                items_opted_in[id(item)] = False
+
+            ocp_versions = item.metadata["com.redhat.openshift.versions"]
+            if (
+                [
+                    version
+                    for version in self.ocp_versions_resolved[ocp_versions]
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) < (4, 11)
+                ]
+                and [
+                    version
+                    for version in self.ocp_versions_resolved[ocp_versions]
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) > (4, 10)
+                ]
+                and items_opted_in[id(item)]
+            ):
+                item.add_error(
+                    "INVALIDFILE",
+                    "Cannot push item to index image "
+                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
+                        item=item
+                    ),
+                )
+                LOG.error(
+                    "Cannot push item to index image "
+                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
+                        item=item
+                    )
+                )
+                failed_items[id(item)] = True
 
         for version, items in sorted(self.version_items_mapping.items()):
-            is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in items])
+            non_fbc_items = []
+            osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
+            for item in items:
+                if id(item) in failed_items:
+                    continue
+                if not items_opted_in[id(item)] or (
+                    items_opted_in[id(item)] and osev_tuple <= (4, 10)
+                ):
+                    non_fbc_items.append(item)
+                elif items_opted_in[id(item)] and osev_tuple >= (4, 11):
+                    LOG.warning(
+                        "Skipping {i}".format(i=item)
+                        + "from iib build as it's opted in for FBC and targeting OCP version >4.10"
+                    )
+
+            is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in non_fbc_items])
             is_advisory_source = all(
-                [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in items]
+                [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in non_fbc_items]
             )
             item_groups = {}
             if is_hotfix and not is_advisory_source:
                 raise ValueError("Cannot push hotfixes without an advisory")
             if is_hotfix:
-                for item in items:
+                for item in non_fbc_items:
                     item_groups.setdefault(item.origin, []).append(item)
             else:
-                item_groups["default"] = items
+                item_groups["default"] = non_fbc_items
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)
 
             for group, g_items in item_groups.items():
+                if not g_items:
+                    continue
                 tag = version
                 index_image = "{image_repo}:{tag}".format(
                     image_repo=self.target_settings["iib_index_image"], tag=tag

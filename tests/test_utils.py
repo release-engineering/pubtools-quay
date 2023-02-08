@@ -5,7 +5,6 @@ import pytest
 import requests_mock
 import requests
 import os
-import six
 
 from pubtools._quay import exceptions
 from pubtools._quay.utils import misc
@@ -166,7 +165,7 @@ def test_retry(mock_timestamp, mock_sleep):
 
 
 @mock.patch(
-    "six.moves.builtins.open",
+    "builtins.open",
     new_callable=mock.mock_open,
     read_data='{"auths": {"registry": {"auth": "dXNlcjpwYXNz"}}}',
 )
@@ -174,3 +173,33 @@ def test_retry(mock_timestamp, mock_sleep):
 def test_get_basic_auth(mock_isfile, mock_file):
     mock_isfile.return_value = True
     assert misc.get_basic_auth("registry") == ["user", "pass"]
+
+
+@mock.patch("pubtools._quay.utils.misc.run_entrypoint")
+def test_get_repo_metadata(
+    mock_run_entrypoint,
+    target_settings,
+    container_multiarch_push_item,
+    operator_push_item_ok,
+    fake_cert_key_paths,
+):
+    hub = mock.MagicMock()
+    mock_run_entrypoint.return_value = {"key": "value"}
+    res = misc.pyxis_get_repo_metadata("some_repo", target_settings)
+
+    assert res == {"key": "value"}
+    mock_run_entrypoint.assert_called_once_with(
+        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
+        "pubtools-pyxis-get-repo-metadata",
+        [
+            "--pyxis-server",
+            "pyxis-url.com",
+            "--pyxis-ssl-crtfile",
+            "/path/to/file.crt",
+            "--pyxis-ssl-keyfile",
+            "/path/to/file.key",
+            "--repo-name",
+            "some_repo",
+        ],
+        {},
+    )

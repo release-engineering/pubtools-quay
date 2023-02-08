@@ -17,17 +17,17 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.utils.misc.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_multiarch_merge_ml_operator(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_claims_runner,
     mock_run_cmd,
     mock_run_entrypoint_operator_pusher,
+    mock_run_entrypoint_misc,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
     target_settings,
@@ -51,10 +51,12 @@ def test_push_docker_multiarch_merge_ml_operator(
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
 
-    mock_run_entrypoint_push_docker.side_effect = [
+    mock_run_entrypoint_misc.side_effect = [
         # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
     ]
+
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
         [
@@ -239,9 +241,7 @@ def test_push_docker_multiarch_merge_ml_operator(
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_multiarch_simple_workflow(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_claims_runner,
     mock_run_cmd,
@@ -266,10 +266,6 @@ def test_push_docker_multiarch_simple_workflow(
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
 
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
         [
@@ -386,9 +382,7 @@ def test_push_docker_multiarch_simple_workflow(
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_source(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_claims_runner,
     mock_run_cmd,
@@ -414,10 +408,6 @@ def test_push_docker_source(
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
 
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
         [
@@ -552,9 +542,7 @@ def test_push_docker_source(
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_tag_docker_multiarch_merge_ml(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
     mock_claims_runner,
@@ -576,13 +564,6 @@ def test_tag_docker_multiarch_merge_ml(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
-
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
 
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
@@ -725,9 +706,7 @@ def test_tag_docker_multiarch_merge_ml(
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_tag_docker_source_copy_untag(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
     mock_claims_runner,
@@ -750,13 +729,6 @@ def test_tag_docker_source_copy_untag(
     }
     hub.worker.get_target_info = mock_get_target_info
     target_settings["propagated_from"] = "test-target"
-
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
 
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
@@ -1244,9 +1216,7 @@ def test_remove_repo(
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
-@mock.patch("pubtools._quay.push_docker.run_entrypoint")
 def test_push_docker_operator_verify_bundle_fail(
-    mock_run_entrypoint_push_docker,
     mock_run_entrypoint_sig_handler,
     mock_claims_runner,
     mock_run_cmd,
@@ -1263,10 +1233,6 @@ def test_push_docker_operator_verify_bundle_fail(
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
-    mock_run_entrypoint_push_docker.side_effect = [
-        # pubtools-pyxis-get-repo-metadata
-        {"release_categories": ["definitely-not-deprecated"]},
-    ]
     mock_run_entrypoint_sig_handler.side_effect = [
         # pubtools-pyxis-get-signatures (containers)
         [
