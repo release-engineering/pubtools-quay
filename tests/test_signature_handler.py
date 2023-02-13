@@ -346,6 +346,8 @@ def test_upload_signatures_pyxis(
             "/path/to/file.crt",
             "--pyxis-ssl-keyfile",
             "/path/to/file.key",
+            "--request-threads",
+            "7",
             "--signatures",
             "@/var/pubtools_quay_upload_signatures_ABC123",
         ],
