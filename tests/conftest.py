@@ -292,7 +292,7 @@ def operator_push_item_fbc():
                 "repo": "test-repo",
                 "tag": "test-tag",
             },
-            "com.redhat.openshift.versions": "v4.10",
+            "com.redhat.openshift.versions": "v4.12",
             "op_type": "bundle",
             "build": {
                 "build_id": 123456,
@@ -330,7 +330,7 @@ def operator_push_item_fbc_hotfix():
                 "repo": "test-repo",
                 "tag": "test-tag",
             },
-            "com.redhat.openshift.versions": "v4.10",
+            "com.redhat.openshift.versions": "v4.12",
             "op_type": "bundle",
             "build": {
                 "build_id": 123456,

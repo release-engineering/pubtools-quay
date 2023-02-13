@@ -999,8 +999,8 @@ def test_push_operators_fbc_opted_in(
     mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], []]
 
     mock_run_entrypoint.side_effect = [
-        [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
-        [{"ocp_version": "4.11"}],
+        [{"ocp_version": "4.6"}, {"ocp_version": "4.12"}],
+        [{"ocp_version": "4.13"}],
     ]
     iib_results = [
         IIBRes(
@@ -1011,7 +1011,7 @@ def test_push_operators_fbc_opted_in(
         IIBRes(
             "some-registry.com/ns/index-image:7",
             "some-registry.com/ns/iib@sha256:c3c3",
-            ["v4.7-3"],
+            ["v4.12-3"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
@@ -1022,20 +1022,20 @@ def test_push_operators_fbc_opted_in(
     results = pusher.build_index_images()
 
     assert mock_get_deprecation_list.call_count == 3
-    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.11")
-    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
-    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.12")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.13")
+    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.6")
 
     assert results == {
         "v4.6": {
             "hotfix_tag": "",
-            "iib_result": iib_results[0],
+            "iib_result": iib_results[1],
             "is_hotfix": False,
             "signing_keys": ["some-key"],
         },
-        "v4.7": {
+        "v4.12": {
             "hotfix_tag": "",
-            "iib_result": iib_results[1],
+            "iib_result": iib_results[0],
             "is_hotfix": False,
             "signing_keys": ["some-key"],
         },
@@ -1067,13 +1067,13 @@ def test_push_operators_fbc_opted_in_inconsistent(
 
     mock_run_entrypoint.side_effect = [
         [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
-        [{"ocp_version": "4.10"}],
+        [{"ocp_version": "4.12"}],
     ]
     iib_results = [
         IIBRes(
             "some-registry.com/ns/index-image:8",
             "some-registry.com/ns/iib@sha256:c3c3",
-            ["v4.10-4"],
+            ["v4.12-4"],
         )
     ]
     mock_add_bundles.side_effect = iib_results
@@ -1084,12 +1084,12 @@ def test_push_operators_fbc_opted_in_inconsistent(
     results = pusher.build_index_images()
 
     assert mock_get_deprecation_list.call_count == 3
-    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.10")
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.12")
     assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
 
     assert results == {
-        "v4.10": {
+        "v4.12": {
             "hotfix_tag": "",
             "iib_result": iib_results[0],
             "is_hotfix": False,
@@ -1104,7 +1104,7 @@ def test_push_operators_fbc_opted_in_inconsistent(
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
-def test_push_operators_fbc_4_9_to_4_11_opted_in(
+def test_push_operators_fbc_4_10_to_4_13_opted_in(
     mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
@@ -1120,10 +1120,15 @@ def test_push_operators_fbc_4_9_to_4_11_opted_in(
         {"fbc_opt_in": True},
     ]
 
-    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], [], [], []]
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"], [], [], [], []]
 
     mock_run_entrypoint.side_effect = [
-        [{"ocp_version": "4.11"}, {"ocp_version": "4.10"}, {"ocp_version": "4.9"}],
+        [
+            {"ocp_version": "4.13"},
+            {"ocp_version": "4.12"},
+            {"ocp_version": "4.11"},
+            {"ocp_version": "4.10"},
+        ],
         [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
     ]
     iib_results = [

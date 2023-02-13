@@ -482,25 +482,25 @@ class OperatorPusher:
                 [
                     version
                     for version in self.ocp_versions_resolved[ocp_versions]
-                    if tuple([int(x) for x in version.replace("v", "").split(".")]) < (4, 11)
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) < (4, 13)
                 ]
                 and [
                     version
                     for version in self.ocp_versions_resolved[ocp_versions]
-                    if tuple([int(x) for x in version.replace("v", "").split(".")]) > (4, 10)
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) > (4, 12)
                 ]
                 and items_opted_in[id(item)]
             ):
                 item.add_error(
                     "INVALIDFILE",
                     "Cannot push item to index image "
-                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
+                    "as it supports both <= 4.12 and >= 4.13 and is opted in FBC: {item}".format(
                         item=item
                     ),
                 )
                 LOG.error(
                     "Cannot push item to index image "
-                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
+                    "as it supports both <= 4.12 and >= 4.13 and is opted in FBC: {item}".format(
                         item=item
                     )
                 )
@@ -513,13 +513,13 @@ class OperatorPusher:
                 if id(item) in failed_items:
                     continue
                 if not items_opted_in[id(item)] or (
-                    items_opted_in[id(item)] and osev_tuple <= (4, 10)
+                    items_opted_in[id(item)] and osev_tuple <= (4, 12)
                 ):
                     non_fbc_items.append(item)
-                elif items_opted_in[id(item)] and osev_tuple >= (4, 11):
+                elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
                     LOG.warning(
                         "Skipping {i}".format(i=item)
-                        + "from iib build as it's opted in for FBC and targeting OCP version >4.10"
+                        + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
                     )
 
             is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in non_fbc_items])
