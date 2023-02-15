@@ -364,6 +364,7 @@ class SignatureHandler:
         args = ["--pyxis-server", self.target_settings["pyxis_server"]]
         args += ["--pyxis-ssl-crtfile", cert]
         args += ["--pyxis-ssl-keyfile", key]
+        args += ["--request-threads", str(self.target_settings.get("num_thread_pyxis", 7))]
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="pubtools_quay_upload_signatures_"
