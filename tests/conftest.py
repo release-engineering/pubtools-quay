@@ -273,6 +273,44 @@ def operator_push_item_ok():
 
 
 @pytest.fixture
+def operator_push_item_fbc_inconsistent():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="operator",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos=[],
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "com.redhat.openshift.versions": "v4.10,v4.13",
+            "op_type": "bundle",
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
+            "destination": {"tags": {"repo": ["tag1", "tag2"]}},
+            "tags": {"repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+            "arch": "some-arch",
+        },
+    )
+
+
+@pytest.fixture
 def operator_push_item_fbc():
     return MockContainerPushItem(
         file_path="push_item_filepath",
