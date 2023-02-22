@@ -118,7 +118,11 @@ class OperatorPusher:
         env_vars = {}
 
         data = run_entrypoint(
-            ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-operator-indices"),
+            (
+                "pubtools-pyxis",
+                "console_scripts",
+                "pubtools-pyxis-get-operator-indices",
+            ),
             "pubtools-pyxis-get-operator-indices",
             args,
             env_vars,
@@ -191,7 +195,8 @@ class OperatorPusher:
 
         deprecation_list = []
         deprecation_list_url = "{0}/{1}.yml/raw?ref=master".format(
-            self.target_settings["iib_deprecation_list_url"].rstrip("/"), version.replace(".", "_")
+            self.target_settings["iib_deprecation_list_url"].rstrip("/"),
+            version.replace(".", "_"),
         )
         registry_url = self.target_settings["docker_settings"]["docker_reference_registry"][0]
 
@@ -315,7 +320,12 @@ class OperatorPusher:
 
     @classmethod
     def iib_remove_operators(
-        cls, operators=None, archs=None, index_image=None, build_tags=None, target_settings={}
+        cls,
+        operators=None,
+        archs=None,
+        index_image=None,
+        build_tags=None,
+        target_settings={},
     ):
         """
         Construct and execute pubtools-iib command to remove operators from index image.
@@ -398,7 +408,11 @@ class OperatorPusher:
                     raise
             for manifest in manifest_list["manifests"]:
                 current_index_images.append(
-                    (manifest["digest"], version, self.target_settings["quay_operator_repository"])
+                    (
+                        manifest["digest"],
+                        version,
+                        self.target_settings["quay_operator_repository"],
+                    )
                 )
         return list(set(current_index_images))
 
@@ -506,12 +520,14 @@ class OperatorPusher:
                 )
                 failed_items[id(item)] = True
 
+        # if any of push items failed due to fbc issues, return early and skip all iib operations
+        if failed_items:
+            return {}
+
         for version, items in sorted(self.version_items_mapping.items()):
             non_fbc_items = []
             osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
             for item in items:
-                if id(item) in failed_items:
-                    continue
                 if not items_opted_in[id(item)] or (
                     items_opted_in[id(item)] and osev_tuple <= (4, 12)
                 ):
@@ -537,7 +553,6 @@ class OperatorPusher:
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)
-
             for group, g_items in item_groups.items():
                 if not g_items:
                     continue

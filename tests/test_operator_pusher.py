@@ -1057,6 +1057,9 @@ def test_push_operators_fbc_opted_in_inconsistent(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
+    """Expected push failure as item repositories are inconsistently opted in.
+    Failure happens on push item and therefore no iib operations should happen."""
+
     mock_get_repo_metadata.side_effect = [
         {"fbc_opt_in": True},
         {"fbc_opt_in": False},
@@ -1083,20 +1086,10 @@ def test_push_operators_fbc_opted_in_inconsistent(
 
     results = pusher.build_index_images()
 
-    assert mock_get_deprecation_list.call_count == 3
-    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.12")
-    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
-    assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
+    assert mock_get_deprecation_list.call_count == 0
 
-    assert results == {
-        "v4.12": {
-            "hotfix_tag": "",
-            "iib_result": iib_results[0],
-            "is_hotfix": False,
-            "signing_keys": ["some-key"],
-        }
-    }
-    assert mock_add_bundles.call_count == 1
+    assert results == {}
+    assert mock_add_bundles.call_count == 0
     assert operator_push_item_fbc.state == "NOTPUSHED"
 
 
@@ -1114,6 +1107,9 @@ def test_push_operators_fbc_4_10_to_4_13_opted_in(
     operator_push_item_different_version,
     fake_cert_key_paths,
 ):
+    """Expected push failure as item is opted in fbc and targeted to < 4.13 and  >= 4.13.
+    Failure happens on push item and therefore no iib operations should happen."""
+
     mock_get_repo_metadata.side_effect = [
         {"fbc_opt_in": True},
         {"fbc_opt_in": True},
@@ -1131,18 +1127,9 @@ def test_push_operators_fbc_4_10_to_4_13_opted_in(
         ],
         [{"ocp_version": "4.6"}, {"ocp_version": "4.7"}],
     ]
-    iib_results = [
-        IIBRes(
-            "some-registry.com/ns/index-image:6",
-            "some-registry.com/ns/iib@sha256:b2b2",
-            ["v4.6-3"],
-        ),
-        IIBRes(
-            "some-registry.com/ns/index-image:7",
-            "some-registry.com/ns/iib@sha256:c3c3",
-            ["v4.7-3"],
-        ),
-    ]
+
+    iib_results = [{}, {}]
+
     mock_add_bundles.side_effect = iib_results
     pusher = operator_pusher.OperatorPusher(
         [operator_push_item_fbc, operator_push_item_different_version], "3", target_settings
@@ -1150,33 +1137,7 @@ def test_push_operators_fbc_4_10_to_4_13_opted_in(
 
     results = pusher.build_index_images()
 
-    assert results == {
-        "v4.6": {
-            "iib_result": iib_results[0],
-            "signing_keys": ["some-key"],
-            "is_hotfix": False,
-            "hotfix_tag": "",
-        },
-        "v4.7": {
-            "iib_result": iib_results[1],
-            "signing_keys": ["some-key"],
-            "is_hotfix": False,
-            "hotfix_tag": "",
-        },
-    }
-    assert mock_add_bundles.call_count == 2
-    assert mock_add_bundles.call_args_list[0] == mock.call(
-        bundles=["some-registry1.com/repo2:5.0.0"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
-        deprecation_list=[],
-        build_tags=["v4.6-3"],
-        target_settings=target_settings,
-    )
-    assert mock_add_bundles.call_args_list[1] == mock.call(
-        bundles=["some-registry1.com/repo2:5.0.0"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
-        deprecation_list=[],
-        build_tags=["v4.7-3"],
-        target_settings=target_settings,
-    )
+    assert results == {}
+
+    assert mock_add_bundles.call_count == 0
     assert operator_push_item_fbc.state == "INVALIDFILE"
