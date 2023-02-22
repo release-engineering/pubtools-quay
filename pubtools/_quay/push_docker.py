@@ -719,7 +719,10 @@ class PushDocker:
 
             # Rollback only when all index image builds fails or there are failed items
             if not any([x["iib_result"] for x in iib_results.values()]) or failed_items:
-                LOG.error("Push of all index images failed, running rollback.")
+                if failed_items:
+                    LOG.error("There are failed push items. Cannot continue, running rollback.")
+                else:
+                    LOG.error("Push of all index images failed, running rollback.")
                 self.rollback(backup_tags, rollback_tags)
                 sys.exit(1)
             if successful_iib_results != iib_results:

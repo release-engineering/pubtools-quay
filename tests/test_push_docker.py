@@ -30,7 +30,10 @@ def test_init_verify_target_settings_ok(
         "some-target",
         target_settings,
     )
-    assert push_docker_instance.push_items == [container_multiarch_push_item, operator_push_item_ok]
+    assert push_docker_instance.push_items == [
+        container_multiarch_push_item,
+        operator_push_item_ok,
+    ]
     assert push_docker_instance.hub == hub
     assert push_docker_instance.task_id == "1"
     assert push_docker_instance.target_name == "some-target"
@@ -132,7 +135,10 @@ def test_get_container_push_items_errors(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_container_push_items_no_pull_data(
-    mock_quay_api_client, mock_quay_client, target_settings, container_push_item_no_metadata
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    container_push_item_no_metadata,
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
@@ -202,7 +208,10 @@ def test_get_operator_push_item_errors(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_no_op_type(
-    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_no_op_type
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    operator_push_item_no_op_type,
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
@@ -236,7 +245,10 @@ def test_get_operator_push_item_op_appregistry(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 def test_get_operator_push_item_unknown_op_type(
-    mock_quay_api_client, mock_quay_client, target_settings, operator_push_item_unknown_op_type
+    mock_quay_api_client,
+    mock_quay_client,
+    target_settings,
+    operator_push_item_unknown_op_type,
 ):
     hub = mock.MagicMock()
     push_docker_instance = push_docker.PushDocker(
@@ -692,14 +704,22 @@ def test_generate_backup_mapping(
     mock_quay_client.return_value.get_manifest = mock_get_manifest
 
     push_docker_instance = push_docker.PushDocker(
-        [container_multiarch_push_item, container_signing_push_item, container_push_item_ok],
+        [
+            container_multiarch_push_item,
+            container_signing_push_item,
+            container_push_item_ok,
+        ],
         hub,
         "1",
         "some-target",
         target_settings,
     )
     backup_tags, rollback_tags = push_docker_instance.generate_backup_mapping(
-        [container_multiarch_push_item, container_signing_push_item, container_push_item_ok]
+        [
+            container_multiarch_push_item,
+            container_signing_push_item,
+            container_push_item_ok,
+        ]
     )
     assert backup_tags == {
         push_docker.PushDocker.ImageData(
@@ -818,7 +838,10 @@ def test_generate_backup_mapping_tag_inconsistency(
     response = mock.MagicMock()
     response.status_code = 404
     mock_get_repository_tags = mock.MagicMock()
-    mock_get_repository_tags.return_value = {"name": "target----repo", "tags": ["latest-test-tag"]}
+    mock_get_repository_tags.return_value = {
+        "name": "target----repo",
+        "tags": ["latest-test-tag"],
+    }
 
     mock_poll_tag_inconsistency.return_value = None
 
@@ -876,7 +899,10 @@ def test_generate_backup_mapping_tag_inconsistency_uncaught_error(
     response = mock.MagicMock()
     response.status_code = 500
     mock_get_repository_tags = mock.MagicMock()
-    mock_get_repository_tags.return_value = {"name": "target----repo", "tags": ["latest-test-tag"]}
+    mock_get_repository_tags.return_value = {
+        "name": "target----repo",
+        "tags": ["latest-test-tag"],
+    }
 
     mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
     mock_get_manifest_digest = mock.MagicMock()
@@ -921,7 +947,10 @@ def test_poll_tag_inconsistency_found_match(
     )
 
     mock_get_repository_tags = mock.MagicMock()
-    mock_get_repository_tags.return_value = {"name": "target----repo", "tags": ["latest-test-tag"]}
+    mock_get_repository_tags.return_value = {
+        "name": "target----repo",
+        "tags": ["latest-test-tag"],
+    }
     mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
 
     mock_get_manifest_digest = mock.MagicMock()
@@ -1003,7 +1032,10 @@ def test_poll_tag_inconsistency_timeout_reached(
     )
 
     mock_get_repository_tags = mock.MagicMock()
-    mock_get_repository_tags.return_value = {"name": "target----repo", "tags": ["latest-test-tag"]}
+    mock_get_repository_tags.return_value = {
+        "name": "target----repo",
+        "tags": ["latest-test-tag"],
+    }
     mock_quay_client.return_value.get_repository_tags = mock_get_repository_tags
 
     response = mock.MagicMock()
@@ -1603,7 +1635,8 @@ def test_push_docker_full_success_repush(
         [container_multiarch_push_item, container_push_item_external_repos]
     )
     mock_container_image_pusher.assert_called_once_with(
-        [container_multiarch_push_item, container_push_item_external_repos], target_settings
+        [container_multiarch_push_item, container_push_item_external_repos],
+        target_settings,
     )
     mock_push_container_images.assert_called_once_with()
     mock_container_signature_handler.assert_called_once_with(
@@ -1934,9 +1967,119 @@ def test_push_docker_failure_rollback(
     )
 
 
+@mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorPusher")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.ContainerImagePusher")
+@mock.patch("pubtools._quay.push_docker.PushDocker.generate_backup_mapping")
+@mock.patch("pubtools._quay.push_docker.PushDocker.check_repos_validity")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_operator_push_items")
+@mock.patch("pubtools._quay.push_docker.PushDocker.remove_old_signatures")
+@mock.patch("pubtools._quay.push_docker.PushDocker.get_docker_push_items")
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+def test_push_docker_failure_fbc_rollback(
+    mock_quay_api_client,
+    mock_quay_client,
+    mock_get_docker_push_items,
+    mock_remove_old_signatures,
+    mock_get_operator_push_items,
+    mock_check_repos_validity,
+    mock_generate_backup_mapping,
+    mock_container_image_pusher,
+    mock_container_signature_handler,
+    mock_operator_pusher,
+    mock_operator_signature_handler,
+    mock_rollback,
+    target_settings,
+    container_multiarch_push_item,
+    operator_push_item_fbc_inconsistent,
+):
+    operator_push_item_fbc_inconsistent.errors = {"repo": "error"}
+    hub = mock.MagicMock()
+    mock_push_container_images = mock.MagicMock()
+    mock_container_image_pusher.return_value.push_container_images = mock_push_container_images
+    mock_sign_container_images = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images = mock_sign_container_images
+    mock_sign_container_images_new_digests = mock.MagicMock(return_value=([], []))
+    mock_container_signature_handler.return_value.sign_container_images_new_digests = (
+        mock_sign_container_images_new_digests
+    )
+    mock_build_index_images = mock.MagicMock()
+    iib_result = mock.MagicMock(internal_index_image_copy_resolved="registry/ns/iib@digest")
+    mock_build_index_images.return_value = {
+        "v4.5": {"iib_result": False, "signing_keys": []},
+        "v4.6": {"iib_result": False, "signing_keys": []},
+    }
+    mock_operator_pusher.return_value.build_index_images = mock_build_index_images
+    mock_push_index_images = mock.MagicMock()
+    mock_operator_pusher.return_value.push_index_images = mock_push_index_images
+    mock_sign_operator_images = mock.MagicMock(return_value=([], []))
+    mock_operator_signature_handler.return_value.sign_operator_images = mock_sign_operator_images
+
+    mock_get_docker_push_items.return_value = [container_multiarch_push_item]
+    mock_get_operator_push_items.return_value = [operator_push_item_fbc_inconsistent]
+    mock_generate_backup_mapping.return_value = (
+        {
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
+        },
+        ["item1", "item2"],
+    )
+
+    push_docker_instance = push_docker.PushDocker(
+        [container_multiarch_push_item, operator_push_item_fbc_inconsistent],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    with pytest.raises(SystemExit):
+        push_docker_instance.run()
+
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_get_docker_push_items.assert_called_once_with()
+    mock_check_repos_validity.assert_called_once_with(
+        [container_multiarch_push_item], hub, target_settings
+    )
+    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_container_image_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_push_container_images.assert_called_once_with()
+    mock_container_signature_handler.assert_called_once_with(
+        hub, "1", target_settings, "some-target"
+    )
+    assert mock_sign_container_images.call_count == 1
+    assert mock_sign_container_images.call_args_list[0] == mock.call(
+        [container_multiarch_push_item]
+    )
+    assert mock_sign_container_images_new_digests.call_count == 1
+    assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
+        [container_multiarch_push_item],
+    )
+    mock_operator_pusher.assert_called_once()
+    mock_build_index_images.assert_called_once()
+    mock_push_index_images.assert_not_called()
+    mock_sign_operator_images.assert_called_once()
+    mock_rollback.assert_called_once_with(
+        {
+            push_docker.PushDocker.ImageData(
+                "some-ns/orig-ns----somerepo", "sometag", None, None
+            ): {"digest": "some-digest"}
+        },
+        ["item1", "item2"],
+    )
+
+
 @mock.patch("pubtools._quay.push_docker.PushDocker")
 def test_mod_entrypoint(
-    mock_push_docker, container_multiarch_push_item, operator_push_item_ok, target_settings
+    mock_push_docker,
+    container_multiarch_push_item,
+    operator_push_item_ok,
+    target_settings,
 ):
     hub = mock.MagicMock()
     mock_run = mock.MagicMock()
@@ -2071,7 +2214,10 @@ def test_remove_old_signatures_container_signatures(
         claim_messages,
     )
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_with(
-        ["signature-id-1"], "mock_pyxis_server", "/path/to/file.crt", "/path/to/file.key"
+        ["signature-id-1"],
+        "mock_pyxis_server",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
 
 
@@ -2149,5 +2295,8 @@ def test_remove_old_signatures_operator_signatures(
     )
 
     mock_signature_remover.remove_signatures_from_pyxis.assert_called_once_with(
-        ["signature-id-2"], "mock_pyxis_server", "/path/to/file.crt", "/path/to/file.key"
+        ["signature-id-2"],
+        "mock_pyxis_server",
+        "/path/to/file.crt",
+        "/path/to/file.key",
     )
