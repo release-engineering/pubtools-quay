@@ -1616,6 +1616,7 @@ def test_copy_all_archs_sign_images_source(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         exclude_by_claims=["msg0", "msg1"],
     )
 
@@ -1771,6 +1772,7 @@ def test_merge_manifest_lists_sign_images(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         exclude_by_claims=["msg0", "msg1", "msg2", "msg3"],
     )
 
@@ -1856,6 +1858,7 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         exclude_by_claims=["msg0", "msg1", "msg2", "msg3"],
     )
 
@@ -1923,6 +1926,7 @@ def test_untag_image(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
     )
 
 
@@ -1972,6 +1976,7 @@ def test_manifest_list_remove_archs(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         remove_archs=["amd64", "arm64", "arm"],
     )
 
@@ -2437,6 +2442,7 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         exclude_by_claims=[],
     )
 
@@ -2500,5 +2506,6 @@ def test_merge_manifest_lists_sign_images_none_signing_key(
         pyxis_server="pyxis-url.com",
         pyxis_ssl_crtfile="/path/to/file.crt",
         pyxis_ssl_keyfile="/path/to/file.key",
+        threads=7,
         exclude_by_claims=[],
     )

@@ -126,6 +126,7 @@ class SignatureRemover:
         pyxis_server,
         pyxis_ssl_crtfile,
         pyxis_ssl_keyfile,
+        threads,
     ):
         """
         Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.
@@ -139,12 +140,15 @@ class SignatureRemover:
                 Path to .crt file for SSL authentication.
             pyxis_ssl_keyfile (str):
                 Path to .key file for SSL authentication.
+            threads (int):
+                The number of threads to use for parallel requests.
         """
         LOG.info("Removing outdated signatures from pyxis")
 
         args = ["--pyxis-server", pyxis_server]
         args += ["--pyxis-ssl-crtfile", pyxis_ssl_crtfile]
         args += ["--pyxis-ssl-keyfile", pyxis_ssl_keyfile]
+        args += ["--request-threads", str(threads)]
 
         with tempfile.NamedTemporaryFile(mode="w") as temp:
             json.dump(signatures_to_remove, temp)
@@ -195,6 +199,7 @@ class SignatureRemover:
         pyxis_server,
         pyxis_ssl_crtfile,
         pyxis_ssl_keyfile,
+        threads,
     ):
         """
         Remove all signatures of all images in a given Quay repository.
@@ -210,6 +215,8 @@ class SignatureRemover:
                 Path to .crt file for SSL authentication.
             pyxis_ssl_keyfile (str):
                 Path to .key file for SSL authentication.
+            threads (int):
+                The number of threads to use for parallel requests.
         """
         LOG.info("Removing signatures of all images of repository '{0}'".format(repository))
 
@@ -234,6 +241,7 @@ class SignatureRemover:
                 pyxis_server,
                 pyxis_ssl_crtfile,
                 pyxis_ssl_keyfile,
+                threads,
             )
         else:
             LOG.info("No signatures need to be removed")
@@ -244,6 +252,7 @@ class SignatureRemover:
         pyxis_server,
         pyxis_ssl_crtfile,
         pyxis_ssl_keyfile,
+        threads,
         exclude_by_claims=None,
         remove_archs=None,
     ):
@@ -265,6 +274,8 @@ class SignatureRemover:
                 Path to .crt file for SSL authentication.
             pyxis_ssl_keyfile (str):
                 Path to .key file for SSL authentication.
+            threads (int):
+                The number of threads to use for parallel requests.
             exclude_by_claims ([dict]|None):
                 List of claim messages whose existing signature matches will not be removed.
             remove_archs ([str]|None):
@@ -326,6 +337,7 @@ class SignatureRemover:
                 pyxis_server,
                 pyxis_ssl_crtfile,
                 pyxis_ssl_keyfile,
+                threads,
             )
         else:
             LOG.info("No signatures need to be removed")

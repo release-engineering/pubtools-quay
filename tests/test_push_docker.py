@@ -2218,6 +2218,7 @@ def test_remove_old_signatures_container_signatures(
         "mock_pyxis_server",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
 
 
@@ -2299,4 +2300,5 @@ def test_remove_old_signatures_operator_signatures(
         "mock_pyxis_server",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )

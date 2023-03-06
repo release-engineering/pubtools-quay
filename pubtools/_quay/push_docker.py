@@ -536,6 +536,7 @@ class PushDocker:
                 self.target_settings["pyxis_server"],
                 cert,
                 key,
+                self.target_settings.get("num_thread_pyxis", 7),
             )
 
         signatures_to_remove = []
@@ -562,6 +563,7 @@ class PushDocker:
                     self.target_settings["pyxis_server"],
                     cert,
                     key,
+                    self.target_settings.get("num_thread_pyxis", 7),
                 )
 
     def _fetch_digest(self, repo, tag, media_type):
