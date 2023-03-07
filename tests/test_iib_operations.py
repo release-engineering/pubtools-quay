@@ -125,7 +125,7 @@ def test_task_iib_add_bundles(
         "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key", 7
     )
 
 
@@ -229,7 +229,7 @@ def test_task_iib_add_bundles_operator_ns(
         "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key", 7
     )
 
 
@@ -328,7 +328,7 @@ def test_task_iib_remove_operators(
         "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key", 7
     )
 
 
@@ -429,7 +429,7 @@ def test_task_iib_remove_operators_operator_ns(
         "/path/to/file.key",
     )
     mock_remove_signatures_from_pyxis.assert_called_once_with(
-        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key"
+        ["1", "2"], "pyxis-url.com", "/path/to/file.crt", "/path/to/file.key", 7
     )
 
 

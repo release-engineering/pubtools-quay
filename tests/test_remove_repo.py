@@ -190,6 +190,7 @@ def test_run(mock_quay_api_client, mock_signature_remover, hookspy):
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
     mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
 
@@ -242,6 +243,7 @@ def test_run_multiple_repos(mock_quay_api_client, mock_signature_remover):
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
     assert mock_remove_repository_signatures.call_args_list[1] == mock.call(
         "namespace/image2",
@@ -249,6 +251,7 @@ def test_run_multiple_repos(mock_quay_api_client, mock_signature_remover):
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
 
     assert mock_delete_repo.call_count == 2

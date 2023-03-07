@@ -510,6 +510,7 @@ class TagDocker:
             pyxis_server=self.target_settings["pyxis_server"],
             pyxis_ssl_crtfile=cert,
             pyxis_ssl_keyfile=key,
+            threads=self.target_settings.get("num_thread_pyxis", 7),
             exclude_by_claims=claim_messages,
         )
 
@@ -579,6 +580,7 @@ class TagDocker:
             pyxis_server=self.target_settings["pyxis_server"],
             pyxis_ssl_crtfile=cert,
             pyxis_ssl_keyfile=key,
+            threads=self.target_settings.get("num_thread_pyxis", 7),
             exclude_by_claims=claim_messages,
         )
 
@@ -648,6 +650,7 @@ class TagDocker:
             pyxis_server=self.target_settings["pyxis_server"],
             pyxis_ssl_crtfile=cert,
             pyxis_ssl_keyfile=key,
+            threads=self.target_settings.get("num_thread_pyxis", 7),
         )
 
         self.run_untag_images([dest_image], True, self.target_settings)
@@ -692,6 +695,7 @@ class TagDocker:
             pyxis_server=self.target_settings["pyxis_server"],
             pyxis_ssl_crtfile=cert,
             pyxis_ssl_keyfile=key,
+            threads=self.target_settings.get("num_thread_pyxis", 7),
             remove_archs=remove_archs,
         )
 

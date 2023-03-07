@@ -56,6 +56,12 @@ CLEAR_REPO_ARGS = {
         "required": True,
         "type": str,
     },
+    ("--pyxis-request-threads",): {
+        "help": "Maximum number of threads to use for parallel pyxis request",
+        "required": False,
+        "default": 7,
+        "type": int,
+    },
 }
 
 
@@ -68,6 +74,7 @@ def clear_repositories(
     pyxis_server,
     pyxis_ssl_crtfile,
     pyxis_ssl_keyfile,
+    pyxis_request_threads,
 ):
     """
     Clear Quay repository.
@@ -89,6 +96,8 @@ def clear_repositories(
             Path to .crt file for SSL authentication.
         pyxis_ssl_keyfile (str):
             Path to .key file for SSL authentication.
+        pyxis_request_threads:
+            Maximum number of threads to use for parallel pyxis request.
     """
     parsed_repositories = repositories.split(",")
 
@@ -106,6 +115,7 @@ def clear_repositories(
             pyxis_server,
             pyxis_ssl_crtfile,
             pyxis_ssl_keyfile,
+            pyxis_request_threads,
         )
 
         internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))

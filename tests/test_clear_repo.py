@@ -193,6 +193,7 @@ def test_run(mock_quay_client, mock_signature_remover, mock_untag_images):
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
     mock_get_repo_tags.assert_called_once_with("quay-organization/namespace----image")
     mock_untag_images.assert_called_once_with(
@@ -255,6 +256,7 @@ def test_run_multiple_repos(mock_quay_client, mock_signature_remover, mock_untag
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
     assert mock_remove_repository_signatures.call_args_list[1] == mock.call(
         "namespace/image2",
@@ -262,6 +264,7 @@ def test_run_multiple_repos(mock_quay_client, mock_signature_remover, mock_untag
         "pyxis-url.com",
         "/path/to/file.crt",
         "/path/to/file.key",
+        7,
     )
 
     assert mock_get_repo_tags.call_count == 2

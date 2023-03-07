@@ -1131,6 +1131,7 @@ def test_clear_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
+            pyxis_request_threads=7,
         )
 
 
@@ -1207,6 +1208,7 @@ def test_remove_repo(
             pyxis_server="pyxis-server.com",
             pyxis_ssl_crtfile="/path/to/file.crt",
             pyxis_ssl_keyfile="/path/to/file.key",
+            pyxis_request_threads=7,
         )
 
 

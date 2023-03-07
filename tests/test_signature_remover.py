@@ -114,7 +114,7 @@ def test_remove_signatures_from_pyxis(mock_run_entrypoint, mock_temp_file):
     sig_remover = signature_remover.SignatureRemover()
 
     sig_remover.remove_signatures_from_pyxis(
-        ["id1", "id2", "id3"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id1", "id2", "id3"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
     mock_run_entrypoint.assert_called_once_with(
@@ -127,6 +127,8 @@ def test_remove_signatures_from_pyxis(mock_run_entrypoint, mock_temp_file):
             "some-principal",
             "--pyxis-ssl-keyfile",
             "some-keytab",
+            "--request-threads",
+            "7",
             "--ids",
             "@some-tmp-file",
         ],
@@ -200,7 +202,12 @@ def test_remove_repository_signatures(
         quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_repository_signatures(
-        "namespace/repo", "internal-namespace", "pyxis-server.com", "some-principal", "some-keytab"
+        "namespace/repo",
+        "internal-namespace",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+        7,
     )
 
     mock_get_repo_digests.assert_called_once_with("internal-namespace/namespace----repo")
@@ -208,7 +215,7 @@ def test_remove_repository_signatures(
         ["digest1", "digest2"], "pyxis-server.com", "some-principal", "some-keytab"
     )
     mock_remove_signatures.assert_called_once_with(
-        ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
 
@@ -231,7 +238,12 @@ def test_remove_repository_signatures_none_to_remove(
         quay_user="some-user", quay_password="some-password"
     )
     sig_remover.remove_repository_signatures(
-        "namespace/repo", "internal-namespace", "pyxis-server.com", "some-principal", "some-keytab"
+        "namespace/repo",
+        "internal-namespace",
+        "pyxis-server.com",
+        "some-principal",
+        "some-keytab",
+        7,
     )
 
     mock_get_repo_digests.assert_called_once_with("internal-namespace/namespace----repo")
@@ -295,6 +307,7 @@ def test_remove_tag_signatures_multiarch(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
     )
 
     mock_get_repository_tags.assert_called_once_with(
@@ -316,7 +329,7 @@ def test_remove_tag_signatures_multiarch(
         "some-keytab",
     )
     mock_remove_signatures.assert_called_once_with(
-        ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id1", "id2"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
 
@@ -347,6 +360,7 @@ def test_remove_tag_signatures_non_existent_tag(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
     )
 
     mock_get_repository_tags.assert_called_once_with(
@@ -416,6 +430,7 @@ def test_remove_tag_signatures_source(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
     )
 
     mock_get_repository_tags.assert_called_once_with(
@@ -431,7 +446,7 @@ def test_remove_tag_signatures_source(
         "some-keytab",
     )
     mock_remove_signatures.assert_called_once_with(
-        ["id1"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id1"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
 
@@ -453,6 +468,7 @@ def test_remove_tag_signatures_digest(
             "pyxis-server.com",
             "some-principal",
             "some-keytab",
+            7,
         )
 
     mock_get_signatures.assert_not_called()
@@ -507,6 +523,7 @@ def test_remove_tag_signatures_no_signatures(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
     )
 
     mock_remove_signatures.assert_not_called()
@@ -571,6 +588,7 @@ def test_remove_tag_signatures_exclude_by_claims(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
         exclude_by_claims=claim_messages,
     )
 
@@ -593,7 +611,7 @@ def test_remove_tag_signatures_exclude_by_claims(
         "some-keytab",
     )
     mock_remove_signatures.assert_called_once_with(
-        ["id2"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id2"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
 
@@ -648,6 +666,7 @@ def test_remove_tag_signatures_selected_archs(
         "pyxis-server.com",
         "some-principal",
         "some-keytab",
+        7,
         remove_archs=selected_archs,
     )
 
@@ -667,7 +686,7 @@ def test_remove_tag_signatures_selected_archs(
         "some-keytab",
     )
     mock_remove_signatures.assert_called_once_with(
-        ["id1"], "pyxis-server.com", "some-principal", "some-keytab"
+        ["id1"], "pyxis-server.com", "some-principal", "some-keytab", 7
     )
 
 

@@ -176,6 +176,7 @@ def task_iib_add_bundles(
         target_settings["pyxis_server"],
         cert,
         key,
+        target_settings.get("num_thread_pyxis", 7),
     )
 
 
@@ -291,6 +292,7 @@ def task_iib_remove_operators(
         target_settings["pyxis_server"],
         cert,
         key,
+        target_settings.get("num_thread_pyxis", 7),
     )
 
 
