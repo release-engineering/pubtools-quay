@@ -615,6 +615,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
                 <span class="n">cert</span><span class="p">,</span>
                 <span class="n">key</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="n">signatures_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
@@ -641,6 +642,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
                     <span class="n">cert</span><span class="p">,</span>
                     <span class="n">key</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
                 <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_fetch_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">media_type</span><span class="p">):</span>

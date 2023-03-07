@@ -135,6 +135,12 @@
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--pyxis-request-threads&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Maximum number of threads to use for parallel pyxis request&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 
 
@@ -147,6 +153,7 @@
     <span class="n">pyxis_server</span><span class="p">,</span>
     <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
     <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+    <span class="n">pyxis_request_threads</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clear Quay repository.</span>
@@ -168,6 +175,8 @@
 <span class="sd">            Path to .crt file for SSL authentication.</span>
 <span class="sd">        pyxis_ssl_keyfile (str):</span>
 <span class="sd">            Path to .key file for SSL authentication.</span>
+<span class="sd">        pyxis_request_threads:</span>
+<span class="sd">            Maximum number of threads to use for parallel pyxis request.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parsed_repositories</span> <span class="o">=</span> <span class="n">repositories</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
 
@@ -185,6 +194,7 @@
             <span class="n">pyxis_server</span><span class="p">,</span>
             <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
             <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+            <span class="n">pyxis_request_threads</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">internal_repo</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quay_org</span><span class="p">,</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repository</span><span class="p">))</span>

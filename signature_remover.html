@@ -182,7 +182,7 @@ sturcture is an iterator to reduce memory requirements.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis">
-<span class="sig-name descname"><span class="pre">remove_signatures_from_pyxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures_to_remove</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_signatures_from_pyxis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_signatures_from_pyxis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures_to_remove</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_signatures_from_pyxis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_signatures_from_pyxis" title="Permalink to this definition"></a></dt>
 <dd><p>Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -193,6 +193,8 @@ sturcture is an iterator to reduce memory requirements.</p>
 <dt>pyxis_ssl_crtfile (str):</dt><dd><p>Path to .crt file for SSL authentication.</p>
 </dd>
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
+</dd>
+<dt>threads (int):</dt><dd><p>The number of threads to use for parallel requests.</p>
 </dd>
 </dl>
 </dd>
@@ -217,7 +219,7 @@ sturcture is an iterator to reduce memory requirements.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_remover.SignatureRemover.remove_repository_signatures">
-<span class="sig-name descname"><span class="pre">remove_repository_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repository</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_repository_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_repository_signatures" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_repository_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repository</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">namespace</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_repository_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_repository_signatures" title="Permalink to this definition"></a></dt>
 <dd><p>Remove all signatures of all images in a given Quay repository.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -231,6 +233,8 @@ sturcture is an iterator to reduce memory requirements.</p>
 </dd>
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
 </dd>
+<dt>threads (int):</dt><dd><p>The number of threads to use for parallel requests.</p>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -238,7 +242,7 @@ sturcture is an iterator to reduce memory requirements.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="pubtools._quay.signature_remover.SignatureRemover.remove_tag_signatures">
-<span class="sig-name descname"><span class="pre">remove_tag_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_by_claims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_tag_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_tag_signatures" title="Permalink to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">remove_tag_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_by_claims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_archs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signature_remover.html#SignatureRemover.remove_tag_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signature_remover.SignatureRemover.remove_tag_signatures" title="Permalink to this definition"></a></dt>
 <dd><p>Remove signatures of an image specified by a tag.</p>
 <p>Source and multiarch images are supported. Signatures may be excluded from removal by
 specifying a list of claim messages. If existing signature and a claim messages matches,
@@ -254,6 +258,8 @@ This option only has an effect when the image is a manifest list.</p>
 <dt>pyxis_ssl_crtfile (str):</dt><dd><p>Path to .crt file for SSL authentication.</p>
 </dd>
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
+</dd>
+<dt>threads (int):</dt><dd><p>The number of threads to use for parallel requests.</p>
 </dd>
 <dt>exclude_by_claims ([dict]|None):</dt><dd><p>List of claim messages whose existing signature matches will not be removed.</p>
 </dd>

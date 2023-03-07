@@ -109,6 +109,7 @@
                                 <span class="n">PYXIS_SERVER</span> <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">crtfile</span>
                                 <span class="n">PYXIS_SSL_CRTFILE</span> <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">keyfile</span>
                                 <span class="n">PYXIS_SSL_KEYFILE</span>
+                                <span class="p">[</span><span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">request</span><span class="o">-</span><span class="n">threads</span> <span class="n">PYXIS_REQUEST_THREADS</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="section" id="named-arguments">
@@ -138,6 +139,10 @@
 <dt><kbd>--pyxis-ssl-keyfile</kbd></dt>
 <dd><p>Path to .key file for the SSL authentication</p>
 </dd>
+<dt><kbd>--pyxis-request-threads</kbd></dt>
+<dd><p>Maximum number of threads to use for parallel pyxis request</p>
+<p>Default: 7</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -145,7 +150,7 @@
 <h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.clear_repo.clear_repositories">
-<span class="sig-prename descclassname"><span class="pre">pubtools._quay.clear_repo.</span></span><span class="sig-name descname"><span class="pre">clear_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/clear_repo.html#clear_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.clear_repo.clear_repositories" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.clear_repo.</span></span><span class="sig-name descname"><span class="pre">clear_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_request_threads</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/clear_repo.html#clear_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.clear_repo.clear_repositories" title="Permalink to this definition"></a></dt>
 <dd><p>Clear Quay repository.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
@@ -164,6 +169,8 @@
 <dt>pyxis_ssl_crtfile (str):</dt><dd><p>Path to .crt file for SSL authentication.</p>
 </dd>
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
+</dd>
+<dt>pyxis_request_threads:</dt><dd><p>Maximum number of threads to use for parallel pyxis request.</p>
 </dd>
 </dl>
 </dd>

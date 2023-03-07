@@ -205,6 +205,7 @@
         <span class="n">pyxis_server</span><span class="p">,</span>
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+        <span class="n">threads</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove signatures from Pyxis by using a pubtools-pyxis entrypoint.</span>
@@ -218,12 +219,15 @@
 <span class="sd">                Path to .crt file for SSL authentication.</span>
 <span class="sd">            pyxis_ssl_keyfile (str):</span>
 <span class="sd">                Path to .key file for SSL authentication.</span>
+<span class="sd">            threads (int):</span>
+<span class="sd">                The number of threads to use for parallel requests.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing outdated signatures from pyxis&quot;</span><span class="p">)</span>
 
         <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="n">pyxis_server</span><span class="p">]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">pyxis_ssl_crtfile</span><span class="p">]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">pyxis_ssl_keyfile</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--request-threads&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">threads</span><span class="p">)]</span>
 
         <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">signatures_to_remove</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
@@ -274,6 +278,7 @@
         <span class="n">pyxis_server</span><span class="p">,</span>
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+        <span class="n">threads</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove all signatures of all images in a given Quay repository.</span>
@@ -289,6 +294,8 @@
 <span class="sd">                Path to .crt file for SSL authentication.</span>
 <span class="sd">            pyxis_ssl_keyfile (str):</span>
 <span class="sd">                Path to .key file for SSL authentication.</span>
+<span class="sd">            threads (int):</span>
+<span class="sd">                The number of threads to use for parallel requests.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing signatures of all images of repository &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repository</span><span class="p">))</span>
 
@@ -313,6 +320,7 @@
                 <span class="n">pyxis_server</span><span class="p">,</span>
                 <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
                 <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+                <span class="n">threads</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No signatures need to be removed&quot;</span><span class="p">)</span></div>
@@ -323,6 +331,7 @@
         <span class="n">pyxis_server</span><span class="p">,</span>
         <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
         <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+        <span class="n">threads</span><span class="p">,</span>
         <span class="n">exclude_by_claims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">remove_archs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -344,6 +353,8 @@
 <span class="sd">                Path to .crt file for SSL authentication.</span>
 <span class="sd">            pyxis_ssl_keyfile (str):</span>
 <span class="sd">                Path to .key file for SSL authentication.</span>
+<span class="sd">            threads (int):</span>
+<span class="sd">                The number of threads to use for parallel requests.</span>
 <span class="sd">            exclude_by_claims ([dict]|None):</span>
 <span class="sd">                List of claim messages whose existing signature matches will not be removed.</span>
 <span class="sd">            remove_archs ([str]|None):</span>
@@ -405,6 +416,7 @@
                 <span class="n">pyxis_server</span><span class="p">,</span>
                 <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
                 <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
+                <span class="n">threads</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;No signatures need to be removed&quot;</span><span class="p">)</span></div>
