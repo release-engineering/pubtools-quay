@@ -1,6 +1,22 @@
 ChangeLog
 =========
 
+0.11.0 (2023-03-14)
+-------------------
+
+* Fix race condition in parallel container pushes
+* Delete signatures in parallel
+* Do not execute iib operation on fbc errors
+* Better error message when operator item fails due to fbc inconsistency
+* Change FBC logic to not call IIB only when ocp_version >=4.13
+* Unpin requests-mock version
+* Set request threads for uploading signatures
+* Reformatted with new tox version
+* Added support for FBC operators
+* Drop Python2 support
+* Use namespace from index image target settings
+* Make iib_deprecation_list_url optional target settings
+
 0.10.4 (2022-10-04)
 -------------------
 
