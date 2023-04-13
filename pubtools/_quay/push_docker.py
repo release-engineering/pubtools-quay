@@ -449,6 +449,7 @@ class PushDocker:
                 if e.response.status_code != 404 and e.response.status_code != 401:
                     raise
 
+    @log_step("Remove outdated signatures")
     def remove_old_signatures(
         self,
         push_items,
