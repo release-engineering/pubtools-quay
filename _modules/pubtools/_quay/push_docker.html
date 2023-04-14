@@ -528,7 +528,8 @@
                 <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">404</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">401</span><span class="p">:</span>
                     <span class="k">raise</span></div>
 
-<div class="viewcode-block" id="PushDocker.remove_old_signatures"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.remove_old_signatures">[docs]</a>    <span class="k">def</span> <span class="nf">remove_old_signatures</span><span class="p">(</span>
+<div class="viewcode-block" id="PushDocker.remove_old_signatures"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.remove_old_signatures">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Remove outdated signatures&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">remove_old_signatures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">push_items</span><span class="p">,</span>
         <span class="n">existing_index_images</span><span class="p">,</span>
