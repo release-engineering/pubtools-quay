@@ -162,7 +162,7 @@ def test_remote_executor_run(mock_sshclient):
     mock_exec_command.return_value = (mock_in, mock_out, mock_err)
     mock_sshclient.return_value.exec_command = mock_exec_command
 
-    out, err = executor._run_cmd("pwd", stdin="input")
+    out, err = executor._run_cmd("skopeo", stdin="input")
 
     mock_load_host_keys.assert_called_once()
     assert mock_set_keys.call_count == 1
@@ -175,7 +175,7 @@ def test_remote_executor_run(mock_sshclient):
         port=22,
         key_filename="path/to/file.key",
     )
-    mock_exec_command.assert_called_once_with("pwd")
+    mock_exec_command.assert_called_once_with("'skopeo --authfile $HOME/.docker/config.json'")
     mock_send.assert_called_once_with("input")
     mock_shutdown_write.assert_called_once()
     mock_recv_exit_status.assert_called_once()
@@ -689,8 +689,7 @@ def test_skopeo_login_success(mock_run_cmd):
     assert mock_run_cmd.call_args_list == [
         mock.call("skopeo login --get-login quay_host", tolerate_err=True),
         mock.call(
-            "skopeo login --authfile $HOME/.docker/config.json -u quay_user "
-            "--password-stdin quay_host",
+            "skopeo login -u quay_user --password-stdin quay_host",
             stdin="quay_token",
         ),
     ]

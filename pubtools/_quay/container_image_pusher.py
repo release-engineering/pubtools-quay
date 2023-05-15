@@ -92,7 +92,7 @@ class ContainerImagePusher:
             source_quay_host=target_settings.get("source_quay_host"),
             source_quay_user=target_settings.get("source_quay_user"),
             source_quay_password=target_settings.get("source_quay_password"),
-            container_exec=True,
+            container_exec=target_settings.get("container_exec", True),
             container_image=target_settings["skopeo_image"],
             docker_url=target_settings.get("docker_host") or "unix://var/run/docker.sock",
             docker_timeout=target_settings.get("docker_timeout"),

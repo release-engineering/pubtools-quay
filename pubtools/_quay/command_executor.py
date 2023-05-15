@@ -82,9 +82,7 @@ class Executor(object):
             )
         LOG.info("Logging in to Quay with provided credentials")
 
-        cmd_login = (
-            "skopeo login --authfile $HOME/.docker/config.json -u {0} --password-stdin %s" % host
-        ).format(quote(username))
+        cmd_login = ("skopeo login -u {0} --password-stdin %s" % host).format(quote(username))
         out, err = self._run_cmd(cmd_login, stdin=password)
 
         if "Login Succeeded" in out:
@@ -258,6 +256,8 @@ class RemoteExecutor(Executor):
                 key_filename=self.key_filename,
             )
 
+            if cmd.startswith("skopeo"):
+                cmd = cmd + " --authfile $HOME/.docker/config.json"
             ssh_in, out, err = client.exec_command(quote(cmd))  # nosec B601
             if stdin:
                 ssh_in.channel.send(stdin)
