@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.11.1 (2023-05-15)
+-------------------
+
+* Make executor configurable
+* Pin bandit version
+* Add removing outdated signatures into task_status.jsonl
+
 0.11.0 (2023-03-14)
 -------------------
 
