@@ -781,6 +781,7 @@ def test_sign_operator_images(
                 ["v4.5-1"],
             ),
             "signing_keys": ["key1"],
+            "is_hotfix": False,
         },
         "v4.6": {
             "iib_result": IIBRes(
@@ -789,6 +790,7 @@ def test_sign_operator_images(
                 ["v4.6-1"],
             ),
             "signing_keys": ["key2"],
+            "is_hotfix": False,
         },
     }
 
@@ -810,6 +812,55 @@ def test_sign_operator_images(
     mock_upload_signatures_to_pyxis.assert_called_once_with(
         ["msg1", "msg2", "msg3", "msg4"], ["sig1", "sig2", "sig3", "sig4"]
     )
+
+
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.validate_radas_messages")
+@mock.patch("pubtools._quay.signature_handler.SignatureHandler.get_signatures_from_radas")
+@mock.patch(
+    "pubtools._quay.signature_handler.OperatorSignatureHandler.construct_index_image_claim_messages"
+)
+@mock.patch("pubtools._quay.signature_handler.QuayClient")
+def test_sign_operator_images_hotfix(
+    mock_quay_client,
+    mock_construct_index_claim_msgs,
+    mock_get_radas_signatures,
+    mock_validate_radas_msgs,
+    mock_upload_signatures_to_pyxis,
+    target_settings,
+):
+    hub = mock.MagicMock()
+    mock_construct_index_claim_msgs.side_effect = [["msg1", "msg2"]]
+    mock_get_radas_signatures.return_value = ["sig1", "sig2"]
+    iib_results = {
+        "v4.5": {
+            "iib_result": IIBRes(
+                "registry1/iib-namespace/image:v4.5-hotfixlabel-advid",
+                "registry1/iib-namespace/iib@sha256:a1a1a1",
+                ["v4.5-hotfixlabel-advid", "v4.5-stamp"],
+            ),
+            "signing_keys": ["betakey"],
+            "is_hotfix": True,
+            "hotfix_tag": "v4.5-hotfixlabel-advid",
+        },
+    }
+
+    sig_handler = signature_handler.OperatorSignatureHandler(
+        hub, "1", target_settings, "some-target"
+    )
+    sig_handler.sign_operator_images(iib_results, "stamp-tag")
+
+    assert mock_construct_index_claim_msgs.call_count == 1
+    mock_construct_index_claim_msgs.call_args_list[0] == mock.call(
+        "quay.io/iib-namespace/iib@sha256:a1a1a1",
+        "v4.5-hotfixlabel-advid",
+        "v4.5-stamp",
+        ["betakey"],
+    )
+
+    mock_get_radas_signatures.assert_called_once_with(["msg1", "msg2"])
+    mock_validate_radas_msgs.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
+    mock_upload_signatures_to_pyxis.assert_called_once_with(["msg1", "msg2"], ["sig1", "sig2"])
 
 
 @mock.patch("pubtools._quay.signature_handler.SignatureHandler.upload_signatures_to_pyxis")
@@ -1031,6 +1082,7 @@ def test_sign_operator_images_no_signatures(
                 ["v4.5-1"],
             ),
             "signing_keys": [None],
+            "is_hotfix": False,
         },
     }
 

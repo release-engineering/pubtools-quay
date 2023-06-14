@@ -656,9 +656,17 @@ class OperatorSignatureHandler(SignatureHandler):
                 tag=iib_result.build_tags[0],
             )
             # Version acts as a tag of the index image
-            claim_messages += self.construct_index_image_claim_messages(
-                permanent_index_image, [version, "%s-%s" % (version, tag_suffix)], signing_keys
-            )
+            # use hotfix tag if it exists
+            if iib_details["is_hotfix"]:
+                claim_messages += self.construct_index_image_claim_messages(
+                    permanent_index_image,
+                    [iib_details["hotfix_tag"], "%s-%s" % (version, tag_suffix)],
+                    signing_keys,
+                )
+            else:
+                claim_messages += self.construct_index_image_claim_messages(
+                    permanent_index_image, [version, "%s-%s" % (version, tag_suffix)], signing_keys
+                )
 
         if not claim_messages:
             LOG.info("No new claim messages will be uploaded")
