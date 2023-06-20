@@ -687,9 +687,7 @@ class PushDocker:
         self.fetch_missing_push_items_digests(docker_push_items, self.target_settings)
 
         # sign missing images
-        manifest_claims += container_signature_handler.sign_container_images_new_digests(
-            docker_push_items
-        )
+        container_signature_handler.sign_container_images_new_digests(docker_push_items)
 
         failed = False
 
