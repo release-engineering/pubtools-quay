@@ -536,6 +536,12 @@ class PushDocker:
                 not in new_signatures
             ):
                 signatures_to_remove.append(existing_signature["_id"])
+                LOG.debug(
+                    f"Removing signature. Reference: {existing_signature['reference']}, "
+                    f"Repository: {existing_signature['repository']}, "
+                    f"Digest: {existing_signature['manifest_digest']}, "
+                    f"Key: {existing_signature['sig_key_id']}"
+                )
 
         cert, key = get_pyxis_ssl_paths(self.target_settings)
 
@@ -566,6 +572,13 @@ class PushDocker:
                     existing_signature["repository"],
                 ) in existing_index_images:
                     signatures_to_remove.append(existing_signature["_id"])
+                    LOG.debug(
+                        f"Removing operator signature. "
+                        f"Reference: {existing_signature['reference']}, "
+                        f"Repository: {existing_signature['repository']}, "
+                        f"Digest: {existing_signature['manifest_digest']}, "
+                        f"Key: {existing_signature['sig_key_id']}"
+                    )
             if signatures_to_remove:
                 signature_remover.remove_signatures_from_pyxis(
                     signatures_to_remove,

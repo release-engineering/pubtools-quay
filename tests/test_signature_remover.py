@@ -193,9 +193,27 @@ def test_remove_repository_signatures(
 ):
     mock_get_repo_digests.return_value = ["digest1", "digest2"]
     mock_get_signatures.return_value = [
-        {"repository": "namespace/repo", "_id": "id1"},
-        {"repository": "namespace/repo", "_id": "id2"},
-        {"repository": "namespace/different-repo", "_id": "id3"},
+        {
+            "repository": "namespace/repo",
+            "_id": "id1",
+            "reference": "some-registry.com/redhat-namespace/old-image:5",
+            "manifest_digest": "sha256:a1a1a1",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "repository": "namespace/repo",
+            "_id": "id2",
+            "reference": "some-registry.com/redhat-namespace/old-image:6",
+            "manifest_digest": "sha256:b2b2b2",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "repository": "namespace/different-repo",
+            "_id": "id3",
+            "reference": "some-registry.com/redhat-namespace/old-image:7",
+            "manifest_digest": "sha256:c3c3c3",
+            "sig_key_id": "sig-key",
+        },
     ]
 
     sig_remover = signature_remover.SignatureRemover(
@@ -278,24 +296,28 @@ def test_remove_tag_signatures_multiarch(
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/other-image",
             "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:2",
             "_id": "id4",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sig_key_id": "sig-key",
         },
     ]
 
@@ -401,24 +423,28 @@ def test_remove_tag_signatures_source(
             "reference": "redhat.com/external-repo/external-image:3",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:3",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/other-image",
             "reference": "redhat.com/external-repo/other-image:3",
             "_id": "id3",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:4",
             "_id": "id4",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
     ]
 
@@ -554,18 +580,21 @@ def test_remove_tag_signatures_exclude_by_claims(
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/other-image",
             "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sig_key_id": "sig-key",
         },
     ]
 
@@ -641,18 +670,21 @@ def test_remove_tag_signatures_selected_archs(
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id1",
             "manifest_digest": "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/external-image",
             "reference": "redhat.com/external-repo/external-image:1",
             "_id": "id2",
             "manifest_digest": "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "sig_key_id": "sig-key",
         },
         {
             "repository": "external-repo/other-image",
             "reference": "redhat.com/external-repo/other-image:1",
             "_id": "id3",
             "manifest_digest": "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "sig_key_id": "sig-key",
         },
     ]
 

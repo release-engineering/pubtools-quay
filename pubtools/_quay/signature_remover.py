@@ -232,6 +232,12 @@ class SignatureRemover:
         ):
             if signature["repository"] == repository:
                 remove_signature_ids.append(signature["_id"])
+                LOG.debug(
+                    f"Removing signature. Reference: {signature['reference']}, "
+                    f"Repository: {signature['repository']}, "
+                    f"Digest: {signature['manifest_digest']}, "
+                    f"Key: {signature['sig_key_id']}"
+                )
 
         if len(remove_signature_ids) > 0:
             LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
@@ -328,6 +334,12 @@ class SignatureRemover:
                 and (sig["manifest_digest"], sig["reference"]) not in new_claims_signatures
             ):
                 remove_signature_ids.append(sig["_id"])
+                LOG.debug(
+                    f"Removing signature. Reference: {sig['reference']}, "
+                    f"Repository: {sig['repository']}, "
+                    f"Digest: {sig['manifest_digest']}, "
+                    f"Key: {sig['sig_key_id']}"
+                )
 
         if len(remove_signature_ids) > 0:
             LOG.info("{0} signatures will be removed".format(len(remove_signature_ids)))
