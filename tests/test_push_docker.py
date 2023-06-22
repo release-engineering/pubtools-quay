@@ -2175,6 +2175,7 @@ def test_remove_old_signatures_container_signatures(
                     "repository": "some-product/some-repo",
                     "reference": "registry/some-product/some-repo:sometag",
                     "_id": "signature-id-1",
+                    "sig_key_id": "sig-key",
                 }
             ]
         )
@@ -2247,6 +2248,7 @@ def test_remove_old_signatures_operator_signatures(
                     "repository": "some-product/some-repo",
                     "reference": "registry/some-product/some-repo:sometag",
                     "_id": "signature-id-1",
+                    "sig_key_id": "sig-key",
                 }
             ],
             [
@@ -2255,6 +2257,7 @@ def test_remove_old_signatures_operator_signatures(
                     "repository": "some-product/some-repo",
                     "reference": "registry/some-product/some-repo:someversion",
                     "_id": "signature-id-2",
+                    "sig_key_id": "sig-key",
                 }
             ],
         ]
@@ -2331,6 +2334,7 @@ def test_remove_old_signatures_operator_signatures_repush(
                     "repository": "some-product/some-repo",
                     "reference": "registry/some-product/some-repo:sometag",
                     "_id": "signature-id-1",
+                    "sig_key_id": "sig-key",
                 }
             ],
             [
@@ -2339,6 +2343,7 @@ def test_remove_old_signatures_operator_signatures_repush(
                     "repository": "some-product/some-repo",
                     "reference": "registry/some-product/some-repo:someversion",
                     "_id": "signature-id-2",
+                    "sig_key_id": "sig-key",
                 }
             ],
         ]

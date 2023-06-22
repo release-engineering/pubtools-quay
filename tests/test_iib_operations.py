@@ -57,8 +57,22 @@ def test_task_iib_add_bundles(
 
     mock_get_index_image_signatures = mock.MagicMock()
     mock_get_index_image_signatures.return_value = [
-        {"signature": "value1", "_id": "1"},
-        {"signature": "value2", "_id": "2"},
+        {
+            "signature": "value1",
+            "_id": "1",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:a1a1a1",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "signature": "value2",
+            "_id": "2",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:b2b2b2",
+            "sig_key_id": "sig-key",
+        },
     ]
     mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
 
@@ -161,8 +175,22 @@ def test_task_iib_add_bundles_operator_ns(
 
     mock_get_index_image_signatures = mock.MagicMock()
     mock_get_index_image_signatures.return_value = [
-        {"signature": "value1", "_id": "1"},
-        {"signature": "value2", "_id": "2"},
+        {
+            "signature": "value1",
+            "_id": "1",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:a1a1a1",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "signature": "value2",
+            "_id": "2",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:b2b2b2",
+            "sig_key_id": "sig-key",
+        },
     ]
     mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
 
@@ -263,8 +291,22 @@ def test_task_iib_remove_operators(
 
     mock_get_index_image_signatures = mock.MagicMock()
     mock_get_index_image_signatures.return_value = [
-        {"signature": "value1", "_id": "1"},
-        {"signature": "value2", "_id": "2"},
+        {
+            "signature": "value1",
+            "_id": "1",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:a1a1a1",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "signature": "value2",
+            "_id": "2",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:b2b2b2",
+            "sig_key_id": "sig-key",
+        },
     ]
     mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
 
@@ -364,8 +406,22 @@ def test_task_iib_remove_operators_operator_ns(
 
     mock_get_index_image_signatures = mock.MagicMock()
     mock_get_index_image_signatures.return_value = [
-        {"signature": "value1", "_id": "1"},
-        {"signature": "value2", "_id": "2"},
+        {
+            "signature": "value1",
+            "_id": "1",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:a1a1a1",
+            "sig_key_id": "sig-key",
+        },
+        {
+            "signature": "value2",
+            "_id": "2",
+            "reference": "some-registry.com/redhat-namespace/old-index-image:5",
+            "repository": "image-repo",
+            "manifest_digest": "sha256:b2b2b2",
+            "sig_key_id": "sig-key",
+        },
     ]
     mock_signature_remover.return_value.get_index_image_signatures = mock_get_index_image_signatures
 

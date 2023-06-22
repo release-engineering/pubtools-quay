@@ -171,6 +171,13 @@ def task_iib_add_bundles(
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
+    for sig in old_signatures:
+        LOG.debug(
+            f"Removing operator signature. Reference: {sig['reference']}, "
+            f"Repository: {sig['repository']}, "
+            f"Digest: {sig['manifest_digest']}, "
+            f"Key: {sig['sig_key_id']}"
+        )
     sig_remover.remove_signatures_from_pyxis(
         signature_ids,
         target_settings["pyxis_server"],
@@ -287,6 +294,13 @@ def task_iib_remove_operators(
     )
 
     signature_ids = [s["_id"] for s in old_signatures]
+    for sig in old_signatures:
+        LOG.debug(
+            f"Removing operator signature. Reference: {sig['reference']}, "
+            f"Repository: {sig['repository']}, "
+            f"Digest: {sig['manifest_digest']}, "
+            f"Key: {sig['sig_key_id']}"
+        )
     sig_remover.remove_signatures_from_pyxis(
         signature_ids,
         target_settings["pyxis_server"],

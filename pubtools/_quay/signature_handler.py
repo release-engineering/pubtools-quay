@@ -361,6 +361,14 @@ class SignatureHandler:
                 }
             )
 
+        for sig in signatures:
+            LOG.debug(
+                f"Uploading new signature. Reference: {sig['reference']}, "
+                f"Repository: {sig['repository']}, "
+                f"Digest: {sig['manifest_digest']}, "
+                f"Key: {sig['sig_key_id']}"
+            )
+
         args = ["--pyxis-server", self.target_settings["pyxis_server"]]
         args += ["--pyxis-ssl-crtfile", cert]
         args += ["--pyxis-ssl-keyfile", key]
