@@ -456,6 +456,7 @@ class PushDocker:
         existing_index_images,
         iib_results,
         backup_tags,
+        rollback_tags,
         container_signature_handler,
         operator_signature_handler,
         signature_remover,
@@ -483,6 +484,9 @@ class PushDocker:
             backup_tags ({ImageData: str}):
                 Dictionary of ImageData (repo, tag, digest) -> manifest
                 holding containers which were overwritten in the currently running task
+            rollback_tags ({ImageData: str}):
+                List of ImageData [(repo, tag, digest)]
+                holding containers which were overwritten in the currently running task
             container_signature_handler (ContainerSignatureHandler):
                 ContanerSignatureHandler instance.
             operator_signature_handler (OperatorSignatureHandler):
@@ -499,6 +503,9 @@ class PushDocker:
         outdated_signatures = []
 
         for image_data, manifest in backup_tags.items():
+            # do not remove signatures for just pushed content in the case of a repush
+            if image_data in rollback_tags:
+                continue
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
             if "manifests" in manifest:
                 for arch_manifest in manifest["manifests"]:
@@ -736,6 +743,7 @@ class PushDocker:
             existing_index_images,
             dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
             backup_tags,
+            rollback_tags,
             container_signature_handler,
             operator_signature_handler,
             sig_remover,

@@ -2143,8 +2143,9 @@ def test_remove_old_signatures_no_old_signatures(
     ).remove_old_signatures(
         [container_push_item_external_repos],
         [],
+        [],
         backup_tags,
-        {},
+        [],
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
@@ -2207,6 +2208,7 @@ def test_remove_old_signatures_container_signatures(
         [],
         {},
         backup_tags,
+        [],
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
@@ -2288,6 +2290,7 @@ def test_remove_old_signatures_operator_signatures(
             }
         },
         backup_tags,
+        [],
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
@@ -2301,4 +2304,83 @@ def test_remove_old_signatures_operator_signatures(
         "/path/to/file.crt",
         "/path/to/file.key",
         7,
+    )
+
+
+@mock.patch("pubtools._quay.push_docker.PushDocker.verify_target_settings")
+@mock.patch("pubtools._quay.push_docker.ContainerSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
+@mock.patch("pubtools._quay.push_docker.SignatureRemover")
+def test_remove_old_signatures_operator_signatures_repush(
+    mock_signature_remover,
+    mock_operator_signature_handler,
+    mock_container_signature_handler,
+    patched_verify_target_settings,
+    container_push_item_external_repos,
+    operator_push_item_ok,
+    fake_cert_key_paths,
+    claim_messages,
+):
+    mock_get_signatures_from_pyxis = mock.MagicMock(
+        side_effect=[
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:sometag",
+                    "_id": "signature-id-1",
+                }
+            ],
+            [
+                {
+                    "manifest_digest": "some-digest",
+                    "repository": "some-product/some-repo",
+                    "reference": "registry/some-product/some-repo:someversion",
+                    "_id": "signature-id-2",
+                }
+            ],
+        ]
+    )
+    existing_index_images = [("some-digest", "someversion", "some-product/some-repo")]
+
+    mock_container_signature_handler.get_signatures_from_pyxis = mock_get_signatures_from_pyxis
+    backup_tags = {}
+    image_data = push_docker.PushDocker.ImageData(
+        "reference/some-product----some-repo", "someversion", None, None
+    )
+    backup_tags[image_data] = {"digest": "some-digest"}
+    rollback_tags = [image_data]
+    mock_target_settings = {
+        "pyxis_server": "mock_pyxis_server",
+        "iib_krb_principal": "mock_pyxis_principal",
+        "iib_krb_ktfile": "mock_pyxis_krb_ktfile",
+    }
+
+    push_docker.PushDocker(
+        [container_push_item_external_repos],
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock.MagicMock(),
+        mock_target_settings,
+    ).remove_old_signatures(
+        [container_push_item_external_repos],
+        existing_index_images,
+        {
+            "v4.5": {
+                "iib_result": mock.MagicMock(
+                    internal_index_image_copy_resolved="registy/ns/iib@digest"
+                ),
+                "signing_keys": ["sig_key1"],
+            }
+        },
+        backup_tags,
+        rollback_tags,
+        mock_container_signature_handler,
+        mock_operator_signature_handler,
+        mock_signature_remover,
+        claim_messages,
+        claim_messages,
+    )
+    mock_container_signature_handler.get_signatures_from_pyxis.assert_has_calls(
+        [mock.call([]), mock.call(["some-digest"])]
     )
