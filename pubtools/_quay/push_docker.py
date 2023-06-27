@@ -499,13 +499,14 @@ class PushDocker:
                 claim messages created for new index image(s)
 
         """
+        # if there are no rollback tags, it means content is repushed. And therefore nothing
+        # should be removed.
+        if rollback_tags:
+            continue
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
         for image_data, manifest in backup_tags.items():
-            # do not remove signatures for just pushed content in the case of a repush
-            if image_data in rollback_tags:
-                continue
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
             if "manifests" in manifest:
                 for arch_manifest in manifest["manifests"]:
