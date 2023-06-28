@@ -456,6 +456,7 @@ class PushDocker:
         existing_index_images,
         iib_results,
         backup_tags,
+        rollback_tags,
         container_signature_handler,
         operator_signature_handler,
         signature_remover,
@@ -483,6 +484,9 @@ class PushDocker:
             backup_tags ({ImageData: str}):
                 Dictionary of ImageData (repo, tag, digest) -> manifest
                 holding containers which were overwritten in the currently running task
+            rollback_tags ({ImageData: str}):
+                List of ImageData [(repo, tag, digest)]
+                holding containers which were overwritten in the currently running task
             container_signature_handler (ContainerSignatureHandler):
                 ContanerSignatureHandler instance.
             operator_signature_handler (OperatorSignatureHandler):
@@ -495,6 +499,10 @@ class PushDocker:
                 claim messages created for new index image(s)
 
         """
+        # if there are no rollback tags, it means content is repushed. And therefore nothing
+        # should be removed.
+        if not rollback_tags:
+            return
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
@@ -687,9 +695,7 @@ class PushDocker:
         self.fetch_missing_push_items_digests(docker_push_items, self.target_settings)
 
         # sign missing images
-        manifest_claims += container_signature_handler.sign_container_images_new_digests(
-            docker_push_items
-        )
+        container_signature_handler.sign_container_images_new_digests(docker_push_items)
 
         failed = False
 
@@ -738,6 +744,7 @@ class PushDocker:
             existing_index_images,
             dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
             backup_tags,
+            rollback_tags,
             container_signature_handler,
             operator_signature_handler,
             sig_remover,
