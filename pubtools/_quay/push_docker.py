@@ -501,8 +501,8 @@ class PushDocker:
         """
         # if there are no rollback tags, it means content is repushed. And therefore nothing
         # should be removed.
-        if rollback_tags:
-            continue
+        if not rollback_tags:
+            return
         new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
 
