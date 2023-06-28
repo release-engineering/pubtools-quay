@@ -2190,6 +2190,7 @@ def test_remove_old_signatures_container_signatures(
     image_data = push_docker.PushDocker.ImageData(
         "reference/some-product----some-repo", "sometag", "some-digest", "other-digest"
     )
+    rollback_tags = [image_data]
     backup_tags[image_data] = "v2sch2-manifest"
     mock_target_settings = {
         "pyxis_server": "mock_pyxis_server",
@@ -2208,7 +2209,7 @@ def test_remove_old_signatures_container_signatures(
         [],
         {},
         backup_tags,
-        [],
+        rollback_tags,
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
@@ -2266,6 +2267,7 @@ def test_remove_old_signatures_operator_signatures(
         "reference/some-product----some-repo", "someversion", None, None
     )
     backup_tags[image_data] = {"digest": "some-digest"}
+    rollback_tags = [image_data]
     mock_target_settings = {
         "pyxis_server": "mock_pyxis_server",
         "iib_krb_principal": "mock_pyxis_principal",
@@ -2290,7 +2292,7 @@ def test_remove_old_signatures_operator_signatures(
             }
         },
         backup_tags,
-        [],
+        rollback_tags,
         mock_container_signature_handler,
         mock_operator_signature_handler,
         mock_signature_remover,
@@ -2382,5 +2384,5 @@ def test_remove_old_signatures_operator_signatures_repush(
         claim_messages,
     )
     mock_container_signature_handler.get_signatures_from_pyxis.assert_has_calls(
-        [mock.call([]), mock.call(["some-digest"])]
+        [mock.call([None]), mock.call(["some-digest"])]
     )
