@@ -2,6 +2,9 @@ import functools
 import logging
 import re
 import yaml
+from collections import namedtuple
+from concurrent import futures
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -453,7 +456,7 @@ class OperatorPusher:
         - Use Pyxis to parse 'com.redhat.openshift.versions'
         - Get deprecation list for a given version (list of bundles to be deprecated)
         - Create mapping of which bundles should be pushed to which index image versions
-        - Contact IIB to add the bundles to the index images
+        - Contact IIB to add the bundles to the index images with multiple threads
 
         Returns ({str:dict}):
             Dictionary containing IIB results and signing keys for all OPM versions. Data will be
@@ -524,6 +527,22 @@ class OperatorPusher:
         if failed_items:
             return {}
 
+        BuildIndexImageParam = namedtuple(
+            "BuildIndexImageParam",
+            [
+                "bundles",
+                "index_image",
+                "deprecation_list",
+                "build_tags",
+                "target_settings",
+                "tag",
+                "signing_keys",
+                "is_hotfix",
+                "hotfix_tag",
+            ],
+        )
+        build_index_image_params = []
+
         for version, items in sorted(self.version_items_mapping.items()):
             non_fbc_items = []
             osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
@@ -573,25 +592,52 @@ class OperatorPusher:
                 bundles = [self.public_bundle_ref(i) for i in g_items]
                 signing_keys = sorted(list(set([item.claims_signing_key for item in g_items])))
 
-                # build index image in IIB
                 if is_hotfix:
                     target_settings = self.target_settings.copy()
                     target_settings["iib_overwrite_from_index"] = False
                     target_settings["iib_overwrite_from_index_token"] = ""
                 else:
                     target_settings = self.target_settings
-                build_details = self.iib_add_bundles(
-                    bundles=bundles,
-                    index_image=index_image,
-                    deprecation_list=deprecation_list,
-                    build_tags=build_tags,
-                    target_settings=target_settings,
+
+                # save parameters which are used to build index image in IIB.
+                build_index_image_params.append(
+                    BuildIndexImageParam(
+                        bundles=bundles,
+                        index_image=index_image,
+                        deprecation_list=deprecation_list,
+                        build_tags=build_tags,
+                        target_settings=target_settings,
+                        tag=tag,
+                        signing_keys=signing_keys,
+                        is_hotfix=is_hotfix,
+                        hotfix_tag="" if not is_hotfix else hotfix_tag,
+                    )
                 )
-                iib_results[tag] = {
+
+        num_thread_build_index_images = self.target_settings.get("num_thread_build_index_images", 2)
+
+        with ThreadPoolExecutor(max_workers=num_thread_build_index_images) as executor:
+            future_results = {
+                executor.submit(
+                    lambda param: self.iib_add_bundles(
+                        bundles=param.bundles,
+                        index_image=param.index_image,
+                        deprecation_list=param.deprecation_list,
+                        build_tags=param.build_tags,
+                        target_settings=param.target_settings,
+                    ),
+                    param,
+                ): param
+                for param in build_index_image_params
+            }
+            for future in futures.as_completed(future_results):
+                build_details = future.result()
+                param = future_results[future]
+                iib_results[param.tag] = {
                     "iib_result": build_details,
-                    "signing_keys": signing_keys,
-                    "is_hotfix": is_hotfix,
-                    "hotfix_tag": "" if not is_hotfix else hotfix_tag,
+                    "signing_keys": param.signing_keys,
+                    "is_hotfix": param.is_hotfix,
+                    "hotfix_tag": param.hotfix_tag,
                 }
 
         return iib_results
