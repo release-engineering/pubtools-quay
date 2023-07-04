@@ -2,7 +2,6 @@ import functools
 import logging
 import re
 import yaml
-from collections import namedtuple
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
 
@@ -21,6 +20,7 @@ from .utils.misc import (
 )
 from .quay_client import QuayClient
 from .utils.misc import parse_index_image, pyxis_get_repo_metadata
+from .models import BuildIndexImageParam
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -527,20 +527,6 @@ class OperatorPusher:
         if failed_items:
             return {}
 
-        BuildIndexImageParam = namedtuple(
-            "BuildIndexImageParam",
-            [
-                "bundles",
-                "index_image",
-                "deprecation_list",
-                "build_tags",
-                "target_settings",
-                "tag",
-                "signing_keys",
-                "is_hotfix",
-                "hotfix_tag",
-            ],
-        )
         build_index_image_params = []
 
         for version, items in sorted(self.version_items_mapping.items()):
@@ -614,7 +600,7 @@ class OperatorPusher:
                     )
                 )
 
-        num_thread_build_index_images = self.target_settings.get("num_thread_build_index_images", 2)
+        num_thread_build_index_images = self.target_settings.get("num_thread_build_index_images", 5)
 
         with ThreadPoolExecutor(max_workers=num_thread_build_index_images) as executor:
             future_results = {
