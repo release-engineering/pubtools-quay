@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.11.2 (2023-07-10)
+-------------------
+
+* Add logs for adding and removing signatures
+* Remove less signatures
+* Use hotfix tag to sign an hotfix index image
+
 0.11.1 (2023-05-15)
 -------------------
 
