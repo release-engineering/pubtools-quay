@@ -130,7 +130,7 @@ The workflow can be summarized as:
 - Use Pyxis to parse ‘com.redhat.openshift.versions’
 - Get deprecation list for a given version (list of bundles to be deprecated)
 - Create mapping of which bundles should be pushed to which index image versions
-- Contact IIB to add the bundles to the index images</p>
+- Contact IIB to add the bundles to the index images with multiple threads</p>
 <dl>
 <dt>Returns ({str:dict}):</dt><dd><p>Dictionary containing IIB results and signing keys for all OPM versions. Data will be
 used in operator signing. Dictionary structure:
