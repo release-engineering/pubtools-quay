@@ -5,6 +5,7 @@ import requests
 import re
 from requests.packages.urllib3.util.retry import Retry
 from urllib import request
+import threading
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
@@ -33,7 +34,15 @@ class QuayClient:
         """
         self.username = username
         self.password = password
-        self.session = QuaySession(hostname=host, api="docker")
+        self.host = host
+        self.thread_local = threading.local()
+
+    @property
+    def session(self):
+        """Create QuaySession object per thread."""
+        if not hasattr(self.thread_local, "session"):
+            self.thread_local.session = QuaySession(hostname=self.host, api="docker")
+        return self.thread_local.session
 
     def get_manifest(self, image, raw=False, media_type=None):
         """
