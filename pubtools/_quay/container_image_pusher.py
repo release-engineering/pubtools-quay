@@ -47,21 +47,23 @@ class ContainerImagePusher:
     @property
     def src_quay_client(self):
         """Create and access QuayClient for source image."""
-        self._src_quay_client = QuayClient(
-            self.target_settings["source_quay_user"],
-            self.target_settings["source_quay_password"],
-            self.target_settings.get("source_quay_host") or self.quay_host,
-        )
+        if self._src_quay_client is None:
+            self._src_quay_client = QuayClient(
+                self.target_settings["source_quay_user"],
+                self.target_settings["source_quay_password"],
+                self.target_settings.get("source_quay_host") or self.quay_host,
+            )
         return self._src_quay_client
 
     @property
     def dest_quay_client(self):
         """Create and access QuayClient for dest image."""
-        self._dest_quay_client = QuayClient(
-            self.target_settings["dest_quay_user"],
-            self.target_settings["dest_quay_password"],
-            self.quay_host,
-        )
+        if self._dest_quay_client is None:
+            self._dest_quay_client = QuayClient(
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
+                self.quay_host,
+            )
         return self._dest_quay_client
 
     @classmethod
