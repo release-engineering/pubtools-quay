@@ -9,6 +9,7 @@ import string
 import subprocess
 import tarfile
 import time
+import textwrap
 
 import docker
 import paramiko
@@ -182,7 +183,9 @@ class LocalExecutor(Executor):
         out, err = p.communicate(input=stdin)
 
         if p.returncode != 0 and not tolerate_err:
-            LOG.error("Command {0} failed with {1}".format(cmd, err))
+            LOG.error("Command {0} failed with the following error:".format(cmd))
+            for line in textwrap.wrap(err, 200):
+                LOG.error(f"    {line}")
             raise RuntimeError(err_msg)
 
         return out, err
@@ -266,7 +269,9 @@ class RemoteExecutor(Executor):
             out_text = out.read().decode("utf-8")
             err_text = err.read().decode("utf-8")
             if out.channel.recv_exit_status() != 0 and not tolerate_err:
-                LOG.error("Command {0} failed with {1}".format(cmd, err_text))
+                LOG.error("Command {0} failed with the following error:".format(cmd))
+                for line in err_text.splitlines():
+                    LOG.error(f"    {line}")
                 raise RuntimeError(err_msg)
 
         return out_text, err_text
@@ -372,7 +377,9 @@ class ContainerExecutor(Executor):
         stdout = self.client.exec_start(cmd_exec["Id"])
 
         if self.client.exec_inspect(cmd_exec["Id"]).get("ExitCode") != 0 and not tolerate_err:
-            LOG.error("Command {0} failed with {1}".format(cmd, stdout))
+            LOG.error("Command {0} failed with the following error:".format(cmd))
+            for line in stdout.splitlines():
+                LOG.error(f"    {line}")
             raise RuntimeError(err_msg)
 
         if stdout is None:
