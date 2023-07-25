@@ -1,8 +1,10 @@
 import mock
 import paramiko
 import pytest
+import logging
 
 from pubtools._quay import command_executor
+from .utils.misc import compare_logs
 
 
 def test_local_executor_init():
@@ -71,6 +73,43 @@ def test_local_executor_run_error(mock_popen):
 
     with pytest.raises(RuntimeError, match="An error has occured when executing.*"):
         executor._run_cmd("pwd", stdin="input")
+
+
+@mock.patch("pubtools._quay.command_executor.subprocess.Popen")
+def test_local_executor_run_long_error(mock_popen, caplog):
+    caplog.set_level(logging.ERROR)
+    executor = command_executor.LocalExecutor({"some_param": "value"})
+
+    err_msg = " ".join(["Very long error message."] * 40)
+
+    mock_communicate = mock.MagicMock()
+    mock_communicate.return_value = ("outlog", err_msg)
+    mock_popen.return_value.communicate = mock_communicate
+    mock_popen.return_value.returncode = -1
+
+    expected_logs = [
+        ".*failed with the following error:",
+        "    Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message.",
+        "    Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message.",
+        "    Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message.",
+        "    Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message.",
+        "    Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message. Very long error message. "
+        "Very long error message. Very long error message.",
+    ]
+
+    with pytest.raises(RuntimeError, match="An error has occured when executing.*"):
+        executor._run_cmd("pwd", stdin="input")
+
+    compare_logs(caplog, expected_logs)
 
 
 @mock.patch("pubtools._quay.command_executor.subprocess.Popen")

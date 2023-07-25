@@ -30,7 +30,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: 3.11
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
@@ -46,7 +46,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: 3.11
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
@@ -62,7 +62,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: 3.11
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
@@ -78,11 +78,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.7
+          python-version: 3.11
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
-        run: tox -e py37
+        run: tox -e py311
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3.1.2
         with:
@@ -99,7 +99,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: Install Tox
         run: pip install tox
       - name: Run Tox
