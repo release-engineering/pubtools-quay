@@ -363,19 +363,19 @@ def test_push_operators(
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.5"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.6"],
         },
         "v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.7"],
         },
     }
     assert mock_add_bundles.call_count == 3
@@ -408,7 +408,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:5",
-                ["quay.io/some-namespace/operators----index-image:5"],
+                ["quay.io/some-namespace/operators----index-image:v4.5"],
                 True,
                 target_settings,
             )
@@ -418,7 +418,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:6",
-                ["quay.io/some-namespace/operators----index-image:6"],
+                ["quay.io/some-namespace/operators----index-image:v4.6"],
                 True,
                 target_settings,
             )
@@ -428,7 +428,7 @@ def test_push_operators(
         [
             mock.call(
                 "some-registry.com/ns/index-image:7",
-                ["quay.io/some-namespace/operators----index-image:7"],
+                ["quay.io/some-namespace/operators----index-image:v4.7"],
                 True,
                 target_settings,
             )
@@ -498,7 +498,7 @@ def test_push_operators_extra_ns(
         [
             mock.call(
                 "some-registry.com/ns/index-image:5",
-                ["quay.io/quay-operator-ns/operators----index-image:5"],
+                ["quay.io/quay-operator-ns/operators----index-image:v4.5"],
                 True,
                 target_settings,
             )
@@ -508,7 +508,7 @@ def test_push_operators_extra_ns(
         [
             mock.call(
                 "some-registry.com/ns/index-image:6",
-                ["quay.io/quay-operator-ns/operators----index-image:6"],
+                ["quay.io/quay-operator-ns/operators----index-image:v4.6"],
                 True,
                 target_settings,
             )
@@ -518,7 +518,7 @@ def test_push_operators_extra_ns(
         [
             mock.call(
                 "some-registry.com/ns/index-image:7",
-                ["quay.io/quay-operator-ns/operators----index-image:7"],
+                ["quay.io/quay-operator-ns/operators----index-image:v4.7"],
                 True,
                 target_settings,
             )
@@ -584,19 +584,19 @@ def test_push_operators_not_all_successful(
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.5"],
         },
         "v4.6": {
             "iib_result": None,
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.6"],
         },
         "v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "hotfix_tag": "",
+            "destination_tags": ["v4.7"],
         },
     }
     assert mock_add_bundles.call_count == 3
@@ -629,7 +629,7 @@ def test_push_operators_not_all_successful(
         [
             mock.call(
                 "some-registry.com/ns/index-image:5",
-                ["quay.io/some-namespace/operators----index-image:5"],
+                ["quay.io/some-namespace/operators----index-image:v4.5"],
                 True,
                 target_settings,
             )
@@ -639,7 +639,7 @@ def test_push_operators_not_all_successful(
         [
             mock.call(
                 "some-registry.com/ns/index-image:7",
-                ["quay.io/some-namespace/operators----index-image:7"],
+                ["quay.io/some-namespace/operators----index-image:v4.7"],
                 True,
                 target_settings,
             )
@@ -699,13 +699,13 @@ def test_push_operators_hotfix(
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "is_hotfix": True,
-            "hotfix_tag": "v4.5-test-hotfix-1234-4567",
+            "destination_tags": ["v4.5-test-hotfix-1234-4567"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "is_hotfix": True,
-            "hotfix_tag": "v4.6-test-hotfix-1234-4567",
+            "destination_tags": ["v4.6-test-hotfix-1234-4567"],
         },
     }
     expected_target_settings = target_settings.copy()
@@ -716,14 +716,14 @@ def test_push_operators_hotfix(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5-3", "v4.5-test-hotfix-1234-4567"],
+        build_tags=["v4.5-3"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6-3", "v4.6-test-hotfix-1234-4567"],
+        build_tags=["v4.6-3"],
         target_settings=expected_target_settings,
     )
 
@@ -745,6 +745,111 @@ def test_push_operators_hotfix(
             mock.call(
                 "some-registry.com/index/image:6",
                 ["quay.io/some-namespace/operators----index-image:v4.6-test-hotfix-1234-4567"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+
+
+@mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_push_operators_pre_release(
+    mock_get_repo_metadata,
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    mock_run_tag_images,
+    target_settings,
+    operator_push_item_pre_release,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"]]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/index/image:v4.5",
+            "some-registry.com/index/image@sha256:a1a1",
+            ["v4.5-pre-1.2"],
+        ),
+        IIBRes(
+            "some-registry.com/index/image:v4.6",
+            "some-registry.com/index/image@sha256:b2b2",
+            ["v4.6-pre-1.2"],
+        ),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher([operator_push_item_pre_release], "3", target_settings)
+
+    results = pusher.build_index_images()
+
+    assert mock_get_deprecation_list.call_count == 2
+    assert mock_get_deprecation_list.call_args_list[0] == mock.call("v4.5")
+    assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
+
+    assert results == {
+        "v4.5": {
+            "iib_result": iib_results[0],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "destination_tags": ["v4.5.pre-1.2"],
+        },
+        "v4.6": {
+            "iib_result": iib_results[1],
+            "signing_keys": ["some-key"],
+            "is_hotfix": False,
+            "destination_tags": ["v4.6.pre-1.2"],
+        },
+    }
+    expected_target_settings = target_settings.copy()
+    expected_target_settings["iib_overwrite_from_index"] = False
+    expected_target_settings["iib_overwrite_from_index_token"] = ""
+    assert mock_add_bundles.call_count == 2
+    assert mock_add_bundles.call_args_list[0] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
+        deprecation_list=["bundle1", "bundle2"],
+        build_tags=["v4.5.pre-1.2", "v4.5-3"],
+        target_settings=expected_target_settings,
+    )
+    assert mock_add_bundles.call_args_list[1] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+        deprecation_list=["bundle3"],
+        build_tags=["v4.6.pre-1.2", "v4.6-3"],
+        target_settings=expected_target_settings,
+    )
+
+    pusher.push_index_images(results)
+
+    assert mock_run_tag_images.call_count == 2
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index/image:v4.5",
+                ["quay.io/some-namespace/operators----index-image:v4.5.pre-1.2"],
+                True,
+                target_settings,
+            )
+        ]
+    )
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index/image:v4.6",
+                ["quay.io/some-namespace/operators----index-image:v4.6.pre-1.2"],
                 True,
                 target_settings,
             )
@@ -1028,13 +1133,13 @@ def test_push_operators_fbc_opted_in(
 
     assert results == {
         "v4.6": {
-            "hotfix_tag": "",
+            "destination_tags": ["v4.6"],
             "iib_result": iib_results[1],
             "is_hotfix": False,
             "signing_keys": ["some-key"],
         },
         "v4.12": {
-            "hotfix_tag": "",
+            "destination_tags": ["v4.12"],
             "iib_result": iib_results[0],
             "is_hotfix": False,
             "signing_keys": ["some-key"],

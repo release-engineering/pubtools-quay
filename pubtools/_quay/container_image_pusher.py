@@ -128,11 +128,16 @@ class ContainerImagePusher:
         for repo, tags in sorted(push_item.metadata["tags"].items()):
             internal_repo = get_internal_container_repo_name(repo)
             for tag in tags:
+                dst_tag = (
+                    f"{tag}.{push_item.metadata.get('com.redhat.pre-release')}"
+                    if push_item.metadata.get("com.redhat.pre-release")
+                    else f"{tag}"
+                )
                 dest_ref = image_schema.format(
                     host=self.quay_host,
                     namespace=namespace,
                     repo=internal_repo,
-                    tag=tag,
+                    tag=dst_tag,
                 )
                 dest_refs.append(dest_ref)
         return dest_refs

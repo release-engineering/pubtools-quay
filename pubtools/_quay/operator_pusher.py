@@ -547,39 +547,75 @@ class OperatorPusher:
             is_advisory_source = all(
                 [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in non_fbc_items]
             )
-            item_groups = {}
+            item_groups = {
+                version: {
+                    "items": [],
+                    "overwrite": True,
+                    "build_tags": [],
+                    "destination_tags": [version],
+                }
+            }
             if is_hotfix and not is_advisory_source:
                 raise ValueError("Cannot push hotfixes without an advisory")
+
             if is_hotfix:
                 for item in non_fbc_items:
-                    item_groups.setdefault(item.origin, []).append(item)
+                    hotfix_tag = "{0}-{1}-{2}".format(
+                        version,
+                        item.metadata["com.redhat.hotfix"],
+                        item.origin.split("-")[1].replace(":", "-"),
+                    )
+                    item_groups.setdefault(
+                        item.origin,
+                        {
+                            "items": [],
+                            "overwrite": False,
+                            "build_tags": [],
+                            "destination_tags": [hotfix_tag],
+                        },
+                    )
+                    item_groups[item.origin]["items"].append(item)
             else:
-                item_groups["default"] = non_fbc_items
+                for item in non_fbc_items:
+                    if item.metadata.get("com.redhat.pre-release"):
+                        item_groups.setdefault(
+                            f'{version}.{item.metadata.get("com.redhat.pre-release")}',
+                            {
+                                "items": [],
+                                "build_tags": [
+                                    f"{version}.{item.metadata.get('com.redhat.pre-release')}"
+                                ],
+                                "overwrite": False,
+                                "destination_tags": [
+                                    f"{version}.{item.metadata.get('com.redhat.pre-release')}"
+                                ],
+                            },
+                        )
+                        item_groups[f'{version}.{item.metadata.get("com.redhat.pre-release")}'][
+                            "items"
+                        ].append(item)
+                    else:
+                        item_groups[version]["items"].append(item)
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)
-            for group, g_items in item_groups.items():
-                if not g_items:
+            for group, group_info in item_groups.items():
+                if not group_info["items"]:
                     continue
                 tag = version
                 index_image = "{image_repo}:{tag}".format(
                     image_repo=self.target_settings["iib_index_image"], tag=tag
                 )
+                build_tags = group_info["build_tags"]
+                build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
 
-                build_tags = ["{0}-{1}".format(index_image.split(":")[1], self.task_id)]
-                if is_hotfix:
-                    hotfix_tag = "{0}-{1}-{2}".format(
-                        version,
-                        g_items[0].metadata["com.redhat.hotfix"],
-                        g_items[0].origin.split("-")[1].replace(":", "-"),
-                    )
-                    build_tags.append(hotfix_tag)
+                bundles = [self.public_bundle_ref(i) for i in group_info["items"]]
+                signing_keys = sorted(
+                    list(set([item.claims_signing_key for item in group_info["items"]]))
+                )
 
-                bundles = [self.public_bundle_ref(i) for i in g_items]
-                signing_keys = sorted(list(set([item.claims_signing_key for item in g_items])))
-
-                if is_hotfix:
-                    target_settings = self.target_settings.copy()
+                target_settings = self.target_settings.copy()
+                if not group_info["overwrite"]:
                     target_settings["iib_overwrite_from_index"] = False
                     target_settings["iib_overwrite_from_index_token"] = ""
                 else:
@@ -596,7 +632,9 @@ class OperatorPusher:
                         tag=tag,
                         signing_keys=signing_keys,
                         is_hotfix=is_hotfix,
-                        hotfix_tag="" if not is_hotfix else hotfix_tag,
+                        destination_tags=group_info[
+                            "destination_tags"
+                        ],  # ="" if not is_hotfix else hotfix_tag,
                     )
                 )
 
@@ -623,7 +661,8 @@ class OperatorPusher:
                     "iib_result": build_details,
                     "signing_keys": param.signing_keys,
                     "is_hotfix": param.is_hotfix,
-                    "hotfix_tag": param.hotfix_tag,
+                    "destination_tags": param.destination_tags,
+                    # "hotfix_tag": param.hotfix_tag,
                 }
 
         return iib_results
@@ -662,10 +701,11 @@ class OperatorPusher:
                 repo=iib_intermediate_repo,
                 tag=build_details.build_tags[0],
             )
-            if not results["is_hotfix"]:
-                dest_image = "{0}:{1}".format(index_image_repo, tag)
-            else:
-                dest_image = "{0}:{1}".format(index_image_repo, results["hotfix_tag"])
+            dest_images = [
+                "{0}:{1}".format(index_image_repo, dst_tag)
+                for dst_tag in results["destination_tags"]
+            ]
+
             # We don't use permanent index image here because we always want to overwrite
             # production tags with the latest index image (in case of parallel pushes)
             index_image_ts = self.target_settings.copy()
@@ -677,7 +717,7 @@ class OperatorPusher:
             )
 
             ContainerImagePusher.run_tag_images(
-                build_details.index_image, [dest_image], True, index_image_ts
+                build_details.index_image, dest_images, True, index_image_ts
             )
             if tag_suffix:
                 dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)

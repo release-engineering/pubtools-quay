@@ -388,6 +388,45 @@ def operator_push_item_fbc_hotfix():
 
 
 @pytest.fixture
+def operator_push_item_pre_release():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="operator",
+        file_size=0,
+        file_info=None,
+        origin="RHBA-1234:4567",
+        repos=[],
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "com.redhat.openshift.versions": "v4.5",
+            "op_type": "bundle",
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
+            "destination": {"tags": {"repo": ["tag1", "tag2"]}},
+            "tags": {"repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+            "arch": "some-arch",
+            "com.redhat.pre-release": "pre-1.2",
+        },
+    )
+
+
+@pytest.fixture
 def operator_push_item_hotfix():
     return MockContainerPushItem(
         file_path="push_item_filepath",
@@ -892,6 +931,43 @@ def container_multiarch_push_item():
         state="NOTPUSHED",
         claims_signing_key="some-key",
         metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "destination": {"tags": {"repo": ["tag1"]}},
+            "tags": {"target/repo": ["latest-test-tag"]},
+            "v_r": "1.0",
+            "pull_url": "some-registry/src/repo:1",
+            "build": {
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                }
+            },
+            "arch": "amd64",
+        },
+    )
+
+
+@pytest.fixture
+def container_multiarch_pre_release_push_item():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="docker",
+        file_size=0,
+        file_info=None,
+        origin="push_item_origin",
+        repos={"test_repo": []},
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "com.redhat.pre-release": "pre-1.2",
             "pull_data": {
                 "registry": "test-regitry",
                 "repo": "test-repo",
