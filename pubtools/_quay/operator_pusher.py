@@ -446,35 +446,12 @@ class OperatorPusher:
             LOG.info("Bundle {0} is present".format(bundle))
         return True
 
-    @log_step("Build index images")
-    def build_index_images(self):
-        """
-        Perform the 'build' part of the operator workflow.
-
-        This workflow is a part of push-docker operation.
-        The workflow can be summarized as:
-        - Use Pyxis to parse 'com.redhat.openshift.versions'
-        - Get deprecation list for a given version (list of bundles to be deprecated)
-        - Create mapping of which bundles should be pushed to which index image versions
-        - Contact IIB to add the bundles to the index images with multiple threads
-
-        Returns ({str:dict}):
-            Dictionary containing IIB results and signing keys for all OPM versions. Data will be
-            used in operator signing. Dictionary structure:
-            {
-                "version": {
-                    "iib_result": (...) (object returned by iiblib)
-                    "signing_keys": [...] (list of signing keys to be used for signing)
-                }
-            }
-        """
-        iib_results = {}
+    def _get_fbc_opted_in_items(self):
         repos_opted_in = {}
         items_opted_in = {}
         failed_items = {}
 
         # We need to load pyxis resolved versions at this point
-
         versions_mapping = self.version_items_mapping  # noqa: F841
 
         for item in self.push_items:
@@ -522,6 +499,97 @@ class OperatorPusher:
                     )
                 )
                 failed_items[id(item)] = True
+        return items_opted_in, failed_items
+
+    def _get_non_fbc_item_for_version(self, items, version, items_opted_in):
+        non_fbc_items = []
+        osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
+        for item in items:
+            if not items_opted_in[id(item)] or (items_opted_in[id(item)] and osev_tuple <= (4, 12)):
+                non_fbc_items.append(item)
+            elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
+                LOG.warning(
+                    "Skipping {i}".format(i=item)
+                    + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
+                )
+        return non_fbc_items
+
+    def _create_item_groups_for_version(
+        self, non_fbc_items, version, is_hotfix=False, is_prerelease=False
+    ):
+        item_groups = {
+            version: {
+                "items": [],
+                "overwrite": True,
+                "build_tags": [],
+                "destination_tags": [version],
+            }
+        }
+        if is_hotfix or is_prerelease:
+            for item in non_fbc_items:
+                tag_part = (
+                    item.metadata["com.redhat.hotfix"]
+                    if is_hotfix
+                    else item.metadata["com.redhat.prerelease"]
+                )
+                dst_tag = "{0}-{1}-{2}".format(
+                    version,
+                    tag_part,
+                    item.origin.split("-")[1].replace(":", "-"),
+                )
+                item_groups.setdefault(
+                    item.origin,
+                    {
+                        "items": [],
+                        "overwrite": False,
+                        "build_tags": [],
+                        "destination_tags": [dst_tag],
+                    },
+                )
+                item_groups[item.origin]["items"].append(item)
+        else:
+            for item in non_fbc_items:
+                if item.metadata.get("com.redhat.prerelease"):
+                    prerelease = item.metadata.get("com.redhat.prerelease")
+                    item_groups.setdefault(
+                        f"{version}.{item.origin}",
+                        {
+                            "items": [],
+                            "build_tags": [f"{version}.{item.origin}.{prerelease}"],
+                            "overwrite": False,
+                            "destination_tags": [f"{version}.{item.origin}.{prerelease}"],
+                        },
+                    )
+                    item_groups[f"{version}.{item.origin}"]["items"].append(item)
+                else:
+                    item_groups[version]["items"].append(item)
+        return item_groups
+
+    @log_step("Build index images")
+    def build_index_images(self):
+        """
+        Perform the 'build' part of the operator workflow.
+
+        This workflow is a part of push-docker operation.
+        The workflow can be summarized as:
+        - Use Pyxis to parse 'com.redhat.openshift.versions'
+        - Get deprecation list for a given version (list of bundles to be deprecated)
+        - Create mapping of which bundles should be pushed to which index image versions
+        - Contact IIB to add the bundles to the index images with multiple threads
+
+        Returns ({str:dict}):
+            Dictionary containing IIB results and signing keys for all OPM versions. Data will be
+            used in operator signing. Dictionary structure:
+            {
+                "version": {
+                    "iib_result": (...) (object returned by iiblib)
+                    "signing_keys": [...] (list of signing keys to be used for signing)
+                }
+            }
+        """
+        iib_results = {}
+
+        items_opted_in, failed_items = self._get_fbc_opted_in_items()
 
         # if any of push items failed due to fbc issues, return early and skip all iib operations
         if failed_items:
@@ -530,72 +598,21 @@ class OperatorPusher:
         build_index_image_params = []
 
         for version, items in sorted(self.version_items_mapping.items()):
-            non_fbc_items = []
-            osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
-            for item in items:
-                if not items_opted_in[id(item)] or (
-                    items_opted_in[id(item)] and osev_tuple <= (4, 12)
-                ):
-                    non_fbc_items.append(item)
-                elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
-                    LOG.warning(
-                        "Skipping {i}".format(i=item)
-                        + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
-                    )
+            non_fbc_items = self._get_non_fbc_item_for_version(items, version, items_opted_in)
 
             is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in non_fbc_items])
+            is_prerelease = any(
+                [item.metadata.get("com.redhat.prerelease") for item in non_fbc_items]
+            )
             is_advisory_source = all(
                 [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in non_fbc_items]
             )
-            item_groups = {
-                version: {
-                    "items": [],
-                    "overwrite": True,
-                    "build_tags": [],
-                    "destination_tags": [version],
-                }
-            }
             if is_hotfix and not is_advisory_source:
                 raise ValueError("Cannot push hotfixes without an advisory")
+            if is_prerelease and not is_advisory_source:
+                raise ValueError("Cannot push pre release without an advisory")
 
-            if is_hotfix:
-                for item in non_fbc_items:
-                    hotfix_tag = "{0}-{1}-{2}".format(
-                        version,
-                        item.metadata["com.redhat.hotfix"],
-                        item.origin.split("-")[1].replace(":", "-"),
-                    )
-                    item_groups.setdefault(
-                        item.origin,
-                        {
-                            "items": [],
-                            "overwrite": False,
-                            "build_tags": [],
-                            "destination_tags": [hotfix_tag],
-                        },
-                    )
-                    item_groups[item.origin]["items"].append(item)
-            else:
-                for item in non_fbc_items:
-                    if item.metadata.get("com.redhat.pre-release"):
-                        item_groups.setdefault(
-                            f'{version}.{item.metadata.get("com.redhat.pre-release")}',
-                            {
-                                "items": [],
-                                "build_tags": [
-                                    f"{version}.{item.metadata.get('com.redhat.pre-release')}"
-                                ],
-                                "overwrite": False,
-                                "destination_tags": [
-                                    f"{version}.{item.metadata.get('com.redhat.pre-release')}"
-                                ],
-                            },
-                        )
-                        item_groups[f'{version}.{item.metadata.get("com.redhat.pre-release")}'][
-                            "items"
-                        ].append(item)
-                    else:
-                        item_groups[version]["items"].append(item)
+            item_groups = self._create_item_groups_for_version(non_fbc_items, version, is_hotfix)
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)

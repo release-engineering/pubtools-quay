@@ -757,7 +757,7 @@ def test_push_operators_hotfix(
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
-def test_push_operators_pre_release(
+def test_push_operators_prerelease(
     mock_get_repo_metadata,
     mock_get_deprecation_list,
     mock_run_entrypoint,
@@ -782,12 +782,12 @@ def test_push_operators_pre_release(
         IIBRes(
             "some-registry.com/index/image:v4.5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-pre-1.2"],
+            ["v4.5.RHBA-1234:4567.pre-1.2"],
         ),
         IIBRes(
             "some-registry.com/index/image:v4.6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-pre-1.2"],
+            ["v4.6.RHBA-1234:4567.pre-1.2"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
@@ -804,13 +804,13 @@ def test_push_operators_pre_release(
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "destination_tags": ["v4.5.pre-1.2"],
+            "destination_tags": ["v4.5.RHBA-1234:4567.pre-1.2"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "destination_tags": ["v4.6.pre-1.2"],
+            "destination_tags": ["v4.6.RHBA-1234:4567.pre-1.2"],
         },
     }
     expected_target_settings = target_settings.copy()
@@ -821,14 +821,14 @@ def test_push_operators_pre_release(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5.pre-1.2", "v4.5-3"],
+        build_tags=["v4.5.RHBA-1234:4567.pre-1.2", "v4.5-3"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6.pre-1.2", "v4.6-3"],
+        build_tags=["v4.6.RHBA-1234:4567.pre-1.2", "v4.6-3"],
         target_settings=expected_target_settings,
     )
 
@@ -839,7 +839,7 @@ def test_push_operators_pre_release(
         [
             mock.call(
                 "some-registry.com/index/image:v4.5",
-                ["quay.io/some-namespace/operators----index-image:v4.5.pre-1.2"],
+                ["quay.io/some-namespace/operators----index-image:v4.5.RHBA-1234:4567.pre-1.2"],
                 True,
                 target_settings,
             )
@@ -849,7 +849,7 @@ def test_push_operators_pre_release(
         [
             mock.call(
                 "some-registry.com/index/image:v4.6",
-                ["quay.io/some-namespace/operators----index-image:v4.6.pre-1.2"],
+                ["quay.io/some-namespace/operators----index-image:v4.6.RHBA-1234:4567.pre-1.2"],
                 True,
                 target_settings,
             )
@@ -903,6 +903,54 @@ def test_push_operators_hotfix_invalid_origin(
     with pytest.raises(ValueError) as exc:
         results = pusher.build_index_images()
     assert str(exc.value) == "Cannot push hotfixes without an advisory"
+
+
+@mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_push_operators_prerelease_invalid_origin(
+    mock_get_repo_metadata,
+    mock_get_deprecation_list,
+    mock_run_entrypoint,
+    mock_add_bundles,
+    mock_run_tag_images,
+    target_settings,
+    operator_push_item_prerelease_invalid_origin,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
+
+    mock_get_deprecation_list.side_effect = [["bundle1", "bundle2"], ["bundle3"]]
+
+    mock_run_entrypoint.side_effect = [
+        [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}],
+    ]
+    iib_results = [
+        IIBRes(
+            "some-registry.com/index-image:5",
+            "some-registry.com/index-image@sha256:a1a1",
+            ["v4.5-test-hotfix-RHBA-1234-4567-3"],
+        ),
+        IIBRes(
+            "some-registry.com/index-image:6",
+            "some-registry.com/index-image@sha256:b2b2",
+            ["v4.6-test-hotfix-RHBA-1234-4567-3"],
+        ),
+    ]
+    mock_add_bundles.side_effect = iib_results
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_prerelease_invalid_origin], "3", target_settings
+    )
+
+    with pytest.raises(ValueError) as exc:
+        results = pusher.build_index_images()
+    assert str(exc.value) == "Cannot push pre release without an advisory"
 
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
