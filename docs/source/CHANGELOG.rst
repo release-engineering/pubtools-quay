@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.11.3 (2023-07-25)
+-------------------
+
+* Trigger building index images in parallel
+* Make request session object per thread
+
 0.11.2 (2023-07-10)
 -------------------
 
