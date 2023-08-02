@@ -129,8 +129,8 @@ class ContainerImagePusher:
             internal_repo = get_internal_container_repo_name(repo)
             for tag in tags:
                 dst_tag = (
-                    f"{tag}.{push_item.metadata.get('com.redhat.pre-release')}"
-                    if push_item.metadata.get("com.redhat.pre-release")
+                    f"{tag}.{push_item.metadata.get('com.redhat.prerelease')}"
+                    if push_item.metadata.get("com.redhat.prerelease")
                     else f"{tag}"
                 )
                 dest_ref = image_schema.format(

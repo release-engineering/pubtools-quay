@@ -1006,7 +1006,7 @@ def container_multiarch_pre_release_push_item():
         state="NOTPUSHED",
         claims_signing_key="some-key",
         metadata={
-            "com.redhat.pre-release": "pre-1.2",
+            "com.redhat.prerelease": "pre-1.2",
             "pull_data": {
                 "registry": "test-regitry",
                 "repo": "test-repo",

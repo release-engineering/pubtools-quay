@@ -549,20 +549,7 @@ class OperatorPusher:
                 item_groups[item.origin]["items"].append(item)
         else:
             for item in non_fbc_items:
-                if item.metadata.get("com.redhat.prerelease"):
-                    prerelease = item.metadata.get("com.redhat.prerelease")
-                    item_groups.setdefault(
-                        f"{version}.{item.origin}",
-                        {
-                            "items": [],
-                            "build_tags": [f"{version}.{item.origin}.{prerelease}"],
-                            "overwrite": False,
-                            "destination_tags": [f"{version}.{item.origin}.{prerelease}"],
-                        },
-                    )
-                    item_groups[f"{version}.{item.origin}"]["items"].append(item)
-                else:
-                    item_groups[version]["items"].append(item)
+                item_groups[version]["items"].append(item)
         return item_groups
 
     @log_step("Build index images")
@@ -612,7 +599,9 @@ class OperatorPusher:
             if is_prerelease and not is_advisory_source:
                 raise ValueError("Cannot push pre release without an advisory")
 
-            item_groups = self._create_item_groups_for_version(non_fbc_items, version, is_hotfix)
+            item_groups = self._create_item_groups_for_version(
+                non_fbc_items, version, is_hotfix, is_prerelease
+            )
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)

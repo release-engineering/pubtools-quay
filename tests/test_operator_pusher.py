@@ -782,12 +782,12 @@ def test_push_operators_prerelease(
         IIBRes(
             "some-registry.com/index/image:v4.5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5.RHBA-1234:4567.pre-1.2"],
+            ["v4.5-RHBA-1234-4567-pre-1.2"],
         ),
         IIBRes(
             "some-registry.com/index/image:v4.6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6.RHBA-1234:4567.pre-1.2"],
+            ["v4.6-RHBA-1234-4567.pre-1.2"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
@@ -804,13 +804,13 @@ def test_push_operators_prerelease(
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "destination_tags": ["v4.5.RHBA-1234:4567.pre-1.2"],
+            "destination_tags": ["v4.5-pre-1.2-1234-4567"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "is_hotfix": False,
-            "destination_tags": ["v4.6.RHBA-1234:4567.pre-1.2"],
+            "destination_tags": ["v4.6-pre-1.2-1234-4567"],
         },
     }
     expected_target_settings = target_settings.copy()
@@ -821,14 +821,14 @@ def test_push_operators_prerelease(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5.RHBA-1234:4567.pre-1.2", "v4.5-3"],
+        build_tags=["v4.5-3"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6.RHBA-1234:4567.pre-1.2", "v4.6-3"],
+        build_tags=["v4.6-3"],
         target_settings=expected_target_settings,
     )
 
@@ -839,7 +839,7 @@ def test_push_operators_prerelease(
         [
             mock.call(
                 "some-registry.com/index/image:v4.5",
-                ["quay.io/some-namespace/operators----index-image:v4.5.RHBA-1234:4567.pre-1.2"],
+                ["quay.io/some-namespace/operators----index-image:v4.5-pre-1.2-1234-4567"],
                 True,
                 target_settings,
             )
@@ -849,7 +849,7 @@ def test_push_operators_prerelease(
         [
             mock.call(
                 "some-registry.com/index/image:v4.6",
-                ["quay.io/some-namespace/operators----index-image:v4.6.RHBA-1234:4567.pre-1.2"],
+                ["quay.io/some-namespace/operators----index-image:v4.6-pre-1.2-1234-4567"],
                 True,
                 target_settings,
             )
