@@ -447,6 +447,13 @@ class OperatorPusher:
         return True
 
     def _get_fbc_opted_in_items(self):
+        """ Get items that are opted in for fbc.
+
+        An item needs to be targeted for repos with fbc_opt_in set to True and
+        ocp versions needs to be higher than 4.12. Inconsistencies in versions
+        (like support for both > 4.12 and <= 4.12) results  in item error.
+        """
+
         repos_opted_in = {}
         items_opted_in = {}
         failed_items = {}
@@ -501,7 +508,19 @@ class OperatorPusher:
                 failed_items[id(item)] = True
         return items_opted_in, failed_items
 
-    def _get_non_fbc_item_for_version(self, items, version, items_opted_in):
+    def _get_non_fbc_items_for_version(self, items, version, items_opted_in):
+        """Return non fbc items for given ocp version.
+        Args:
+            items: List[ContainerPushItem]
+                list of push items
+            version: str
+                ocp version for which items should be returned.
+            items_opted_in: Dict[int, bool]
+                list of push items opted in fbc.
+        Returns List[ContainerPushItem]:
+            list of items not opted in fbc
+        """
+
         non_fbc_items = []
         osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
         for item in items:
@@ -517,6 +536,20 @@ class OperatorPusher:
     def _create_item_groups_for_version(
         self, non_fbc_items, version, is_hotfix=False, is_prerelease=False
     ):
+        """Iterate thought non fbc items and group those together based on version.
+        Args:
+            non_fbc_items: List[ContainerPushItem]
+                list of items not opted in fbc
+            version: str
+                ocp version
+            is_hotfix: bool
+                flag indicating items are for hotfix push
+            is_prerelease: bool
+                flag indicating items are for prerelease push
+        Returns Dict[str, Dict[str, Any]]:
+            Dictionary of items grouped by ocp version
+        """
+
         item_groups = {
             version: {
                 "items": [],
@@ -568,7 +601,7 @@ class OperatorPusher:
             Dictionary containing IIB results and signing keys for all OPM versions. Data will be
             used in operator signing. Dictionary structure:
             {
-                "version": {
+                <target_tag>: {
                     "iib_result": (...) (object returned by iiblib)
                     "signing_keys": [...] (list of signing keys to be used for signing)
                 }
@@ -585,7 +618,7 @@ class OperatorPusher:
         build_index_image_params = []
 
         for version, items in sorted(self.version_items_mapping.items()):
-            non_fbc_items = self._get_non_fbc_item_for_version(items, version, items_opted_in)
+            non_fbc_items = self._get_non_fbc_items_for_version(items, version, items_opted_in)
 
             is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in non_fbc_items])
             is_prerelease = any(
