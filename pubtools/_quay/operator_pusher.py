@@ -447,13 +447,12 @@ class OperatorPusher:
         return True
 
     def _get_fbc_opted_in_items(self):
-        """ Get items that are opted in for fbc.
+        """Get items that are opted in for fbc.
 
         An item needs to be targeted for repos with fbc_opt_in set to True and
         ocp versions needs to be higher than 4.12. Inconsistencies in versions
         (like support for both > 4.12 and <= 4.12) results  in item error.
         """
-
         repos_opted_in = {}
         items_opted_in = {}
         failed_items = {}
@@ -510,6 +509,7 @@ class OperatorPusher:
 
     def _get_non_fbc_items_for_version(self, items, version, items_opted_in):
         """Return non fbc items for given ocp version.
+
         Args:
             items: List[ContainerPushItem]
                 list of push items
@@ -520,7 +520,6 @@ class OperatorPusher:
         Returns List[ContainerPushItem]:
             list of items not opted in fbc
         """
-
         non_fbc_items = []
         osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
         for item in items:
@@ -537,6 +536,7 @@ class OperatorPusher:
         self, non_fbc_items, version, is_hotfix=False, is_prerelease=False
     ):
         """Iterate thought non fbc items and group those together based on version.
+
         Args:
             non_fbc_items: List[ContainerPushItem]
                 list of items not opted in fbc
@@ -549,7 +549,6 @@ class OperatorPusher:
         Returns Dict[str, Dict[str, Any]]:
             Dictionary of items grouped by ocp version
         """
-
         item_groups = {
             version: {
                 "items": [],
