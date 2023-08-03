@@ -592,6 +592,8 @@ class OperatorPusher:
         This workflow is a part of push-docker operation.
         The workflow can be summarized as:
         - Use Pyxis to parse 'com.redhat.openshift.versions'
+        - Filter out push items which opted in to FBC and shouldn't be pushed
+        - Set extra attributes or push items are for prerelease or for hotfix
         - Get deprecation list for a given version (list of bundles to be deprecated)
         - Create mapping of which bundles should be pushed to which index image versions
         - Contact IIB to add the bundles to the index images with multiple threads
