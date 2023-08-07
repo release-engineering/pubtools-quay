@@ -605,6 +605,8 @@ class OperatorPusher:
                 <target_tag>: {
                     "iib_result": (...) (object returned by iiblib)
                     "signing_keys": [...] (list of signing keys to be used for signing)
+                    "is_hotfix": (bool) flag indicating if group is for hotfix tag
+                    "destination_tags": [...] (list of destination tags)
                 }
             }
         """
