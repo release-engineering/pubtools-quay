@@ -535,7 +535,7 @@ class OperatorPusher:
     def _create_item_groups_for_version(
         self, non_fbc_items, version, is_hotfix=False, is_prerelease=False
     ):
-        """Iterate thought non fbc items and group those together based on version.
+        """Iterate thought non fbc items and group those together based on destination tag.
 
         Args:
             non_fbc_items: List[ContainerPushItem]
@@ -553,7 +553,6 @@ class OperatorPusher:
             version: {
                 "items": [],
                 "overwrite": True,
-                "build_tags": [],
                 "destination_tags": [version],
             }
         }
@@ -574,7 +573,6 @@ class OperatorPusher:
                     {
                         "items": [],
                         "overwrite": False,
-                        "build_tags": [],
                         "destination_tags": [dst_tag],
                     },
                 )
@@ -605,7 +603,6 @@ class OperatorPusher:
                 <target_tag>: {
                     "iib_result": (...) (object returned by iiblib)
                     "signing_keys": [...] (list of signing keys to be used for signing)
-                    "is_hotfix": (bool) flag indicating if group is for hotfix tag
                     "destination_tags": [...] (list of destination tags)
                 }
             }
@@ -648,7 +645,7 @@ class OperatorPusher:
                 index_image = "{image_repo}:{tag}".format(
                     image_repo=self.target_settings["iib_index_image"], tag=tag
                 )
-                build_tags = group_info["build_tags"]
+                build_tags = []
                 build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
 
                 bundles = [self.public_bundle_ref(i) for i in group_info["items"]]
@@ -673,10 +670,7 @@ class OperatorPusher:
                         target_settings=target_settings,
                         tag=tag,
                         signing_keys=signing_keys,
-                        is_hotfix=is_hotfix,
-                        destination_tags=group_info[
-                            "destination_tags"
-                        ],  # ="" if not is_hotfix else hotfix_tag,
+                        destination_tags=group_info["destination_tags"],
                     )
                 )
 
@@ -702,9 +696,7 @@ class OperatorPusher:
                 iib_results[param.tag] = {
                     "iib_result": build_details,
                     "signing_keys": param.signing_keys,
-                    "is_hotfix": param.is_hotfix,
                     "destination_tags": param.destination_tags,
-                    # "hotfix_tag": param.hotfix_tag,
                 }
 
         return iib_results

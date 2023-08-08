@@ -780,8 +780,8 @@ def test_sign_operator_images(
                 "registry1/iib-namespace/iib@sha256:a1a1a1",
                 ["v4.5-1"],
             ),
+            "destination_tags": ["v4.5"],
             "signing_keys": ["key1"],
-            "is_hotfix": False,
         },
         "v4.6": {
             "iib_result": IIBRes(
@@ -789,8 +789,8 @@ def test_sign_operator_images(
                 "registry1/iib-namespace/iib@sha256:b2b2b2",
                 ["v4.6-1"],
             ),
+            "destination_tags": ["v4.6"],
             "signing_keys": ["key2"],
-            "is_hotfix": False,
         },
     }
 
@@ -840,8 +840,7 @@ def test_sign_operator_images_hotfix(
                 ["v4.5-hotfixlabel-advid", "v4.5-stamp"],
             ),
             "signing_keys": ["betakey"],
-            "is_hotfix": True,
-            "hotfix_tag": "v4.5-hotfixlabel-advid",
+            "destination_tags": ["v4.5-hotfixlabel-advid"],
         },
     }
 
@@ -1082,7 +1081,7 @@ def test_sign_operator_images_no_signatures(
                 ["v4.5-1"],
             ),
             "signing_keys": [None],
-            "is_hotfix": False,
+            "destination_tags": ["v4.5"],
         },
     }
 

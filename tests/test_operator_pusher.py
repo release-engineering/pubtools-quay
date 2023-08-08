@@ -362,19 +362,16 @@ def test_push_operators(
         "v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.5"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.6"],
         },
         "v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.7"],
         },
     }
@@ -583,19 +580,16 @@ def test_push_operators_not_all_successful(
         "v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.5"],
         },
         "v4.6": {
             "iib_result": None,
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.6"],
         },
         "v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.7"],
         },
     }
@@ -698,13 +692,11 @@ def test_push_operators_hotfix(
         "v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "is_hotfix": True,
             "destination_tags": ["v4.5-test-hotfix-1234-4567"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
-            "is_hotfix": True,
             "destination_tags": ["v4.6-test-hotfix-1234-4567"],
         },
     }
@@ -803,13 +795,11 @@ def test_push_operators_prerelease(
         "v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.5-pre-1.2-1234-4567"],
         },
         "v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
-            "is_hotfix": False,
             "destination_tags": ["v4.6-pre-1.2-1234-4567"],
         },
     }
@@ -1183,13 +1173,11 @@ def test_push_operators_fbc_opted_in(
         "v4.6": {
             "destination_tags": ["v4.6"],
             "iib_result": iib_results[1],
-            "is_hotfix": False,
             "signing_keys": ["some-key"],
         },
         "v4.12": {
             "destination_tags": ["v4.12"],
             "iib_result": iib_results[0],
-            "is_hotfix": False,
             "signing_keys": ["some-key"],
         },
     }
