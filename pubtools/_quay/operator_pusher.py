@@ -754,7 +754,11 @@ class OperatorPusher:
                 build_details.index_image, dest_images, True, index_image_ts
             )
             if tag_suffix:
-                dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
+                _dest_images = []
+                for _dest_tag in results["destination_tags"]:
+                    _dest_images.append(
+                        "{0}:{1}-{2}".format(index_image_repo, _dest_tag, tag_suffix)
+                    )
                 ContainerImagePusher.run_tag_images(
-                    permanent_index_image, [dest_image], True, index_image_ts
+                    permanent_index_image, _dest_images, True, index_image_ts
                 )
