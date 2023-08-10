@@ -774,12 +774,12 @@ def test_push_operators_prerelease(
         IIBRes(
             "some-registry.com/index/image:v4.5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-RHBA-1234-4567-pre-1.2"],
+            ["v4.5-1234-4567-pre-1.2"],
         ),
         IIBRes(
             "some-registry.com/index/image:v4.6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-RHBA-1234-4567.pre-1.2"],
+            ["v4.6-1234-4567.pre-1.2"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
