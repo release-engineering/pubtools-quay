@@ -525,35 +525,18 @@
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Bundle </span><span class="si">{0}</span><span class="s2"> is present&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bundle</span><span class="p">))</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="OperatorPusher.build_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.build_index_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Build index images&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">build_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Perform the &#39;build&#39; part of the operator workflow.</span>
+    <span class="k">def</span> <span class="nf">_get_fbc_opted_in_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get items that are opted in for fbc.</span>
 
-<span class="sd">        This workflow is a part of push-docker operation.</span>
-<span class="sd">        The workflow can be summarized as:</span>
-<span class="sd">        - Use Pyxis to parse &#39;com.redhat.openshift.versions&#39;</span>
-<span class="sd">        - Get deprecation list for a given version (list of bundles to be deprecated)</span>
-<span class="sd">        - Create mapping of which bundles should be pushed to which index image versions</span>
-<span class="sd">        - Contact IIB to add the bundles to the index images with multiple threads</span>
-
-<span class="sd">        Returns ({str:dict}):</span>
-<span class="sd">            Dictionary containing IIB results and signing keys for all OPM versions. Data will be</span>
-<span class="sd">            used in operator signing. Dictionary structure:</span>
-<span class="sd">            {</span>
-<span class="sd">                &quot;version&quot;: {</span>
-<span class="sd">                    &quot;iib_result&quot;: (...) (object returned by iiblib)</span>
-<span class="sd">                    &quot;signing_keys&quot;: [...] (list of signing keys to be used for signing)</span>
-<span class="sd">                }</span>
-<span class="sd">            }</span>
+<span class="sd">        An item needs to be targeted for repos with fbc_opt_in set to True and</span>
+<span class="sd">        ocp versions needs to be higher than 4.12. Inconsistencies in versions</span>
+<span class="sd">        (like support for both &gt; 4.12 and &lt;= 4.12) results  in item error.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">iib_results</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">repos_opted_in</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">items_opted_in</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">failed_items</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="c1"># We need to load pyxis resolved versions at this point</span>
-
         <span class="n">versions_mapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span>  <span class="c1"># noqa: F841</span>
 
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
@@ -601,6 +584,111 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">failed_items</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">items_opted_in</span><span class="p">,</span> <span class="n">failed_items</span>
+
+    <span class="k">def</span> <span class="nf">_get_non_fbc_items_for_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">items_opted_in</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return non fbc items for given ocp version.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            items: List[ContainerPushItem]</span>
+<span class="sd">                list of push items</span>
+<span class="sd">            version: str</span>
+<span class="sd">                ocp version for which items should be returned.</span>
+<span class="sd">            items_opted_in: Dict[int, bool]</span>
+<span class="sd">                list of push items opted in fbc.</span>
+<span class="sd">        Returns List[ContainerPushItem]:</span>
+<span class="sd">            list of items not opted in fbc</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">non_fbc_items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">osev_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">or</span> <span class="p">(</span><span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)):</span>
+                <span class="n">non_fbc_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">):</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Skipping </span><span class="si">{i}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">item</span><span class="p">)</span>
+                    <span class="o">+</span> <span class="s2">&quot;from iib build as it&#39;s opted in for FBC and targeting OCP version &gt;=4.13&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">non_fbc_items</span>
+
+    <span class="k">def</span> <span class="nf">_create_item_groups_for_version</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">non_fbc_items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">is_hotfix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_prerelease</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate thought non fbc items and group those together based on destination tag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            non_fbc_items: List[ContainerPushItem]</span>
+<span class="sd">                list of items not opted in fbc</span>
+<span class="sd">            version: str</span>
+<span class="sd">                ocp version</span>
+<span class="sd">            is_hotfix: bool</span>
+<span class="sd">                flag indicating items are for hotfix push</span>
+<span class="sd">            is_prerelease: bool</span>
+<span class="sd">                flag indicating items are for prerelease push</span>
+<span class="sd">        Returns Dict[str, Dict[str, Any]]:</span>
+<span class="sd">            Dictionary of items grouped by ocp version</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">item_groups</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">version</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">version</span><span class="p">],</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">is_hotfix</span> <span class="ow">or</span> <span class="n">is_prerelease</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">:</span>
+                <span class="n">tag_part</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">is_hotfix</span>
+                    <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.prerelease&quot;</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">dst_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">version</span><span class="p">,</span>
+                    <span class="n">tag_part</span><span class="p">,</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">),</span>
+                <span class="p">)</span>
+                <span class="n">item_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                        <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                        <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">dst_tag</span><span class="p">],</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+                <span class="n">item_groups</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">:</span>
+                <span class="n">item_groups</span><span class="p">[</span><span class="n">version</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">item_groups</span>
+
+<div class="viewcode-block" id="OperatorPusher.build_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.build_index_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Build index images&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">build_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the &#39;build&#39; part of the operator workflow.</span>
+
+<span class="sd">        This workflow is a part of push-docker operation.</span>
+<span class="sd">        The workflow can be summarized as:</span>
+<span class="sd">        - Use Pyxis to parse &#39;com.redhat.openshift.versions&#39;</span>
+<span class="sd">        - Filter out push items which opted in to FBC and shouldn&#39;t be pushed</span>
+<span class="sd">        - Set extra attributes or push items are for prerelease or for hotfix</span>
+<span class="sd">        - Get deprecation list for a given version (list of bundles to be deprecated)</span>
+<span class="sd">        - Create mapping of which bundles should be pushed to which index image versions</span>
+<span class="sd">        - Contact IIB to add the bundles to the index images with multiple threads</span>
+
+<span class="sd">        Returns ({str:dict}):</span>
+<span class="sd">            Dictionary containing IIB results and signing keys for all OPM versions. Data will be</span>
+<span class="sd">            used in operator signing. Dictionary structure:</span>
+<span class="sd">            {</span>
+<span class="sd">                &lt;target_tag&gt;: {</span>
+<span class="sd">                    &quot;iib_result&quot;: (...) (object returned by iiblib)</span>
+<span class="sd">                    &quot;signing_keys&quot;: [...] (list of signing keys to be used for signing)</span>
+<span class="sd">                    &quot;destination_tags&quot;: [...] (list of destination tags)</span>
+<span class="sd">                }</span>
+<span class="sd">            }</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">iib_results</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">items_opted_in</span><span class="p">,</span> <span class="n">failed_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fbc_opted_in_items</span><span class="p">()</span>
 
         <span class="c1"># if any of push items failed due to fbc issues, return early and skip all iib operations</span>
         <span class="k">if</span> <span class="n">failed_items</span><span class="p">:</span>
@@ -609,56 +697,43 @@
         <span class="n">build_index_image_params</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-            <span class="n">non_fbc_items</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">osev_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span>
-            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">or</span> <span class="p">(</span>
-                    <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
-                <span class="p">):</span>
-                    <span class="n">non_fbc_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">):</span>
-                    <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                        <span class="s2">&quot;Skipping </span><span class="si">{i}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">item</span><span class="p">)</span>
-                        <span class="o">+</span> <span class="s2">&quot;from iib build as it&#39;s opted in for FBC and targeting OCP version &gt;=4.13&quot;</span>
-                    <span class="p">)</span>
+            <span class="n">non_fbc_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_fbc_items_for_version</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">items_opted_in</span><span class="p">)</span>
 
             <span class="n">is_hotfix</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">])</span>
+            <span class="n">is_prerelease</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;com.redhat.prerelease&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">]</span>
+            <span class="p">)</span>
             <span class="n">is_advisory_source</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Z0-9:\-]{4,40}$&quot;</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">]</span>
             <span class="p">)</span>
-            <span class="n">item_groups</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">if</span> <span class="n">is_hotfix</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_advisory_source</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot push hotfixes without an advisory&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">:</span>
-                    <span class="n">item_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">item_groups</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">non_fbc_items</span>
+            <span class="k">if</span> <span class="n">is_prerelease</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_advisory_source</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot push pre release without an advisory&quot;</span><span class="p">)</span>
+
+            <span class="n">item_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_item_groups_for_version</span><span class="p">(</span>
+                <span class="n">non_fbc_items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">is_hotfix</span><span class="p">,</span> <span class="n">is_prerelease</span>
+            <span class="p">)</span>
 
             <span class="c1"># Get deprecation list</span>
             <span class="n">deprecation_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_deprecation_list</span><span class="p">(</span><span class="n">version</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">g_items</span> <span class="ow">in</span> <span class="n">item_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">g_items</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">group_info</span> <span class="ow">in</span> <span class="n">item_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]:</span>
                     <span class="k">continue</span>
                 <span class="n">tag</span> <span class="o">=</span> <span class="n">version</span>
                 <span class="n">index_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{image_repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">image_repo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_index_image&quot;</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
                 <span class="p">)</span>
+                <span class="n">build_tags</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">build_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">))</span>
 
-                <span class="n">build_tags</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)]</span>
-                <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
-                    <span class="n">hotfix_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">version</span><span class="p">,</span>
-                        <span class="n">g_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">],</span>
-                        <span class="n">g_items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">),</span>
-                    <span class="p">)</span>
-                    <span class="n">build_tags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hotfix_tag</span><span class="p">)</span>
+                <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]]</span>
+                <span class="n">signing_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">claims_signing_key</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]]))</span>
+                <span class="p">)</span>
 
-                <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">]</span>
-                <span class="n">signing_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">item</span><span class="o">.</span><span class="n">claims_signing_key</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">g_items</span><span class="p">])))</span>
-
-                <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
-                    <span class="n">target_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">target_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;overwrite&quot;</span><span class="p">]:</span>
                     <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
                     <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -674,8 +749,7 @@
                         <span class="n">target_settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">,</span>
                         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                         <span class="n">signing_keys</span><span class="o">=</span><span class="n">signing_keys</span><span class="p">,</span>
-                        <span class="n">is_hotfix</span><span class="o">=</span><span class="n">is_hotfix</span><span class="p">,</span>
-                        <span class="n">hotfix_tag</span><span class="o">=</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_hotfix</span> <span class="k">else</span> <span class="n">hotfix_tag</span><span class="p">,</span>
+                        <span class="n">destination_tags</span><span class="o">=</span><span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">],</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -701,8 +775,7 @@
                 <span class="n">iib_results</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span>
                     <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">signing_keys</span><span class="p">,</span>
-                    <span class="s2">&quot;is_hotfix&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">is_hotfix</span><span class="p">,</span>
-                    <span class="s2">&quot;hotfix_tag&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">hotfix_tag</span><span class="p">,</span>
+                    <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">destination_tags</span><span class="p">,</span>
                 <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">iib_results</span></div>
@@ -741,10 +814,11 @@
                 <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
                 <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_hotfix&quot;</span><span class="p">]:</span>
-                <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;hotfix_tag&quot;</span><span class="p">])</span>
+            <span class="n">dest_images</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">dst_tag</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">dst_tag</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">]</span>
+            <span class="p">]</span>
+
             <span class="c1"># We don&#39;t use permanent index image here because we always want to overwrite</span>
             <span class="c1"># production tags with the latest index image (in case of parallel pushes)</span>
             <span class="n">index_image_ts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -756,12 +830,16 @@
             <span class="p">)</span>
 
             <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-                <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
+                <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="n">dest_images</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">tag_suffix</span><span class="p">:</span>
-                <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)</span>
+                <span class="n">_dest_images</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">_dest_tag</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">_dest_images</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">_dest_tag</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)</span>
+                    <span class="p">)</span>
                 <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
-                    <span class="n">permanent_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
+                    <span class="n">permanent_index_image</span><span class="p">,</span> <span class="n">_dest_images</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
                 <span class="p">)</span></div></div>
 </pre></div>
 

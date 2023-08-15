@@ -744,15 +744,11 @@
             <span class="p">)</span>
             <span class="c1"># Version acts as a tag of the index image</span>
             <span class="c1"># use hotfix tag if it exists</span>
-            <span class="k">if</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;is_hotfix&quot;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">dest_tag</span> <span class="ow">in</span> <span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">]:</span>
                 <span class="n">claim_messages</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_index_image_claim_messages</span><span class="p">(</span>
                     <span class="n">permanent_index_image</span><span class="p">,</span>
-                    <span class="p">[</span><span class="n">iib_details</span><span class="p">[</span><span class="s2">&quot;hotfix_tag&quot;</span><span class="p">],</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)],</span>
+                    <span class="p">[</span><span class="n">dest_tag</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dest_tag</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)],</span>
                     <span class="n">signing_keys</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">claim_messages</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_index_image_claim_messages</span><span class="p">(</span>
-                    <span class="n">permanent_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">version</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">version</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="p">)],</span> <span class="n">signing_keys</span>
                 <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">claim_messages</span><span class="p">:</span>
