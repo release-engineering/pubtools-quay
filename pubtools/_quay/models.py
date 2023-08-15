@@ -13,5 +13,4 @@ class BuildIndexImageParam:
     target_settings: Dict[str, Any]
     tag: str
     signing_keys: List[str]
-    is_hotfix: bool
-    hotfix_tag: str
+    destination_tags: List[str]

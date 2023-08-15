@@ -446,35 +446,18 @@ class OperatorPusher:
             LOG.info("Bundle {0} is present".format(bundle))
         return True
 
-    @log_step("Build index images")
-    def build_index_images(self):
-        """
-        Perform the 'build' part of the operator workflow.
+    def _get_fbc_opted_in_items(self):
+        """Get items that are opted in for fbc.
 
-        This workflow is a part of push-docker operation.
-        The workflow can be summarized as:
-        - Use Pyxis to parse 'com.redhat.openshift.versions'
-        - Get deprecation list for a given version (list of bundles to be deprecated)
-        - Create mapping of which bundles should be pushed to which index image versions
-        - Contact IIB to add the bundles to the index images with multiple threads
-
-        Returns ({str:dict}):
-            Dictionary containing IIB results and signing keys for all OPM versions. Data will be
-            used in operator signing. Dictionary structure:
-            {
-                "version": {
-                    "iib_result": (...) (object returned by iiblib)
-                    "signing_keys": [...] (list of signing keys to be used for signing)
-                }
-            }
+        An item needs to be targeted for repos with fbc_opt_in set to True and
+        ocp versions needs to be higher than 4.12. Inconsistencies in versions
+        (like support for both > 4.12 and <= 4.12) results  in item error.
         """
-        iib_results = {}
         repos_opted_in = {}
         items_opted_in = {}
         failed_items = {}
 
         # We need to load pyxis resolved versions at this point
-
         versions_mapping = self.version_items_mapping  # noqa: F841
 
         for item in self.push_items:
@@ -522,6 +505,111 @@ class OperatorPusher:
                     )
                 )
                 failed_items[id(item)] = True
+        return items_opted_in, failed_items
+
+    def _get_non_fbc_items_for_version(self, items, version, items_opted_in):
+        """Return non fbc items for given ocp version.
+
+        Args:
+            items: List[ContainerPushItem]
+                list of push items
+            version: str
+                ocp version for which items should be returned.
+            items_opted_in: Dict[int, bool]
+                list of push items opted in fbc.
+        Returns List[ContainerPushItem]:
+            list of items not opted in fbc
+        """
+        non_fbc_items = []
+        osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
+        for item in items:
+            if not items_opted_in[id(item)] or (items_opted_in[id(item)] and osev_tuple <= (4, 12)):
+                non_fbc_items.append(item)
+            elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
+                LOG.warning(
+                    "Skipping {i}".format(i=item)
+                    + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
+                )
+        return non_fbc_items
+
+    def _create_item_groups_for_version(
+        self, non_fbc_items, version, is_hotfix=False, is_prerelease=False
+    ):
+        """Iterate thought non fbc items and group those together based on destination tag.
+
+        Args:
+            non_fbc_items: List[ContainerPushItem]
+                list of items not opted in fbc
+            version: str
+                ocp version
+            is_hotfix: bool
+                flag indicating items are for hotfix push
+            is_prerelease: bool
+                flag indicating items are for prerelease push
+        Returns Dict[str, Dict[str, Any]]:
+            Dictionary of items grouped by ocp version
+        """
+        item_groups = {
+            version: {
+                "items": [],
+                "overwrite": True,
+                "destination_tags": [version],
+            }
+        }
+        if is_hotfix or is_prerelease:
+            for item in non_fbc_items:
+                tag_part = (
+                    item.metadata["com.redhat.hotfix"]
+                    if is_hotfix
+                    else item.metadata["com.redhat.prerelease"]
+                )
+                dst_tag = "{0}-{1}-{2}".format(
+                    version,
+                    tag_part,
+                    item.origin.split("-")[1].replace(":", "-"),
+                )
+                item_groups.setdefault(
+                    item.origin,
+                    {
+                        "items": [],
+                        "overwrite": False,
+                        "destination_tags": [dst_tag],
+                    },
+                )
+                item_groups[item.origin]["items"].append(item)
+        else:
+            for item in non_fbc_items:
+                item_groups[version]["items"].append(item)
+        return item_groups
+
+    @log_step("Build index images")
+    def build_index_images(self):
+        """
+        Perform the 'build' part of the operator workflow.
+
+        This workflow is a part of push-docker operation.
+        The workflow can be summarized as:
+        - Use Pyxis to parse 'com.redhat.openshift.versions'
+        - Filter out push items which opted in to FBC and shouldn't be pushed
+        - Set extra attributes or push items are for prerelease or for hotfix
+        - Get deprecation list for a given version (list of bundles to be deprecated)
+        - Create mapping of which bundles should be pushed to which index image versions
+        - Contact IIB to add the bundles to the index images with multiple threads
+
+        Returns ({str:dict}):
+            Dictionary containing IIB results and signing keys for all OPM versions. Data will be
+            used in operator signing. Dictionary structure:
+            {
+                <target_tag>: {
+                    "iib_result": (...) (object returned by iiblib)
+                    "signing_keys": [...] (list of signing keys to be used for signing)
+                    "destination_tags": [...] (list of destination tags)
+                }
+            }
+        """
+        iib_results = {}
+
+        items_opted_in, failed_items = self._get_fbc_opted_in_items()
 
         # if any of push items failed due to fbc issues, return early and skip all iib operations
         if failed_items:
@@ -530,56 +618,43 @@ class OperatorPusher:
         build_index_image_params = []
 
         for version, items in sorted(self.version_items_mapping.items()):
-            non_fbc_items = []
-            osev_tuple = tuple([int(x) for x in version.replace("v", "").split(".")])
-            for item in items:
-                if not items_opted_in[id(item)] or (
-                    items_opted_in[id(item)] and osev_tuple <= (4, 12)
-                ):
-                    non_fbc_items.append(item)
-                elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
-                    LOG.warning(
-                        "Skipping {i}".format(i=item)
-                        + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
-                    )
+            non_fbc_items = self._get_non_fbc_items_for_version(items, version, items_opted_in)
 
             is_hotfix = any([item.metadata.get("com.redhat.hotfix") for item in non_fbc_items])
+            is_prerelease = any(
+                [item.metadata.get("com.redhat.prerelease") for item in non_fbc_items]
+            )
             is_advisory_source = all(
                 [re.match(r"^[A-Z0-9:\-]{4,40}$", item.origin) for item in non_fbc_items]
             )
-            item_groups = {}
             if is_hotfix and not is_advisory_source:
                 raise ValueError("Cannot push hotfixes without an advisory")
-            if is_hotfix:
-                for item in non_fbc_items:
-                    item_groups.setdefault(item.origin, []).append(item)
-            else:
-                item_groups["default"] = non_fbc_items
+            if is_prerelease and not is_advisory_source:
+                raise ValueError("Cannot push pre release without an advisory")
+
+            item_groups = self._create_item_groups_for_version(
+                non_fbc_items, version, is_hotfix, is_prerelease
+            )
 
             # Get deprecation list
             deprecation_list = self.get_deprecation_list(version)
-            for group, g_items in item_groups.items():
-                if not g_items:
+            for group, group_info in item_groups.items():
+                if not group_info["items"]:
                     continue
                 tag = version
                 index_image = "{image_repo}:{tag}".format(
                     image_repo=self.target_settings["iib_index_image"], tag=tag
                 )
+                build_tags = []
+                build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
 
-                build_tags = ["{0}-{1}".format(index_image.split(":")[1], self.task_id)]
-                if is_hotfix:
-                    hotfix_tag = "{0}-{1}-{2}".format(
-                        version,
-                        g_items[0].metadata["com.redhat.hotfix"],
-                        g_items[0].origin.split("-")[1].replace(":", "-"),
-                    )
-                    build_tags.append(hotfix_tag)
+                bundles = [self.public_bundle_ref(i) for i in group_info["items"]]
+                signing_keys = sorted(
+                    list(set([item.claims_signing_key for item in group_info["items"]]))
+                )
 
-                bundles = [self.public_bundle_ref(i) for i in g_items]
-                signing_keys = sorted(list(set([item.claims_signing_key for item in g_items])))
-
-                if is_hotfix:
-                    target_settings = self.target_settings.copy()
+                target_settings = self.target_settings.copy()
+                if not group_info["overwrite"]:
                     target_settings["iib_overwrite_from_index"] = False
                     target_settings["iib_overwrite_from_index_token"] = ""
                 else:
@@ -595,8 +670,7 @@ class OperatorPusher:
                         target_settings=target_settings,
                         tag=tag,
                         signing_keys=signing_keys,
-                        is_hotfix=is_hotfix,
-                        hotfix_tag="" if not is_hotfix else hotfix_tag,
+                        destination_tags=group_info["destination_tags"],
                     )
                 )
 
@@ -622,8 +696,7 @@ class OperatorPusher:
                 iib_results[param.tag] = {
                     "iib_result": build_details,
                     "signing_keys": param.signing_keys,
-                    "is_hotfix": param.is_hotfix,
-                    "hotfix_tag": param.hotfix_tag,
+                    "destination_tags": param.destination_tags,
                 }
 
         return iib_results
@@ -662,10 +735,11 @@ class OperatorPusher:
                 repo=iib_intermediate_repo,
                 tag=build_details.build_tags[0],
             )
-            if not results["is_hotfix"]:
-                dest_image = "{0}:{1}".format(index_image_repo, tag)
-            else:
-                dest_image = "{0}:{1}".format(index_image_repo, results["hotfix_tag"])
+            dest_images = [
+                "{0}:{1}".format(index_image_repo, dst_tag)
+                for dst_tag in results["destination_tags"]
+            ]
+
             # We don't use permanent index image here because we always want to overwrite
             # production tags with the latest index image (in case of parallel pushes)
             index_image_ts = self.target_settings.copy()
@@ -677,10 +751,14 @@ class OperatorPusher:
             )
 
             ContainerImagePusher.run_tag_images(
-                build_details.index_image, [dest_image], True, index_image_ts
+                build_details.index_image, dest_images, True, index_image_ts
             )
             if tag_suffix:
-                dest_image = "{0}:{1}-{2}".format(index_image_repo, tag, tag_suffix)
+                _dest_images = []
+                for _dest_tag in results["destination_tags"]:
+                    _dest_images.append(
+                        "{0}:{1}-{2}".format(index_image_repo, _dest_tag, tag_suffix)
+                    )
                 ContainerImagePusher.run_tag_images(
-                    permanent_index_image, [dest_image], True, index_image_ts
+                    permanent_index_image, _dest_images, True, index_image_ts
                 )
