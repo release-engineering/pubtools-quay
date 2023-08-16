@@ -538,7 +538,7 @@ def test_push_docker_source(
         push_docker.run()
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("subprocess.Popen")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.signature_handler.run_entrypoint")
@@ -546,7 +546,7 @@ def test_tag_docker_multiarch_merge_ml(
     mock_run_entrypoint_sig_handler,
     mock_run_entrypoint_sig_remover,
     mock_claims_runner,
-    mock_api_client,
+    mock_popen,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -599,8 +599,8 @@ def test_tag_docker_multiarch_merge_ml(
         [],
     ]
 
-    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
-    mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+    mock_popen.return_value.communicate.return_value = ("Login Succeeded", "err")
+    mock_popen.return_value.returncode = 0
 
     src_manifest_list_missing = deepcopy(src_manifest_list)
     src_manifest_list_missing["manifests"] = src_manifest_list_missing["manifests"][:2]
@@ -701,6 +701,7 @@ def test_tag_docker_multiarch_merge_ml(
         tag_docker_instance.run()
 
 
+@mock.patch("subprocess.Popen")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.signature_handler._ManifestClaimsRunner")
@@ -712,6 +713,7 @@ def test_tag_docker_source_copy_untag(
     mock_claims_runner,
     mock_run_cmd,
     mock_api_client,
+    mock_popen,
     target_settings,
     tag_docker_push_item_add_integration,
     tag_docker_push_item_remove_no_src_integration,
@@ -743,17 +745,17 @@ def test_tag_docker_source_copy_untag(
         [],
     ]
 
-    mock_api_client.return_value.exec_start.side_effect = [
-        b"something",
-        b"Login Succeeded",
-        b'{"Architecture": "amd64"}',
-        b'{"Architecture": "amd64"}',
-        b'{"Architecture": "amd64"}',
-        b"dest-quay-user",
-        b"finished tagging",
-        b'{"Architecture": "amd64"}',
-    ]
+    mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+    mock_popen.return_value.communicate.side_effect = [
+        ("something", "err"),
+        ("Login Succeeded", "err"),
+        ('{"Architecture": "amd64"}', "err"),
+        ('{"Architecture": "amd64"}', "err"),
+        ('{"Architecture": "amd64"}', "err"),
+        ('{"Architecture": "amd64"}', "err"),
+    ]
+    mock_popen.return_value.returncode = 0
 
     with requests_mock.Mocker() as m:
         m.get(

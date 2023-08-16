@@ -5,7 +5,7 @@ import logging
 
 import requests
 
-from .command_executor import ContainerExecutor
+from .command_executor import LocalExecutor
 from .exceptions import (
     BadPushItem,
     InvalidTargetSettings,
@@ -91,8 +91,6 @@ class TagDocker:
             "iib_index_image",
             "iib_krb_principal",
             "quay_operator_repository",
-            "skopeo_image",
-            "docker_settings",
         ]
         for setting in required_settings:
             if setting not in self.target_settings:
@@ -728,15 +726,7 @@ class TagDocker:
             self.hub, self.task_id, self.target_settings, self.target_name
         )
 
-        with ContainerExecutor(
-            self.target_settings["skopeo_image"],
-            self.target_settings.get("docker_host") or "unix://var/run/docker.sock",
-            self.target_settings.get("docker_timeout"),
-            self.target_settings.get("docker_tls_verify") or False,
-            self.target_settings.get("docker_cert_path") or None,
-            self.target_settings.get("skopeo_executor_username") or None,
-            self.target_settings.get("skopeo_executor_password") or None,
-        ) as executor:
+        with LocalExecutor() as executor:
             executor.skopeo_login(
                 self.quay_host,
                 self.target_settings["dest_quay_user"],
