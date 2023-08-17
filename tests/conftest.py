@@ -417,6 +417,47 @@ def operator_push_item_pre_release():
                     }
                 },
             },
+            "operators.operatorframework.io.bundle.package.v1": "operator-name",
+            "destination": {"tags": {"repo": ["tag1", "tag2"]}},
+            "tags": {"repo": ["latest-test-tag", "1.0"]},
+            "v_r": "1.0",
+            "arch": "some-arch",
+            "com.redhat.prerelease": "pre-1.2",
+        },
+    )
+
+
+@pytest.fixture
+def operator_push_item_pre_release2():
+    return MockContainerPushItem(
+        file_path="push_item_filepath",
+        file_name="push_item_filename",
+        file_type="operator",
+        file_size=0,
+        file_info=None,
+        origin="RHBA-1234:4567",
+        repos=[],
+        build="push_item_build",
+        checksums={},
+        state="NOTPUSHED",
+        claims_signing_key="some-key",
+        metadata={
+            "pull_data": {
+                "registry": "test-regitry",
+                "repo": "test-repo",
+                "tag": "test-tag",
+            },
+            "com.redhat.openshift.versions": "v4.5",
+            "op_type": "bundle",
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
+            "operators.operatorframework.io.bundle.package.v1": "operator-name2",
             "destination": {"tags": {"repo": ["tag1", "tag2"]}},
             "tags": {"repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",

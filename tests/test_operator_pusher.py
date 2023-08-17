@@ -359,17 +359,17 @@ def test_push_operators(
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
 
     assert results == {
-        "v4.5": {
+        "v4.5-v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.5"],
         },
-        "v4.6": {
+        "v4.6-v4.6": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.6"],
         },
-        "v4.7": {
+        "v4.7-v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.7"],
@@ -577,17 +577,17 @@ def test_push_operators_not_all_successful(
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.7")
 
     assert results == {
-        "v4.5": {
+        "v4.5-v4.5": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.5"],
         },
-        "v4.6": {
+        "v4.6-v4.6": {
             "iib_result": None,
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.6"],
         },
-        "v4.7": {
+        "v4.7-v4.7": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.7"],
@@ -689,12 +689,12 @@ def test_push_operators_hotfix(
     assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
 
     assert results == {
-        "v4.5": {
+        "v4.5-RHBA-1234:4567": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.5-test-hotfix-1234-4567"],
         },
-        "v4.6": {
+        "v4.6-RHBA-1234:4567": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
             "destination_tags": ["v4.6-test-hotfix-1234-4567"],
@@ -757,6 +757,7 @@ def test_push_operators_prerelease(
     mock_run_tag_images,
     target_settings,
     operator_push_item_pre_release,
+    operator_push_item_pre_release2,
     fake_cert_key_paths,
 ):
     mock_get_repo_metadata.side_effect = [
@@ -774,16 +775,28 @@ def test_push_operators_prerelease(
         IIBRes(
             "some-registry.com/index/image:v4.5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-1234-4567-pre-1.2"],
+            ["v4.5-prerelease-operator-name-1234-4567"],
+        ),
+        IIBRes(
+            "some-registry.com/index/image:v4.5",
+            "some-registry.com/index/image@sha256:a1a1",
+            ["v4.5-prerelease-operator-name2-1234-4567"],
         ),
         IIBRes(
             "some-registry.com/index/image:v4.6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-1234-4567.pre-1.2"],
+            ["v4.6-prerelease-operator-name-1234-4567"],
+        ),
+        IIBRes(
+            "some-registry.com/index/image:v4.6",
+            "some-registry.com/index/image@sha256:b2b2",
+            ["v4.6-prerelease-operator-name2-1234-4567"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
-    pusher = operator_pusher.OperatorPusher([operator_push_item_pre_release], "3", target_settings)
+    pusher = operator_pusher.OperatorPusher(
+        [operator_push_item_pre_release, operator_push_item_pre_release2], "3", target_settings
+    )
 
     results = pusher.build_index_images()
 
@@ -792,21 +805,31 @@ def test_push_operators_prerelease(
     assert mock_get_deprecation_list.call_args_list[1] == mock.call("v4.6")
 
     assert results == {
-        "v4.5": {
+        "v4.5-RHBA-1234:4567-operator-name": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.5-pre-1.2-1234-4567"],
+            "destination_tags": ["v4.5-prerelease-operator-name-1234-4567"],
         },
-        "v4.6": {
+        "v4.5-RHBA-1234:4567-operator-name2": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.6-pre-1.2-1234-4567"],
+            "destination_tags": ["v4.5-prerelease-operator-name2-1234-4567"],
+        },
+        "v4.6-RHBA-1234:4567-operator-name": {
+            "iib_result": iib_results[2],
+            "signing_keys": ["some-key"],
+            "destination_tags": ["v4.6-prerelease-operator-name-1234-4567"],
+        },
+        "v4.6-RHBA-1234:4567-operator-name2": {
+            "iib_result": iib_results[3],
+            "signing_keys": ["some-key"],
+            "destination_tags": ["v4.6-prerelease-operator-name2-1234-4567"],
         },
     }
     expected_target_settings = target_settings.copy()
     expected_target_settings["iib_overwrite_from_index"] = False
     expected_target_settings["iib_overwrite_from_index_token"] = ""
-    assert mock_add_bundles.call_count == 2
+    assert mock_add_bundles.call_count == 4
     assert mock_add_bundles.call_args_list[0] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
@@ -816,6 +839,20 @@ def test_push_operators_prerelease(
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
+        deprecation_list=["bundle1", "bundle2"],
+        build_tags=["v4.5-3"],
+        target_settings=expected_target_settings,
+    )
+    assert mock_add_bundles.call_args_list[2] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
+        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+        deprecation_list=["bundle3"],
+        build_tags=["v4.6-3"],
+        target_settings=expected_target_settings,
+    )
+    assert mock_add_bundles.call_args_list[3] == mock.call(
+        bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
         build_tags=["v4.6-3"],
@@ -824,12 +861,26 @@ def test_push_operators_prerelease(
 
     pusher.push_index_images(results)
 
-    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_count == 4
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index/image:v4.6",
+                [
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name-1234-4567"
+                ],
+                True,
+                target_settings,
+            )
+        ]
+    )
     mock_run_tag_images.assert_has_calls(
         [
             mock.call(
                 "some-registry.com/index/image:v4.5",
-                ["quay.io/some-namespace/operators----index-image:v4.5-pre-1.2-1234-4567"],
+                [
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name-1234-4567"
+                ],
                 True,
                 target_settings,
             )
@@ -839,10 +890,24 @@ def test_push_operators_prerelease(
         [
             mock.call(
                 "some-registry.com/index/image:v4.6",
-                ["quay.io/some-namespace/operators----index-image:v4.6-pre-1.2-1234-4567"],
+                [
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name2-1234-4567"
+                ],
                 True,
                 target_settings,
             )
+        ]
+    )
+    mock_run_tag_images.assert_has_calls(
+        [
+            mock.call(
+                "some-registry.com/index/image:v4.5",
+                [
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name2-1234-4567"
+                ],
+                True,
+                target_settings,
+            ),
         ]
     )
 
@@ -1170,12 +1235,12 @@ def test_push_operators_fbc_opted_in(
     assert mock_get_deprecation_list.call_args_list[2] == mock.call("v4.6")
 
     assert results == {
-        "v4.6": {
+        "v4.6-v4.6": {
             "destination_tags": ["v4.6"],
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
         },
-        "v4.12": {
+        "v4.12-v4.12": {
             "destination_tags": ["v4.12"],
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],

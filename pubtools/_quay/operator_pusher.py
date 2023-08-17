@@ -558,25 +558,33 @@ class OperatorPusher:
         }
         if is_hotfix or is_prerelease:
             for item in non_fbc_items:
-                tag_part = (
-                    item.metadata["com.redhat.hotfix"]
-                    if is_hotfix
-                    else item.metadata["com.redhat.prerelease"]
-                )
+                if is_hotfix:
+                    tag_part = item.metadata["com.redhat.hotfix"]
+                    origin = item.origin
+                else:
+                    tag_part = "prerelease-{0}".format(
+                        item.metadata["operators.operatorframework.io.bundle.package.v1"]
+                    )
+                    origin = (
+                        item.origin
+                        + "-"
+                        + item.metadata["operators.operatorframework.io.bundle.package.v1"]
+                    )
                 dst_tag = "{0}-{1}-{2}".format(
                     version,
                     tag_part,
                     item.origin.split("-")[1].replace(":", "-"),
                 )
                 item_groups.setdefault(
-                    item.origin,
+                    origin,
                     {
                         "items": [],
                         "overwrite": False,
-                        "destination_tags": [dst_tag],
+                        "destination_tags": [],
                     },
                 )
-                item_groups[item.origin]["items"].append(item)
+                item_groups[origin]["items"].append(item)
+                item_groups[origin]["destination_tags"].append(dst_tag)
         else:
             for item in non_fbc_items:
                 item_groups[version]["items"].append(item)
@@ -671,6 +679,7 @@ class OperatorPusher:
                         tag=tag,
                         signing_keys=signing_keys,
                         destination_tags=group_info["destination_tags"],
+                        origin=group,
                     )
                 )
 
@@ -693,7 +702,7 @@ class OperatorPusher:
             for future in futures.as_completed(future_results):
                 build_details = future.result()
                 param = future_results[future]
-                iib_results[param.tag] = {
+                iib_results[param.tag + "-" + param.origin] = {
                     "iib_result": build_details,
                     "signing_keys": param.signing_keys,
                     "destination_tags": param.destination_tags,
