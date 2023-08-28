@@ -637,25 +637,33 @@
         <span class="p">}</span>
         <span class="k">if</span> <span class="n">is_hotfix</span> <span class="ow">or</span> <span class="n">is_prerelease</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">:</span>
-                <span class="n">tag_part</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">is_hotfix</span>
-                    <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.prerelease&quot;</span><span class="p">]</span>
-                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_hotfix</span><span class="p">:</span>
+                    <span class="n">tag_part</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;com.redhat.hotfix&quot;</span><span class="p">]</span>
+                    <span class="n">origin</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">origin</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">tag_part</span> <span class="o">=</span> <span class="s2">&quot;prerelease-</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;operators.operatorframework.io.bundle.package.v1&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="n">origin</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">item</span><span class="o">.</span><span class="n">origin</span>
+                        <span class="o">+</span> <span class="s2">&quot;-&quot;</span>
+                        <span class="o">+</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;operators.operatorframework.io.bundle.package.v1&quot;</span><span class="p">]</span>
+                    <span class="p">)</span>
                 <span class="n">dst_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">-</span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">version</span><span class="p">,</span>
                     <span class="n">tag_part</span><span class="p">,</span>
                     <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">item_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
-                    <span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">,</span>
+                    <span class="n">origin</span><span class="p">,</span>
                     <span class="p">{</span>
                         <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">[],</span>
                         <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                        <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">dst_tag</span><span class="p">],</span>
+                        <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="p">[],</span>
                     <span class="p">},</span>
                 <span class="p">)</span>
-                <span class="n">item_groups</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">origin</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">item_groups</span><span class="p">[</span><span class="n">origin</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">item_groups</span><span class="p">[</span><span class="n">origin</span><span class="p">][</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dst_tag</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">non_fbc_items</span><span class="p">:</span>
                 <span class="n">item_groups</span><span class="p">[</span><span class="n">version</span><span class="p">][</span><span class="s2">&quot;items&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
@@ -750,6 +758,7 @@
                         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                         <span class="n">signing_keys</span><span class="o">=</span><span class="n">signing_keys</span><span class="p">,</span>
                         <span class="n">destination_tags</span><span class="o">=</span><span class="n">group_info</span><span class="p">[</span><span class="s2">&quot;destination_tags&quot;</span><span class="p">],</span>
+                        <span class="n">origin</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -772,7 +781,7 @@
             <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">future_results</span><span class="p">):</span>
                 <span class="n">build_details</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
                 <span class="n">param</span> <span class="o">=</span> <span class="n">future_results</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
-                <span class="n">iib_results</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">iib_results</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">param</span><span class="o">.</span><span class="n">origin</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
                     <span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span>
                     <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">signing_keys</span><span class="p">,</span>
                     <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">destination_tags</span><span class="p">,</span>
