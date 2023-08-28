@@ -1,6 +1,14 @@
 ChangeLog
 =========
 
+0.12.0 (2023-07-25)
+-------------------
+
+* Support pre-release containers
+* Better error reporting for skopeo copy commands
+* Local executor for tag-docker operatoin
+
+
 0.11.3 (2023-07-25)
 -------------------
 
