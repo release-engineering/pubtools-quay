@@ -8,9 +8,10 @@ class BuildIndexImageParam:
 
     bundles: str
     index_image: str
-    deprecation_list: [str]
+    deprecation_list: List[str]
     build_tags: List[str]
     target_settings: Dict[str, Any]
     tag: str
     signing_keys: List[str]
     destination_tags: List[str]
+    origin: str
