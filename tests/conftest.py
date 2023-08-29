@@ -922,6 +922,10 @@ def target_settings():
         "skopeo_executor_password": "quay-executor-password",
         "verify_bundle_tries": 2,
         "verify_bundle_wait_time_increase": 1,
+        "cosign_private_key_path": "path/to/key.key",
+        "cosign_public_key_path": "path/to/key.pub",
+        "push_security_manifests_enabled": True,
+        "cosign_rekor_url": "https://some-rekor.com",
     }
 
 
@@ -1028,6 +1032,7 @@ def container_multiarch_push_item():
                 }
             },
             "arch": "amd64",
+            "product_name": "new-product",
         },
     )
 

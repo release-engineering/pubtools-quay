@@ -1262,6 +1262,7 @@ def test_rollback_delete_tag_server_error(
     mock_delete_tag.assert_called_once_with("some-namespace/target----repo3", "3")
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
@@ -1287,6 +1288,7 @@ def test_push_docker_full_success(
     mock_operator_signature_handler,
     mock_rollback,
     mock_timestamp,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -1380,6 +1382,10 @@ def test_push_docker_full_success(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
@@ -1394,6 +1400,7 @@ def test_push_docker_full_success(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
@@ -1419,6 +1426,7 @@ def test_push_docker_full_prerelease(
     mock_operator_signature_handler,
     mock_rollback,
     mock_timestamp,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_pre_release_push_item,
     container_push_item_external_repos,
@@ -1514,6 +1522,10 @@ def test_push_docker_full_prerelease(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_pre_release_push_item]
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_pre_release_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
@@ -1528,6 +1540,7 @@ def test_push_docker_full_prerelease(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
@@ -1553,6 +1566,7 @@ def test_push_docker_full_no_v2sch2(
     mock_operator_signature_handler,
     mock_rollback,
     mock_timestamp,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -1655,6 +1669,10 @@ def test_push_docker_full_no_v2sch2(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
@@ -1669,6 +1687,7 @@ def test_push_docker_full_no_v2sch2(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
@@ -1694,6 +1713,7 @@ def test_push_docker_full_success_repush(
     mock_operator_signature_handler,
     mock_rollback,
     mock_timestamp,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -1784,6 +1804,10 @@ def test_push_docker_full_success_repush(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item, container_push_item_external_repos],
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item, container_push_item_external_repos], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once_with([operator_push_item_ok], "1", target_settings)
     mock_build_index_images.assert_called_once_with()
     mock_push_index_images.assert_called_once_with(
@@ -1798,6 +1822,7 @@ def test_push_docker_full_success_repush(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -1821,6 +1846,7 @@ def test_push_docker_no_operator_push_items(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     fake_cert_key_paths,
@@ -1885,6 +1911,10 @@ def test_push_docker_no_operator_push_items(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_not_called()
     mock_build_index_images.assert_not_called()
     mock_push_index_images.assert_not_called()
@@ -1892,6 +1922,7 @@ def test_push_docker_no_operator_push_items(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -1917,6 +1948,7 @@ def test_push_docker_failure_no_rollback(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     operator_push_item_ok,
@@ -1988,6 +2020,10 @@ def test_push_docker_failure_no_rollback(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
     mock_push_index_images.assert_called_once()
@@ -1995,6 +2031,7 @@ def test_push_docker_failure_no_rollback(
     mock_rollback.assert_not_called()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -2020,6 +2057,7 @@ def test_push_docker_failure_rollback(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     operator_push_item_ok,
@@ -2087,6 +2125,10 @@ def test_push_docker_failure_rollback(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
     mock_push_index_images.assert_called_once()
@@ -2101,6 +2143,7 @@ def test_push_docker_failure_rollback(
     )
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
 @mock.patch("pubtools._quay.push_docker.OperatorSignatureHandler")
 @mock.patch("pubtools._quay.push_docker.OperatorPusher")
@@ -2126,6 +2169,7 @@ def test_push_docker_failure_fbc_rollback(
     mock_operator_pusher,
     mock_operator_signature_handler,
     mock_rollback,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item,
     operator_push_item_fbc_inconsistent,
@@ -2194,6 +2238,10 @@ def test_push_docker_failure_fbc_rollback(
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item],
     )
+    mock_security_manifest_pusher.assert_called_once_with(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_security_manifest_pusher.return_value.push_security_manifests.assert_called_once_with()
     mock_operator_pusher.assert_called_once()
     mock_build_index_images.assert_called_once()
     mock_push_index_images.assert_not_called()

@@ -15,6 +15,7 @@ from .utils.misc import sort_dictionary_sortable_values, compare_logs, IIBRes
 # flake8: noqa: E501
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.utils.misc.run_entrypoint")
@@ -30,6 +31,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_run_entrypoint_misc,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     operator_push_item_ok,
@@ -236,6 +238,7 @@ def test_push_docker_multiarch_merge_ml_operator(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -247,6 +250,7 @@ def test_push_docker_multiarch_simple_workflow(
     mock_run_cmd,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     src_manifest_list,
@@ -376,6 +380,7 @@ def test_push_docker_multiarch_simple_workflow(
         push_docker.run()
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.fetch_missing_push_items_digests")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
@@ -389,6 +394,7 @@ def test_push_docker_source(
     mock_api_client,
     mock_run_entrypoint_signature_remover,
     mock_fetch_missing_push_items_digests,
+    mock_security_manifest_pusher,
     target_settings,
     container_source_push_item_integration,
     src_manifest_list,
@@ -1214,6 +1220,7 @@ def test_remove_repo(
         )
 
 
+@mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -1227,6 +1234,7 @@ def test_push_docker_operator_verify_bundle_fail(
     mock_run_entrypoint_operator_pusher,
     mock_api_client,
     mock_run_entrypoint_signature_remover,
+    mock_security_manifest_pusher,
     target_settings,
     container_multiarch_push_item_integration,
     operator_push_item_ok,
