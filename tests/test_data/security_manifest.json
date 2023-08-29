@@ -1,0 +1,1245 @@
+{
+    "bomFormat": "CycloneDX",
+    "components": [
+        {
+            "build_dependency": false,
+            "name": "acl",
+            "purl": "pkg:rpm/acl@2.2.53-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.53-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "audit-libs",
+            "purl": "pkg:rpm/audit-libs@3.0-0.17.20191104git1c2f876.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.0-0.17.20191104git1c2f876.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "basesystem",
+            "purl": "pkg:rpm/basesystem@11-5.el8?arch=noarch",
+            "type": "library",
+            "version": "11-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "bash",
+            "purl": "pkg:rpm/bash@4.4.19-10.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.4.19-10.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "brotli",
+            "purl": "pkg:rpm/brotli@1.0.6-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.0.6-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "bzip2-libs",
+            "purl": "pkg:rpm/bzip2-libs@1.0.6-26.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.0.6-26.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "ca-certificates",
+            "purl": "pkg:rpm/ca-certificates@2020.2.41-80.0.el8_2?arch=noarch",
+            "type": "library",
+            "version": "2020.2.41-80.0.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "chkconfig",
+            "purl": "pkg:rpm/chkconfig@1.11-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.11-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "coreutils-single",
+            "purl": "pkg:rpm/coreutils-single@8.30-7.el8_2.1?arch=ppc64le",
+            "type": "library",
+            "version": "8.30-7.el8_2.1"
+        },
+        {
+            "build_dependency": false,
+            "name": "cracklib",
+            "purl": "pkg:rpm/cracklib@2.9.6-15.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9.6-15.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "crypto-policies",
+            "purl": "pkg:rpm/crypto-policies@20191128-2.git23e1bf1.el8?arch=noarch",
+            "type": "library",
+            "version": "20191128-2.git23e1bf1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "cryptsetup-libs",
+            "purl": "pkg:rpm/cryptsetup-libs@2.2.2-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.2-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "curl",
+            "purl": "pkg:rpm/curl@7.61.1-12.el8?arch=ppc64le",
+            "type": "library",
+            "version": "7.61.1-12.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "cyrus-sasl-lib",
+            "purl": "pkg:rpm/cyrus-sasl-lib@2.1.27-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.1.27-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus-common",
+            "purl": "pkg:rpm/dbus-common@1.12.8-10.el8_2?arch=noarch&epoch=1",
+            "type": "library",
+            "version": "1.12.8-10.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus-daemon",
+            "purl": "pkg:rpm/dbus-daemon@1.12.8-10.el8_2?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.12.8-10.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus-glib",
+            "purl": "pkg:rpm/dbus-glib@0.110-2.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.110-2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus-libs",
+            "purl": "pkg:rpm/dbus-libs@1.12.8-10.el8_2?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.12.8-10.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus-tools",
+            "purl": "pkg:rpm/dbus-tools@1.12.8-10.el8_2?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.12.8-10.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dbus",
+            "purl": "pkg:rpm/dbus@1.12.8-10.el8_2?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.12.8-10.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "device-mapper-libs",
+            "purl": "pkg:rpm/device-mapper-libs@1.02.169-3.el8?arch=ppc64le&epoch=8",
+            "type": "library",
+            "version": "1.02.169-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "device-mapper",
+            "purl": "pkg:rpm/device-mapper@1.02.169-3.el8?arch=ppc64le&epoch=8",
+            "type": "library",
+            "version": "1.02.169-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "dnf-data",
+            "purl": "pkg:rpm/dnf-data@4.2.17-7.el8_2?arch=noarch",
+            "type": "library",
+            "version": "4.2.17-7.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dnf-plugin-subscription-manager",
+            "purl": "pkg:rpm/dnf-plugin-subscription-manager@1.26.20-1.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.26.20-1.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "dnf",
+            "purl": "pkg:rpm/dnf@4.2.17-7.el8_2?arch=noarch",
+            "type": "library",
+            "version": "4.2.17-7.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "elfutils-default-yama-scope",
+            "purl": "pkg:rpm/elfutils-default-yama-scope@0.178-7.el8?arch=noarch",
+            "type": "library",
+            "version": "0.178-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "elfutils-libelf",
+            "purl": "pkg:rpm/elfutils-libelf@0.178-7.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.178-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "elfutils-libs",
+            "purl": "pkg:rpm/elfutils-libs@0.178-7.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.178-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "expat",
+            "purl": "pkg:rpm/expat@2.2.5-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.5-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "file-libs",
+            "purl": "pkg:rpm/file-libs@5.33-13.el8?arch=ppc64le",
+            "type": "library",
+            "version": "5.33-13.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "filesystem",
+            "purl": "pkg:rpm/filesystem@3.8-2.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.8-2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "findutils",
+            "purl": "pkg:rpm/findutils@4.6.0-20.el8?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "4.6.0-20.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gawk",
+            "purl": "pkg:rpm/gawk@4.2.1-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.2.1-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gdb-gdbserver",
+            "purl": "pkg:rpm/gdb-gdbserver@8.2-11.el8?arch=ppc64le",
+            "type": "library",
+            "version": "8.2-11.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gdbm-libs",
+            "purl": "pkg:rpm/gdbm-libs@1.18-1.el8?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.18-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gdbm",
+            "purl": "pkg:rpm/gdbm@1.18-1.el8?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.18-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "glib2",
+            "purl": "pkg:rpm/glib2@2.56.4-8.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.56.4-8.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "glibc-common",
+            "purl": "pkg:rpm/glibc-common@2.28-101.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.28-101.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "glibc-minimal-langpack",
+            "purl": "pkg:rpm/glibc-minimal-langpack@2.28-101.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.28-101.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "glibc",
+            "purl": "pkg:rpm/glibc@2.28-101.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.28-101.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gmp",
+            "purl": "pkg:rpm/gmp@6.1.2-10.el8?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "6.1.2-10.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gnupg2",
+            "purl": "pkg:rpm/gnupg2@2.2.9-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.9-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gnutls",
+            "purl": "pkg:rpm/gnutls@3.6.8-11.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "3.6.8-11.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "gobject-introspection",
+            "purl": "pkg:rpm/gobject-introspection@1.56.1-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.56.1-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gpgme",
+            "purl": "pkg:rpm/gpgme@1.10.0-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.10.0-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "grep",
+            "purl": "pkg:rpm/grep@3.1-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.1-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "gzip",
+            "purl": "pkg:rpm/gzip@1.9-9.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.9-9.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "ima-evm-utils",
+            "purl": "pkg:rpm/ima-evm-utils@1.1-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.1-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "info",
+            "purl": "pkg:rpm/info@6.5-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "6.5-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "iptables-libs",
+            "purl": "pkg:rpm/iptables-libs@1.8.4-10.el8_2.1?arch=ppc64le",
+            "type": "library",
+            "version": "1.8.4-10.el8_2.1"
+        },
+        {
+            "build_dependency": false,
+            "name": "json-c",
+            "purl": "pkg:rpm/json-c@0.13.1-0.2.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.13.1-0.2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "json-glib",
+            "purl": "pkg:rpm/json-glib@1.4.4-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.4.4-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "keyutils-libs",
+            "purl": "pkg:rpm/keyutils-libs@1.5.10-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.5.10-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "kmod-libs",
+            "purl": "pkg:rpm/kmod-libs@25-16.el8?arch=ppc64le",
+            "type": "library",
+            "version": "25-16.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "krb5-libs",
+            "purl": "pkg:rpm/krb5-libs@1.17-18.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.17-18.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "langpacks-en",
+            "purl": "pkg:rpm/langpacks-en@1.0-12.el8?arch=noarch",
+            "type": "library",
+            "version": "1.0-12.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libacl",
+            "purl": "pkg:rpm/libacl@2.2.53-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.53-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libarchive",
+            "purl": "pkg:rpm/libarchive@3.3.2-8.el8_1?arch=ppc64le",
+            "type": "library",
+            "version": "3.3.2-8.el8_1"
+        },
+        {
+            "build_dependency": false,
+            "name": "libassuan",
+            "purl": "pkg:rpm/libassuan@2.5.1-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.5.1-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libattr",
+            "purl": "pkg:rpm/libattr@2.4.48-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.4.48-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libblkid",
+            "purl": "pkg:rpm/libblkid@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libcap-ng",
+            "purl": "pkg:rpm/libcap-ng@0.7.9-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.7.9-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libcap",
+            "purl": "pkg:rpm/libcap@2.26-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.26-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libcom_err",
+            "purl": "pkg:rpm/libcom_err@1.45.4-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.45.4-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libcomps",
+            "purl": "pkg:rpm/libcomps@0.1.11-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.1.11-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libcurl",
+            "purl": "pkg:rpm/libcurl@7.61.1-12.el8?arch=ppc64le",
+            "type": "library",
+            "version": "7.61.1-12.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libdb-utils",
+            "purl": "pkg:rpm/libdb-utils@5.3.28-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "5.3.28-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libdb",
+            "purl": "pkg:rpm/libdb@5.3.28-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "5.3.28-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libdnf",
+            "purl": "pkg:rpm/libdnf@0.39.1-6.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "0.39.1-6.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "libfdisk",
+            "purl": "pkg:rpm/libfdisk@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libffi",
+            "purl": "pkg:rpm/libffi@3.1-21.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.1-21.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libgcc",
+            "purl": "pkg:rpm/libgcc@8.3.1-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "8.3.1-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libgcrypt",
+            "purl": "pkg:rpm/libgcrypt@1.8.3-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.8.3-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libgpg-error",
+            "purl": "pkg:rpm/libgpg-error@1.31-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.31-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libidn2",
+            "purl": "pkg:rpm/libidn2@2.2.0-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.2.0-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libksba",
+            "purl": "pkg:rpm/libksba@1.3.5-7.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.3.5-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libmetalink",
+            "purl": "pkg:rpm/libmetalink@0.1.3-7.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.1.3-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libmodulemd1",
+            "purl": "pkg:rpm/libmodulemd1@1.8.16-0.2.8.2.1?arch=ppc64le",
+            "type": "library",
+            "version": "1.8.16-0.2.8.2.1"
+        },
+        {
+            "build_dependency": false,
+            "name": "libmount",
+            "purl": "pkg:rpm/libmount@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libnghttp2",
+            "purl": "pkg:rpm/libnghttp2@1.33.0-3.el8_2.1?arch=ppc64le",
+            "type": "library",
+            "version": "1.33.0-3.el8_2.1"
+        },
+        {
+            "build_dependency": false,
+            "name": "libnl3",
+            "purl": "pkg:rpm/libnl3@3.5.0-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.5.0-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libnsl2",
+            "purl": "pkg:rpm/libnsl2@1.2.0-2.20180605git4a062cf.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.2.0-2.20180605git4a062cf.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libpcap",
+            "purl": "pkg:rpm/libpcap@1.9.0-3.el8?arch=ppc64le&epoch=14",
+            "type": "library",
+            "version": "1.9.0-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libpsl",
+            "purl": "pkg:rpm/libpsl@0.20.2-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.20.2-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libpwquality",
+            "purl": "pkg:rpm/libpwquality@1.4.0-9.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.4.0-9.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "librepo",
+            "purl": "pkg:rpm/librepo@1.11.0-3.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.11.0-3.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "libreport-filesystem",
+            "purl": "pkg:rpm/libreport-filesystem@2.9.5-10.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9.5-10.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "librhsm",
+            "purl": "pkg:rpm/librhsm@0.0.3-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.0.3-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "librtas",
+            "purl": "pkg:rpm/librtas@2.0.2-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.0.2-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libseccomp",
+            "purl": "pkg:rpm/libseccomp@2.4.1-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.4.1-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libselinux",
+            "purl": "pkg:rpm/libselinux@2.9-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libsemanage",
+            "purl": "pkg:rpm/libsemanage@2.9-2.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9-2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libsepol",
+            "purl": "pkg:rpm/libsepol@2.9-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libsigsegv",
+            "purl": "pkg:rpm/libsigsegv@2.11-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.11-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libsmartcols",
+            "purl": "pkg:rpm/libsmartcols@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libsolv",
+            "purl": "pkg:rpm/libsolv@0.7.7-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.7.7-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libssh-config",
+            "purl": "pkg:rpm/libssh-config@0.9.0-4.el8?arch=noarch",
+            "type": "library",
+            "version": "0.9.0-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libssh",
+            "purl": "pkg:rpm/libssh@0.9.0-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.9.0-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libstdc++",
+            "purl": "pkg:rpm/libstdc++@8.3.1-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "8.3.1-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libtasn1",
+            "purl": "pkg:rpm/libtasn1@4.13-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.13-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libtirpc",
+            "purl": "pkg:rpm/libtirpc@1.1.4-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.1.4-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libunistring",
+            "purl": "pkg:rpm/libunistring@0.9.9-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.9.9-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libusbx",
+            "purl": "pkg:rpm/libusbx@1.0.22-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.0.22-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libuser",
+            "purl": "pkg:rpm/libuser@0.62-23.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.62-23.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libutempter",
+            "purl": "pkg:rpm/libutempter@1.1.6-14.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.1.6-14.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libuuid",
+            "purl": "pkg:rpm/libuuid@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libverto",
+            "purl": "pkg:rpm/libverto@0.3.0-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.3.0-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libxcrypt",
+            "purl": "pkg:rpm/libxcrypt@4.1.1-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.1.1-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libxml2",
+            "purl": "pkg:rpm/libxml2@2.9.7-7.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.9.7-7.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libyaml",
+            "purl": "pkg:rpm/libyaml@0.1.7-5.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.1.7-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "libzstd",
+            "purl": "pkg:rpm/libzstd@1.4.2-2.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.4.2-2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "lua-libs",
+            "purl": "pkg:rpm/lua-libs@5.3.4-11.el8?arch=ppc64le",
+            "type": "library",
+            "version": "5.3.4-11.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "lz4-libs",
+            "purl": "pkg:rpm/lz4-libs@1.8.1.2-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.8.1.2-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "mpfr",
+            "purl": "pkg:rpm/mpfr@3.1.6-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.1.6-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "ncurses-base",
+            "purl": "pkg:rpm/ncurses-base@6.1-7.20180224.el8?arch=noarch",
+            "type": "library",
+            "version": "6.1-7.20180224.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "ncurses-libs",
+            "purl": "pkg:rpm/ncurses-libs@6.1-7.20180224.el8?arch=ppc64le",
+            "type": "library",
+            "version": "6.1-7.20180224.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "nettle",
+            "purl": "pkg:rpm/nettle@3.4.1-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.4.1-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "npth",
+            "purl": "pkg:rpm/npth@1.5-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.5-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "openldap",
+            "purl": "pkg:rpm/openldap@2.4.46-11.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.4.46-11.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "openssl-libs",
+            "purl": "pkg:rpm/openssl-libs@1.1.1c-15.el8?arch=ppc64le&epoch=1",
+            "type": "library",
+            "version": "1.1.1c-15.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "p11-kit-trust",
+            "purl": "pkg:rpm/p11-kit-trust@0.23.14-5.el8_0?arch=ppc64le",
+            "type": "library",
+            "version": "0.23.14-5.el8_0"
+        },
+        {
+            "build_dependency": false,
+            "name": "p11-kit",
+            "purl": "pkg:rpm/p11-kit@0.23.14-5.el8_0?arch=ppc64le",
+            "type": "library",
+            "version": "0.23.14-5.el8_0"
+        },
+        {
+            "build_dependency": false,
+            "name": "pam",
+            "purl": "pkg:rpm/pam@1.3.1-8.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.3.1-8.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "passwd",
+            "purl": "pkg:rpm/passwd@0.80-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.80-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "pcre2",
+            "purl": "pkg:rpm/pcre2@10.32-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "10.32-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "pcre",
+            "purl": "pkg:rpm/pcre@8.42-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "8.42-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "platform-python-setuptools",
+            "purl": "pkg:rpm/platform-python-setuptools@39.2.0-5.el8?arch=noarch",
+            "type": "library",
+            "version": "39.2.0-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "platform-python",
+            "purl": "pkg:rpm/platform-python@3.6.8-23.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.6.8-23.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "popt",
+            "purl": "pkg:rpm/popt@1.16-14.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.16-14.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "publicsuffix-list-dafsa",
+            "purl": "pkg:rpm/publicsuffix-list-dafsa@20180723-1.el8?arch=noarch",
+            "type": "library",
+            "version": "20180723-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-dateutil",
+            "purl": "pkg:rpm/python3-dateutil@2.6.1-6.el8?arch=noarch&epoch=1",
+            "type": "library",
+            "version": "2.6.1-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-dbus",
+            "purl": "pkg:rpm/python3-dbus@1.2.4-15.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.2.4-15.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-decorator",
+            "purl": "pkg:rpm/python3-decorator@4.2.1-2.el8?arch=noarch",
+            "type": "library",
+            "version": "4.2.1-2.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-dnf-plugins-core",
+            "purl": "pkg:rpm/python3-dnf-plugins-core@4.0.12-4.el8_2?arch=noarch",
+            "type": "library",
+            "version": "4.0.12-4.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-dnf",
+            "purl": "pkg:rpm/python3-dnf@4.2.17-7.el8_2?arch=noarch",
+            "type": "library",
+            "version": "4.2.17-7.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-ethtool",
+            "purl": "pkg:rpm/python3-ethtool@0.14-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.14-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-gobject-base",
+            "purl": "pkg:rpm/python3-gobject-base@3.28.3-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.28.3-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-gpg",
+            "purl": "pkg:rpm/python3-gpg@1.10.0-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.10.0-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-hawkey",
+            "purl": "pkg:rpm/python3-hawkey@0.39.1-6.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "0.39.1-6.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-iniparse",
+            "purl": "pkg:rpm/python3-iniparse@0.4-31.el8?arch=noarch",
+            "type": "library",
+            "version": "0.4-31.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-inotify",
+            "purl": "pkg:rpm/python3-inotify@0.9.6-13.el8?arch=noarch",
+            "type": "library",
+            "version": "0.9.6-13.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-libcomps",
+            "purl": "pkg:rpm/python3-libcomps@0.1.11-4.el8?arch=ppc64le",
+            "type": "library",
+            "version": "0.1.11-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-libdnf",
+            "purl": "pkg:rpm/python3-libdnf@0.39.1-6.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "0.39.1-6.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-librepo",
+            "purl": "pkg:rpm/python3-librepo@1.11.0-3.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.11.0-3.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-libs",
+            "purl": "pkg:rpm/python3-libs@3.6.8-23.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.6.8-23.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-pip-wheel",
+            "purl": "pkg:rpm/python3-pip-wheel@9.0.3-16.el8?arch=noarch",
+            "type": "library",
+            "version": "9.0.3-16.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-rpm",
+            "purl": "pkg:rpm/python3-rpm@4.14.2-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.14.2-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-setuptools-wheel",
+            "purl": "pkg:rpm/python3-setuptools-wheel@39.2.0-5.el8?arch=noarch",
+            "type": "library",
+            "version": "39.2.0-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-six",
+            "purl": "pkg:rpm/python3-six@1.11.0-8.el8?arch=noarch",
+            "type": "library",
+            "version": "1.11.0-8.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-subscription-manager-rhsm",
+            "purl": "pkg:rpm/python3-subscription-manager-rhsm@1.26.20-1.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.26.20-1.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "python3-syspurpose",
+            "purl": "pkg:rpm/python3-syspurpose@1.26.20-1.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.26.20-1.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "readline",
+            "purl": "pkg:rpm/readline@7.0-10.el8?arch=ppc64le",
+            "type": "library",
+            "version": "7.0-10.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "redhat-release",
+            "purl": "pkg:rpm/redhat-release@8.2-1.0.el8?arch=ppc64le",
+            "type": "library",
+            "version": "8.2-1.0.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "rootfiles",
+            "purl": "pkg:rpm/rootfiles@8.1-22.el8?arch=noarch",
+            "type": "library",
+            "version": "8.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "rpm-build-libs",
+            "purl": "pkg:rpm/rpm-build-libs@4.14.2-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.14.2-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "rpm-libs",
+            "purl": "pkg:rpm/rpm-libs@4.14.2-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.14.2-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "rpm",
+            "purl": "pkg:rpm/rpm@4.14.2-37.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.14.2-37.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "sed",
+            "purl": "pkg:rpm/sed@4.5-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "4.5-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "setup",
+            "purl": "pkg:rpm/setup@2.12.2-5.el8?arch=noarch",
+            "type": "library",
+            "version": "2.12.2-5.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "shadow-utils",
+            "purl": "pkg:rpm/shadow-utils@4.6-8.el8?arch=ppc64le&epoch=2",
+            "type": "library",
+            "version": "4.6-8.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "sqlite-libs",
+            "purl": "pkg:rpm/sqlite-libs@3.26.0-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "3.26.0-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "subscription-manager-rhsm-certificates",
+            "purl": "pkg:rpm/subscription-manager-rhsm-certificates@1.26.20-1.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.26.20-1.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "subscription-manager",
+            "purl": "pkg:rpm/subscription-manager@1.26.20-1.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.26.20-1.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "systemd-libs",
+            "purl": "pkg:rpm/systemd-libs@239-31.el8_2.2?arch=ppc64le",
+            "type": "library",
+            "version": "239-31.el8_2.2"
+        },
+        {
+            "build_dependency": false,
+            "name": "systemd-pam",
+            "purl": "pkg:rpm/systemd-pam@239-31.el8_2.2?arch=ppc64le",
+            "type": "library",
+            "version": "239-31.el8_2.2"
+        },
+        {
+            "build_dependency": false,
+            "name": "systemd",
+            "purl": "pkg:rpm/systemd@239-31.el8_2.2?arch=ppc64le",
+            "type": "library",
+            "version": "239-31.el8_2.2"
+        },
+        {
+            "build_dependency": false,
+            "name": "tar",
+            "purl": "pkg:rpm/tar@1.30-4.el8?arch=ppc64le&epoch=2",
+            "type": "library",
+            "version": "1.30-4.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "tzdata",
+            "purl": "pkg:rpm/tzdata@2020a-1.el8?arch=noarch",
+            "type": "library",
+            "version": "2020a-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "usermode",
+            "purl": "pkg:rpm/usermode@1.113-1.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.113-1.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "util-linux",
+            "purl": "pkg:rpm/util-linux@2.32.1-22.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.32.1-22.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "vim-minimal",
+            "purl": "pkg:rpm/vim-minimal@8.0.1763-13.el8?arch=ppc64le&epoch=2",
+            "type": "library",
+            "version": "8.0.1763-13.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "virt-what",
+            "purl": "pkg:rpm/virt-what@1.18-6.el8?arch=ppc64le",
+            "type": "library",
+            "version": "1.18-6.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "which",
+            "purl": "pkg:rpm/which@2.21-12.el8?arch=ppc64le",
+            "type": "library",
+            "version": "2.21-12.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "xz-libs",
+            "purl": "pkg:rpm/xz-libs@5.2.4-3.el8?arch=ppc64le",
+            "type": "library",
+            "version": "5.2.4-3.el8"
+        },
+        {
+            "build_dependency": false,
+            "name": "yum",
+            "purl": "pkg:rpm/yum@4.2.17-7.el8_2?arch=noarch",
+            "type": "library",
+            "version": "4.2.17-7.el8_2"
+        },
+        {
+            "build_dependency": false,
+            "name": "zlib",
+            "purl": "pkg:rpm/zlib@1.2.11-16.el8_2?arch=ppc64le",
+            "type": "library",
+            "version": "1.2.11-16.el8_2"
+        }
+    ],
+    "incompleteness_reasons": [
+        {
+            "description": "parent build 'osbs-test-sandwich-container-1.0.rhel8.layered.pinned-2' is missing SBOM",
+            "type": "other"
+        }
+    ],
+    "specVersion": "1.4",
+    "version": 1
+}

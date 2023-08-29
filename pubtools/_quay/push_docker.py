@@ -10,6 +10,7 @@ from .utils.misc import get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
+from .security_manifest_pusher import SecurityManifestPusher
 from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
 from .signature_remover import SignatureRemover
 from .operator_pusher import OperatorPusher
@@ -667,7 +668,8 @@ class PushDocker:
         - Generate backup mapping that will be used for rollback if something goes wrong.
         - Sign container images using RADAS and upload signatures to Pyxis
         - Push container images to their destinations
-        - Fetching digests for missing media types of pushed items
+        - Generate and push container security manifests for pushed images
+        - Fetch digests for missing media types of pushed items
         - Sign manifests for missing media types (has to be done after pushing)
         - Filter out push items to only include operator image items
         - Add operator bundles to index images by using IIB
@@ -709,6 +711,11 @@ class PushDocker:
 
         # sign missing images
         container_signature_handler.sign_container_images_new_digests(docker_push_items)
+
+        if self.target_settings.get("push_security_manifests_enabled", False):
+            # Generate and push security manifests (if enabled in target settings)
+            sec_manifest_pusher = SecurityManifestPusher(docker_push_items, self.target_settings)
+            sec_manifest_pusher.push_security_manifests()
 
         failed = False
 
