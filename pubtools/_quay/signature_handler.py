@@ -300,16 +300,19 @@ class SignatureHandler:
             )
         )
 
-        address = (
+        default_radas_address = (
             "queue://Consumer.msg-producer-pub"
-            ".{task_id}.VirtualTopic.eng.robosignatory.container.sign.{task_id}".format(
-                task_id=self.task_id
-            )
+            ".{task_id}.VirtualTopic.eng.robosignatory.container.sign.{task_id}"
         )
+
         docker_settings = self.target_settings["docker_settings"]
+
+        radas_address = docker_settings.get("umb_radas_address", default_radas_address)
+        radas_address.format(task_id=self.task_id)
+
         umb_settings = UMBSettings(
             broker_urls=docker_settings["umb_urls"],
-            radas_address=docker_settings.get("umb_radas_address", address),
+            radas_address=docker_settings.get("umb_radas_address", radas_address),
             pub_cert=docker_settings.get("umb_pub_cert", "/etc/pub/umb-pub-cert-key.pem"),
             ca_cert=docker_settings.get("umb_ca_cert", "/etc/pki/tls/certs/ca-bundle.crt"),
             signing_timeout=docker_settings.get("umb_signing_timeout", 600),
