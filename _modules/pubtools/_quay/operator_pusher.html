@@ -83,6 +83,7 @@
 <span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">from</span> <span class="nn">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures.thread</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">from</span> <span class="nn">requests.adapters</span> <span class="kn">import</span> <span class="n">HTTPAdapter</span>
@@ -764,28 +765,39 @@
 
         <span class="n">num_thread_build_index_images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_build_index_images&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 
-        <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">num_thread_build_index_images</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
-            <span class="n">future_results</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
-                    <span class="k">lambda</span> <span class="n">param</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
-                        <span class="n">bundles</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">bundles</span><span class="p">,</span>
-                        <span class="n">index_image</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span>
-                        <span class="n">deprecation_list</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">deprecation_list</span><span class="p">,</span>
-                        <span class="n">build_tags</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">build_tags</span><span class="p">,</span>
-                        <span class="n">target_settings</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span>
-                    <span class="p">),</span>
-                    <span class="n">param</span><span class="p">,</span>
-                <span class="p">):</span> <span class="n">param</span>
-                <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">build_index_image_params</span>
-            <span class="p">}</span>
-            <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">future_results</span><span class="p">):</span>
-                <span class="n">build_details</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
-                <span class="n">param</span> <span class="o">=</span> <span class="n">future_results</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
-                <span class="n">iib_results</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">param</span><span class="o">.</span><span class="n">origin</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-                    <span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span>
-                    <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">signing_keys</span><span class="p">,</span>
-                    <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">destination_tags</span><span class="p">,</span>
+        <span class="n">orig_environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">environ_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubtools_iib_get_common_args</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">environ_vars</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">environ_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">num_thread_build_index_images</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+                <span class="n">future_results</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">param</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
+                            <span class="n">bundles</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">bundles</span><span class="p">,</span>
+                            <span class="n">index_image</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span>
+                            <span class="n">deprecation_list</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">deprecation_list</span><span class="p">,</span>
+                            <span class="n">build_tags</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">build_tags</span><span class="p">,</span>
+                            <span class="n">target_settings</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span>
+                        <span class="p">),</span>
+                        <span class="n">param</span><span class="p">,</span>
+                    <span class="p">):</span> <span class="n">param</span>
+                    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">build_index_image_params</span>
                 <span class="p">}</span>
+                <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">future_results</span><span class="p">):</span>
+                    <span class="n">build_details</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                    <span class="n">param</span> <span class="o">=</span> <span class="n">future_results</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                    <span class="n">iib_results</span><span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">tag</span> <span class="o">+</span> <span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">param</span><span class="o">.</span><span class="n">origin</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="s2">&quot;iib_result&quot;</span><span class="p">:</span> <span class="n">build_details</span><span class="p">,</span>
+                        <span class="s2">&quot;signing_keys&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">signing_keys</span><span class="p">,</span>
+                        <span class="s2">&quot;destination_tags&quot;</span><span class="p">:</span> <span class="n">param</span><span class="o">.</span><span class="n">destination_tags</span><span class="p">,</span>
+                    <span class="p">}</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">orig_environ</span><span class="p">)</span>
+            <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orig_environ</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">iib_results</span></div>
 
