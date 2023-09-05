@@ -102,7 +102,6 @@ def setup_entry_point_cli(entry_tuple, name, args, environ_vars):
         environ_vars (dict):
             Env variable names and values to set for the entrypoint.
     """
-    orig_argv = sys.argv[:]
     orig_environ = os.environ.copy()
 
     try:
@@ -110,14 +109,16 @@ def setup_entry_point_cli(entry_tuple, name, args, environ_vars):
         # For a console_scripts entry point, this will be the same value
         # as if the script was invoked directly. For any other kind of entry point,
         # this value is probably meaningless.
-        sys.argv = [name]
-        sys.argv.extend(args)
         for key in environ_vars:
             os.environ[key] = environ_vars[key]
         entry_point_func = pkg_resources.load_entry_point(*entry_tuple)
-        yield entry_point_func
+        if args:
+            func_args = [name]
+            func_args.extend(args)
+            yield functools.partial(entry_point_func, func_args)
+        else:
+            yield entry_point_func
     finally:
-        sys.argv = orig_argv[:]
         os.environ.update(orig_environ)
 
         to_delete = [key for key in os.environ if key not in orig_environ]
