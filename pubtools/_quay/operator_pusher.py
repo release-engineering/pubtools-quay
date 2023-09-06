@@ -4,6 +4,7 @@ import re
 import yaml
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
+import os
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -685,28 +686,39 @@ class OperatorPusher:
 
         num_thread_build_index_images = self.target_settings.get("num_thread_build_index_images", 5)
 
-        with ThreadPoolExecutor(max_workers=num_thread_build_index_images) as executor:
-            future_results = {
-                executor.submit(
-                    lambda param: self.iib_add_bundles(
-                        bundles=param.bundles,
-                        index_image=param.index_image,
-                        deprecation_list=param.deprecation_list,
-                        build_tags=param.build_tags,
-                        target_settings=param.target_settings,
-                    ),
-                    param,
-                ): param
-                for param in build_index_image_params
-            }
-            for future in futures.as_completed(future_results):
-                build_details = future.result()
-                param = future_results[future]
-                iib_results[param.tag + "-" + param.origin] = {
-                    "iib_result": build_details,
-                    "signing_keys": param.signing_keys,
-                    "destination_tags": param.destination_tags,
+        orig_environ = os.environ.copy()
+        _, environ_vars = self.pubtools_iib_get_common_args(self.target_settings)
+        for key in environ_vars:
+            os.environ[key] = environ_vars[key]
+
+        try:
+            with ThreadPoolExecutor(max_workers=num_thread_build_index_images) as executor:
+                future_results = {
+                    executor.submit(
+                        lambda param: self.iib_add_bundles(
+                            bundles=param.bundles,
+                            index_image=param.index_image,
+                            deprecation_list=param.deprecation_list,
+                            build_tags=param.build_tags,
+                            target_settings=param.target_settings,
+                        ),
+                        param,
+                    ): param
+                    for param in build_index_image_params
                 }
+                for future in futures.as_completed(future_results):
+                    build_details = future.result()
+                    param = future_results[future]
+                    iib_results[param.tag + "-" + param.origin] = {
+                        "iib_result": build_details,
+                        "signing_keys": param.signing_keys,
+                        "destination_tags": param.destination_tags,
+                    }
+        finally:
+            os.environ.update(orig_environ)
+            to_delete = [key for key in os.environ if key not in orig_environ]
+            for key in to_delete:
+                del os.environ[key]
 
         return iib_results
 
