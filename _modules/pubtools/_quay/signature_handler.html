@@ -379,16 +379,19 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="n">address</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">default_radas_address</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;queue://Consumer.msg-producer-pub&quot;</span>
-            <span class="s2">&quot;.</span><span class="si">{task_id}</span><span class="s2">.VirtualTopic.eng.robosignatory.container.sign.</span><span class="si">{task_id}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span>
-            <span class="p">)</span>
+            <span class="s2">&quot;.</span><span class="si">{task_id}</span><span class="s2">.VirtualTopic.eng.robosignatory.container.sign.</span><span class="si">{task_id}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
+
         <span class="n">docker_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]</span>
+
+        <span class="n">radas_address</span> <span class="o">=</span> <span class="n">docker_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;umb_radas_address&quot;</span><span class="p">,</span> <span class="n">default_radas_address</span><span class="p">)</span>
+        <span class="n">radas_address</span> <span class="o">=</span> <span class="n">radas_address</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">)</span>
+
         <span class="n">umb_settings</span> <span class="o">=</span> <span class="n">UMBSettings</span><span class="p">(</span>
             <span class="n">broker_urls</span><span class="o">=</span><span class="n">docker_settings</span><span class="p">[</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">],</span>
-            <span class="n">radas_address</span><span class="o">=</span><span class="n">docker_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;umb_radas_address&quot;</span><span class="p">,</span> <span class="n">address</span><span class="p">),</span>
+            <span class="n">radas_address</span><span class="o">=</span><span class="n">radas_address</span><span class="p">,</span>
             <span class="n">pub_cert</span><span class="o">=</span><span class="n">docker_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;umb_pub_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pub/umb-pub-cert-key.pem&quot;</span><span class="p">),</span>
             <span class="n">ca_cert</span><span class="o">=</span><span class="n">docker_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;umb_ca_cert&quot;</span><span class="p">,</span> <span class="s2">&quot;/etc/pki/tls/certs/ca-bundle.crt&quot;</span><span class="p">),</span>
             <span class="n">signing_timeout</span><span class="o">=</span><span class="n">docker_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;umb_signing_timeout&quot;</span><span class="p">,</span> <span class="mi">600</span><span class="p">),</span>
