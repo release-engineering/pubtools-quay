@@ -834,28 +834,28 @@ def test_push_operators_prerelease(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5-3"],
+        build_tags=["v4.5-3-RHBA-1234:4567-operator-name"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[1] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
         deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5-3"],
+        build_tags=["v4.5-3-RHBA-1234:4567-operator-name2"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[2] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6-3"],
+        build_tags=["v4.6-3-RHBA-1234:4567-operator-name"],
         target_settings=expected_target_settings,
     )
     assert mock_add_bundles.call_args_list[3] == mock.call(
         bundles=["some-registry1.com/repo:1.0"],
         index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
         deprecation_list=["bundle3"],
-        build_tags=["v4.6-3"],
+        build_tags=["v4.6-3-RHBA-1234:4567-operator-name2"],
         target_settings=expected_target_settings,
     )
 
