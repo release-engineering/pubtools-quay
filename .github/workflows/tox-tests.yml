@@ -84,7 +84,7 @@ jobs:
       - name: Run Tox
         run: tox -e py311
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.2
+        uses: codecov/codecov-action@v3.1.4
         with:
           fail_ci_if_error: true
           verbose: true
