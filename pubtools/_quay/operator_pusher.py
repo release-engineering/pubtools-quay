@@ -657,7 +657,9 @@ class OperatorPusher:
                 build_tags = []
                 if is_prerelease:
                     build_tags.append(
-                        "{0}-{1}-{2}".format(index_image.split(":")[1], self.task_id, group)
+                        "{0}-{1}-{2}".format(
+                            index_image.split(":")[1], self.task_id, group.replace(":", "-")
+                        )
                     )
                 else:
                     build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
