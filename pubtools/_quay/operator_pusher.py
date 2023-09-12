@@ -655,7 +655,14 @@ class OperatorPusher:
                     image_repo=self.target_settings["iib_index_image"], tag=tag
                 )
                 build_tags = []
-                build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
+                if is_prerelease:
+                    build_tags.append(
+                        "{0}-{1}-{2}".format(
+                            index_image.split(":")[1], self.task_id, group.replace(":", "-")
+                        )
+                    )
+                else:
+                    build_tags.append("{0}-{1}".format(index_image.split(":")[1], self.task_id))
 
                 bundles = [self.public_bundle_ref(i) for i in group_info["items"]]
                 signing_keys = sorted(
