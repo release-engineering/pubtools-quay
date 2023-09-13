@@ -1,13 +1,17 @@
 ChangeLog
 =========
 
+0.12.1 (2023-09-13)
+-------------------
+
+Allow radas messaging address to be formatable
+
 0.12.0 (2023-07-25)
 -------------------
 
 * Support pre-release containers
 * Better error reporting for skopeo copy commands
 * Local executor for tag-docker operatoin
-
 
 0.11.3 (2023-07-25)
 -------------------
