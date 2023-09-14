@@ -268,7 +268,7 @@ def test_get_manifest_list_wrong_type():
         )
 
         client = quay_client.QuayClient("user", "pass")
-        with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a manifest list"):
+        with pytest.raises(exceptions.ManifestTypeError, match=".*doesn't have a .* manifest"):
             client.get_manifest(
                 "quay.io/namespace/image:1",
                 media_type="application/vnd.docker.distribution.manifest.list.v2+json",
@@ -293,7 +293,7 @@ def test_get_manifest_success():
 
         client = quay_client.QuayClient("user", "pass")
         ret_manifest = client.get_manifest("quay.io/namespace/image:1")
-        assert m.call_count == 1
+        assert m.call_count == 2
 
     assert manifest == ret_manifest
 
@@ -361,7 +361,7 @@ def test_get_manifest_accept_any():
 
         client = quay_client.QuayClient("user", "pass")
         ret_manifest = client.get_manifest("quay.io/namespace/image:1")
-        assert m.call_count == 2
+        assert m.call_count == 5
 
     assert v2s1_manifest == ret_manifest
 
@@ -632,7 +632,7 @@ def test_get_manifest_digest():
 
         client = quay_client.QuayClient("user", "pass")
         digest = client.get_manifest_digest("quay.io/namespace/image:1")
-        assert m.call_count == 1
+        assert m.call_count == 2
 
         assert digest == "sha256:b9742c91f353022604e8ed4cf4ab1d688114fc4b133f0e11cbf7dd6272753ac8"
 

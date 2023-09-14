@@ -156,6 +156,10 @@ def test_get_repository_digests(
         v2s2_manifest_data,
     ]
     mock_quay_client.return_value.get_manifest = mock_get_manifest
+    mock_quay_client.MANIFEST_LIST_TYPE = (
+        "application/vnd.docker.distribution.manifest.list.v2+json"
+    )
+    mock_quay_client.MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 
     sig_remover = signature_remover.SignatureRemover(
         quay_user="some-user", quay_password="some-password"

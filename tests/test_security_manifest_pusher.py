@@ -209,7 +209,7 @@ def test_cosign_attest_security_manifest_err(
     "pubtools._quay.security_manifest_pusher.open",
     mock.mock_open(read_data="quay.io/org/repo:sha256-abcdef.att\n"),
 )
-def test_cosign_triangulate_attestation_image(
+def test_cosign_triangulate_image(
     mock_run, mock_uuid, target_settings, container_multiarch_push_item
 ):
     pusher = security_manifest_pusher.SecurityManifestPusher(
@@ -218,7 +218,7 @@ def test_cosign_triangulate_attestation_image(
     mock_run.return_value.returncode = 0
     mock_uuid.return_value.hex = "abcd"
 
-    ret = pusher.cosign_triangulate_attestation_image("quay.io/org/repo@sha256:abcdef", "/temp/")
+    ret = pusher.cosign_triangulate_image("quay.io/org/repo@sha256:abcdef", "/temp/")
     mock_run.assert_called_once_with(
         [
             "cosign",
@@ -239,9 +239,41 @@ def test_cosign_triangulate_attestation_image(
 @mock.patch("subprocess.run")
 @mock.patch(
     "pubtools._quay.security_manifest_pusher.open",
+    mock.mock_open(read_data="quay.io/org/repo:sha256-abcdef.sig\n"),
+)
+def test_cosign_triangulate_image_nondefault_type(
+    mock_run, mock_uuid, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 0
+    mock_uuid.return_value.hex = "abcd"
+
+    ret = pusher.cosign_triangulate_image("quay.io/org/repo@sha256:abcdef", "/temp/", "signature")
+    mock_run.assert_called_once_with(
+        [
+            "cosign",
+            "triangulate",
+            "--type=signature",
+            "quay.io/org/repo@sha256:abcdef",
+            "--output-file",
+            "/temp/signature_reference_abcd.json",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    assert ret == "quay.io/org/repo:sha256-abcdef.sig"
+
+
+@mock.patch("uuid.uuid4")
+@mock.patch("subprocess.run")
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.open",
     mock.mock_open(read_data="quay.io/org/repo:sha256-abcdef.att\n"),
 )
-def test_cosign_triangulate_attestation_image_error(
+def test_cosign_triangulate_image_error(
     mock_run, mock_uuid, target_settings, container_multiarch_push_item
 ):
     pusher = security_manifest_pusher.SecurityManifestPusher(
@@ -250,8 +282,27 @@ def test_cosign_triangulate_attestation_image_error(
     mock_run.return_value.returncode = 1
     mock_uuid.return_value.hex = "abcd"
 
-    with pytest.raises(RuntimeError, match="Getting attestation image to image.*"):
-        pusher.cosign_triangulate_attestation_image("quay.io/org/repo@sha256:abcdef", "/temp/")
+    with pytest.raises(RuntimeError, match="Triangulating attestation image to image.*"):
+        pusher.cosign_triangulate_image("quay.io/org/repo@sha256:abcdef", "/temp/")
+
+
+@mock.patch("uuid.uuid4")
+@mock.patch("subprocess.run")
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.open",
+    mock.mock_open(read_data="quay.io/org/repo:sha256-abcdef.att\n"),
+)
+def test_cosign_triangulate_image_unknown_type(
+    mock_run, mock_uuid, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 0
+    mock_uuid.return_value.hex = "abcd"
+
+    with pytest.raises(ValueError, match="Image type 'wrong' needs to be one of.*"):
+        pusher.cosign_triangulate_image("quay.io/org/repo@sha256:abcdef", "/temp/", "wrong")
 
 
 def test_get_security_manifest_from_attestation(target_settings, container_multiarch_push_item):
@@ -316,8 +367,7 @@ def test_security_manifest_add_products(
 
 @mock.patch("pubtools._quay.security_manifest_pusher.QuayApiClient")
 @mock.patch(
-    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
-    "cosign_triangulate_attestation_image"
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher." "cosign_triangulate_image"
 )
 def test_delete_existing_attestation(
     mock_triangulate, mock_api_client, target_settings, container_multiarch_push_item

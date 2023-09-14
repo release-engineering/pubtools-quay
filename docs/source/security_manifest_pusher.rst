@@ -11,7 +11,7 @@ Class used for creating and pushing container security manifests in the form of 
    .. automethod:: cosign_get_security_manifest
    .. automethod:: cosign_get_existing_attestation
    .. automethod:: cosign_attest_security_manifest
-   .. automethod:: cosign_triangulate_attestation_image
+   .. automethod:: cosign_triangulate_image
    .. automethod:: get_security_manifest_from_attestation
    .. automethod:: security_manifest_get_products
    .. automethod:: get_destination_repos

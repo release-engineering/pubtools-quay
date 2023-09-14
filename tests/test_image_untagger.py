@@ -156,7 +156,7 @@ def test_tag_digest_mappings(
 
         assert tag_digest_mapping == expected_tag_digest_mapping
         assert digest_tag_mapping == expected_digest_tag_mapping
-        assert m.call_count == 9
+        assert m.call_count == 13
 
 
 @mock.patch("pubtools._quay.image_untagger.QuayClient")
@@ -205,12 +205,125 @@ def test_get_lost_digests_some(
     ]
 
 
-def test_untag_images_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog):
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    mock_triangulate.side_effect = [
+        "stage.quay.io/name/repo1:sha256-abcd.att",
+        "stage.quay.io/name/repo1:sha256-abcd.sbom",
+        "stage.quay.io/name/repo1:sha256-abcd.sig",
+    ]
+    untagger = setup_untagger(references)
+    cosign_images = untagger.get_repo_cosign_images(
+        ["stage.quay.io/name/repo1@sha256:1234abc"], repo_tags
+    )
+    assert cosign_images == {
+        "stage.quay.io/name/repo1:sha256-abcd.att",
+        "stage.quay.io/name/repo1:sha256-abcd.sig",
+    }
+
+    assert mock_triangulate.call_count == 3
+
+
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images_empty(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    untagger = setup_untagger(references)
+    cosign_images = untagger.get_repo_cosign_images([], repo_tags)
+    assert cosign_images == set()
+
+    mock_triangulate.assert_not_called()
+
+
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images_tag_images(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    untagger = setup_untagger(references)
+    with pytest.raises(ValueError, match=".* are not specified by digest"):
+        untagger.get_repo_cosign_images(
+            ["stage.quay.io/name/repo1@sha256:1234abc", "stage.quay.io/name/repo1:1"], repo_tags
+        )
+
+    mock_triangulate.assert_not_called()
+
+
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images_different_repos(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    untagger = setup_untagger(references)
+    with pytest.raises(ValueError, match="Specified images belong to multiple repos"):
+        untagger.get_repo_cosign_images(
+            ["stage.quay.io/name/repo1@sha256:1234abc", "stage.quay.io/name/repo2@sha256:def5432"],
+            repo_tags,
+        )
+
+    mock_triangulate.assert_not_called()
+
+
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images_specified_types(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    mock_triangulate.side_effect = [
+        "stage.quay.io/name/repo1:sha256-abcd.att",
+        "stage.quay.io/name/repo1:sha256-abcd.sbom",
+        "stage.quay.io/name/repo1:sha256-abcd.sig",
+    ]
+    untagger = setup_untagger(references)
+    cosign_images = untagger.get_repo_cosign_images(
+        ["stage.quay.io/name/repo1@sha256:1234abc"], repo_tags, ["attestation"]
+    )
+    assert cosign_images == {
+        "stage.quay.io/name/repo1:sha256-abcd.att",
+    }
+
+    assert mock_triangulate.call_count == 1
+
+
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_get_repo_cosign_images_wrong_specified_types(mock_triangulate):
+    references = [
+        "stage.quay.io/name/repo1:1",
+    ]
+    repo_tags = ["1", "2", "sha256-abcd.att", "sha256-abcd.sig"]
+    mock_triangulate.side_effect = [
+        "stage.quay.io/name/repo1:sha256-abcd.att",
+        "stage.quay.io/name/repo1:sha256-abcd.sbom",
+        "stage.quay.io/name/repo1:sha256-abcd.sig",
+    ]
+    untagger = setup_untagger(references)
+    with pytest.raises(ValueError, match="Unknown cosign image types.*"):
+        untagger.get_repo_cosign_images(
+            ["stage.quay.io/name/repo1@sha256:1234abc"], repo_tags, ["artestation", "sbomb"]
+        )
+
+    assert mock_triangulate.call_count == 0
+
+
+@mock.patch("pubtools._quay.image_untagger.ImageUntagger.get_repo_cosign_images")
+def test_untag_images_no_lost_digests(
+    mock_get_repo_cosign_images, manifest_list_data, v2s2_manifest_data, caplog
+):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
     ]
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
+    mock_get_repo_cosign_images.return_value = set()
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
         register_tags_api(m, "repo1", repo_tags)
@@ -222,7 +335,7 @@ def test_untag_images_no_lost_digests(manifest_list_data, v2s2_manifest_data, ca
         lost_images = untagger.untag_images()
 
         assert lost_images == []
-        assert m.call_count == 10
+        assert m.call_count == 14
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
@@ -232,13 +345,17 @@ def test_untag_images_no_lost_digests(manifest_list_data, v2s2_manifest_data, ca
         compare_logs(caplog, expected_logs)
 
 
-def test_untag_images_lost_digests_error(manifest_list_data, v2s2_manifest_data, caplog):
+@mock.patch("pubtools._quay.image_untagger.ImageUntagger.get_repo_cosign_images")
+def test_untag_images_lost_digests_error(
+    mock_get_repo_cosign_images, manifest_list_data, v2s2_manifest_data, caplog
+):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
         "stage.quay.io/name/repo1:2",
     ]
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
+    mock_get_repo_cosign_images.return_value = set()
     untagger = setup_untagger(references)
     with requests_mock.Mocker() as m:
         register_tags_api(m, "repo1", repo_tags)
@@ -262,7 +379,10 @@ def test_untag_images_lost_digests_error(manifest_list_data, v2s2_manifest_data,
             untagger.untag_images()
 
 
-def test_untag_images_lost_digests_remove_anyway(manifest_list_data, v2s2_manifest_data, caplog):
+@mock.patch("pubtools._quay.image_untagger.ImageUntagger.get_repo_cosign_images")
+def test_untag_images_lost_digests_remove_anyway(
+    mock_get_repo_cosign_images, manifest_list_data, v2s2_manifest_data, caplog
+):
     caplog.set_level(logging.INFO)
     references = [
         "stage.quay.io/name/repo1:1",
@@ -270,6 +390,7 @@ def test_untag_images_lost_digests_remove_anyway(manifest_list_data, v2s2_manife
     ]
     repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
     untagger = setup_untagger(references, remove_last=True)
+    mock_get_repo_cosign_images.return_value = set()
     with requests_mock.Mocker() as m:
         register_tags_api(m, "repo1", repo_tags)
         register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
@@ -289,8 +410,16 @@ def test_untag_images_lost_digests_remove_anyway(manifest_list_data, v2s2_manife
             "stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         ]
 
-        assert lost_images == expected_lost_images
-        assert m.call_count == 11
+        assert sorted(lost_images) == sorted(expected_lost_images)
+        assert m.call_count == 16
+
+        assert mock_get_repo_cosign_images.call_count == 2
+        assert mock_get_repo_cosign_images.call_args_list[0] == mock.call(
+            expected_lost_images, repo_tags["tags"]
+        )
+        assert mock_get_repo_cosign_images.call_args_list[1] == mock.call(
+            [], repo_tags["tags"], ["signature"]
+        )
 
         expected_logs = [
             "Gathering tags and digests of repository 'name/repo1'",
@@ -303,6 +432,91 @@ def test_untag_images_lost_digests_remove_anyway(manifest_list_data, v2s2_manife
             ".*stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*",
             "Removing tag '1' from repository 'name/repo1'",
             "Removing tag '2' from repository 'name/repo1'",
+        ]
+        compare_logs(caplog, expected_logs)
+
+
+@mock.patch("pubtools._quay.image_untagger.ImageUntagger.get_repo_cosign_images")
+def test_untag_images_lost_digests_cosign_images(
+    mock_get_repo_cosign_images, manifest_list_data, v2s2_manifest_data, caplog
+):
+    caplog.set_level(logging.INFO)
+    references = [
+        "stage.quay.io/name/repo1:1",
+        "stage.quay.io/name/repo1:2",
+    ]
+    repo_tags = {"name": "repo1", "tags": ["1", "2", "3", "4"]}
+    untagger = setup_untagger(references, remove_last=True)
+    mock_get_repo_cosign_images.side_effect = [
+        {
+            "stage.quay.io/name/repo1:sha256-abcdef.att",
+            "stage.quay.io/name/repo1:sha256-abcdef.sig",
+        },
+        {
+            "stage.quay.io/name/repo1:sha256-fedcba.sig",
+        },
+    ]
+    with requests_mock.Mocker() as m:
+        register_tags_api(m, "repo1", repo_tags)
+        register_manifest_url(m, "repo1", "1", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "2", manifest_list_data, mlist=True)
+        register_manifest_url(m, "repo1", "3", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "4", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "sha256-abcdef.att", v2s2_manifest_data)
+        register_manifest_url(m, "repo1", "sha256-abcdef.sig", manifest_list_data)
+        m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/1")
+        m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/2")
+        m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/sha256-abcdef.att")
+        m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/sha256-abcdef.sig")
+        m.delete("https://stage.quay.io/api/v1/repository/name/repo1/tag/sha256-fedcba.sig")
+        lost_images = untagger.untag_images()
+
+        expected_lost_images = [
+            "stage.quay.io/name/repo1:sha256-abcdef.att",
+            "stage.quay.io/name/repo1:sha256-abcdef.sig",
+            "stage.quay.io/name/repo1:sha256-fedcba.sig",
+            "stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
+            "stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "stage.quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "stage.quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        ]
+
+        assert sorted(lost_images) == sorted(expected_lost_images)
+        assert m.call_count == 23
+
+        assert mock_get_repo_cosign_images.call_count == 2
+        assert mock_get_repo_cosign_images.call_args_list[0] == mock.call(
+            expected_lost_images[3:], repo_tags["tags"]
+        )
+        assert mock_get_repo_cosign_images.call_args_list[1] == mock.call(
+            [
+                "stage.quay.io/name/repo1@sha256:78060d7b3da37ef95fe133f82c0efb0a0c730da9a4178b5767213a1e7a59fff1",
+                "stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f",
+            ],
+            repo_tags["tags"],
+            ["signature"],
+        )
+
+        expected_logs = [
+            "Gathering tags and digests of repository 'name/repo1'",
+            "Following images won't be referencable by tag: "
+            ".*stage.quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
+            ".*stage.quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
+            ".*stage.quay.io/name/repo1@sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9.*"
+            ".*stage.quay.io/name/repo1@sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c.*"
+            ".*stage.quay.io/name/repo1@sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb.*"
+            ".*stage.quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd.*",
+            "Following cosign images won't be referecable by tag: "
+            ".*stage.quay.io/name/repo1:sha256-abcdef.att.*"
+            ".*stage.quay.io/name/repo1:sha256-abcdef.sig.*"
+            ".*stage.quay.io/name/repo1:sha256-fedcba.sig.*",
+            "Removing tag '1' from repository 'name/repo1'",
+            "Removing tag '2' from repository 'name/repo1'",
+            "Removing tag 'sha256-abcdef.att' from repository 'name/repo1'",
+            "Removing tag 'sha256-abcdef.sig' from repository 'name/repo1'",
+            "Removing tag 'sha256-fedcba.sig' from repository 'name/repo1'",
         ]
         compare_logs(caplog, expected_logs)
 

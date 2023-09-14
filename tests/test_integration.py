@@ -488,7 +488,7 @@ def test_push_docker_source(
                 {
                     "text": json.dumps(src_manifest_list, sort_keys=True),
                     "headers": {
-                        "Content-Type": "application/vnd.docker.distribution.manifest.v2+json"
+                        "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"
                     },
                 },
                 {
@@ -1063,9 +1063,11 @@ def test_task_iib_build_from_scratch(
         )
 
 
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
 @mock.patch("pubtools._quay.signature_remover.run_entrypoint")
 def test_clear_repo(
     mock_run_entrypoint_signature_remover,
+    mock_triangulate,
     src_manifest_list,
 ):
     mock_run_entrypoint_signature_remover.return_value = [

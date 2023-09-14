@@ -183,8 +183,14 @@ class SignatureRemover:
         for tag in repo_tags["tags"]:
             image = image_schema.format(host=self.quay_host, repo=repository, tag=tag)
             manifest = self.quay_client.get_manifest(image)
-            # if V2S2, we want to include its digest
-            if manifest["mediaType"] == "application/vnd.docker.distribution.manifest.v2+json":
+            # If single arch, get digest
+            # Seems that V2S1 doesn't have to contain MediaType at all
+            if manifest.get("mediaType", None) in {
+                QuayClient.MANIFEST_V2S2_TYPE,
+                QuayClient.MANIFEST_OCI_V2S2_TYPE,
+                QuayClient.MANIFEST_V2S1_TYPE,
+                None,
+            }:
                 digests.append(self.quay_client.get_manifest_digest(image))
             else:
                 for arch_manifest in manifest["manifests"]:
