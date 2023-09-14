@@ -19,6 +19,8 @@ class QuayClient:
     MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
     MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
     MANIFEST_V2S1_TYPE = "application/vnd.docker.distribution.manifest.v1+json"
+    MANIFEST_OCI_LIST_TYPE = "application/vnd.oci.image.index.v1+json"
+    MANIFEST_OCI_V2S2_TYPE = "application/vnd.oci.image.manifest.v1+json"
 
     def __init__(self, username, password, host=None):
         """
@@ -58,10 +60,12 @@ class QuayClient:
             media_type (str):
                 Can be application/vnd.docker.distribution.manifest.list.v2+json,
                 application/vnd.docker.distribution.manifest.v2+json,
-                application/vnd.docker.distribution.manifest.v1+json or None
-                indicating which manifest type is requested. If it's None,
+                application/vnd.docker.distribution.manifest.v1+json,
+                application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json
+                or None indicating which manifest type is requested. If it's None,
                 manifest list is prefered, but if v2s2 is returned instead, v2s2
-                is returned as final result.
+                is returned as final result. If neither is found, same order is attempted with
+                OCI type images.
         Returns (dict|str):
             Image manifest
         Raises:
@@ -73,7 +77,7 @@ class QuayClient:
         repo, ref = self._parse_and_validate_image_url(image)
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
-        if media_type not in ("application/vnd.docker.distribution.manifest.list.v2+json", None):
+        if media_type:
             kwargs = {"headers": {"Accept": media_type}}
             response = self._request_quay("GET", endpoint, kwargs)
 
@@ -90,21 +94,20 @@ class QuayClient:
             else:
                 return response.json()
 
-        # request 'Content-Type' to be manifest list
-        kwargs = {"headers": {"Accept": QuayClient.MANIFEST_LIST_TYPE}}
-        response = self._request_quay("GET", endpoint, kwargs)
-        if (
-            media_type == QuayClient.MANIFEST_LIST_TYPE
-            and response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
+        # If type is not specified, try to get manifests in this order
+        # If somehow none of these match, we'll accept whatever we got
+        for manifest_type in (
+            QuayClient.MANIFEST_LIST_TYPE,
+            QuayClient.MANIFEST_V2S2_TYPE,
+            QuayClient.MANIFEST_OCI_LIST_TYPE,
+            QuayClient.MANIFEST_OCI_V2S2_TYPE,
+            QuayClient.MANIFEST_V2S1_TYPE,
         ):
-            raise ManifestTypeError("Image {0} doesn't have a manifest list".format(image))
-        # We asked for ML but received neither ML nor V2S2. Let's ask again for V2S2
-        if (
-            response.headers["Content-Type"] != QuayClient.MANIFEST_LIST_TYPE
-            and response.headers["Content-Type"] != QuayClient.MANIFEST_V2S2_TYPE
-        ):
-            kwargs = {"headers": {"Accept": QuayClient.MANIFEST_V2S2_TYPE}}
+            kwargs = {"headers": {"Accept": manifest_type}}
             response = self._request_quay("GET", endpoint, kwargs)
+
+            if response.headers["Content-Type"] == manifest_type:
+                break
 
         if raw:
             return response.text

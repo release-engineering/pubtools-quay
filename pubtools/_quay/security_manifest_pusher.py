@@ -29,6 +29,8 @@ class DigestSecurityManifest:
 class SecurityManifestPusher:
     """Class that pushes container security manifests."""
 
+    COSIGN_TRIANGULATE_TYPES = ("attestation", "sbom", "signature")
+
     def __init__(self, push_items: list, target_settings: dict):
         """
         Initialize.
@@ -69,6 +71,7 @@ class SecurityManifestPusher:
             )
         return self._dest_quay_api_client
 
+    @classmethod
     def cosign_get_security_manifest(self, image_ref: str, output_file: str) -> bool:
         """
         Use cosign to get security manifest from an image and save it to a file.
@@ -163,7 +166,10 @@ class SecurityManifestPusher:
             LOG.error(f"Command {' '.join(cmd)} has failed: {result.stdout}")
             raise RuntimeError(f"Creating attestation to image {image_ref} has failed")
 
-    def cosign_triangulate_attestation_image(self, image_ref: str, dir_path: str) -> str:
+    @classmethod
+    def cosign_triangulate_image(
+        self, image_ref: str, dir_path: str, image_type: str = "attestation"
+    ) -> str:
         """
         Use cosign to get the reference to the attestation image.
 
@@ -172,17 +178,24 @@ class SecurityManifestPusher:
                 Image whose attestation image reference to get.
             dir_path (str):
                 Path where a file containing the reference should be created.
+            image_type (str):
+                Type of image being triangulated.
         Returns (str):
             Reference of the attestation image.
         Raises:
             RuntimeError:
                 If the command fails.
         """
-        reference_file = os.path.join(dir_path, f"attestation_reference_{uuid.uuid4().hex}.json")
+        if image_type not in self.COSIGN_TRIANGULATE_TYPES:
+            raise ValueError(
+                f"Image type '{image_type}' needs to be one of {self.COSIGN_TRIANGULATE_TYPES}"
+            )
+
+        reference_file = os.path.join(dir_path, f"{image_type}_reference_{uuid.uuid4().hex}.json")
         cmd = [
             "cosign",
             "triangulate",
-            "--type=attestation",
+            f"--type={image_type}",
             image_ref,
             "--output-file",
             reference_file,
@@ -192,7 +205,7 @@ class SecurityManifestPusher:
 
         if result.returncode:
             LOG.error(f"Command {' '.join(cmd)} has failed: {result.stdout}")
-            raise RuntimeError(f"Getting attestation image to image {image_ref} has failed")
+            raise RuntimeError(f"Triangulating {image_type} image to image {image_ref} has failed")
 
         with open(reference_file, "r") as f:
             return f.read().strip()
@@ -314,7 +327,7 @@ class SecurityManifestPusher:
                 Path to a directory where temporary files may be created.
         """
         LOG.info(f"Removing attestation image of image {image_ref}")
-        attestation_image_ref = self.cosign_triangulate_attestation_image(image_ref, dir_path)
+        attestation_image_ref = self.cosign_triangulate_image(image_ref, dir_path)
 
         tag = attestation_image_ref.split(":")[-1]
         repo_path = attestation_image_ref.split(":")[0]

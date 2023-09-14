@@ -112,7 +112,10 @@ def test_args_missing_quay_credential(mock_image_untagger):
     mock_image_untagger.assert_not_called()
 
 
-def test_full_run_remove_last(manifest_list_data, v2s2_manifest_data, caplog, hookspy):
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_full_run_remove_last(
+    mock_triangulate, manifest_list_data, v2s2_manifest_data, caplog, hookspy
+):
     args = [
         "dummy",
         "--reference",
@@ -168,11 +171,14 @@ def test_full_run_remove_last(manifest_list_data, v2s2_manifest_data, caplog, ho
             "quay.io/name/repo1@sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
         ]
 
-        assert m.call_count == 11
+        assert m.call_count == 16
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
+            "Getting cosign images of 6 images",
+            "0 cosign images were found for the 6 images",
+            "Getting cosign images of 0 images",
             "Following images won't be referencable by tag: "
             ".*quay.io/name/repo1@sha256:836b8281def8a913eb3f1aeb4d12d372d77e11fb4bc5ebffe46a55552af5fc1f.*"
             ".*quay.io/name/repo1@sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee.*"
@@ -256,7 +262,7 @@ def test_full_run_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog
         m.delete("https://quay.io/api/v1/repository/name/repo1/tag/1")
         untag_images.untag_images_main(args)
 
-        assert m.call_count == 11
+        assert m.call_count == 15
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*",
@@ -268,7 +274,8 @@ def test_full_run_no_lost_digests(manifest_list_data, v2s2_manifest_data, caplog
         compare_logs(caplog, expected_logs)
 
 
-def test_full_run_last_error(manifest_list_data, v2s2_manifest_data, caplog):
+@mock.patch("pubtools._quay.image_untagger.SecurityManifestPusher.cosign_triangulate_image")
+def test_full_run_last_error(mock_triangulate, manifest_list_data, v2s2_manifest_data, caplog):
     args = [
         "dummy",
         "--reference",
@@ -324,11 +331,14 @@ def test_full_run_last_error(manifest_list_data, v2s2_manifest_data, caplog):
         with pytest.raises(ValueError, match=expected_err_msg):
             untag_images.untag_images_main(args)
 
-        assert m.call_count == 9
+        assert m.call_count == 14
 
         expected_logs = [
             "Started untagging operation with the following references: .*quay.io/name/repo1:1.*quay.io/name/repo1:2.*",
             "Gathering tags and digests of repository 'name/repo1'",
+            "Getting cosign images of 6 images",
+            "0 cosign images were found for the 6 images",
+            "Getting cosign images of 0 images",
         ]
         compare_logs(caplog, expected_logs)
 
