@@ -576,6 +576,8 @@ class OperatorPusher:
                     tag_part,
                     item.origin.split("-")[1].replace(":", "-"),
                 )
+                if is_prerelease:
+                    floating_dst_tag = "{0}-{1}".format(version, tag_part)
                 item_groups.setdefault(
                     origin,
                     {
@@ -586,6 +588,8 @@ class OperatorPusher:
                 )
                 item_groups[origin]["items"].append(item)
                 item_groups[origin]["destination_tags"].append(dst_tag)
+                if is_prerelease:
+                    item_groups[origin]["destination_tags"].append(floating_dst_tag)
         else:
             for item in non_fbc_items:
                 item_groups[version]["items"].append(item)

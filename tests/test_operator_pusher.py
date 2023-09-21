@@ -671,12 +671,12 @@ def test_push_operators_hotfix(
         IIBRes(
             "some-registry.com/index/image:5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-test-hotfix-RHBA-1234-4567"],
+            ["v4.5-test-hotfix-RHBA-1234-4567", "v4.5-test-hotfix"],
         ),
         IIBRes(
             "some-registry.com/index/image:6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-test-hotfix-RHBA-1234-4567"],
+            ["v4.6-test-hotfix-RHBA-1234-4567", "v4.6-test-hotfix-RHBA-1234-4567"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
@@ -808,22 +808,34 @@ def test_push_operators_prerelease(
         "v4.5-RHBA-1234:4567-operator-name": {
             "iib_result": iib_results[0],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.5-prerelease-operator-name-1234-4567"],
+            "destination_tags": [
+                "v4.5-prerelease-operator-name-1234-4567",
+                "v4.5-prerelease-operator-name",
+            ],
         },
         "v4.5-RHBA-1234:4567-operator-name2": {
             "iib_result": iib_results[1],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.5-prerelease-operator-name2-1234-4567"],
+            "destination_tags": [
+                "v4.5-prerelease-operator-name2-1234-4567",
+                "v4.5-prerelease-operator-name2",
+            ],
         },
         "v4.6-RHBA-1234:4567-operator-name": {
             "iib_result": iib_results[2],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.6-prerelease-operator-name-1234-4567"],
+            "destination_tags": [
+                "v4.6-prerelease-operator-name-1234-4567",
+                "v4.6-prerelease-operator-name",
+            ],
         },
         "v4.6-RHBA-1234:4567-operator-name2": {
             "iib_result": iib_results[3],
             "signing_keys": ["some-key"],
-            "destination_tags": ["v4.6-prerelease-operator-name2-1234-4567"],
+            "destination_tags": [
+                "v4.6-prerelease-operator-name2-1234-4567",
+                "v4.6-prerelease-operator-name2",
+            ],
         },
     }
     expected_target_settings = target_settings.copy()
@@ -867,7 +879,8 @@ def test_push_operators_prerelease(
             mock.call(
                 "some-registry.com/index/image:v4.6",
                 [
-                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name-1234-4567"
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name-1234-4567",
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name",
                 ],
                 True,
                 target_settings,
@@ -879,7 +892,8 @@ def test_push_operators_prerelease(
             mock.call(
                 "some-registry.com/index/image:v4.5",
                 [
-                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name-1234-4567"
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name-1234-4567",
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name",
                 ],
                 True,
                 target_settings,
@@ -891,7 +905,8 @@ def test_push_operators_prerelease(
             mock.call(
                 "some-registry.com/index/image:v4.6",
                 [
-                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name2-1234-4567"
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name2-1234-4567",
+                    "quay.io/some-namespace/operators----index-image:v4.6-prerelease-operator-name2",
                 ],
                 True,
                 target_settings,
@@ -903,7 +918,8 @@ def test_push_operators_prerelease(
             mock.call(
                 "some-registry.com/index/image:v4.5",
                 [
-                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name2-1234-4567"
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name2-1234-4567",
+                    "quay.io/some-namespace/operators----index-image:v4.5-prerelease-operator-name2",
                 ],
                 True,
                 target_settings,
