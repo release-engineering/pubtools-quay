@@ -671,12 +671,12 @@ def test_push_operators_hotfix(
         IIBRes(
             "some-registry.com/index/image:5",
             "some-registry.com/index/image@sha256:a1a1",
-            ["v4.5-test-hotfix-RHBA-1234-4567", "v4.5-test-hotfix"],
+            ["v4.5-test-hotfix-RHBA-1234-4567"],
         ),
         IIBRes(
             "some-registry.com/index/image:6",
             "some-registry.com/index/image@sha256:b2b2",
-            ["v4.6-test-hotfix-RHBA-1234-4567", "v4.6-test-hotfix-RHBA-1234-4567"],
+            ["v4.6-test-hotfix-RHBA-1234-4567"],
         ),
     ]
     mock_add_bundles.side_effect = iib_results
