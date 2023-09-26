@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tag Docker &mdash; pubtools-quay 0.12.0 documentation</title>
+  <title>Security manifest pusher &mdash; pubtools-quay 0.12.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -18,9 +18,7 @@
         <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Utilities" href="utilities.html" />
-    <link rel="prev" title="Signature Remover" href="signature_remover.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -45,27 +43,10 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <ul class="current">
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="modules_reference.html">Modules reference</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="command_executor.html">Command Executor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="container_image_pusher.html">Container image pusher</a></li>
-<li class="toctree-l2"><a class="reference internal" href="iib_operations.html">IIB operations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="image_untagger.html">Image untagger</a></li>
-<li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
-<li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quay_client.html">Quay Client</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
-<li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Tag Docker</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="modules_reference.html">Modules reference</a></li>
 </ul>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
@@ -85,10 +66,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules_reference.html">Modules reference</a></li>
-      <li class="breadcrumb-item active">Tag Docker</li>
+      <li class="breadcrumb-item active">Security manifest pusher</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/tag_docker.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/security_manifest_pusher.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -96,18 +76,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="tag-docker">
-<h1>Tag Docker<a class="headerlink" href="#tag-docker" title="Permalink to this heading"></a></h1>
-<p>This is the main class for the Tag Docker workflow, which is used for adding and deleting tags and architectures.</p>
-<span class="target" id="module-pubtools._quay.tag_docker"></span></div>
+  <div class="section" id="security-manifest-pusher">
+<h1>Security manifest pusher<a class="headerlink" href="#security-manifest-pusher" title="Permalink to this heading"></a></h1>
+<span class="target" id="module-pubtools._quay.security_manifest_pusher"></span><p>Class used for creating and pushing container security manifests in the form of attestations. THe manifests are extracted from a pushed image, and the product name is added as a metadata. If there is an already existing security manifest, multiple product names can be merged.</p>
+</div>
 
 
            </div>
           </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="signature_remover.html" class="btn btn-neutral float-left" title="Signature Remover" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="utilities.html" class="btn btn-neutral float-right" title="Utilities" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
+          <footer>
 
   <hr/>
 
