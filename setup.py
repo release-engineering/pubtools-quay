@@ -113,7 +113,7 @@ if os.environ.get("READTHEDOCS", None):
 
 setup(
     name="pubtools-quay",
-    version="0.12.1",
+    version="0.13.0",
     description="Pubtools-quay",
     long_description=long_description,
     long_description_content_type="text/x-rst",

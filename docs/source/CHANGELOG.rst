@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.13.0 (2023-09-27)
+-------------------
+
+* Implement workflow to push container security manifests
+* Support prerelease floating tag
+* Remove images created by cosign
+
 0.12.1 (2023-09-13)
 -------------------
 
