@@ -217,6 +217,7 @@ def test_iib_add_bundles_list_deprecation_list(
     mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
+    target_settings["check_related_images"] = True
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_add_bundles(
         ["bundle1", "bundle2"],
@@ -240,6 +241,7 @@ def test_iib_add_bundles_list_deprecation_list(
             "--overwrite-from-index",
             "--iib-krb-ktfile",
             "/etc/pub/some.keytab",
+            "--check-related-images",
             "--index-image",
             "registry.com/rh-osbs/iib-pub-pending:v4.5",
             "--bundle",
