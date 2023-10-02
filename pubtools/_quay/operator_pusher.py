@@ -258,6 +258,9 @@ class OperatorPusher:
                 "iib_overwrite_from_index_token"
             ]
 
+        if target_settings.get("check_related_images"):
+            args += ["--check-related-images"]
+
         return (args, env_vars)
 
     @classmethod
