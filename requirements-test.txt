@@ -1,6 +1,7 @@
 mock
 requests-mock
 pytest
+pylint<3.0.0
 pytest-pylint
 pytest-cov
 pubtools-pyxis
