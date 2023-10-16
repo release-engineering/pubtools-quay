@@ -167,7 +167,6 @@ def test_iib_add_bundles_str_deprecation_list(
         ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
         "pubtools-iib-add-bundles",
         [
-            "--skip-pulp",
             "--iib-server",
             "iib-server.com",
             "--iib-krb-principal",
@@ -233,7 +232,6 @@ def test_iib_add_bundles_list_deprecation_list(
         ("pubtools-iib", "console_scripts", "pubtools-iib-add-bundles"),
         "pubtools-iib-add-bundles",
         [
-            "--skip-pulp",
             "--iib-server",
             "iib-server.com",
             "--iib-krb-principal",
@@ -276,7 +274,6 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
         ("pubtools-iib", "console_scripts", "pubtools-iib-remove-operators"),
         "pubtools-iib-remove-operators",
         [
-            "--skip-pulp",
             "--iib-server",
             "iib-server.com",
             "--iib-krb-principal",
