@@ -242,9 +242,7 @@ class OperatorPusher:
         Returns (([str]), {str:str}):
             Tuple of arguments and environment variables to be used when calling pubtools-iib.
         """
-        args = ["--skip-pulp"]
-
-        args += ["--iib-server", target_settings["iib_server"]]
+        args = ["--iib-server", target_settings["iib_server"]]
         args += ["--iib-krb-principal", target_settings["iib_krb_principal"]]
 
         if target_settings.get("iib_overwrite_from_index", False):
