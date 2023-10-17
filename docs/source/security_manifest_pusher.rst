@@ -1,5 +1,5 @@
 Security manifest pusher
-======================
+========================
 
 .. py:module:: pubtools._quay.security_manifest_pusher
 

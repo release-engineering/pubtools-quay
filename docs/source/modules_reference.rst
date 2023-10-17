@@ -19,6 +19,7 @@ API reference to modules used by pubtools-quay. Isolated usage outside of pubtoo
    quay_session
    signature_handler
    signature_remover
+   security_manifest_pusher
    tag_docker
    utilities
    exceptions

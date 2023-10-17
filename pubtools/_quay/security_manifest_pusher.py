@@ -232,20 +232,19 @@ class SecurityManifestPusher:
 
         Products are expected to be in format:
         "properties":[
-            {
-                "name": "product",
-                "value": "product-1",
-            },
-            {
-                "name": "product",
-                "value": "product-2",
-            },
+        {
+        "name": "product",
+        "value": "product-1"
+        },
+        {
+        "name": "product",
+        "value": "product-2"
+        }
         ]
 
         Args:
             security_manifest (dict):
                 Security manifest extracted from an attestation.
-
         Returns (set[str]):
             List of products.
         """

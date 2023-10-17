@@ -50,7 +50,7 @@ class QuaySession(object):
         Args:
             endpoint (str):
                 Endpoint of the request.
-            **kwargs:
+            kwargs:
                 Additional arguments to add to the requests method.
         Returns:
             requests.Response: A response object.
@@ -66,7 +66,7 @@ class QuaySession(object):
         Args:
             endpoint (str):
                 Endpoint of the request.
-            **kwargs:
+            kwargs:
                 Additional arguments to add to the requests method.
         Returns:
             requests.Response: A response object.
@@ -82,7 +82,7 @@ class QuaySession(object):
         Args:
             endpoint (str):
                 Endpoint of the request.
-            **kwargs:
+            kwargs:
                 Additional arguments to add to the requests method.
         Returns:
             requests.Response: A response object.
@@ -98,7 +98,7 @@ class QuaySession(object):
         Args:
             endpoint (str):
                 Endpoint of the request.
-            **kwargs:
+            kwargs:
                 Additional arguments to add to the requests method.
         Returns:
             requests.Response: A response object.
@@ -116,7 +116,7 @@ class QuaySession(object):
                 REST API method of the request (GET, POST, PUT, DELETE).
             endpoint (str):
                 Endpoint of the request.
-            **kwargs:
+            kwargs:
                 Additional arguments to add to the requests method.
         Returns:
             requests.Response: A response object.
