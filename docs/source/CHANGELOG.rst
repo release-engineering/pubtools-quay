@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.14.0 (2023-10-17)
+-------------------
+
+* Add --check-related-images option while calling iib-add-bundles
+* Remove --skip-pulp argument when calling pubtools-iib
+
 0.13.0 (2023-09-27)
 -------------------
 
