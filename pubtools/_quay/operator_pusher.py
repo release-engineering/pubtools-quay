@@ -613,11 +613,11 @@ class OperatorPusher:
             Dictionary containing IIB results and signing keys for all OPM versions. Data will be
             used in operator signing. Dictionary structure:
             {
-                <target_tag>: {
-                    "iib_result": (...) (object returned by iiblib)
-                    "signing_keys": [...] (list of signing keys to be used for signing)
-                    "destination_tags": [...] (list of destination tags)
-                }
+            <target_tag>: {
+            "iib_result": (...) (object returned by iiblib)
+            "signing_keys": [...] (list of signing keys to be used for signing)
+            "destination_tags": [...] (list of destination tags)
+            }
             }
         """
         iib_results = {}

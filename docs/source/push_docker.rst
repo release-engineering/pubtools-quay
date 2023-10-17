@@ -12,7 +12,6 @@ This is the main class for the Push Docker workflow, which is the primary workfl
    .. automethod:: verify_target_settings
    .. automethod:: get_docker_push_items
    .. automethod:: get_operator_push_items
-   .. automethod:: get_repo_metadata
    .. automethod:: check_repos_validity
    .. automethod:: generate_backup_mapping
    .. automethod:: _poll_tag_inconsistency

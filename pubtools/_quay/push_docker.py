@@ -282,9 +282,9 @@ class PushDocker:
 
         Specifically, create two resources: 'backup_tags' and 'rollback_tags'.
         - 'backup_tags' is a mapping of ImageData->manifest, and consists of images which will
-          be overwritten. During rollback, tag is made to re-reference the old manifest.
+        be overwritten. During rollback, tag is made to re-reference the old manifest.
         - 'rollback_tags' is a list of ImageData which don't yet exist. During rollback, they
-          will be removed to preserve pre-push state.
+        will be removed to preserve pre-push state.
 
         ImageData is a namedtuple used to assign and access parts of an image in a formatted way.
 
@@ -388,7 +388,6 @@ class PushDocker:
             timeout (int, optional):
                 How many seconds to poll before giving up and assuming that the image doesn't exist.
                 Defaults to 120.
-
         Returns (str, None):
             Image digest, or None if digest doesn't exist (or timeout is reached).
         """
