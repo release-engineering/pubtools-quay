@@ -8,6 +8,8 @@ import proton
 from proton.handlers import MessagingHandler
 from proton.reactor import Container
 
+from .utils.tracing import instrument_func
+
 LOG = logging.getLogger("pubtools.quay")
 
 # There are some linting errors since this was copied from rcm-pub
@@ -161,6 +163,7 @@ class ManifestClaimsHandler(MessagingHandler):
         self.ssl_domain.set_trusted_ca_db(settings.ca_cert)
         self.ssl_domain.set_peer_authentication(proton.SSLDomain.ANONYMOUS_PEER)
 
+    @instrument_func()
     def on_start(self, event):  # pragma: no cover
         LOG.debug("Message event loop starting, connecting to brokers...")
         conn = event.container.connect(
@@ -171,6 +174,7 @@ class ManifestClaimsHandler(MessagingHandler):
         # schedule a timer task, if the connection to UMB could be established, raise exception.
         LOG.debug("Message event loop started")
 
+    @instrument_func()
     def on_timer_task(self, event):
         """timer task has three functionalities:
         1. if it couldn't be connected to brokers, then after self.timeout, exception
@@ -228,6 +232,7 @@ class ManifestClaimsHandler(MessagingHandler):
         else:
             LOG.warning("Unexpected on_link_opened event")
 
+    @instrument_func()
     def on_message(self, event):
         """Once receive a message, check if it's expected by checking the awaiting_response,
         if it is, then append it to received and remove it from awaiting_response.
@@ -310,6 +315,7 @@ class ManifestClaimsHandler(MessagingHandler):
             if error_tag in self._PROTON_KNOWN_UNHANDLED_ERRORS:
                 self._endpoint_error(event, endpoint)
 
+    @instrument_func()
     def _send_message(self, count=None):
         if not self.to_send:  # pragma: no cover
             return

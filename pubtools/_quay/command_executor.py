@@ -15,6 +15,8 @@ import docker
 import paramiko
 from shlex import quote
 
+from .utils.tracing import instrument_func
+
 LOG = logging.getLogger("pubtools.quay")
 
 
@@ -160,6 +162,7 @@ class LocalExecutor(Executor):
         self.params.setdefault("stdout", subprocess.PIPE)
         self.params.setdefault("stdin", subprocess.PIPE)
 
+    @instrument_func()
     def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
         """
         Run a command locally.

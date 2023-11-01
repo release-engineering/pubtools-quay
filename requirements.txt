@@ -11,4 +11,6 @@ pubtools>=0.3.0
 iiblib
 pubtools-iib
 kerberos
-
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp
