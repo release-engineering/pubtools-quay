@@ -2,13 +2,20 @@ import logging
 
 from pubtools.pluggy import pm, task_context
 
-from .signature_remover import SignatureRemover
+from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
 from .utils.misc import (
     setup_arg_parser,
     add_args_env_variables,
     get_internal_container_repo_name,
 )
+from .item_processor import (
+    ItemProcesor,
+    ReferenceProcessorInternal,
+    ContentExtractor,
+    VirtualPushItem,
+)
+from .signer_wrapper import SIGNER_BY_LABEL
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -61,20 +68,22 @@ REMOVE_REPO_ARGS = {
         "default": 7,
         "type": int,
     },
+    ("--signers",): {
+        "help": "Comma separated list of signerrs",
+        "required": False,
+        "type": str,
+        "default": "",
+    },
+    ("--signer-configs",): {
+        "help": "Comma separated list of signerrs",
+        "required": False,
+        "type": str,
+        "default": "",
+    },
 }
 
 
-def remove_repositories(
-    repositories,
-    quay_org,
-    quay_api_token,
-    quay_user,
-    quay_password,
-    pyxis_server,
-    pyxis_ssl_crtfile,
-    pyxis_ssl_keyfile,
-    pyxis_request_threads,
-):
+def remove_repositories(repositories, settings):
     """
     Remove Quay repository.
 
@@ -101,21 +110,45 @@ def remove_repositories(
     parsed_repositories = repositories.split(",")
 
     LOG.info("Removing repositories '{0}'".format(repositories))
-    quay_api_client = QuayApiClient(quay_api_token)
+    quay_api_client = QuayApiClient(settings["quay_api_token"])
+    quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
 
-    sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
+    extractor = ContentExtractor(quay_client=quay_client)
+    reference_processor = ReferenceProcessorInternal(settings["quay_org"])
+    item_processor = ItemProcesor(
+        extractor=extractor,
+        reference_processor=reference_processor,
+        reference_registries=[],
+        source_registry="quay.io",
+    )
+    item = VirtualPushItem(
+        metadata={"tags": {repo: [] for repo in parsed_repositories}},
+        repos={repo: [] for repo in parsed_repositories},
+    )
+    existing_tags = item_processor.generate_existing_tags(item)
+    repo_tags_map = {}
+    for _, repo, tag in existing_tags:
+        repo_tags_map.setdefault(repo, []).append(tag)
+    item2 = VirtualPushItem(
+        metadata={"tags": {repo: repo_tags_map[repo]} for repo in parsed_repositories},
+        repos={repo: [] for repo in parsed_repositories},
+    )
+    existing_manifests = item_processor.generate_existing_manifests(item2)
+    signers = settings["signers"].split(",")
+    signer_configs = settings["signer_configs"].split(",")
+    outdated_manifests = []
+    for repo, tag, mad in existing_manifests:
+        outdated_manifests.append((mad.digest, tag, repo))
+
+    for n, signer in enumerate(signers):
+        signercls = SIGNER_BY_LABEL[signer]
+        signer = signercls(config_file=signer_configs[0], settings=settings)
+        signer.remove_signatures(outdated_manifests, _exclude=[])
 
     for repository in parsed_repositories:
-        sig_remover.remove_repository_signatures(
-            repository,
-            quay_org,
-            pyxis_server,
-            pyxis_ssl_crtfile,
-            pyxis_ssl_keyfile,
-            pyxis_request_threads,
+        internal_repo = "{0}/{1}".format(
+            settings["quay_org"], get_internal_container_repo_name(repository)
         )
-
-        internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
         quay_api_client.delete_repository(internal_repo)
 
     LOG.info("Repositories have been removed")
@@ -146,4 +179,5 @@ def remove_repositories_main(sysargs=None):
     kwargs = args.__dict__
 
     with task_context():
-        remove_repositories(**kwargs)
+        repositories = kwargs.pop("repositories")
+        remove_repositories(repositories, kwargs)

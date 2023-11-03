@@ -4,3 +4,9 @@ fail_under = 100
 exclude_lines =
     pragma: no cover
     if __name__ == .__main__.:
+
+[run]
+dynamic_context = test_function
+
+[html]
+show_contexts = True

@@ -13,11 +13,15 @@ from .exceptions import (
 from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
-from .signature_handler import SignatureHandler, BasicSignatureHandler
 from .manifest_list_merger import ManifestListMerger
 from .untag_images import untag_images
 from .push_docker import PushDocker
-from .signature_remover import SignatureRemover
+from .signer_wrapper import SIGNER_BY_LABEL
+from .item_processor import (
+    ItemProcesor,
+    ReferenceProcessorInternal,
+    ContentExtractor,
+)
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -60,8 +64,12 @@ class TagDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self.signature_remover = SignatureRemover()
-        self.signature_remover.set_quay_client(self.quay_client)
+        self.dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
+        self.dest_registries = (
+            self.dest_registries
+            if isinstance(self.dest_registries, list)
+            else [self.dest_registries]
+        )
 
         self.verify_target_settings()
         self.verify_input_data()
@@ -446,7 +454,7 @@ class TagDocker:
             ]
             return add_archs
 
-    def copy_tag_sign_images(self, push_item, tag, signature_handler, executor):
+    def copy_tag_sign_images(self, push_item, tag, executor):
         """
         Copy image from source to the destination tag and sign new manifest claims.
 
@@ -467,7 +475,8 @@ class TagDocker:
         external_image_schema = "{host}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
 
-        internal_repo = get_internal_container_repo_name(list(push_item.repos.keys())[0])
+        repo = list(push_item.repos.keys())[0]
+        internal_repo = get_internal_container_repo_name(repo)
         full_repo = full_repo_schema.format(
             host=self.quay_host, namespace=namespace, repo=internal_repo
         )
@@ -480,7 +489,8 @@ class TagDocker:
             )
         )
 
-        claim_messages = []
+        to_sign_map = {}
+        current_signatures = []
         details = self.get_image_details(source_image, executor)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
@@ -489,33 +499,54 @@ class TagDocker:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                 )
-                message = SignatureHandler.create_manifest_claim_message(
-                    destination_repo=list(push_item.repos.keys())[0],
-                    signature_key=push_item.claims_signing_key,
-                    manifest_digest=details.digest,
-                    docker_reference=reference,
-                    image_name=list(push_item.repos.keys())[0],
-                    task_id=self.task_id,
-                )
-                claim_messages.append(message)
+                to_sign_map.setdefault((reference, repo), {})
+                to_sign_map[(reference, repo)][details.digest] = push_item.claims_signing_key
+
+            cert, key = get_pyxis_ssl_paths(self.target_settings)
+
+            digest_extractor = ContentExtractor(
+                quay_client=self.quay_client,
+                sleep_time=self.target_settings.get("retry_sleep_time", 5),
+            )
+            reference_processor = ReferenceProcessorInternal(self.target_settings["quay_namespace"])
+            item_processor = ItemProcesor(
+                extractor=digest_extractor,
+                reference_processor=reference_processor,
+                reference_registries=self.dest_registries,
+                source_registry=self.target_settings["quay_host"].rstrip("/"),
+            )
+            outdated_manifests = []
+
+            existing_manifests = item_processor.generate_existing_manifests_map(push_item)
+            for reference, repo_tags in existing_manifests.items():
+                for repo, tag_mads in repo_tags.items():
+                    for tag, mads in tag_mads.items():
+                        if not mads:
+                            continue
+                        for mad in mads:
+                            outdated_manifests.append((mad.digest, tag, repo))
+
+            for signer in self.target_settings["signing"]:
+                if signer["enabled"]:
+                    signercls = SIGNER_BY_LABEL[signer["label"]]
+                    signer = signercls(
+                        config_file=signer["config_file"], settings=self.target_settings
+                    )
+                    signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+                    for repo_reference, digest_key in to_sign_map.items():
+                        reference, repo = repo_reference
+                        for digest, key in digest_key.items():
+                            signer.sign_container(
+                                reference, digest, key, repo=repo, task_id=self.task_id
+                            )
+                            LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
+
         elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
-        cert, key = get_pyxis_ssl_paths(self.target_settings)
-
-        self.signature_remover.remove_tag_signatures(
-            reference=dest_image,
-            pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_ssl_crtfile=cert,
-            pyxis_ssl_keyfile=key,
-            threads=self.target_settings.get("num_thread_pyxis", 7),
-            exclude_by_claims=claim_messages,
-        )
-
-        signature_handler.sign_claim_messages(claim_messages, True, True)
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
-    def merge_manifest_lists_sign_images(self, push_item, tag, add_archs, signature_handler):
+    def merge_manifest_lists_sign_images(self, push_item, tag, add_archs):
         """
         Merge manifest lists between source and destination tag and sign manifest claims.
 
@@ -546,43 +577,80 @@ class TagDocker:
         source_image = "{0}:{1}".format(full_repo, push_item.metadata["tag_source"])
         dest_image = "{0}:{1}".format(full_repo, tag)
 
-        claim_messages = []
-        registries = self.target_settings["docker_settings"]["docker_reference_registry"]
-
         # NOTE: Arch images don't need to be copied, since they already exist in the same repo
         merger = ManifestListMerger(source_image, dest_image)
         merger.set_quay_clients(self.quay_client, self.quay_client)
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
+        dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
+        to_sign_map = {}
+        current_signatures = []
         if push_item.claims_signing_key:
             for manifest in new_manifest_list["manifests"]:
-                for registry in registries:
+                for registry in dest_registries:
                     reference = external_image_schema.format(
                         host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                     )
-                    message = SignatureHandler.create_manifest_claim_message(
-                        destination_repo=list(push_item.repos.keys())[0],
-                        signature_key=push_item.claims_signing_key,
-                        manifest_digest=manifest["digest"],
-                        docker_reference=reference,
-                        image_name=list(push_item.repos.keys())[0],
-                        task_id=self.task_id,
+                    to_map_key = (reference, list(push_item.repos.keys())[0])
+                    to_sign_map.setdefault(to_map_key, {})
+                    to_sign_map[to_map_key][manifest["digest"]] = push_item.claims_signing_key
+                    current_signatures.append(
+                        (reference, manifest["digest"], push_item.claims_signing_key)
                     )
-                    claim_messages.append(message)
 
-        cert, key = get_pyxis_ssl_paths(self.target_settings)
+            outdated_manifests = []
+            if push_item.claims_signing_key:
+                extractor = ContentExtractor(
+                    quay_client=self.quay_client,
+                    sleep_time=self.target_settings.get("retry_sleep_time", 5),
+                )
+            to_sign_map = {}
+            current_signatures = []
+            if push_item.claims_signing_key:
+                for manifest in new_manifest_list["manifests"]:
+                    for registry in dest_registries:
+                        reference = external_image_schema.format(
+                            host=registry, repo=list(push_item.repos.keys())[0], tag=tag
+                        )
+                        to_map_key = (reference, list(push_item.repos.keys())[0])
+                        to_sign_map.setdefault(to_map_key, {})
+                        to_sign_map[to_map_key][manifest["digest"]] = push_item.claims_signing_key
+                        current_signatures.append(
+                            (reference, manifest["digest"], push_item.claims_signing_key)
+                        )
 
-        # claim messages ensure that signatures of non-modified archs won't get removed
-        self.signature_remover.remove_tag_signatures(
-            reference=dest_image,
-            pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_ssl_crtfile=cert,
-            pyxis_ssl_keyfile=key,
-            threads=self.target_settings.get("num_thread_pyxis", 7),
-            exclude_by_claims=claim_messages,
-        )
+                namespace = self.target_settings["quay_namespace"]
+                reference_processor = ReferenceProcessorInternal(quay_namespace=namespace)
+                item_processor = ItemProcesor(
+                    extractor=extractor,
+                    reference_processor=reference_processor,
+                    reference_registries=dest_registries,
+                    source_registry=self.target_settings["quay_host"].rstrip("/"),
+                )
+                existing_manifests = item_processor.generate_existing_manifests_map(push_item)
+                for reference, repo_tags in existing_manifests.items():
+                    for repo, tag_mads in repo_tags.items():
+                        for tag, mads in tag_mads.items():
+                            if not mads:
+                                continue
+                            for mad in mads:
+                                outdated_manifests.append((mad.digest, tag, repo))
 
-        signature_handler.sign_claim_messages(claim_messages, True, True)
+            for signer in self.target_settings["signing"]:
+                if signer["enabled"]:
+                    signercls = SIGNER_BY_LABEL[signer["label"]]
+                    signer = signercls(
+                        config_file=signer["config_file"], settings=self.target_settings
+                    )
+                    signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+                    for repo_reference, digest_key in to_sign_map.items():
+                        reference, repo = repo_reference
+                        for digest, key in digest_key.items():
+                            signer.sign_container(
+                                reference, digest, key, repo=repo, task_id=self.task_id
+                            )
+                            LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
+                            current_signatures.append((reference, digest, key))
 
         raw_src_manifest = self.quay_client.get_manifest(
             source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
@@ -635,6 +703,20 @@ class TagDocker:
         full_repo_schema = "{host}/{namespace}/{repo}"
         namespace = self.target_settings["quay_namespace"]
 
+        extractor = ContentExtractor(
+            quay_client=self.quay_client, sleep_time=self.target_settings.get("retry_sleep_time", 5)
+        )
+        reference_processor = ReferenceProcessorInternal(self.target_settings["quay_namespace"])
+        item_processor = ItemProcesor(
+            extractor=extractor,
+            reference_processor=reference_processor,
+            reference_registries=self.dest_registries,
+            source_registry=self.target_settings["quay_host"].rstrip("/"),
+        )
+        to_sign_entries = []
+        for to_sign_entry in item_processor.generate_to_unsign(push_item):
+            to_sign_entries.append((to_sign_entry["digest"], tag, to_sign_entry["repo"]))
+
         internal_repo = get_internal_container_repo_name(list(push_item.repos.keys())[0])
         full_repo = full_repo_schema.format(
             host=self.quay_host, namespace=namespace, repo=internal_repo
@@ -643,13 +725,11 @@ class TagDocker:
 
         cert, key = get_pyxis_ssl_paths(self.target_settings)
 
-        self.signature_remover.remove_tag_signatures(
-            reference=dest_image,
-            pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_ssl_crtfile=cert,
-            pyxis_ssl_keyfile=key,
-            threads=self.target_settings.get("num_thread_pyxis", 7),
-        )
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.remove_signatures(to_sign_entries, _exclude=[])
 
         self.run_untag_images([dest_image], True, self.target_settings)
 
@@ -677,25 +757,29 @@ class TagDocker:
         manifest_list = self.quay_client.get_manifest(
             dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
         )
-        keep_manifests = []
 
+        keep_manifests = []
+        remove_manifest_sigs = []
         for manifest in manifest_list["manifests"]:
             if manifest["platform"]["architecture"] not in remove_archs:
                 keep_manifests.append(deepcopy(manifest))
+            else:
+                remove_manifest_sigs.append(manifest)
 
         new_manifest_list = deepcopy(manifest_list)
         new_manifest_list["manifests"] = keep_manifests
 
-        cert, key = get_pyxis_ssl_paths(self.target_settings)
+        to_remove_sig_entries = []
+        for to_remove_man in remove_manifest_sigs:
+            to_remove_sig_entries.append(
+                (to_remove_man["digest"], tag, list(push_item.repos.keys())[0])
+            )
 
-        self.signature_remover.remove_tag_signatures(
-            reference=dest_image,
-            pyxis_server=self.target_settings["pyxis_server"],
-            pyxis_ssl_crtfile=cert,
-            pyxis_ssl_keyfile=key,
-            threads=self.target_settings.get("num_thread_pyxis", 7),
-            remove_archs=remove_archs,
-        )
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.remove_signatures(to_remove_sig_entries, _exclude=[])
 
         self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
@@ -722,9 +806,6 @@ class TagDocker:
         PushDocker.check_repos_validity(self.push_items, self.hub, self.target_settings)
         # perform tag-docker-specific checks
         self.check_input_validity()
-        signature_handler = BasicSignatureHandler(
-            self.hub, self.task_id, self.target_settings, self.target_name
-        )
 
         with LocalExecutor() as executor:
             executor.skopeo_login(
@@ -742,12 +823,10 @@ class TagDocker:
                         continue
                     # If None, we're dealing with a source image and we want to copy to destination
                     elif add_archs is None:
-                        self.copy_tag_sign_images(item, tag, signature_handler, executor)
+                        self.copy_tag_sign_images(item, tag, executor)
                     # Otherwise, merge relevant archs of source and dest
                     else:
-                        self.merge_manifest_lists_sign_images(
-                            item, tag, add_archs, signature_handler
-                        )
+                        self.merge_manifest_lists_sign_images(item, tag, add_archs)
 
                 for tag in item.metadata["remove_tags"]:
                     LOG.info("Processing remove tag '{0}'".format(tag))
