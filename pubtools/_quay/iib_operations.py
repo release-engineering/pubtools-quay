@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from .container_image_pusher import ContainerImagePusher
 from .exceptions import InvalidTargetSettings
@@ -101,6 +102,8 @@ def task_iib_add_bundles(
         target_settings=target_settings,
     )
 
+    if not build_details:
+        sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -223,6 +226,8 @@ def task_iib_remove_operators(
         target_settings=target_settings,
     )
 
+    if not build_details:
+        sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -345,6 +350,8 @@ def task_iib_build_from_scratch(
         target_settings=target_settings,
     )
 
+    if not build_details:
+        sys.exit(1)
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=target_settings.get("quay_operator_namespace", target_settings["quay_namespace"]),

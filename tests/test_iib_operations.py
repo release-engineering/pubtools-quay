@@ -704,3 +704,55 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         target_settings,
         "some-target",
     )
+
+
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
+def test_task_iib_add_bundles_fail(mock_iib_add_bundles, target_settings):
+    mock_iib_add_bundles.return_value = False
+    mock_hub = mock.MagicMock()
+    with pytest.raises(SystemExit):
+        iib_operations.task_iib_add_bundles(
+            ["bundle1", "bundle2"],
+            ["arch1", "arch2"],
+            "some-registry.com/redhat-namespace/new-index-image:5",
+            ["bundle3", "bundle4"],
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
+
+
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_remove_operators")
+def test_task_iib_remove_operators_fail(mock_iib_remove_operators, target_settings):
+    mock_iib_remove_operators.return_value = False
+    mock_hub = mock.MagicMock()
+    with pytest.raises(SystemExit):
+        iib_operations.task_iib_remove_operators(
+            ["operator1", "operator2"],
+            ["arch1", "arch2"],
+            "some-registry.com/redhat-namespace/new-index-image:5",
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
+
+
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
+def test_task_iib_build_from_scratch_fail(mock_iib_add_bundles, target_settings):
+    mock_iib_add_bundles.return_value = False
+    mock_hub = mock.MagicMock()
+    with pytest.raises(SystemExit):
+        iib_operations.task_iib_build_from_scratch(
+            ["bundle1", "bundle2"],
+            ["arch1", "arch2"],
+            "12",
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
