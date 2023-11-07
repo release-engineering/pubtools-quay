@@ -54,6 +54,15 @@ class ContentExtractor:
     def _extract_ml_manifest(
         self, image_ref: str, _manifest: str, mtype: str
     ) -> List[ManifestArchDigest]:
+        """Extract manifests from manifest list.
+
+        Args:
+            image_ref (str): Image reference in format <registry>/<repo>:<tag>
+            _manifest (str): Manifest list in JSON format.
+            mtype (str): NOT USED
+        Returns:
+            list: List of ManifestArchDigest objects.
+        """
         mads = []
         manifest = json.loads(_manifest)
         for arch_manifest in manifest["manifests"]:
@@ -73,6 +82,15 @@ class ContentExtractor:
         return mads
 
     def _extract_manifest(self, repo: str, manifest: str, mtype: str) -> ManifestArchDigest:
+        """Calculate information from given manifest.
+
+        Args:
+            repo (str): Repo reference in format <registry>/<repo>
+            manifest (str): Manifest
+            mtype (str): Media type of the manifest.
+        Returns:
+            ManifestArchDigest: ManifestArchDigest object.
+        """
         hasher = hashlib.sha256()
         hasher.update(manifest.encode("utf-8"))
         digest = f"sha256:{hasher.hexdigest()}"
@@ -232,7 +250,7 @@ class ReferenceProcessorInternal:
         if repo.count("/") > 1 or repo[0] == "/" or repo[-1] == "/":
             raise ValueError(
                 "Input repository containing a delimeter should "
-                "have the format '<namespace>/<product>'",
+                "have the format '<namespace>/<product>' or '<repository>'",
                 repo,
             )
         replaced = repo.replace("/", self.INTERNAL_DELIMITER)
@@ -251,21 +269,43 @@ class ItemProcesor:
     INTERNAL_DELIMITER = "----"
 
     def _generate_dest_repo(self, item: PushItem):
+        """Return list of (<dest-registry>, <dest-repository>) tuples for given push item.
+
+        Args:
+            item (PushItem): Push item.
+        Returns:
+            list: List of tuples containing registry and repository.
+        """
+        dest_registry_repos = []
         for registry in self.reference_registries:
             for repo in item.metadata["tags"].keys():
-                yield registry, repo
+                dest_registry_repos.append((registry, repo))
+        return dest_registry_repos
 
     def _generate_src_repo(self, item: PushItem):
-        for repo in item.repos.keys():
-            yield repo
+        """Return list of source repos for given push item.
+
+        Returns:
+            list: List of source repositories.
+        """
+        return item.repos.keys()
 
     def _generate_src_repo_tag(self, item: PushItem):
+        """Return list of tuples of (<source-repo>, <tag>).
+
+        Args:
+            item (PushItem): Push item.
+        Returns:
+            list: List of tuples containing source repository and tag.
+        """
+        src_repo_tag = []
         for repo, tags in item.metadata["tags"].items():
             for tag in tags:
-                yield (repo, tag)
+                src_repo_tag.append((repo, tag))
+        return src_repo_tag
 
     def generate_repo_dest_tags(self, item: PushItem):
-        """Generate list of destination repositories and tags.
+        """Return list of destination repositories and tags.
 
         Args:
             item (PushItem): Push item.
@@ -280,7 +320,7 @@ class ItemProcesor:
         return ret
 
     def generate_repo_untags(self, item: PushItem):
-        """Generate list of repositories and tags which are destined to be untag.
+        """Return list of repositories and tags which are destined to be untag.
 
         Args:
             item (PushItem): Push item.
@@ -294,7 +334,7 @@ class ItemProcesor:
         return ret
 
     def generate_repo_dest_tag_map(self, item: PushItem):
-        """Generate map of destination repositories and tags.
+        """Return map of destination repositories and tags.
 
         Args:
             item (PushItem): Push item.
@@ -363,15 +403,18 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing registry, repository and tag.
         """
+        existing_tag_entries = []
         for repo in self._generate_src_repo(item):
             ref_repo, reference = self.reference_processor(self.source_registry, repo, tag=None)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
             for tag in tags:
-                yield (self.source_registry, repo, tag)
+                existing_tag_entries.append((self.source_registry, repo, tag))
             if not tags:
-                yield (self.source_registry, repo, None)
+                existing_tag_entries.append((self.source_registry, repo, None))
+        return existing_tag_entries
 
     def _generate_existing_manifests(self, item: PushItem, only_media_types=None):
+        existing_manifests = []
         if not only_media_types:
             media_types = [
                 QuayClient.MANIFEST_LIST_TYPE,
@@ -384,10 +427,11 @@ class ItemProcesor:
             _, full_ref = self.reference_processor(self.source_registry, repo, tag=tag)
             man_arch_digs = self.extractor.extract_manifests(full_ref, media_types)
             for mad in man_arch_digs:
-                yield (repo, tag, mad)
+                existing_manifests.append((repo, tag, mad))
             if not man_arch_digs:
-                # If no manifest found, yield None
-                yield (repo, tag, None)
+                # If no manifest found, set tag to None
+                existing_manifests.append((repo, tag, None))
+        return existing_manifests
 
     def generate_existing_manifests_map(self, item: PushItem, only_media_types=None):
         """Genereate existing manifests map for given push item.
