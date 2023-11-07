@@ -1262,6 +1262,7 @@ def test_rollback_delete_tag_server_error(
     mock_delete_tag.assert_called_once_with("some-namespace/target----repo3", "3")
 
 
+@mock.patch("pubtools._quay.push_docker.set_aws_kms_environment_variables")
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.timestamp")
 @mock.patch("pubtools._quay.push_docker.PushDocker.rollback")
@@ -1289,6 +1290,7 @@ def test_push_docker_full_success(
     mock_rollback,
     mock_timestamp,
     mock_security_manifest_pusher,
+    mock_set_aws_kms_environment_variables,
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
@@ -1381,6 +1383,9 @@ def test_push_docker_full_success(
     assert mock_sign_container_images_new_digests.call_count == 1
     assert mock_sign_container_images_new_digests.call_args_list[0] == mock.call(
         [container_multiarch_push_item]
+    )
+    mock_set_aws_kms_environment_variables.assert_called_once_with(
+        target_settings, "security_manifest_signer"
     )
     mock_security_manifest_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings

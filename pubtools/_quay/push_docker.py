@@ -19,6 +19,7 @@ from .utils.misc import (
     get_pyxis_ssl_paths,
     timestamp,
     pyxis_get_repo_metadata,
+    set_aws_kms_environment_variables,
 )
 
 # TODO: do we want this, or should I remove it?
@@ -713,6 +714,7 @@ class PushDocker:
 
         if self.target_settings.get("push_security_manifests_enabled", False):
             # Generate and push security manifests (if enabled in target settings)
+            set_aws_kms_environment_variables(self.target_settings, "security_manifest_signer")
             sec_manifest_pusher = SecurityManifestPusher(docker_push_items, self.target_settings)
             sec_manifest_pusher.push_security_manifests()
 

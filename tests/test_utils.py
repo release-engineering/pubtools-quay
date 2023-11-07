@@ -229,3 +229,64 @@ def test_get_repo_metadata(
         ],
         {},
     )
+
+
+def test_set_aws_kms_environment_variables_missing_setting(target_settings, caplog):
+    caplog.set_level(logging.WARNING)
+    misc.set_aws_kms_environment_variables(target_settings, "test_profile")
+    expected_logs = [
+        "Target settings are missing the aws_kms_credentials property, "
+        "cannot set AWS KMS environment variables"
+    ]
+    compare_logs(caplog, expected_logs)
+
+
+def test_set_aws_kms_environment_variables_missing_profile(target_settings, caplog):
+    caplog.set_level(logging.WARNING)
+    target_settings["aws_kms_credentials"] = {
+        "other_profile": {
+            "aws_access_key_id": "id1",
+            "aws_secret_access_key": "key1",
+            "aws_default_region": "us-east-1",
+        }
+    }
+    misc.set_aws_kms_environment_variables(target_settings, "test_profile")
+    expected_logs = ["AWS KMS profile test_profile not found in the target settings"]
+    compare_logs(caplog, expected_logs)
+
+
+def test_set_aws_kms_environment_variables_missing_variables(target_settings, caplog):
+    caplog.set_level(logging.WARNING)
+    target_settings["aws_kms_credentials"] = {"test_profile": {}}
+    misc.set_aws_kms_environment_variables(target_settings, "test_profile")
+    expected_logs = [
+        "Cannot set AWS KMS environment variable AWS_ACCESS_KEY_ID, "
+        "value missing in profile test_profile",
+        "Cannot set AWS KMS environment variable AWS_SECRET_ACCESS_KEY, "
+        "value missing in profile test_profile",
+        "Cannot set AWS KMS environment variable AWS_DEFAULT_REGION, "
+        "value missing in profile test_profile",
+    ]
+    compare_logs(caplog, expected_logs)
+
+    assert "AWS_ACCESS_KEY_ID" not in os.environ
+    assert "AWS_SECRET_ACCESS_KEY" not in os.environ
+    assert "AWS_DEFAULT_REGION" not in os.environ
+
+
+def test_set_aws_kms_environment_variables(target_settings, caplog):
+    caplog.set_level(logging.WARNING)
+    target_settings["aws_kms_credentials"] = {
+        "test_profile": {
+            "aws_access_key_id": "id1",
+            "aws_secret_access_key": "key1",
+            "aws_default_region": "us-east-1",
+        }
+    }
+    misc.set_aws_kms_environment_variables(target_settings, "test_profile")
+    expected_logs = []
+    compare_logs(caplog, expected_logs)
+
+    assert os.environ["AWS_ACCESS_KEY_ID"] == "id1"
+    assert os.environ["AWS_SECRET_ACCESS_KEY"] == "key1"
+    assert os.environ["AWS_DEFAULT_REGION"] == "us-east-1"
