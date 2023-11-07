@@ -421,3 +421,74 @@ def pyxis_get_repo_metadata(repo, target_settings):
         env_vars,
     )
     return metadata
+
+
+def set_aws_kms_environment_variables(target_settings, profile_name):
+    """
+    Set environment variables required to use an AWS KMS key.
+
+    The values are set from target settings based on the selected profile. Multiple profiles are
+    supported as multiple keys may be used during a push. Following env variables are set:
+    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION. Missing data in target settings
+    will not result in an error. Target settings is expected to be in the following format:
+    {
+    "aws_kms_credentials": {
+        "profile-1": {
+            "aws_access_key_id": "id1",
+            "aws_secret_access_key": "key1",
+            "aws_default_region": "us-east-1"
+            },
+        "profile-2": {
+            "aws_access_key_id": "id2",
+            "aws_secret_access_key": "key2",
+            "aws_default_region": "us-east-2"
+            }
+        },
+    "other_target_setting":"data"
+    }
+
+    Args:
+        target_settings (dict):
+            Target settings.
+        profile_name (str):
+            Profile name whose credentials to apply.
+    """
+    if "aws_kms_credentials" not in target_settings:
+        LOG.warning(
+            "Target settings are missing the aws_kms_credentials property, "
+            "cannot set AWS KMS environment variables"
+        )
+        return
+    if profile_name not in target_settings["aws_kms_credentials"]:
+        LOG.warning(f"AWS KMS profile {profile_name} not found in the target settings")
+        return
+
+    if "aws_access_key_id" not in target_settings["aws_kms_credentials"][profile_name]:
+        LOG.warning(
+            "Cannot set AWS KMS environment variable AWS_ACCESS_KEY_ID, "
+            f"value missing in profile {profile_name}"
+        )
+    else:
+        os.environ["AWS_ACCESS_KEY_ID"] = target_settings["aws_kms_credentials"][profile_name][
+            "aws_access_key_id"
+        ]
+
+    if "aws_secret_access_key" not in target_settings["aws_kms_credentials"][profile_name]:
+        LOG.warning(
+            "Cannot set AWS KMS environment variable AWS_SECRET_ACCESS_KEY, "
+            f"value missing in profile {profile_name}"
+        )
+    else:
+        os.environ["AWS_SECRET_ACCESS_KEY"] = target_settings["aws_kms_credentials"][profile_name][
+            "aws_secret_access_key"
+        ]
+
+    if "aws_default_region" not in target_settings["aws_kms_credentials"][profile_name]:
+        LOG.warning(
+            "Cannot set AWS KMS environment variable AWS_DEFAULT_REGION, "
+            f"value missing in profile {profile_name}"
+        )
+    else:
+        os.environ["AWS_DEFAULT_REGION"] = target_settings["aws_kms_credentials"][profile_name][
+            "aws_default_region"
+        ]
