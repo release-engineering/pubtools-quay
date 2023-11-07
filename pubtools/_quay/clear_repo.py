@@ -69,13 +69,13 @@ CLEAR_REPO_ARGS = {
         "type": int,
     },
     ("--signers",): {
-        "help": "Comma separated list of signerrs",
+        "help": "Comma separated list of signers",
         "required": False,
         "type": str,
         "default": "",
     },
     ("--signer-configs",): {
-        "help": "Comma separated list of signerrs",
+        "help": "Comma separated list of paths to signer configs",
         "required": False,
         "type": str,
         "default": "",

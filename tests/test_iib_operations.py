@@ -83,8 +83,10 @@ def fake_quay_client_get_operator_quay_client(fake_quay_client):
 
 
 @pytest.fixture
-def msg_signer_wrapper_save_signatures():
-    with mock.patch("pubtools._quay.signer_wrapper.MsgSignerWrapper._save_signatures") as mocked:
+def msg_signer_wrapper_save_signatures_file():
+    with mock.patch(
+        "pubtools._quay.signer_wrapper.MsgSignerWrapper._save_signatures_file"
+    ) as mocked:
         mocked.return_value.__enter__.return_value.name = "signature_file"
         yield mocked
 
@@ -188,7 +190,7 @@ def test_task_iib_add_bundles(
     signer_wrapper_run_entry_point,
     signer_wrapper_store_signed,
     signer_wrapper_remove_signatures,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     target_settings,
     fake_cert_key_paths,
     v2s1_manifest,
@@ -313,7 +315,7 @@ def test_task_iib_add_bundles_operator_ns(
     mock_timestamp,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     signer_wrapper_remove_signatures,
     fake_quay_client_get_operator_quay_client,
     target_settings,
@@ -416,7 +418,7 @@ def test_task_iib_add_bundles_operator_ns(
             ),
         ]
     )
-    msg_signer_wrapper_save_signatures.assert_any_call(
+    msg_signer_wrapper_save_signatures_file.assert_any_call(
         [
             {
                 "manifest_digest": "sha256:bd6eba96070efe86b64b9"
@@ -459,7 +461,7 @@ def test_task_iib_remove_operators(
     mock_timestamp,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     signer_wrapper_remove_signatures,
     fake_quay_client_get_operator_quay_client,
     target_settings,
@@ -537,7 +539,7 @@ def test_task_iib_remove_operators_operator_ns(
     mock_timestamp,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     signer_wrapper_remove_signatures,
     fake_quay_client_get_operator_quay_client,
     target_settings,
@@ -610,7 +612,7 @@ def test_task_iib_build_from_scratch(
     mock_timestamp,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     fake_quay_client_get_operator_quay_client,
     target_settings,
     fake_cert_key_paths,
@@ -707,7 +709,7 @@ def test_task_iib_build_from_scratch(
             ),
         ]
     )
-    msg_signer_wrapper_save_signatures.assert_any_call(
+    msg_signer_wrapper_save_signatures_file.assert_any_call(
         [
             {
                 "manifest_digest": "sha256:bd6eba96070efe"
@@ -749,7 +751,7 @@ def test_task_iib_build_from_scratch_operator_ns(
     mock_get_index_image_signatures,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    msg_signer_wrapper_save_signatures,
+    msg_signer_wrapper_save_signatures_file,
     fake_quay_client_get_operator_quay_client,
     target_settings,
     fake_cert_key_paths,
@@ -848,7 +850,7 @@ def test_task_iib_build_from_scratch_operator_ns(
             ),
         ]
     )
-    msg_signer_wrapper_save_signatures.assert_any_call(
+    msg_signer_wrapper_save_signatures_file.assert_any_call(
         [
             {
                 "manifest_digest": "sha256:bd6eba96070efe86b6"

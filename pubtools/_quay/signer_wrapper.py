@@ -1,8 +1,11 @@
+import abc
 from contextlib import contextmanager
 import logging
 import pkg_resources
 import tempfile
 import json
+
+from typing import Optional, List, Dict, Any, Tuple
 
 from marshmallow import Schema, fields, EXCLUDE
 
@@ -29,7 +32,7 @@ class SignerWrapper:
     SCHEMA = NoSchema
     entry_point_conf = ["signer", "group", "signer"]
 
-    def __init__(self, config_file=None, settings=None):
+    def __init__(self, config_file: Optional[str] = None, settings: Dict[str, Any] = None):
         """Initialize SignerWrapper."""
         self.config_file = config_file
         self.settings = settings
@@ -43,27 +46,55 @@ class SignerWrapper:
             self._ep = pkg_resources.load_entry_point(*self.entry_point_conf)
         return self._ep
 
-    def remove_signatures(self, signatures, _exclude=None):
+    def remove_signatures(self, signatures: List[str], _exclude: bool = None):
         """Remove signatures from a sigstore."""
         LOG.debug("Removing signatures %s", signatures)
         self._remove_signatures(signatures)
 
-    def _run_remove_signatures(self, signatures_to_remove):
+    @abc.abstractmethod
+    def _run_remove_signatures(self, signatures_to_remove: List[str]):
         pass  # pragma: no cover
 
-    def _remove_signatures(self, signatures_to_remove):
-        print("SIGNATURES TO REMOVE", signatures_to_remove)
+    def _remove_signatures(self, signatures_to_remove: List[str]):
+        """Remove signatures from sigstore.
+
+        This is helper to make testing easier.
+        Args:
+            signatures_to_remove (list): Signatures to remove.
+        """
         self._run_remove_signatures(signatures_to_remove)
 
-    def _run_store_signed(self, signatures):
+    @abc.abstractmethod
+    def _run_store_signed(self, signatures: List[Dict[str, Any]]):
         pass  # pragma: no cover
 
-    def _store_signed(self, signatures):
+    def _store_signed(self, signatures: List[Dict[str, Any]]):
+        """Store signatures in sigstore.
+
+        This is helper to make testing easier.
+        Args:
+            signatures (list): Signatures to store.
+        """
         LOG.debug("Storing signatures %s", signatures)
         self._run_store_signed(signatures)
 
-    def sign_container(self, reference, digest, signing_key, repo=None, task_id=None):
-        """Sign a specific reference and digest with given signing key."""
+    def sign_container(
+        self,
+        reference: str,
+        digest: str,
+        signing_key: str,
+        repo: Optional[str] = None,
+        task_id: Optional[str] = None,
+    ):
+        """Sign a specific reference and digest with given signing key.
+
+        Args:
+            reference (str): Reference to container image to sign.
+            digest (str): Digest of container image to sign.
+            signing_key (str): Signing key to use.
+            repo (str): Repository name of container image to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+        """
         LOG.debug("Signing container %s %s %s", reference, digest, signing_key)
         opt_args = {k: v for k, v in [("task_id", task_id), ("repo", repo)] if v is not None}
         signed = self.entry_point(
@@ -77,7 +108,7 @@ class SignerWrapper:
             raise SigningError(signed["signer_result"]["error_message"])
         self._store_signed(signed)
 
-    def validate_settings(self, settings=None):
+    def validate_settings(self, settings: Dict[str, Any] = None):
         """Validate provided settings for the SignerWrapper."""
         settings = settings or self.settings
         if settings is None:
@@ -105,7 +136,8 @@ class MsgSignerWrapper(SignerWrapper):
     SCHEMA = MsgSignerSettingsSchema
 
     @contextmanager
-    def _save_signatures(self, signatures):
+    def _save_signatures_file(self, signatures: List[Dict[str, Any]]):
+        """Save signatures to a temporary file and yield the file."""
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="pubtools_quay_upload_signatures_"
         ) as signature_file:
@@ -113,7 +145,14 @@ class MsgSignerWrapper(SignerWrapper):
             signature_file.flush()
             yield signature_file
 
-    def _fetch_signatures(self, manifest_digests):
+    def _fetch_signatures(self, manifest_digests: List[str]):
+        """Fetch signatures from sigstore.
+
+        Args:
+            manifest_digests (list): Manifest digests to fetch signatures for.
+        Returns:
+            List[Dict[str, Any]]: List of fetched signatures.
+        """
         cert, key = get_pyxis_ssl_paths(self.settings)
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
         manifest_digests = sorted(list(set(manifest_digests)))
@@ -149,7 +188,7 @@ class MsgSignerWrapper(SignerWrapper):
             for result in chunk_results:
                 yield result
 
-    def _run_store_signed(self, signed_results):
+    def _run_store_signed(self, signed_results: List[Dict[str, Any]]):
         """
         Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
 
@@ -170,7 +209,7 @@ class MsgSignerWrapper(SignerWrapper):
         """
         LOG.info("Sending new signatures to Pyxis")
 
-        signatures = []
+        signatures: List[Dict[str, Any]] = []
         for reference, op_res in zip(
             signed_results["operation"]["references"], signed_results["operation_results"]
         ):
@@ -199,7 +238,7 @@ class MsgSignerWrapper(SignerWrapper):
         args += ["--pyxis-ssl-keyfile", key]
         args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
 
-        with self._save_signatures(signatures) as signature_file:
+        with self._save_signatures_file(signatures) as signature_file:
             args += ["--signatures", "@{0}".format(signature_file.name)]
             LOG.info("Uploading {0} new signatures".format(len(signatures)))
             env_vars = {}
@@ -210,7 +249,12 @@ class MsgSignerWrapper(SignerWrapper):
                 env_vars,
             )
 
-    def _run_remove_signatures(self, signatures_to_remove):
+    def _run_remove_signatures(self, signatures_to_remove: List[str]):
+        """Remove signatures from the sigstore.
+
+        Args:
+            signatures_to_remove (List[str]): List of signatures to remove.
+        """
         cert, key = get_pyxis_ssl_paths(self.settings)
         args = []
         args = ["--pyxis-server", self.settings["pyxis_server"]]
@@ -232,7 +276,19 @@ class MsgSignerWrapper(SignerWrapper):
                 env_vars,
             )
 
-    def _filter_to_remove(self, signatures, _exclude=None):
+    def _filter_to_remove(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> List[str]:
+        """Filter signatures to remove.
+
+        Args:
+            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)
+            tuples of signautres to remove.
+            _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
+        """
         exclude = _exclude or []
         signatures_to_remove = list(self._fetch_signatures([x[0] for x in signatures]))
         sig_ids_to_remove = []
@@ -255,12 +311,18 @@ class MsgSignerWrapper(SignerWrapper):
                 )
         return sig_ids_to_remove
 
-    def remove_signatures(self, signatures, _exclude=None):
+    def remove_signatures(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ):
         """Remove signatures from sigstore.
 
         Args:
             signatures (list): List of tuples containing (digest, reference, repository) of
             signatures to remove.
+            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
         """
         _signatures = list(signatures)
         to_remove = self._filter_to_remove(_signatures, _exclude=_exclude)

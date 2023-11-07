@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import hashlib
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, TypeAlias
 import requests
 import time
 import json
@@ -17,11 +17,14 @@ class VirtualPushItem:
     repos: Dict[str, Any]
 
 
+PushItem: TypeAlias = VirtualPushItem
+
+
 @dataclass
 class ManifestArchDigest:
     """Data structure to hold information about container manifest."""
 
-    manifest: Dict[str, Any]
+    manifest: str
     digest: str
     arch: str
     type_: str
@@ -29,7 +32,14 @@ class ManifestArchDigest:
 
 @dataclass
 class ContentExtractor:
-    """Class is used to extract specific content from container registry based on provided input."""
+    """Class is used to extract specific content from container registry based on provided input.
+
+    Args:
+        quay_client (QuayClient): Quay client used to communicate with container registry.
+        sleep_time (int): Time to sleep between retries.
+        timeout (int): Timeout for HTTP requests.
+        poll_rate (int): Poll rate for HTTP requests.
+    """
 
     _MEDIA_TYPES_PRIORITY = {
         QuayClient.MANIFEST_LIST_TYPE: 30,
@@ -41,8 +51,10 @@ class ContentExtractor:
     timeout: int = 60
     poll_rate: int = 5
 
-    def _extract_ml_manifest(self, image_ref, _manifest, mtype):
-        digests = []
+    def _extract_ml_manifest(
+        self, image_ref: str, _manifest: str, mtype: str
+    ) -> List[ManifestArchDigest]:
+        mads = []
         manifest = json.loads(_manifest)
         for arch_manifest in manifest["manifests"]:
             manifest = self.quay_client.get_manifest(
@@ -50,7 +62,7 @@ class ContentExtractor:
                 media_type=QuayClient.MANIFEST_V2S2_TYPE,
                 raw=True,
             )
-            digests.append(
+            mads.append(
                 ManifestArchDigest(
                     manifest=manifest,
                     digest=arch_manifest["digest"],
@@ -58,12 +70,12 @@ class ContentExtractor:
                     type_=QuayClient.MANIFEST_V2S2_TYPE,
                 )
             )
-        return digests
+        return mads
 
-    def _extract_manifest(self, repo, manifest, mtype):
+    def _extract_manifest(self, repo: str, manifest: str, mtype: str) -> ManifestArchDigest:
         hasher = hashlib.sha256()
         hasher.update(manifest.encode("utf-8"))
-        digest = hasher.hexdigest()
+        digest = f"sha256:{hasher.hexdigest()}"
         return ManifestArchDigest(manifest=manifest, digest=digest, arch="amd64", type_=mtype)
 
     _MEDIA_TYPES_PROCESS = {
@@ -72,13 +84,16 @@ class ContentExtractor:
         QuayClient.MANIFEST_V2S1_TYPE: _extract_manifest,
     }
 
-    def extract_manifests(self, image_ref, media_types, tolerate_missing=True):
+    def extract_manifests(
+        self, image_ref: str, media_types: Optional[List[str]], tolerate_missing: bool = True
+    ):
         """Extract manifests from container registry.
 
         Method fetches manifests for all provided media types. If HTTPErrors is raised when
         fetching for manifest and status code is 404 or 401, it's retried as there can be delay
         in registry if manifest was just pushed to it.
         When manifest is not found for given media type, it's not included in the result.
+        media_types can be also empty and it that case all container media types are used
 
         Args:
             image_ref (str): Image reference in format <registry>/<repo>:<tag>
@@ -119,25 +134,22 @@ class ContentExtractor:
                     results.append(ret)
         return results
 
-    def extract_tags(self, image_ref, tolerate_missing=True):
+    def extract_tags(self, repo_ref: str, tolerate_missing: bool = True):
         """Fetch list of tags for given image reference.
 
         Args:
-            image_ref (str): Image reference in format <registry>/<repo>:<tag>
-            tolerate_missing (bool): If True, missing manifests are tolerated and empty list
+            repo_ref (str): Repo reference in format <registry>/<repo>
+            tolerate_missing (bool): If True, missing repo is tolerated and empty list
             is returned.
         Returns:
             list: List of tags.
         """
         try:
-            repo_tags = self.quay_client.get_repository_tags(image_ref)
+            repo_tags = self.quay_client.get_repository_tags(repo_ref)
         except requests.exceptions.HTTPError as e:
             # When robot account is used, 401 is returned instead of 404
-            if tolerate_missing:
-                if e.response.status_code == 404 or e.response.status_code == 401:
-                    repo_tags = {"tags": []}
-                else:
-                    raise
+            if tolerate_missing and e.response.status_code == 404 or e.response.status_code == 401:
+                repo_tags = {"tags": []}
             else:
                 raise
         return repo_tags["tags"]
@@ -145,17 +157,18 @@ class ContentExtractor:
 
 @dataclass
 class ReferenceProcessorNOP:
-    """Class is used to produce full image reference from input."""
+    """Class is used to produce full image reference or repo reference from input."""
 
-    def __call__(self, registry, repo, tag):
+    def __call__(self, registry: str, repo: str, tag: Optional[str] = None):
         """Produce full image reference from input.
 
         Args:
             registry (str): Registry where image is located.
             repo (str): Repository name.
-            tag (str): Tag name.
+            tag (Optional[str]): Tag name, if not set only repo reference is returned
         Returns:
-            tuple: Tuple containing repository name and full image reference.
+            tuple: Tuple containing repository name and full image reference if tag is set repo
+            reference otherwise.
         """
         if tag:
             return (repo, f"{registry}/{repo}:{tag}")
@@ -170,12 +183,13 @@ class ReferenceProcessorInternal:
     INTERNAL_DELIMITER = "----"
     quay_namespace: str
 
-    def __call__(self, registry, repo, tag=None):
+    def __call__(self, registry: str, repo: str, tag: Optional[str] = None):
         """Produce full internal image reference from input.
 
         Args:
             registry (str): Registry where image is located.
             repo (str): Repository name.
+            tag (Optional[str]): Tag name.
         Returns:
             tuple: Tuple containing repository name and full image reference.
         """
@@ -190,7 +204,7 @@ class ReferenceProcessorInternal:
         if repo.count("/") > 1 or repo[0] == "/" or repo[-1] == "/":
             raise ValueError(
                 "Input repository containing a delimeter should "
-                "have the format '<namespace>/<product>'",
+                "have the format '<namespace>/<product>' or '<repository>'",
                 repo,
             )
         replaced = repo.replace("/", self.INTERNAL_DELIMITER)
@@ -205,7 +219,7 @@ class ReferenceProcessorInternal:
                 f"{registry}/{self.quay_namespace}/{replaced}",
             )
 
-    def replace_repo(self, repo):
+    def replace_repo(self, repo: str):
         """Convert repo to internal format.
 
         Args:
@@ -236,21 +250,21 @@ class ItemProcesor:
 
     INTERNAL_DELIMITER = "----"
 
-    def _generate_dest_repo(self, item):
+    def _generate_dest_repo(self, item: PushItem):
         for registry in self.reference_registries:
-            for repo, _ in item.metadata["tags"].items():
+            for repo in item.metadata["tags"].keys():
                 yield registry, repo
 
-    def _generate_src_repo(self, item):
-        for repo, _ in item.repos.items():
+    def _generate_src_repo(self, item: PushItem):
+        for repo in item.repos.keys():
             yield repo
 
-    def _generate_src_repo_tag(self, item):
+    def _generate_src_repo_tag(self, item: PushItem):
         for repo, tags in item.metadata["tags"].items():
             for tag in tags:
                 yield (repo, tag)
 
-    def generate_repo_dest_tags(self, item):
+    def generate_repo_dest_tags(self, item: PushItem):
         """Generate list of destination repositories and tags.
 
         Args:
@@ -265,7 +279,7 @@ class ItemProcesor:
                     ret.append((registry, repo, tag))
         return ret
 
-    def generate_repo_untags(self, item):
+    def generate_repo_untags(self, item: PushItem):
         """Generate list of repositories and tags which are destined to be untag.
 
         Args:
@@ -279,7 +293,7 @@ class ItemProcesor:
                 ret.append((repo, tag))
         return ret
 
-    def generate_repo_dest_tag_map(self, item):
+    def generate_repo_dest_tag_map(self, item: PushItem):
         """Generate map of destination repositories and tags.
 
         Args:
@@ -294,7 +308,7 @@ class ItemProcesor:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item):
+    def generate_to_sign(self, item: PushItem):
         """Generate list of images to sign.
 
         Args:
@@ -308,7 +322,7 @@ class ItemProcesor:
         )
 
         for registry, repo, tag in self.generate_repo_dest_tags(item):
-            ref_repo, reference = self.reference_processor(registry, repo, tag)
+            _, reference = self.reference_processor(registry, repo, tag)
             man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
             for mad in man_arch_digs:
                 to_sign.append(
@@ -316,7 +330,7 @@ class ItemProcesor:
                 )
         return to_sign
 
-    def generate_to_unsign(self, item):
+    def generate_to_unsign(self, item: PushItem):
         """Generate list of images to unsign.
 
         Args:
@@ -324,7 +338,7 @@ class ItemProcesor:
         Returns:
             list: List of dictionaries containing reference, digest, repository and architecture.
         """
-        to_sign = []
+        to_unsign = []
         media_types = (
             item.metadata.get("build", {}).get("extra", {}).get("image", {}).get("media_types", [])
         )
@@ -335,12 +349,12 @@ class ItemProcesor:
                 f"{self.source_registry}/{ref_repo}:{tag}", media_types
             )
             for mad in man_arch_digs:
-                to_sign.append(
+                to_unsign.append(
                     {"reference": reference, "digest": mad.digest, "repo": repo, "arch": mad.arch}
                 )
-        return to_sign
+        return to_unsign
 
-    def generate_existing_tags(self, item, tolerate_missing=True):
+    def generate_existing_tags(self, item: PushItem, tolerate_missing: bool = True):
         """Generate list of existing tags for given push item.
 
         Args:
@@ -349,7 +363,6 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing registry, repository and tag.
         """
-        to_sign = []
         for repo in self._generate_src_repo(item):
             ref_repo, reference = self.reference_processor(self.source_registry, repo, tag=None)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
@@ -357,9 +370,8 @@ class ItemProcesor:
                 yield (self.source_registry, repo, tag)
             if not tags:
                 yield (self.source_registry, repo, None)
-        return to_sign
 
-    def _generate_existing_manifests(self, item, only_media_types=None):
+    def _generate_existing_manifests(self, item: PushItem, only_media_types=None):
         if not only_media_types:
             media_types = [
                 QuayClient.MANIFEST_LIST_TYPE,
@@ -369,14 +381,15 @@ class ItemProcesor:
         else:
             media_types = only_media_types
         for repo, tag in self._generate_src_repo_tag(item):
-            ref_repo, full_ref = self.reference_processor(self.source_registry, repo, tag=tag)
+            _, full_ref = self.reference_processor(self.source_registry, repo, tag=tag)
             man_arch_digs = self.extractor.extract_manifests(full_ref, media_types)
             for mad in man_arch_digs:
                 yield (repo, tag, mad)
             if not man_arch_digs:
+                # If no manifest found, yield None
                 yield (repo, tag, None)
 
-    def generate_existing_manifests_map(self, item, only_media_types=None):
+    def generate_existing_manifests_map(self, item: PushItem, only_media_types=None):
         """Genereate existing manifests map for given push item.
 
         Args:
@@ -399,7 +412,7 @@ class ItemProcesor:
                 ).setdefault(tag, mad)
         return mapping_existing
 
-    def generate_existing_manifests(self, item, only_media_types=None):
+    def generate_existing_manifests(self, item: PushItem, only_media_types=None):
         """Generate list of existing manifests for given push item.
 
         Args:
