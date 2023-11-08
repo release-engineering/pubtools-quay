@@ -1638,45 +1638,17 @@ def test_copy_all_archs_sign_images_source(
     mock_get_image_details.assert_called_once_with(
         "quay.io/some-namespace/namespace----test_repo:v1.5", mock_local_executor.return_value
     )
-
-    # assert mock_create_claim_message.call_count == 2
-    # assert mock_create_claim_message.call_args_list[0] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-    #     docker_reference="some-registry1.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # assert mock_create_claim_message.call_args_list[1] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:8a3a33cad0bd33650ba7287a7ec94327d8e47ddf7845c569c80b5c4b20d49d36",
-    #     docker_reference="some-registry2.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # mock_sign_claim_messages.assert_called_once_with(["msg0", "msg1"], True, True)
     mock_run_tag_images.assert_called_once_with(
         "quay.io/some-namespace/namespace----test_repo:v1.5",
         ["quay.io/some-namespace/namespace----test_repo:v1.6"],
         True,
         target_settings,
     )
-    # mock_remove_tag_signatures.assert_called_once_with(
-    #     reference="quay.io/some-namespace/namespace----test_repo:v1.6",
-    #     pyxis_server="pyxis-url.com",
-    #     pyxis_ssl_crtfile="/path/to/file.crt",
-    #     pyxis_ssl_keyfile="/path/to/file.key",
-    #     threads=7,
-    #     exclude_by_claims=["msg0", "msg1"],
-    # )
 
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
-# @mock.patch("pubtools._quay.tag_docker.SignatureHandler.create_manifest_claim_message")
 @mock.patch("pubtools._quay.tag_docker.ContainerImagePusher.run_tag_images")
 def test_tag_sign_images_multiarch_error(
     mock_run_tag_images,
@@ -1801,59 +1773,6 @@ def test_merge_manifest_lists_sign_images(
         "quay.io/some-namespace/namespace----test_repo:v1.6",
     )
     mock_merge_manifest_lists.assert_called_once_with(["arm64", "amd64"])
-    # mock_get_manifest.assert_called_once_with(
-    #     "quay.io/some-namespace/namespace----test_repo:v1.5",
-    #     media_type=mock_quay_client.MANIFEST_LIST_TYPE,
-    #     raw=True,
-    # )
-
-    # assert mock_create_claim_message.call_count == 4
-    # assert mock_create_claim_message.call_args_list[0] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
-    #     docker_reference="some-registry1.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # assert mock_create_claim_message.call_args_list[1] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
-    #     docker_reference="some-registry2.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # assert mock_create_claim_message.call_args_list[2] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
-    #     docker_reference="some-registry1.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # assert mock_create_claim_message.call_args_list[3] == mock.call(
-    #     destination_repo="namespace/test_repo",
-    #     signature_key="some-key",
-    #     manifest_digest="sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
-    #     docker_reference="some-registry2.com/namespace/test_repo:v1.6",
-    #     image_name="namespace/test_repo",
-    #     task_id="1",
-    # )
-    # mock_sign_claim_messages.assert_called_once_with(["msg0", "msg1", "msg2", "msg3"], True, True)
-
-    # mock_upload_manifest.assert_called_once_with(
-    #    new_manifest_list, "quay.io/some-namespace/namespace----test_repo:v1.6"
-    # )
-
-    # mock_remove_tag_signatures.assert_called_once_with(
-    #     reference="quay.io/some-namespace/namespace----test_repo:v1.6",
-    #     pyxis_server="pyxis-url.com",
-    #     pyxis_ssl_crtfile="/path/to/file.crt",
-    #     pyxis_ssl_keyfile="/path/to/file.key",
-    #     threads=7,
-    #     exclude_by_claims=["msg0", "msg1", "msg2", "msg3"],
-    # )
 
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
@@ -2008,15 +1927,11 @@ def test_run_untag_images_dont_remove_last(mock_untag_images, target_settings):
     )
 
 
-# @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
-# @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.run_untag_images")
 def test_untag_image(
     mock_run_untag_images,
-    # mock_quay_client,
     mock_local_executor,
-    # mock_signature_remover,
     target_settings,
     tag_docker_push_item_remove_src,
     fake_cert_key_paths,
@@ -2026,8 +1941,6 @@ def test_untag_image(
     signer_wrapper_run_entry_point,
 ):
     hub = mock.MagicMock()
-    # mock_remove_tag_signatures = mock.MagicMock()
-    # mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_remove_src],
         hub,
@@ -2053,23 +1966,13 @@ def test_untag_image(
     mock_run_untag_images.assert_called_once_with(
         ["quay.io/some-namespace/namespace----test_repo2:v1.8"], True, target_settings
     )
-    # mock_remove_tag_signatures.assert_called_once_with(
-    #     reference="quay.io/some-namespace/namespace----test_repo2:v1.8",
-    #     pyxis_server="pyxis-url.com",
-    #     pyxis_ssl_crtfile="/path/to/file.crt",
-    #     pyxis_ssl_keyfile="/path/to/file.key",
-    #     threads=7,
-    # )
-    # assert False
 
 
-# @mock.patch("pubtools._quay.tag_docker.SignatureRemover")
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 def test_manifest_list_remove_archs(
     mock_quay_client,
     mock_local_executor,
-    # mock_signature_remover,
     target_settings,
     tag_docker_push_item_remove_src,
     manifest_list_data,
@@ -2084,8 +1987,6 @@ def test_manifest_list_remove_archs(
     mock_quay_client.return_value.get_manifest = mock_get_manifest
     mock_upload_manifest = mock.MagicMock()
     mock_quay_client.return_value.upload_manifest = mock_upload_manifest
-    mock_remove_tag_signatures = mock.MagicMock()
-    # mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_remove_src],
         hub,
@@ -2128,19 +2029,9 @@ def test_manifest_list_remove_archs(
         expected_manifest_list, "quay.io/some-namespace/namespace----test_repo2:v1.8"
     )
 
-    # mock_remove_tag_signatures.assert_called_once_with(
-    #     reference="quay.io/some-namespace/namespace----test_repo2:v1.8",
-    #     pyxis_server="pyxis-url.com",
-    #     pyxis_ssl_crtfile="/path/to/file.crt",
-    #     pyxis_ssl_keyfile="/path/to/file.key",
-    #     threads=7,
-    #     remove_archs=["amd64", "arm64", "arm"],
-    # )
-
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
-# @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images")
@@ -2158,7 +2049,6 @@ def test_run_add_noop(
     mock_merge_manifest_lists_sign_images,
     mock_copy_tag_sign_images,
     mock_check_repos_validity,
-    # mock_basic_signature_handler,
     mock_quay_client,
     mock_local_executor,
     target_settings,
@@ -2181,7 +2071,6 @@ def test_run_add_noop(
         [tag_docker_push_item_add], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
-    # mock_basic_signature_handler.assert_called_once_with(hub, "1", target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
         tag_docker_push_item_add, "v1.6", mock_local_executor.return_value.__enter__()
@@ -2198,7 +2087,6 @@ def test_run_add_noop(
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
-# @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images")
@@ -2251,13 +2139,11 @@ def test_run_add_tag_images(
     assert mock_copy_tag_sign_images.call_args_list[0] == mock.call(
         tag_docker_push_item_add,
         "v1.6",
-        # mock_basic_signature_handler.return_value,
         mock_local_executor.return_value.__enter__(),
     )
     assert mock_copy_tag_sign_images.call_args_list[1] == mock.call(
         tag_docker_push_item_add,
         "v1.7",
-        # mock_basic_signature_handler.return_value,
         mock_local_executor.return_value.__enter__(),
     )
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -2268,7 +2154,6 @@ def test_run_add_tag_images(
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
-# @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images")
@@ -2286,7 +2171,6 @@ def test_run_add_merge_manifest_lists(
     mock_merge_manifest_lists_sign_images,
     mock_copy_tag_sign_images,
     mock_check_repos_validity,
-    # mock_basic_signature_handler,
     mock_quay_client,
     mock_local_executor,
     target_settings,
@@ -2309,7 +2193,6 @@ def test_run_add_merge_manifest_lists(
         [tag_docker_push_item_add], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
-    # mock_basic_signature_handler.assert_called_once_with(hub, "1", target_settings, "some-target")
     assert mock_tag_add_calculate_archs.call_count == 2
     assert mock_tag_add_calculate_archs.call_args_list[0] == mock.call(
         tag_docker_push_item_add, "v1.6", mock_local_executor.return_value.__enter__()
@@ -2336,7 +2219,6 @@ def test_run_add_merge_manifest_lists(
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
-# @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images")
@@ -2354,7 +2236,6 @@ def test_run_remove_noop(
     mock_merge_manifest_lists_sign_images,
     mock_copy_tag_sign_images,
     mock_check_repos_validity,
-    # mock_basic_signature_handler,
     mock_quay_client,
     mock_local_executor,
     target_settings,
@@ -2377,7 +2258,6 @@ def test_run_remove_noop(
         [tag_docker_push_item_remove_src], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
-    # mock_basic_signature_handler.assert_called_once_with(hub, "1", target_settings, "some-target")
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -2394,7 +2274,6 @@ def test_run_remove_noop(
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
-# @mock.patch("pubtools._quay.tag_docker.BasicSignatureHandler")
 @mock.patch("pubtools._quay.tag_docker.PushDocker.check_repos_validity")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images")
@@ -2412,7 +2291,6 @@ def test_run_remove_untag_image(
     mock_merge_manifest_lists_sign_images,
     mock_copy_tag_sign_images,
     mock_check_repos_validity,
-    # mock_basic_signature_handler,
     mock_quay_client,
     mock_local_executor,
     target_settings,
@@ -2435,7 +2313,6 @@ def test_run_remove_untag_image(
         [tag_docker_push_item_remove_src], hub, target_settings
     )
     mock_check_input_validity.assert_called_once_with()
-    # mock_basic_signature_handler.assert_called_once_with(hub, "1", target_settings, "some-target")
     mock_tag_add_calculate_archs.assert_not_called()
     mock_copy_tag_sign_images.assert_not_called()
     mock_merge_manifest_lists_sign_images.assert_not_called()
@@ -2559,9 +2436,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
 ):
     executor = mock.MagicMock()
     hub = mock.MagicMock()
-    sig_handler = mock.MagicMock()
-    # mock_sign_claim_messages = mock.MagicMock()
-    # sig_handler.sign_claim_messages = mock_sign_claim_messages
     source_details = tag_docker.TagDocker.ImageDetails(
         "quay.io/some-namespace/namespace----test_repo:v1.5",
         v2s2_manifest_data,
@@ -2571,9 +2445,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
     mock_get_image_details.return_value = source_details
     push_item_none_key = tag_docker_push_item_add
     push_item_none_key.claims_signing_key = None
-    # mock_remove_tag_signatures = mock.MagicMock()
-    # mock_signature_remover.return_value.remove_tag_signatures = mock_remove_tag_signatures
-
     tag_docker_instance = tag_docker.TagDocker(
         [push_item_none_key],
         hub,
@@ -2606,8 +2477,6 @@ def test_copy_all_archs_sign_images_source_none_signing_key(
         )
         tag_docker_instance.copy_tag_sign_images(push_item_none_key, "v1.6", executor)
 
-    # assert mock_create_claim_message.call_count == 0
-    # mock_sign_claim_messages.assert_called_once_with([], True, True)
     mock_run_tag_images.assert_called_once_with(
         "quay.io/some-namespace/namespace----test_repo:v1.5",
         ["quay.io/some-namespace/namespace----test_repo:v1.6"],

@@ -16,6 +16,11 @@ class VirtualPushItem:
     metadata: Dict[str, Any]
     repos: Dict[str, Any]
 
+    def __post_init__(self):
+        """Post init validation of the instance."""
+        if "tags" not in self.metadata:
+            raise ValueError("VirtualPushItem is missing 'tags' in metadata")
+
 
 PushItem: TypeAlias = VirtualPushItem
 
@@ -174,7 +179,7 @@ class ContentExtractor:
 
 
 @dataclass
-class ReferenceProcessorNOP:
+class ReferenceProcessorExternal:
     """Class is used to produce full image reference or repo reference from input."""
 
     def __call__(self, registry: str, repo: str, tag: Optional[str] = None):
@@ -259,10 +264,22 @@ class ReferenceProcessorInternal:
 
 @dataclass
 class ItemProcesor:
-    """Class is used to process push item and extract various data from it."""
+    """Class is used to process push item and extract various data from it.
+
+    Args:
+        extractor (ContentExtractor): Content extractor which is used when container metadata for
+        processed push item is needed.
+        reference_processor (ReferenceProcessor): Reference processor to produce reference from
+        provided push item. Based on used reference processor it can produce reference to internal
+        or external push item.
+        reference_registries (List[str]): List of destination registries where push item should be
+        available when pushed. Can be empty if there's no need to generate destination data.
+        source_registry (str): Source registry where source container image is located.
+        Can be empty if there's no need to generate source data.
+    """
 
     extractor: ContentExtractor
-    reference_processor: ReferenceProcessorNOP
+    reference_processor: ReferenceProcessorExternal
     reference_registries: List[str]
     source_registry: str
 
@@ -348,7 +365,7 @@ class ItemProcesor:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item: PushItem):
+    def generate_to_sign(self, item: PushItem, sign_only_arches: List[str] = []):
         """Generate list of images to sign.
 
         Args:
@@ -365,6 +382,8 @@ class ItemProcesor:
             _, reference = self.reference_processor(registry, repo, tag)
             man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
             for mad in man_arch_digs:
+                if sign_only_arches and mad.arch not in sign_only_arches:
+                    continue
                 to_sign.append(
                     {"reference": reference, "digest": mad.digest, "repo": repo, "arch": mad.arch}
                 )
@@ -427,10 +446,12 @@ class ItemProcesor:
             _, full_ref = self.reference_processor(self.source_registry, repo, tag=tag)
             man_arch_digs = self.extractor.extract_manifests(full_ref, media_types)
             for mad in man_arch_digs:
-                existing_manifests.append((repo, tag, mad))
+                if (repo, tag, mad) not in existing_manifests:
+                    existing_manifests.append((repo, tag, mad))
             if not man_arch_digs:
                 # If no manifest found, set tag to None
-                existing_manifests.append((repo, tag, None))
+                if (repo, tag, None) not in existing_manifests:
+                    existing_manifests.append((repo, tag, None))
         return existing_manifests
 
     def generate_existing_manifests_map(self, item: PushItem, only_media_types=None):
@@ -465,7 +486,68 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing repository, tag and ManifestArchDigest.
         """
+        existing_manifests = []
         for repo, tag, mad in self._generate_existing_manifests(
             item, only_media_types=only_media_types
         ):
-            yield (repo, tag, mad)
+            existing_manifests.append((repo, tag, mad))
+        return existing_manifests
+
+    def generate_all_existing_manifests(self, item: PushItem):
+        """Return manifests for all existing tags in all repositories for given push item.
+
+        Args:
+            item (PushItem): Push item.
+        Returns:
+            list: List of tuples containing repository, tag and ManifestArchDigest.
+        """
+        repo_tags_map = {}
+        for registry, repo, tag in self.generate_existing_tags(item):
+            repo_tags_map.setdefault(repo, []).append(tag)
+        item2 = VirtualPushItem(
+            metadata={"tags": repo_tags_map},
+            repos={repo: [] for repo in repo_tags_map.keys()},
+        )
+        return self.generate_existing_manifests(item2)
+
+
+def item_processor_for_external_data(quay_client, external_registries, retry_sleep_time):
+    """Get instance of item processor configured to produce destination data.
+
+    Args:
+        quay_client (QuayClient): Quay client.
+        external_registries (list): List of external registries.
+        retry_sleep_time (int): sleep time bewteen retries for fetching data from registry.
+    Returns:
+        ItemProcessor: Instance of item processor.
+    """
+    extractor = ContentExtractor(quay_client=quay_client, sleep_time=retry_sleep_time)
+    return ItemProcesor(
+        extractor=extractor,
+        reference_processor=ReferenceProcessorExternal(),
+        reference_registries=external_registries,
+        source_registry=None,
+    )
+
+
+def item_processor_for_internal_data(
+    quay_client, internal_registry, retry_sleep_time, internal_namespace
+):
+    """Get instance of item processor configured to produce internal data.
+
+    Args:
+        quay_client (QuayClient): Quay client.
+        internal_registry (str): Docker registry where containers are stored
+        retry_sleep_time (int): sleep time bewteen retries for fetching data from registry.
+        internal_namespace (str): Namespace of internal organization in the registry.
+    Returns:
+        ItemProcessor: Instance of item processor.
+    """
+    extractor = ContentExtractor(quay_client=quay_client, sleep_time=retry_sleep_time)
+    reference_processor = ReferenceProcessorInternal(internal_namespace)
+    return ItemProcesor(
+        extractor=extractor,
+        reference_processor=reference_processor,
+        reference_registries=[],
+        source_registry=internal_registry,
+    )

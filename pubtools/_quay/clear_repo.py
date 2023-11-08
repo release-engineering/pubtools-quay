@@ -10,9 +10,7 @@ from .utils.misc import (
     get_internal_container_repo_name,
 )
 from .item_processor import (
-    ItemProcesor,
-    ReferenceProcessorInternal,
-    ContentExtractor,
+    item_processor_for_internal_data,
     VirtualPushItem,
 )
 from .signer_wrapper import SIGNER_BY_LABEL
@@ -111,29 +109,16 @@ def clear_repositories(repositories, settings):
 
     LOG.info("Clearing repositories '{0}'".format(repositories))
     quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
-    extractor = ContentExtractor(
-        quay_client=quay_client, sleep_time=settings.get("retry_sleep_time", 5)
+    item_processor = item_processor_for_internal_data(
+        quay_client, "quay.io", 5, settings["quay_org"]
     )
-    reference_processor = ReferenceProcessorInternal(settings["quay_org"])
-    item_processor = ItemProcesor(
-        extractor=extractor,
-        reference_processor=reference_processor,
-        reference_registries=[],
-        source_registry="quay.io",
-    )
+    # Clear repository doesn't work with pushitem so we need to create a virtual push item
+    # to use existing code to generate needed data for clearing the repository
     item = VirtualPushItem(
         metadata={"tags": {repo: [] for repo in parsed_repositories}},
         repos={repo: [] for repo in parsed_repositories},
     )
-    existing_tags = item_processor.generate_existing_tags(item)
-    repo_tags_map = {}
-    for _, repo, tag in existing_tags:
-        repo_tags_map.setdefault(repo, []).append(tag)
-    item2 = VirtualPushItem(
-        metadata={"tags": {repo: repo_tags_map[repo]} for repo in parsed_repositories},
-        repos={repo: [] for repo in parsed_repositories},
-    )
-    existing_manifests = item_processor.generate_existing_manifests(item2)
+    existing_manifests = item_processor.generate_all_existing_manifests(item)
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []

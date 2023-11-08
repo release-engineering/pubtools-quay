@@ -9,12 +9,7 @@ from .utils.misc import (
     add_args_env_variables,
     get_internal_container_repo_name,
 )
-from .item_processor import (
-    ItemProcesor,
-    ReferenceProcessorInternal,
-    ContentExtractor,
-    VirtualPushItem,
-)
+from .item_processor import item_processor_for_internal_data, VirtualPushItem
 from .signer_wrapper import SIGNER_BY_LABEL
 
 LOG = logging.getLogger("pubtools.quay")
@@ -112,28 +107,16 @@ def remove_repositories(repositories, settings):
     LOG.info("Removing repositories '{0}'".format(repositories))
     quay_api_client = QuayApiClient(settings["quay_api_token"])
     quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
-
-    extractor = ContentExtractor(quay_client=quay_client)
-    reference_processor = ReferenceProcessorInternal(settings["quay_org"])
-    item_processor = ItemProcesor(
-        extractor=extractor,
-        reference_processor=reference_processor,
-        reference_registries=[],
-        source_registry="quay.io",
+    item_processor = item_processor_for_internal_data(
+        quay_client, "quay.io", 5, settings["quay_org"]
     )
+    # Remove repository doesn't work with push item by default, therefore we create VirtualPushItem
+    # to support existing code to generate needed repository data.
     item = VirtualPushItem(
         metadata={"tags": {repo: [] for repo in parsed_repositories}},
         repos={repo: [] for repo in parsed_repositories},
     )
-    existing_tags = item_processor.generate_existing_tags(item)
-    repo_tags_map = {}
-    for _, repo, tag in existing_tags:
-        repo_tags_map.setdefault(repo, []).append(tag)
-    item2 = VirtualPushItem(
-        metadata={"tags": {repo: repo_tags_map[repo]} for repo in parsed_repositories},
-        repos={repo: [] for repo in parsed_repositories},
-    )
-    existing_manifests = item_processor.generate_existing_manifests(item2)
+    existing_manifests = item_processor.generate_all_existing_manifests(item)
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
@@ -152,6 +135,7 @@ def remove_repositories(repositories, settings):
         quay_api_client.delete_repository(internal_repo)
 
     LOG.info("Repositories have been removed")
+
     pm.hook.quay_repositories_removed(repository_ids=sorted(parsed_repositories))
 
 

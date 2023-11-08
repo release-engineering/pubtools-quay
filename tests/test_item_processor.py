@@ -5,14 +5,15 @@ from requests.exceptions import HTTPError
 
 from pubtools._quay.item_processor import (
     ItemProcesor,
-    ReferenceProcessorNOP,
+    ReferenceProcessorExternal,
     ContentExtractor,
     ReferenceProcessorInternal,
+    VirtualPushItem,
 )
 
 
 def test_generate_existing_tags_tolerate_missing(operator_signing_push_item):
-    rp = ReferenceProcessorNOP()
+    rp = ReferenceProcessorExternal()
     mock_client = mock.MagicMock()
     mock_client.get_repository_tags.side_effect = HTTPError(
         response=mock.MagicMock(status_code=404)
@@ -28,7 +29,7 @@ def test_generate_existing_tags_tolerate_missing(operator_signing_push_item):
 
 
 def test_generate_existing_tags_no_tolerate_missing(operator_signing_push_item):
-    rp = ReferenceProcessorNOP()
+    rp = ReferenceProcessorExternal()
     mock_client = mock.MagicMock()
     mock_client.get_repository_tags.side_effect = HTTPError(
         response=mock.MagicMock(status_code=404)
@@ -44,7 +45,7 @@ def test_generate_existing_tags_no_tolerate_missing(operator_signing_push_item):
 
 
 def test_generate_existing_tags_server_error(operator_signing_push_item):
-    rp = ReferenceProcessorNOP()
+    rp = ReferenceProcessorExternal()
     mock_client = mock.MagicMock()
     mock_client.get_repository_tags.side_effect = HTTPError(
         response=mock.MagicMock(status_code=500)
@@ -60,7 +61,7 @@ def test_generate_existing_tags_server_error(operator_signing_push_item):
 
 
 def test_generate_existing_tags_server_error_tolerate_missing(operator_signing_push_item):
-    rp = ReferenceProcessorNOP()
+    rp = ReferenceProcessorExternal()
     mock_client = mock.MagicMock()
     mock_client.get_repository_tags.side_effect = HTTPError(
         response=mock.MagicMock(status_code=500)
@@ -127,3 +128,8 @@ def test_reference_processor_replace_repo_no_slash():
 def test_reference_processor_replace_repo_error():
     with pytest.raises(ValueError):
         assert ReferenceProcessorInternal(quay_namespace="ns").replace_repo("namespace/ns/repo")
+
+
+def test_invalid_virtual_push_item():
+    with pytest.raises(ValueError):
+        VirtualPushItem(repos=[], metadata={})

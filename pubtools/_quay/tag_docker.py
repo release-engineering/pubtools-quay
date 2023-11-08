@@ -18,9 +18,7 @@ from .untag_images import untag_images
 from .push_docker import PushDocker
 from .signer_wrapper import SIGNER_BY_LABEL
 from .item_processor import (
-    ItemProcesor,
-    ReferenceProcessorInternal,
-    ContentExtractor,
+    item_processor_for_internal_data,
 )
 
 # TODO: do we want this, or should I remove it?
@@ -503,28 +501,19 @@ class TagDocker:
                 to_sign_map[(reference, repo)][details.digest] = push_item.claims_signing_key
 
             cert, key = get_pyxis_ssl_paths(self.target_settings)
-
-            digest_extractor = ContentExtractor(
-                quay_client=self.quay_client,
-                sleep_time=self.target_settings.get("retry_sleep_time", 5),
-            )
-            reference_processor = ReferenceProcessorInternal(self.target_settings["quay_namespace"])
-            item_processor = ItemProcesor(
-                extractor=digest_extractor,
-                reference_processor=reference_processor,
-                reference_registries=self.dest_registries,
-                source_registry=self.target_settings["quay_host"].rstrip("/"),
+            item_processor = item_processor_for_internal_data(
+                self.quay_client,
+                self.target_settings["quay_host"].rstrip("/"),
+                self.target_settings.get("retry_sleep_time", 5),
+                self.target_settings["quay_namespace"],
             )
             outdated_manifests = []
 
-            existing_manifests = item_processor.generate_existing_manifests_map(push_item)
-            for reference, repo_tags in existing_manifests.items():
-                for repo, tag_mads in repo_tags.items():
-                    for tag, mads in tag_mads.items():
-                        if not mads:
-                            continue
-                        for mad in mads:
-                            outdated_manifests.append((mad.digest, tag, repo))
+            existing_manifests = item_processor.generate_existing_manifests(push_item)
+            for repo, tag, mad in existing_manifests:
+                if not mad:
+                    continue
+                outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
                 if signer["enabled"]:
@@ -599,11 +588,6 @@ class TagDocker:
                     )
 
             outdated_manifests = []
-            if push_item.claims_signing_key:
-                extractor = ContentExtractor(
-                    quay_client=self.quay_client,
-                    sleep_time=self.target_settings.get("retry_sleep_time", 5),
-                )
             to_sign_map = {}
             current_signatures = []
             if push_item.claims_signing_key:
@@ -620,21 +604,16 @@ class TagDocker:
                         )
 
                 namespace = self.target_settings["quay_namespace"]
-                reference_processor = ReferenceProcessorInternal(quay_namespace=namespace)
-                item_processor = ItemProcesor(
-                    extractor=extractor,
-                    reference_processor=reference_processor,
-                    reference_registries=dest_registries,
-                    source_registry=self.target_settings["quay_host"].rstrip("/"),
+                item_processor = item_processor_for_internal_data(
+                    self.quay_client,
+                    self.target_settings["quay_host"].rstrip("/"),
+                    self.target_settings.get("retry_sleep_time", 5),
+                    self.target_settings["quay_namespace"],
                 )
-                existing_manifests = item_processor.generate_existing_manifests_map(push_item)
-                for reference, repo_tags in existing_manifests.items():
-                    for repo, tag_mads in repo_tags.items():
-                        for tag, mads in tag_mads.items():
-                            if not mads:
-                                continue
-                            for mad in mads:
-                                outdated_manifests.append((mad.digest, tag, repo))
+                for repo, tag, mad in item_processor.generate_existing_manifests(push_item):
+                    if not mad:
+                        continue
+                    outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
                 if signer["enabled"]:
@@ -702,20 +681,15 @@ class TagDocker:
         LOG.info("Tag '{0}' will be removed".format(tag))
         full_repo_schema = "{host}/{namespace}/{repo}"
         namespace = self.target_settings["quay_namespace"]
-
-        extractor = ContentExtractor(
-            quay_client=self.quay_client, sleep_time=self.target_settings.get("retry_sleep_time", 5)
+        item_processor = item_processor_for_internal_data(
+            self.quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
         )
-        reference_processor = ReferenceProcessorInternal(self.target_settings["quay_namespace"])
-        item_processor = ItemProcesor(
-            extractor=extractor,
-            reference_processor=reference_processor,
-            reference_registries=self.dest_registries,
-            source_registry=self.target_settings["quay_host"].rstrip("/"),
-        )
-        to_sign_entries = []
-        for to_sign_entry in item_processor.generate_to_unsign(push_item):
-            to_sign_entries.append((to_sign_entry["digest"], tag, to_sign_entry["repo"]))
+        to_unsign_entries = []
+        for to_unsign_entry in item_processor.generate_to_unsign(push_item):
+            to_unsign_entries.append((to_unsign_entry["digest"], tag, to_unsign_entry["repo"]))
 
         internal_repo = get_internal_container_repo_name(list(push_item.repos.keys())[0])
         full_repo = full_repo_schema.format(
@@ -729,7 +703,7 @@ class TagDocker:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                signer.remove_signatures(to_sign_entries, _exclude=[])
+                signer.remove_signatures(to_unsign_entries, _exclude=[])
 
         self.run_untag_images([dest_image], True, self.target_settings)
 

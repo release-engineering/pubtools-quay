@@ -17,6 +17,7 @@ from .item_processor import (
     ReferenceProcessorInternal,
     ContentExtractor,
     VirtualPushItem,
+    item_processor_for_internal_data,
 )
 
 from .quay_client import QuayClient
@@ -311,23 +312,15 @@ def task_iib_remove_operators(
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
-
     quay_client = QuayClient(
         target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
     )
-
-    extractor = ContentExtractor(
-        quay_client=quay_client, sleep_time=target_settings.get("retry_sleep_time", 5)
+    item_processor = item_processor_for_internal_data(
+        quay_client,
+        target_settings["quay_host"].rstrip("/"),
+        target_settings.get("retry_sleep_time", 5),
+        iib_namespace,
     )
-    reference_processor = ReferenceProcessorInternal(iib_namespace)
-    dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
-    item_processor = ItemProcesor(
-        extractor=extractor,
-        reference_processor=reference_processor,
-        reference_registries=dest_registries,
-        source_registry=target_settings["quay_host"].rstrip("/"),
-    )
-
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
         repos={target_settings["quay_operator_repository"]: [tag]},
@@ -440,16 +433,11 @@ def task_iib_build_from_scratch(
     quay_client = QuayClient(
         target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
     )
-    extractor = ContentExtractor(
-        quay_client=quay_client, sleep_time=target_settings.get("retry_sleep_time", 5)
-    )
-    reference_processor = ReferenceProcessorInternal(iib_namespace)
-    dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
-    item_processor = ItemProcesor(
-        extractor=extractor,
-        reference_processor=reference_processor,
-        reference_registries=dest_registries,
-        source_registry=target_settings["quay_host"].rstrip("/"),
+    item_processor = item_processor_for_internal_data(
+        quay_client,
+        target_settings["quay_host"].rstrip("/"),
+        target_settings.get("retry_sleep_time", 5),
+        iib_namespace,
     )
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},

@@ -14,10 +14,8 @@ from .security_manifest_pusher import SecurityManifestPusher
 
 from .operator_pusher import OperatorPusher
 from .item_processor import (
-    ItemProcesor,
-    ReferenceProcessorNOP,
-    ReferenceProcessorInternal,
-    ContentExtractor,
+    item_processor_for_external_data,
+    item_processor_for_internal_data,
 )
 from .utils.misc import parse_index_image
 from .signer_wrapper import SIGNER_BY_LABEL
@@ -328,25 +326,35 @@ class PushDocker:
         """
         backup_tags = {}
         rollback_tags = []
-        namespace = self.target_settings["quay_namespace"]
-
-        extractor = ContentExtractor(
-            quay_client=self.dest_quay_client,
-            sleep_time=self.target_settings.get("retry_sleep_time", 5),
+        # namespace = self.target_settings["quay_namespace"]
+        # extractor = ContentExtractor(
+        #     quay_client=self.dest_quay_client,
+        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
+        # )
+        # reference_processor = ReferenceProcessorInternal(namespace)
+        # item_processor = ItemProcesor(
+        #     extractor=extractor,
+        #     reference_processor=reference_processor,
+        #     reference_registries=self.dest_registries,
+        #     source_registry=self.target_settings["quay_host"].rstrip("/"),
+        # )
+        internal_item_processor = item_processor_for_internal_data(
+            self.dest_quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
         )
-        reference_processor = ReferenceProcessorInternal(namespace)
-        item_processor = ItemProcesor(
-            extractor=extractor,
-            reference_processor=reference_processor,
-            reference_registries=self.dest_registries,
-            source_registry=self.target_settings["quay_host"].rstrip("/"),
+        external_item_processor = item_processor_for_external_data(
+            self.dest_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
         )
         for item in push_items:
-            destination_tags = item_processor.generate_repo_dest_tag_map(item)
-            existing_manifests = item_processor.generate_existing_manifests_map(item)
+            destination_tags = external_item_processor.generate_repo_dest_tag_map(item)
+            existing_manifests = internal_item_processor.generate_existing_manifests_map(item)
             for registry, repos in existing_manifests.items():
                 for e_repo, e_tags in repos.items():
-                    full_repo = reference_processor.replace_repo(e_repo)
+                    full_repo = internal_item_processor.reference_processor.replace_repo(e_repo)
                     for d_tag in destination_tags[list(destination_tags.keys())[0]][e_repo]:
                         if (
                             d_tag in existing_manifests[registry][e_repo]
@@ -444,18 +452,25 @@ class PushDocker:
             push_items(list): List of push items.
             target_settings(dict): Target settings.
         """
-        extractor = ContentExtractor(
-            quay_client=self.dest_quay_client,
-            sleep_time=self.target_settings.get("retry_sleep_time", 5),
+        # extractor = ContentExtractor(
+        #     quay_client=self.dest_quay_client,
+        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
+        # )
+        # namespace = target_settings["quay_namespace"]
+        # reference_processor = ReferenceProcessorInternal(quay_namespace=namespace)
+        # item_processor = ItemProcesor(
+        #     extractor=extractor,
+        #     reference_processor=reference_processor,
+        #     reference_registries=self.dest_registries,
+        #     source_registry=target_settings["quay_host"].rstrip("/"),
+        # )
+        item_processor = item_processor_for_internal_data(
+            self.dest_quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
         )
-        namespace = target_settings["quay_namespace"]
-        reference_processor = ReferenceProcessorInternal(quay_namespace=namespace)
-        item_processor = ItemProcesor(
-            extractor=extractor,
-            reference_processor=reference_processor,
-            reference_registries=self.dest_registries,
-            source_registry=target_settings["quay_host"].rstrip("/"),
-        )
+
         new_digests = {}
         for item in push_items:
             missing_media_types = set(
@@ -512,23 +527,30 @@ class PushDocker:
         successful_iib_results = dict()
         index_stamp = timestamp()
 
-        extractor = ContentExtractor(
-            quay_client=self.dest_quay_client,
-            sleep_time=self.target_settings.get("retry_sleep_time", 5),
-        )
-        reference_processor = ReferenceProcessorNOP()
-        item_processor = ItemProcesor(
-            extractor=extractor,
-            reference_processor=reference_processor,
-            reference_registries=self.dest_registries,
-            source_registry=self.target_settings["quay_host"].rstrip("/"),
+        # extractor = ContentExtractor(
+        #     quay_client=self.dest_quay_client,
+        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
+        # )
+        # reference_processor = ReferenceProcessorExternal()
+        # item_processor = ItemProcesor(
+        #     extractor=extractor,
+        #     reference_processor=reference_processor,
+        #     reference_registries=self.dest_registries,
+        #     source_registry=self.target_settings["quay_host"].rstrip("/"),
+        # )
+        item_processor = item_processor_for_external_data(
+            self.dest_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
         )
         to_sign_map = {}
         current_signatures = []
         for item in docker_push_items:
-            for to_sign_entry in item_processor.generate_to_sign(item):
-                if to_sign_entry["arch"] not in ("amd64", "x86_64"):
-                    continue
+            for to_sign_entry in item_processor.generate_to_sign(
+                item, sign_only_arches=["amd64", "x86_64"]
+            ):
+                # if to_sign_entry["arch"] not in ("amd64", "x86_64"):
+                #    continue
                 to_sign_map.setdefault((to_sign_entry["reference"], to_sign_entry["repo"]), {})
                 to_sign_map[(to_sign_entry["reference"], to_sign_entry["repo"])][
                     to_sign_entry["digest"]
