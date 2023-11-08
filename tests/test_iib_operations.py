@@ -244,7 +244,23 @@ def test_task_iib_add_bundles(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
                 reference="some-registry2.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
                 digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 task_id="1",
                 repo="operators/index-image",
@@ -322,6 +338,7 @@ def test_task_iib_add_bundles_operator_ns(
     fake_cert_key_paths,
     src_manifest_list,
     v2s1_manifest,
+    fixture_run_in_parallel,
 ):
     target_settings["quay_operator_namespace"] = "operator-ns"
 
@@ -373,7 +390,23 @@ def test_task_iib_add_bundles_operator_ns(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
+                reference="some-registry1.com/operator-ns/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
                 reference="some-registry2.com/operator-ns/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/operator-ns/operators/index-image:8-timestamp",
                 digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 task_id="1",
                 repo="operators/index-image",
@@ -468,6 +501,7 @@ def test_task_iib_remove_operators(
     fake_cert_key_paths,
     v2s1_manifest,
     src_manifest_list,
+    fixture_run_in_parallel,
 ):
     fake_setup(
         fake_quay_client_get_operator_quay_client,
@@ -618,6 +652,7 @@ def test_task_iib_build_from_scratch(
     fake_cert_key_paths,
     src_manifest_list,
     v2s1_manifest,
+    fixture_run_in_parallel,
 ):
     fake_setup(
         fake_quay_client_get_operator_quay_client,
@@ -664,7 +699,23 @@ def test_task_iib_build_from_scratch(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
                 reference="some-registry2.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
                 digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 task_id="1",
                 repo="operators/index-image",
@@ -805,7 +856,23 @@ def test_task_iib_build_from_scratch_operator_ns(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
+                reference="some-registry1.com/operator-ns/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
                 reference="some-registry2.com/operator-ns/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/operator-ns/operators/index-image:8-timestamp",
                 digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 task_id="1",
                 repo="operators/index-image",

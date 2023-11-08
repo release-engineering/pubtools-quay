@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from pubtools._quay.signer_wrapper import SignerWrapper, SigningError
+from pubtools._quay.signer_wrapper import SignerWrapper, SigningError, SignEntry
 
 
 def test_signer_wrapper_entry_point():
@@ -35,4 +35,12 @@ def test_sign_container_failed():
             "signer_result": {"status": "error", "error_message": "fake-error-message"}
         }
         with pytest.raises(SigningError):
-            sw.sign_container("fake-container", "fake-tag", "fake-registry")
+            sw.sign_container(
+                SignEntry(
+                    reference="fake-reference",
+                    digest="fake-digest",
+                    signing_key="fake-signing-key",
+                    arch="amd64",
+                    repo="fake-repo",
+                )
+            )

@@ -12,7 +12,9 @@ from marshmallow import Schema, fields, EXCLUDE
 from .utils.misc import (
     run_entrypoint,
     get_pyxis_ssl_paths,
+    run_in_parallel,
 )
+from .item_processor import SignEntry
 
 
 LOG = logging.getLogger("pubtools.quay")
@@ -33,7 +35,11 @@ class SignerWrapper:
     entry_point_conf = ["signer", "group", "signer"]
 
     def __init__(self, config_file: Optional[str] = None, settings: Dict[str, Any] = None):
-        """Initialize SignerWrapper."""
+        """Initialize SignerWrapper.
+        Args:
+            config_file (str): Path to config file for the signer.
+            settings (dict): Settings for the signer.
+        """
         self.config_file = config_file
         self.settings = settings
         self._ep = None
@@ -80,33 +86,55 @@ class SignerWrapper:
 
     def sign_container(
         self,
-        reference: str,
-        digest: str,
-        signing_key: str,
-        repo: Optional[str] = None,
+        sign_entry: SignEntry,
         task_id: Optional[str] = None,
     ):
         """Sign a specific reference and digest with given signing key.
 
         Args:
-            reference (str): Reference to container image to sign.
-            digest (str): Digest of container image to sign.
-            signing_key (str): Signing key to use.
-            repo (str): Repository name of container image to sign.
+            sign_entry (SignEntry): SignEntry to sign.
             task_id (str): Task ID to identify the signing task if needed.
         """
-        LOG.debug("Signing container %s %s %s", reference, digest, signing_key)
-        opt_args = {k: v for k, v in [("task_id", task_id), ("repo", repo)] if v is not None}
+        LOG.debug(
+            "Signing container %s %s %s",
+            sign_entry.reference,
+            sign_entry.digest,
+            sign_entry.signing_key,
+        )
+        opt_args = {
+            k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None
+        }
         signed = self.entry_point(
             config_file=self.config_file,
-            signing_key=signing_key,
-            reference=reference,
-            digest=digest,
+            signing_key=sign_entry.signing_key,
+            reference=sign_entry.reference,
+            digest=sign_entry.digest,
             **opt_args,
         )
         if signed["signer_result"]["status"] != "ok":
             raise SigningError(signed["signer_result"]["error_message"])
+        LOG.info(
+            "Signed %s(%s) with %s in %s",
+            sign_entry.reference,
+            sign_entry.digest,
+            sign_entry.signing_key,
+            self.label,
+        )
         self._store_signed(signed)
+
+    def sign_containers(
+        self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
+    ):
+        """Sign signing entries.
+
+        Args:
+            to_sign_entries (List[SignEntry]): list of entries to sign.
+            task_id (str): optional identifier used in signing process.
+            parallelism (int): determines how many entries should be signed in parallel.
+        """
+        run_in_parallel(
+            self.sign_container, zip(to_sign_entries, [task_id] * len(to_sign_entries)), parallelism
+        )
 
     def validate_settings(self, settings: Dict[str, Any] = None):
         """Validate provided settings for the SignerWrapper."""

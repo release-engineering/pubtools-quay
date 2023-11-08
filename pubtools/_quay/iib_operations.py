@@ -13,10 +13,8 @@ from .utils.misc import (
 )
 from .signer_wrapper import SIGNER_BY_LABEL
 from .item_processor import (
-    ItemProcesor,
-    ReferenceProcessorInternal,
-    ContentExtractor,
     VirtualPushItem,
+    SignEntry,
     item_processor_for_internal_data,
 )
 
@@ -73,15 +71,26 @@ def _get_operator_quay_client(target_settings):
     )
 
 
-def _index_image_to_sign(
+def _index_image_to_sign_entries(
     src_index_image, dest_namespace, dest_tag, index_stamp, signing_keys, target_settings
 ):
-    to_sign_entries = {}
+    """Genereate entries to sign.
+
+    Method generates sign entries for index image with <dest_tag> and <dest_tag>-<index_stamp> tags
+    and given signing_keys. Only manifests with architecture amd64 are included in the output.
+
+    Args:
+        src_index_image (str): Source index image.
+        dest_namespace (str): Destination internal namespace.
+        dest_tag (str): Destination tag.
+        index_stamp (str): Index stamp.
+        signing_keys (list): List of signing keys.
+    """
     iib_repo = target_settings["quay_operator_repository"]
     dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
     dest_registries = dest_registries if isinstance(dest_registries, list) else [dest_registries]
-    _dest_operator_quay_client = _get_operator_quay_client(target_settings)
-    manifest_list = _dest_operator_quay_client.get_manifest(
+    dest_operator_quay_client = _get_operator_quay_client(target_settings)
+    manifest_list = dest_operator_quay_client.get_manifest(
         src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
     )
     index_image_digests = [
@@ -89,13 +98,21 @@ def _index_image_to_sign(
         for m in manifest_list["manifests"]
         if m["platform"]["architecture"] in ["amd64", "x86_64"]
     ]
-
+    to_sign_entries = []
     for registry in dest_registries:
         for _dest_tag in [dest_tag, "%s-%s" % (dest_tag, index_stamp)]:
             for digest in index_image_digests:
-                reference = f"{registry}/{dest_namespace}/{iib_repo}:{dest_tag}"
-                to_sign_entries.setdefault((iib_repo, reference), {})
-                to_sign_entries[(iib_repo, reference)][digest] = signing_keys
+                reference = f"{registry}/{dest_namespace}/{iib_repo}:{_dest_tag}"
+                for key in signing_keys:
+                    to_sign_entries.append(
+                        SignEntry(
+                            reference=reference,
+                            repo=iib_repo,
+                            digest=digest,
+                            arch="amd64",
+                            signing_key=key,
+                        )
+                    )
     return to_sign_entries
 
 
@@ -110,22 +127,15 @@ def _remove_index_image_signatures(outdated_manifests, current_signatures, targe
 def _sign_index_image(
     built_index_image, namespace, dest_tag, signing_keys, task_id, index_stamp, target_settings
 ):
-    to_sign_entries = _index_image_to_sign(
+    to_sign_entries = _index_image_to_sign_entries(
         built_index_image, namespace, dest_tag, index_stamp, signing_keys, target_settings
     )
-
     current_signatures = []
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
             signer = signercls(config_file=signer["config_file"], settings=target_settings)
-            for repo_reference, digest_key in to_sign_entries.items():
-                repo, reference = repo_reference
-                for digest, keys in digest_key.items():
-                    for key in keys:
-                        signer.sign_container(reference, digest, key, repo=repo, task_id=task_id)
-                        LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
-                        current_signatures.append((reference, digest, key))
+            signer.sign_containers(to_sign_entries, task_id=task_id)
     return current_signatures
 
 
@@ -185,19 +195,14 @@ def task_iib_add_bundles(
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
-
-    extractor = ContentExtractor(
-        quay_client=quay_client, sleep_time=target_settings.get("retry_sleep_time", 5)
+    item_processor = item_processor_for_internal_data(
+        quay_client,
+        target_settings["quay_host"].rstrip("/"),
+        target_settings.get("retry_sleep_time", 5),
+        iib_namespace,
     )
-    reference_processor = ReferenceProcessorInternal(iib_namespace)
-    dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
-    item_processor = ItemProcesor(
-        extractor=extractor,
-        reference_processor=reference_processor,
-        reference_registries=dest_registries,
-        source_registry=target_settings["quay_host"].rstrip("/"),
-    )
-
+    # Add bundles task doesn't work with pushitem so we create VirtualPushItem to enable
+    # existing code for fetching needed data.
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
         repos={target_settings["quay_operator_repository"]: [tag]},
@@ -321,6 +326,8 @@ def task_iib_remove_operators(
         target_settings.get("retry_sleep_time", 5),
         iib_namespace,
     )
+    # Remove operators task doesn't work with pushitem so we create VirtualPushItem to enable
+    # existing code for fetching needed data.
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
         repos={target_settings["quay_operator_repository"]: [tag]},
@@ -439,6 +446,8 @@ def task_iib_build_from_scratch(
         target_settings.get("retry_sleep_time", 5),
         iib_namespace,
     )
+    # Build from scratch task doesn't work with pushitem so we create VirtualPushItem to enable
+    # existing code for fetching needed data.
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
         repos={target_settings["quay_operator_repository"]: [tag]},

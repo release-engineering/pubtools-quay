@@ -10,6 +10,10 @@ import sys
 import textwrap
 import time
 
+
+from concurrent import futures
+from concurrent.futures.thread import ThreadPoolExecutor
+
 from io import StringIO
 from pubtools.pluggy import pm
 
@@ -17,6 +21,28 @@ LOG = logging.getLogger("pubtools.quay")
 
 INTERNAL_DELIMITER = "----"
 MAX_RETRY_WAIT = 120
+
+
+def run_in_parallel(func, data, threads=10):
+    """Run method on data in parallel.
+
+    Args:
+        func (function): Function to run on data
+        data (list): List of tuples which are used as arguments for the function
+    Returns:
+        dict: List of result in the same order as data.
+    """
+    future_results = {}
+    results = {}
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        future_results = {
+            executor.submit(func, *data_entry): n for n, data_entry in enumerate(data)
+        }
+        for future in futures.as_completed(future_results):
+            if future.exception():
+                raise future.exception()  # pragma: no cover
+            results[future_results[future]] = future.result()
+    return dict(sorted(results.items(), key=lambda kv: kv[0]))
 
 
 def setup_arg_parser(args):

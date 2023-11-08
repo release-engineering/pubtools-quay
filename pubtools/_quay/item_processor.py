@@ -26,6 +26,25 @@ PushItem: TypeAlias = VirtualPushItem
 
 
 @dataclass
+class SignEntry:
+    """Data structure to hold signing related information.
+
+    Args:
+        signing_key (str): Signing key.
+        repo (str): Repo reference in format <registry>/<repo>
+        reference (str): Reference in format <registry>/<repo>:<tag>
+        digest (str): Digest of the manifest.
+        arch (str): Architecture of the manifest.
+    """
+
+    repo: str
+    reference: str
+    digest: str
+    signing_key: str
+    arch: str
+
+
+@dataclass
 class ManifestArchDigest:
     """Data structure to hold information about container manifest."""
 
@@ -365,11 +384,13 @@ class ItemProcesor:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item: PushItem, sign_only_arches: List[str] = []):
+    def generate_to_sign(self, item: PushItem, sign_only_arches: List[str] = []) -> List[SignEntry]:
         """Generate list of images to sign.
 
         Args:
             item (PushItem): Push item.
+            sign_only_arches(List[str]): List of architectures to sign.
+            If empty, all sign architectures.
         Returns:
             list: List of dictionaries containing reference, digest, repository and architecture.
         """
@@ -385,7 +406,13 @@ class ItemProcesor:
                 if sign_only_arches and mad.arch not in sign_only_arches:
                     continue
                 to_sign.append(
-                    {"reference": reference, "digest": mad.digest, "repo": repo, "arch": mad.arch}
+                    SignEntry(
+                        repo=repo,
+                        reference=reference,
+                        digest=mad.digest,
+                        arch=mad.arch,
+                        signing_key=item.claims_signing_key,
+                    )
                 )
         return to_sign
 
@@ -424,7 +451,7 @@ class ItemProcesor:
         """
         existing_tag_entries = []
         for repo in self._generate_src_repo(item):
-            ref_repo, reference = self.reference_processor(self.source_registry, repo, tag=None)
+            ref_repo, _ = self.reference_processor(self.source_registry, repo, tag=None)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
             for tag in tags:
                 existing_tag_entries.append((self.source_registry, repo, tag))

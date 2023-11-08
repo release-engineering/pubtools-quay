@@ -202,34 +202,34 @@ def test_push_docker_multiarch_merge_ml_operator(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="operators/index-image",
+                    reference="some-registry1.com/namespace/operators/index-image:v4.5",
                     digest="sha256:5555555555",
                     task_id="1",
-                    repo="some-registry1.com/namespace/operators/index-image:v4.5",
+                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="operators/index-image",
+                    reference="some-registry2.com/namespace/operators/index-image:v4.5",
                     digest="sha256:5555555555",
                     task_id="1",
-                    repo="some-registry2.com/namespace/operators/index-image:v4.5",
+                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="operators/index-image",
+                    reference="some-registry1.com/namespace/operators/index-image:v4.6",
                     digest="sha256:5555555555",
                     task_id="1",
-                    repo="some-registry1.com/namespace/operators/index-image:v4.6",
+                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="operators/index-image",
+                    reference="some-registry2.com/namespace/operators/index-image:v4.6",
                     digest="sha256:5555555555",
                     task_id="1",
-                    repo="some-registry2.com/namespace/operators/index-image:v4.6",
+                    repo="operators/index-image",
                 ),
             ]
         )
@@ -612,16 +612,16 @@ def test_tag_docker_multiarch_merge_ml(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="some-registry1.com/namespace/test_repo:v1.6",
-                    digest="sha256:5555555555",
+                    reference="some-registry2.com/namespace/test_repo:v1.6",
+                    digest="sha256:1111111111",
                     task_id="1",
                     repo="namespace/test_repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference="some-registry2.com/namespace/test_repo:v1.6",
-                    digest="sha256:1111111111",
+                    reference="some-registry1.com/namespace/test_repo:v1.6",
+                    digest="sha256:5555555555",
                     task_id="1",
                     repo="namespace/test_repo",
                 ),
@@ -827,7 +827,7 @@ def test_tag_docker_source_copy_untag(
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-@mock.patch("pubtools._quay.utils.misc.timestamp")
+@mock.patch("pubtools._quay.iib_operations.timestamp")
 def test_task_iib_add_bundles(
     mock_timestamp,
     mock_run_entrypoint_operator_pusher,
@@ -839,6 +839,7 @@ def test_task_iib_add_bundles(
     v2s1_manifest,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
+    fixture_run_in_parallel,
 ):
     mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
@@ -910,7 +911,23 @@ def test_task_iib_add_bundles(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
+                    reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
                     reference="some-registry2.com/some-namespace/operators/index-image:8",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
                     digest="sha256:5555555555",
                     task_id="1",
                     repo="operators/index-image",
@@ -922,7 +939,9 @@ def test_task_iib_add_bundles(
 @mock.patch("pubtools._quay.command_executor.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.iib_operations.timestamp")
 def test_task_iib_remove_operators(
+    mock_timestamp,
     mock_run_entrypoint_operator_pusher,
     mock_run_cmd,
     mock_api_client,
@@ -933,6 +952,7 @@ def test_task_iib_remove_operators(
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
 ):
+    mock_timestamp.return_value = "timestamp"
     build_details = IIBRes(
         "some-registry.com/iib-namespace/new-index-image:8",
         "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
@@ -1001,7 +1021,23 @@ def test_task_iib_remove_operators(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:5555555555",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
                 reference="some-registry2.com/some-namespace/operators/index-image:8",
+                digest="sha256:5555555555",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
                 digest="sha256:5555555555",
                 task_id="1",
                 repo="operators/index-image",

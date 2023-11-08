@@ -2017,3 +2017,17 @@ def msg_signer_settings():
         "pyxis_ssl_crtfile": "test-cert-file",
         "pyxis_ssl_keyfile": "test-key-file",
     }
+
+
+def run_in_serial(func, data, threads):
+    ret = []
+    for dentry in data:
+        ret.append(func(*data))
+    return ret
+
+
+@pytest.fixture
+def fixture_run_in_parallel():
+    with mock.patch("pubtools._quay.utils.misc.run_in_parallel") as patched:
+        patched.side_effect = run_in_serial
+        yield patched

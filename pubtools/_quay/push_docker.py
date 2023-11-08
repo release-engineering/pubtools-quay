@@ -16,6 +16,7 @@ from .operator_pusher import OperatorPusher
 from .item_processor import (
     item_processor_for_external_data,
     item_processor_for_internal_data,
+    SignEntry,
 )
 from .utils.misc import parse_index_image
 from .signer_wrapper import SIGNER_BY_LABEL
@@ -326,18 +327,6 @@ class PushDocker:
         """
         backup_tags = {}
         rollback_tags = []
-        # namespace = self.target_settings["quay_namespace"]
-        # extractor = ContentExtractor(
-        #     quay_client=self.dest_quay_client,
-        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
-        # )
-        # reference_processor = ReferenceProcessorInternal(namespace)
-        # item_processor = ItemProcesor(
-        #     extractor=extractor,
-        #     reference_processor=reference_processor,
-        #     reference_registries=self.dest_registries,
-        #     source_registry=self.target_settings["quay_host"].rstrip("/"),
-        # )
         internal_item_processor = item_processor_for_internal_data(
             self.dest_quay_client,
             self.target_settings["quay_host"].rstrip("/"),
@@ -452,18 +441,6 @@ class PushDocker:
             push_items(list): List of push items.
             target_settings(dict): Target settings.
         """
-        # extractor = ContentExtractor(
-        #     quay_client=self.dest_quay_client,
-        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
-        # )
-        # namespace = target_settings["quay_namespace"]
-        # reference_processor = ReferenceProcessorInternal(quay_namespace=namespace)
-        # item_processor = ItemProcesor(
-        #     extractor=extractor,
-        #     reference_processor=reference_processor,
-        #     reference_registries=self.dest_registries,
-        #     source_registry=target_settings["quay_host"].rstrip("/"),
-        # )
         item_processor = item_processor_for_internal_data(
             self.dest_quay_client,
             self.target_settings["quay_host"].rstrip("/"),
@@ -527,47 +504,26 @@ class PushDocker:
         successful_iib_results = dict()
         index_stamp = timestamp()
 
-        # extractor = ContentExtractor(
-        #     quay_client=self.dest_quay_client,
-        #     sleep_time=self.target_settings.get("retry_sleep_time", 5),
-        # )
-        # reference_processor = ReferenceProcessorExternal()
-        # item_processor = ItemProcesor(
-        #     extractor=extractor,
-        #     reference_processor=reference_processor,
-        #     reference_registries=self.dest_registries,
-        #     source_registry=self.target_settings["quay_host"].rstrip("/"),
-        # )
         item_processor = item_processor_for_external_data(
             self.dest_quay_client,
             self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
         )
-        to_sign_map = {}
+        to_sign_entries = []
         current_signatures = []
         for item in docker_push_items:
-            for to_sign_entry in item_processor.generate_to_sign(
-                item, sign_only_arches=["amd64", "x86_64"]
-            ):
-                # if to_sign_entry["arch"] not in ("amd64", "x86_64"):
-                #    continue
-                to_sign_map.setdefault((to_sign_entry["reference"], to_sign_entry["repo"]), {})
-                to_sign_map[(to_sign_entry["reference"], to_sign_entry["repo"])][
-                    to_sign_entry["digest"]
-                ] = item.claims_signing_key
-
+            to_sign_entries.extend(
+                item_processor.generate_to_sign(item, sign_only_arches=["amd64", "x86_64"])
+            )
+        for sign_entry in to_sign_entries:
+            current_signatures.append(
+                (sign_entry.reference, sign_entry.digest, sign_entry.signing_key)
+            )
         for signer in self.target_settings["signing"]:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                for repo_reference, digest_key in to_sign_map.items():
-                    reference, repo = repo_reference
-                    for digest, key in digest_key.items():
-                        signer.sign_container(
-                            reference, digest, key, repo=repo, task_id=self.task_id
-                        )
-                        LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
-                        current_signatures.append((reference, digest, key))
+                signer.sign_containers(to_sign_entries, self.task_id)
 
         # Push container images
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
@@ -577,33 +533,28 @@ class PushDocker:
         to_sign_new_entries = self.fetch_missing_push_items_digests(
             docker_push_items, self.target_settings
         )
-        # sign missing images
+        to_sign_entries = []
+        for reference, repo_tags in to_sign_new_entries.items():
+            for repo, tag_digests in repo_tags.items():
+                for tag, digests in tag_digests.items():
+                    for type_, digest in digests.items():
+                        to_sign_entries.append(
+                            SignEntry(
+                                reference=reference,
+                                repo=repo,
+                                digest=digest,
+                                signing_key=item.claims_signing_key,
+                                arch="amd64",
+                            )
+                        )
+                        current_signatures.append((reference, digest, item.claims_signing_key))
 
+        # sign missing images
         for signer in self.target_settings["signing"]:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                for reference, repo_tags in to_sign_new_entries.items():
-                    for repo, tag_digests in repo_tags.items():
-                        for tag, digests in tag_digests.items():
-                            for type_, digest in digests.items():
-                                signer.sign_container(
-                                    reference,
-                                    digest,
-                                    item.claims_signing_key,
-                                    repo=repo,
-                                    task_id=self.task_id,
-                                )
-                                LOG.info(
-                                    "Signed %s(%s) with %s in %s",
-                                    reference,
-                                    digest,
-                                    item.claims_signing_key,
-                                    signer,
-                                )
-                                current_signatures.append(
-                                    (reference, digest, item.claims_signing_key)
-                                )
+                signer.sign_containers(to_sign_entries, self.task_id)
 
         if self.target_settings.get("push_security_manifests_enabled", False):
             # Generate and push security manifests (if enabled in target settings)
@@ -655,16 +606,23 @@ class PushDocker:
                 # Version acts as a tag of the index image
                 # use hotfix tag if it exists
 
-                to_sign_entries = {}
+                to_sign_entries = []
                 iib_repo = self.target_settings["quay_operator_repository"]
                 for registry in self.dest_registries:
                     for dest_tag in iib_details["destination_tags"]:
                         for digest in index_image_digests:
-                            reference = f"{registry}/{iib_namespace}/{iib_repo}:{dest_tag}"
-                            to_sign_entries.setdefault((iib_repo, reference), {})
-                            to_sign_entries[(iib_repo, reference)][digest] = iib_details[
-                                "signing_keys"
-                            ]
+                            for key in iib_details["signing_keys"]:
+                                reference = f"{registry}/{iib_namespace}/{iib_repo}:{dest_tag}"
+                                to_sign_entries.append(
+                                    SignEntry(
+                                        repo=iib_repo,
+                                        reference=reference,
+                                        digest=digest,
+                                        signing_key=key,
+                                        arch="amd64",
+                                    )
+                                )
+                                current_signatures.append((reference, digest, key))
 
                 for signer in self.target_settings["signing"]:
                     if signer["enabled"]:
@@ -672,21 +630,7 @@ class PushDocker:
                         signer = signercls(
                             config_file=signer["config_file"], settings=self.target_settings
                         )
-                        for repo_reference, digest_keys in to_sign_entries.items():
-                            reference, repo = repo_reference
-                            for digest, keys in digest_keys.items():
-                                for key in keys:
-                                    signer.sign_container(
-                                        reference, digest, key, repo=repo, task_id=self.task_id
-                                    )
-                                    LOG.info(
-                                        "Signed %s(%s) with %s in %s",
-                                        reference,
-                                        digest,
-                                        key,
-                                        signer,
-                                    )
-                                    current_signatures.append((reference, digest, key))
+                        signer.sign_containers(to_sign_entries, self.task_id)
 
             # If there are any failed items, skip pushing
             if not failed_items:

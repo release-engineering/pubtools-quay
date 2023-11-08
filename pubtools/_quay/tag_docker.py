@@ -17,9 +17,7 @@ from .manifest_list_merger import ManifestListMerger
 from .untag_images import untag_images
 from .push_docker import PushDocker
 from .signer_wrapper import SIGNER_BY_LABEL
-from .item_processor import (
-    item_processor_for_internal_data,
-)
+from .item_processor import item_processor_for_internal_data, SignEntry
 
 # TODO: do we want this, or should I remove it?
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -487,7 +485,7 @@ class TagDocker:
             )
         )
 
-        to_sign_map = {}
+        to_sign_entries = []
         current_signatures = []
         details = self.get_image_details(source_image, executor)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
@@ -497,8 +495,15 @@ class TagDocker:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                 )
-                to_sign_map.setdefault((reference, repo), {})
-                to_sign_map[(reference, repo)][details.digest] = push_item.claims_signing_key
+                to_sign_entries.append(
+                    SignEntry(
+                        repo=repo,
+                        reference=reference,
+                        digest=details.digest,
+                        signing_key=push_item.claims_signing_key,
+                        arch="amd64",
+                    )
+                )
 
             cert, key = get_pyxis_ssl_paths(self.target_settings)
             item_processor = item_processor_for_internal_data(
@@ -522,13 +527,7 @@ class TagDocker:
                         config_file=signer["config_file"], settings=self.target_settings
                     )
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    for repo_reference, digest_key in to_sign_map.items():
-                        reference, repo = repo_reference
-                        for digest, key in digest_key.items():
-                            signer.sign_container(
-                                reference, digest, key, repo=repo, task_id=self.task_id
-                            )
-                            LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
+                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
         elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
@@ -572,48 +571,40 @@ class TagDocker:
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
         dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
-        to_sign_map = {}
         current_signatures = []
         if push_item.claims_signing_key:
+            outdated_manifests = []
+            current_signatures = []
+            to_sign_entries = []
             for manifest in new_manifest_list["manifests"]:
                 for registry in dest_registries:
                     reference = external_image_schema.format(
                         host=registry, repo=list(push_item.repos.keys())[0], tag=tag
                     )
-                    to_map_key = (reference, list(push_item.repos.keys())[0])
-                    to_sign_map.setdefault(to_map_key, {})
-                    to_sign_map[to_map_key][manifest["digest"]] = push_item.claims_signing_key
+                    to_sign_entries.append(
+                        SignEntry(
+                            repo=list(push_item.repos.keys())[0],
+                            reference=reference,
+                            digest=manifest["digest"],
+                            arch=manifest["platform"]["architecture"],
+                            signing_key=push_item.claims_signing_key,
+                        )
+                    )
                     current_signatures.append(
                         (reference, manifest["digest"], push_item.claims_signing_key)
                     )
 
-            outdated_manifests = []
-            to_sign_map = {}
-            current_signatures = []
-            if push_item.claims_signing_key:
-                for manifest in new_manifest_list["manifests"]:
-                    for registry in dest_registries:
-                        reference = external_image_schema.format(
-                            host=registry, repo=list(push_item.repos.keys())[0], tag=tag
-                        )
-                        to_map_key = (reference, list(push_item.repos.keys())[0])
-                        to_sign_map.setdefault(to_map_key, {})
-                        to_sign_map[to_map_key][manifest["digest"]] = push_item.claims_signing_key
-                        current_signatures.append(
-                            (reference, manifest["digest"], push_item.claims_signing_key)
-                        )
-
-                namespace = self.target_settings["quay_namespace"]
-                item_processor = item_processor_for_internal_data(
-                    self.quay_client,
-                    self.target_settings["quay_host"].rstrip("/"),
-                    self.target_settings.get("retry_sleep_time", 5),
-                    self.target_settings["quay_namespace"],
-                )
-                for repo, tag, mad in item_processor.generate_existing_manifests(push_item):
-                    if not mad:
-                        continue
-                    outdated_manifests.append((mad.digest, tag, repo))
+            namespace = self.target_settings["quay_namespace"]
+            item_processor = item_processor_for_internal_data(
+                self.quay_client,
+                self.target_settings["quay_host"].rstrip("/"),
+                self.target_settings.get("retry_sleep_time", 5),
+                self.target_settings["quay_namespace"],
+            )
+            for repo, tag, mad in item_processor.generate_existing_manifests(push_item):
+                if not mad:
+                    continue
+                outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
                 if signer["enabled"]:
@@ -622,14 +613,7 @@ class TagDocker:
                         config_file=signer["config_file"], settings=self.target_settings
                     )
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    for repo_reference, digest_key in to_sign_map.items():
-                        reference, repo = repo_reference
-                        for digest, key in digest_key.items():
-                            signer.sign_container(
-                                reference, digest, key, repo=repo, task_id=self.task_id
-                            )
-                            LOG.info("Signed %s(%s) with %s in %s", reference, digest, key, signer)
-                            current_signatures.append((reference, digest, key))
+                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
         raw_src_manifest = self.quay_client.get_manifest(
             source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
