@@ -7,7 +7,6 @@ from .operator_pusher import OperatorPusher
 
 from .utils.misc import (
     get_internal_container_repo_name,
-    get_pyxis_ssl_paths,
     timestamp,
     parse_index_image,
 )
@@ -72,9 +71,9 @@ def _get_operator_quay_client(target_settings):
 
 
 def _index_image_to_sign_entries(
-    src_index_image, dest_namespace, dest_tag, index_stamp, signing_keys, target_settings
+    src_index_image, dest_namespace, dest_tags, signing_keys, target_settings
 ):
-    """Genereate entries to sign.
+    """Generate entries to sign.
 
     Method generates sign entries for index image with <dest_tag> and <dest_tag>-<index_stamp> tags
     and given signing_keys. Only manifests with architecture amd64 are included in the output.
@@ -100,7 +99,7 @@ def _index_image_to_sign_entries(
     ]
     to_sign_entries = []
     for registry in dest_registries:
-        for _dest_tag in [dest_tag, "%s-%s" % (dest_tag, index_stamp)]:
+        for _dest_tag in dest_tags:
             for digest in index_image_digests:
                 reference = f"{registry}/{dest_namespace}/{iib_repo}:{_dest_tag}"
                 for key in signing_keys:
@@ -117,6 +116,13 @@ def _index_image_to_sign_entries(
 
 
 def _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings):
+    """Remove signatures of outdated manifests with confitured signers for the target.
+
+    Args:
+        outdated_manifests (list): List of outdated manifests.
+        current_signatures (list): List of current signatures.
+        target_settings (dict): Target settings.
+    """
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
@@ -125,10 +131,23 @@ def _remove_index_image_signatures(outdated_manifests, current_signatures, targe
 
 
 def _sign_index_image(
-    built_index_image, namespace, dest_tag, signing_keys, task_id, index_stamp, target_settings
+    built_index_image, namespace, dest_tags, signing_keys, task_id, target_settings
 ):
+    """Sign index image with configured signers for the target.
+
+    Args:
+        built_index_image (str): Index image built results.
+        namespace (str): Namespace of internal organization in container registry.
+        dest_tag (str): Destination tag.
+        signing_keys (list): List of signing keys.
+        task_id (str): Task ID.
+        index_stamp (str): timestamp used as suffix in destination timestamp tag
+        target_settings (dict): Target settings.
+    Returns:
+        list: List of current signatures.
+    """
     to_sign_entries = _index_image_to_sign_entries(
-        built_index_image, namespace, dest_tag, index_stamp, signing_keys, target_settings
+        built_index_image, namespace, dest_tags, signing_keys, target_settings
     )
     current_signatures = []
     for signer in target_settings["signing"]:
@@ -216,15 +235,11 @@ def task_iib_add_bundles(
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
-        tag,
+        [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
-        index_stamp,
         target_settings,
     )
-
-    cert, key = get_pyxis_ssl_paths(target_settings)
-
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=iib_namespace,
@@ -237,7 +252,6 @@ def task_iib_add_bundles(
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag="%s-%s" % (tag, index_stamp),
     )
-    cert, key = get_pyxis_ssl_paths(target_settings)
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
@@ -341,13 +355,11 @@ def task_iib_remove_operators(
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
-        tag,
+        [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
-        index_stamp,
         target_settings,
     )
-    cert, key = get_pyxis_ssl_paths(target_settings)
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
@@ -456,14 +468,12 @@ def task_iib_build_from_scratch(
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
-        tag,
+        [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
-        index_stamp,
         target_settings,
     )
 
-    cert, key = get_pyxis_ssl_paths(target_settings)
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
@@ -479,7 +489,6 @@ def task_iib_build_from_scratch(
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag="%s-%s" % (tag, index_stamp),
     )
-    cert, key = get_pyxis_ssl_paths(target_settings)
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )

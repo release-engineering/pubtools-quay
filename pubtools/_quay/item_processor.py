@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import hashlib
-from typing import List, Dict, Any, Optional, TypeAlias
+from typing import List, Dict, Any, Optional, TypeAlias, Tuple
 import requests
 import time
 import json
@@ -105,11 +105,11 @@ class ContentExtractor:
             )
         return mads
 
-    def _extract_manifest(self, repo: str, manifest: str, mtype: str) -> ManifestArchDigest:
+    def _extract_manifest(self, unused: str, manifest: str, mtype: str) -> ManifestArchDigest:
         """Calculate information from given manifest.
 
         Args:
-            repo (str): Repo reference in format <registry>/<repo>
+            unused (str): This parameter is unused for this specific method.
             manifest (str): Manifest
             mtype (str): Media type of the manifest.
         Returns:
@@ -177,7 +177,7 @@ class ContentExtractor:
         return results
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True):
-        """Fetch list of tags for given image reference.
+        """Fetch list of tags for given repo reference.
 
         Args:
             repo_ref (str): Repo reference in format <registry>/<repo>
@@ -303,7 +303,7 @@ class ItemProcesor:
 
     INTERNAL_DELIMITER = "----"
 
-    def _generate_dest_repo(self, item: PushItem):
+    def _generate_dest_repo(self, item: PushItem) -> List[Tuple[str, str]]:
         """Return list of (<dest-registry>, <dest-repository>) tuples for given push item.
 
         Args:
@@ -317,13 +317,13 @@ class ItemProcesor:
                 dest_registry_repos.append((registry, repo))
         return dest_registry_repos
 
-    def _generate_src_repo(self, item: PushItem):
+    def _generate_src_repo(self, item: PushItem) -> List[str]:
         """Return list of source repos for given push item.
 
         Returns:
             list: List of source repositories.
         """
-        return item.repos.keys()
+        return list(item.repos.keys())
 
     def _generate_src_repo_tag(self, item: PushItem):
         """Return list of tuples of (<source-repo>, <tag>).
@@ -479,7 +479,7 @@ class ItemProcesor:
         return existing_manifests
 
     def generate_existing_manifests_map(self, item: PushItem, only_media_types=None):
-        """Genereate existing manifests map for given push item.
+        """Generate existing manifests map for given push item.
 
         Args:
             item (PushItem): Push item.

@@ -429,16 +429,17 @@ def test_push_docker_source(
             target_settings,
         )
 
-        def mock_fetch_missing_push_items_digests_sf(push_items, target):
+        def mock_fetch_missing_push_items_digests_sf(push_items):
             fake_digest_counter = 0
             ret = {}
             for item in push_items:
                 ret["namespace/target----repo"] = {
                     "target----repo": {
                         "latest-test-tag": {
-                            "application/vnd.docker.distribution.manifest.v2+json": [
-                                "fake-digest-%s" % fake_digest_counter
-                            ]
+                            "application/vnd.docker.distribution.manifest.v2+json": (
+                                "fake-digest-%s" % fake_digest_counter,
+                                "fake-sign-key",
+                            )
                         }
                     }
                 }
@@ -452,9 +453,9 @@ def test_push_docker_source(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_key="fake-sign-key",
                     reference="namespace/target----repo",
-                    digest=["fake-digest-0"],
+                    digest="fake-digest-0",
                     task_id="1",
                     repo="target----repo",
                 )

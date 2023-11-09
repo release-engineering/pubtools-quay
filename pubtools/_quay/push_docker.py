@@ -2,6 +2,7 @@ from collections import namedtuple
 import logging
 import sys
 import json
+from typing import Tuple, List, Dict, Any
 
 import requests
 
@@ -9,6 +10,7 @@ from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
 from .utils.misc import get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
+from .iib_operations import _sign_index_image
 from .container_image_pusher import ContainerImagePusher
 from .security_manifest_pusher import SecurityManifestPusher
 
@@ -114,20 +116,6 @@ class PushDocker:
                 self.target_settings["dest_quay_api_token"], self.quay_host
             )
         return self._dest_quay_api_client
-
-    @property
-    def index_image_quay_client(self):
-        """Create and access QuayClient for dest image."""
-        if self._index_image_quay_client is None:
-            index_image_credential = self.target_settings["iib_overwrite_from_index_token"].split(
-                ":"
-            )
-            self._index_image_quay_client = QuayClient(
-                index_image_credential[0],
-                index_image_credential[1],
-                self.quay_host,
-            )
-        return self._index_image_quay_client
 
     def verify_target_settings(self):
         """Verify that target settings contains all the necessary data."""
@@ -306,7 +294,7 @@ class PushDocker:
                         raise
 
     @log_step("Generate backup mapping")
-    def generate_backup_mapping(self, push_items):
+    def generate_backup_mapping(self, push_items) -> Tuple[Dict[str, Any], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
@@ -342,7 +330,7 @@ class PushDocker:
             destination_tags = external_item_processor.generate_repo_dest_tag_map(item)
             existing_manifests = internal_item_processor.generate_existing_manifests_map(item)
             for registry, repos in existing_manifests.items():
-                for e_repo, e_tags in repos.items():
+                for e_repo, _ in repos.items():
                     full_repo = internal_item_processor.reference_processor.replace_repo(e_repo)
                     for d_tag in destination_tags[list(destination_tags.keys())[0]][e_repo]:
                         if (
@@ -367,7 +355,6 @@ class PushDocker:
                                 [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
                                 or [None]
                             )[0]
-                            mad = v2s2_mad or v2s1_mad or v2list_mad
                             image_data = PushDocker.ImageData(
                                 full_repo,
                                 d_tag,
@@ -375,6 +362,7 @@ class PushDocker:
                                 v2s2_mad.digest if v2s2_mad else None,
                                 v2s1_mad.digest if v2s1_mad else None,
                             )
+                            mad = v2s2_mad or v2s1_mad or v2list_mad
                             if mad:
                                 backup_tags[image_data] = json.loads(mad.manifest)
                         else:
@@ -416,8 +404,14 @@ class PushDocker:
                 if e.response.status_code != 404 and e.response.status_code != 401:
                     raise
 
-    def get_outdated_manifests(self, backup_tags):
-        """Return list of existing manifests which are being replaced with new ones."""
+    def get_outdated_manifests(self, backup_tags) -> List[Tuple[str, str, str]]:
+        """Return list of existing manifests which are being replaced with new ones.
+
+        Args:
+            backup_tags (dict({ImageData: str}): backup tags generated with generate_backup_mapping.
+        Returns:
+            List of tuples containing digest, tag, repo identifying manifests
+        """
         outdated_signatures = []
         for image_data, manifest in backup_tags.items():
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
@@ -429,7 +423,7 @@ class PushDocker:
                 outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
         return outdated_signatures
 
-    def fetch_missing_push_items_digests(self, push_items, target_settings):
+    def fetch_missing_push_items_digests(self, push_items):
         """Fetch digests for media types which weren't originally pushed.
 
         In order to be able to sign v2s1 for images which were pushed as
@@ -467,8 +461,47 @@ class PushDocker:
                             continue
                         new_digests[reference][repo].setdefault(tag, {})
                         for mad in man_arch_digs:
-                            new_digests[reference][repo][tag][mad.type_] = mad.digest
+                            new_digests[reference][repo][tag][mad.type_] = (
+                                mad.digest,
+                                item.claims_signing_key,
+                            )
         return new_digests
+
+    def sign_new_manifests(self, docker_push_items):
+        """Sign newly pushed images with signers enabled in target settings.
+
+        Args:
+            docker_push_items(List[PushItem]): list of docker push items.
+        Returns:
+            List of tuple (reference, digest, key) representing currently signed images.
+        """
+        current_signatures = []
+        to_sign_new_entries = self.fetch_missing_push_items_digests(docker_push_items)
+        to_sign_entries = []
+        for reference, repo_tags in to_sign_new_entries.items():
+            for repo, tag_digests in repo_tags.items():
+                for tag, digests in tag_digests.items():
+                    for type_, digest_key in digests.items():
+                        print(digest_key)
+                        digest, key = digest_key
+                        to_sign_entries.append(
+                            SignEntry(
+                                reference=reference,
+                                repo=repo,
+                                digest=digest,
+                                signing_key=key,
+                                arch="amd64",
+                            )
+                        )
+                        print(to_sign_entries[-1])
+                        current_signatures.append((reference, digest, key))
+
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.sign_containers(to_sign_entries, self.task_id)
+        return current_signatures
 
     def run(self):
         """
@@ -529,32 +562,7 @@ class PushDocker:
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
 
-        # fetch missing digests
-        to_sign_new_entries = self.fetch_missing_push_items_digests(
-            docker_push_items, self.target_settings
-        )
-        to_sign_entries = []
-        for reference, repo_tags in to_sign_new_entries.items():
-            for repo, tag_digests in repo_tags.items():
-                for tag, digests in tag_digests.items():
-                    for type_, digest in digests.items():
-                        to_sign_entries.append(
-                            SignEntry(
-                                reference=reference,
-                                repo=repo,
-                                digest=digest,
-                                signing_key=item.claims_signing_key,
-                                arch="amd64",
-                            )
-                        )
-                        current_signatures.append((reference, digest, item.claims_signing_key))
-
-        # sign missing images
-        for signer in self.target_settings["signing"]:
-            if signer["enabled"]:
-                signercls = SIGNER_BY_LABEL[signer["label"]]
-                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                signer.sign_containers(to_sign_entries, self.task_id)
+        self.sign_new_manifests(docker_push_items)
 
         if self.target_settings.get("push_security_manifests_enabled", False):
             # Generate and push security manifests (if enabled in target settings)
@@ -587,7 +595,9 @@ class PushDocker:
 
             for version, iib_details in sorted(successful_iib_results.items()):
                 iib_result = iib_details["iib_result"]
-                # Index image used to fetch manifest list. This image will never be overwritten
+                iib_namespace = self.target_settings.get(
+                    "quay_operator_namespace", self.target_settings["quay_namespace"]
+                )
                 _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
                 permanent_index_image = image_schema.format(
                     host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -595,42 +605,16 @@ class PushDocker:
                     repo=iib_intermediate_repo,
                     tag=iib_result.build_tags[0],
                 )
-                manifest_list = self.index_image_quay_client.get_manifest(
-                    permanent_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+                current_signatures.extend(
+                    _sign_index_image(
+                        permanent_index_image,
+                        iib_namespace,
+                        iib_details["destination_tags"],
+                        iib_details["signing_keys"],
+                        self.task_id,
+                        self.target_settings,
+                    )
                 )
-                index_image_digests = [
-                    m["digest"]
-                    for m in manifest_list["manifests"]
-                    if m["platform"]["architecture"] in ("x86_64", "amd64")
-                ]
-                # Version acts as a tag of the index image
-                # use hotfix tag if it exists
-
-                to_sign_entries = []
-                iib_repo = self.target_settings["quay_operator_repository"]
-                for registry in self.dest_registries:
-                    for dest_tag in iib_details["destination_tags"]:
-                        for digest in index_image_digests:
-                            for key in iib_details["signing_keys"]:
-                                reference = f"{registry}/{iib_namespace}/{iib_repo}:{dest_tag}"
-                                to_sign_entries.append(
-                                    SignEntry(
-                                        repo=iib_repo,
-                                        reference=reference,
-                                        digest=digest,
-                                        signing_key=key,
-                                        arch="amd64",
-                                    )
-                                )
-                                current_signatures.append((reference, digest, key))
-
-                for signer in self.target_settings["signing"]:
-                    if signer["enabled"]:
-                        signercls = SIGNER_BY_LABEL[signer["label"]]
-                        signer = signercls(
-                            config_file=signer["config_file"], settings=self.target_settings
-                        )
-                        signer.sign_containers(to_sign_entries, self.task_id)
 
             # If there are any failed items, skip pushing
             if not failed_items:
