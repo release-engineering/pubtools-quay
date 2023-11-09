@@ -77,37 +77,45 @@ def test_generate_existing_tags_server_error_tolerate_missing(operator_signing_p
 
 
 def test_reference_processor_internal():
-    assert ReferenceProcessorInternal(quay_namespace="ns")("registry", "namespace/repo", None) == (
-        "ns/namespace----repo",
-        "registry/ns/namespace----repo",
+    assert (
+        ReferenceProcessorInternal(quay_namespace="ns").full_reference(
+            "registry", "namespace/repo", None
+        )
+        == "registry/ns/namespace----repo"
     )
 
 
 def test_reference_processor_internal_no_slash():
-    assert ReferenceProcessorInternal(quay_namespace="ns")("registry", "noslash-repo", None) == (
-        "ns/noslash-repo",
-        "registry/ns/noslash-repo",
+    assert (
+        ReferenceProcessorInternal(quay_namespace="ns").full_reference(
+            "registry", "noslash-repo", None
+        )
+        == "registry/ns/noslash-repo"
     )
 
 
 def test_reference_processor_internal_no_slash_tag():
-    assert ReferenceProcessorInternal(quay_namespace="ns")("registry", "noslash-repo", "tag") == (
-        "ns/noslash-repo",
-        "registry/ns/noslash-repo:tag",
+    assert (
+        ReferenceProcessorInternal(quay_namespace="ns").full_reference(
+            "registry", "noslash-repo", "tag"
+        )
+        == "registry/ns/noslash-repo:tag"
     )
 
 
 def test_reference_processor_internal_invalid_repo():
     with pytest.raises(ValueError):
-        assert ReferenceProcessorInternal(quay_namespace="ns")(
+        assert ReferenceProcessorInternal(quay_namespace="ns").full_reference(
             "registry", "namespace/ns/repo", None
         )
 
 
 def test_reference_processor_internal_tag():
-    assert ReferenceProcessorInternal(quay_namespace="ns")("registry", "namespace/repo", "tag") == (
-        "ns/namespace----repo",
-        "registry/ns/namespace----repo:tag",
+    assert (
+        ReferenceProcessorInternal(quay_namespace="ns").full_reference(
+            "registry", "namespace/repo", "tag"
+        )
+        == "registry/ns/namespace----repo:tag"
     )
 
 
@@ -133,3 +141,17 @@ def test_reference_processor_replace_repo_error():
 def test_invalid_virtual_push_item():
     with pytest.raises(ValueError):
         VirtualPushItem(repos=[], metadata={})
+
+
+def test_reference_processor_external_tag():
+    assert (
+        ReferenceProcessorExternal().full_reference("registry", "namespace/repo", "tag")
+        == "registry/namespace/repo:tag"
+    )
+
+
+def test_reference_processor_external_repo():
+    assert (
+        ReferenceProcessorExternal().full_reference("registry", "namespace/repo", None)
+        == "registry/namespace/repo"
+    )

@@ -197,11 +197,10 @@ class ContentExtractor:
         return repo_tags["tags"]
 
 
-@dataclass
 class ReferenceProcessorExternal:
     """Class is used to produce full image reference or repo reference from input."""
 
-    def __call__(self, registry: str, repo: str, tag: Optional[str] = None):
+    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None):
         """Produce full image reference from input.
 
         Args:
@@ -209,13 +208,22 @@ class ReferenceProcessorExternal:
             repo (str): Repository name.
             tag (Optional[str]): Tag name, if not set only repo reference is returned
         Returns:
-            tuple: Tuple containing repository name and full image reference if tag is set repo
-            reference otherwise.
+            str: full image reference.
         """
         if tag:
-            return (repo, f"{registry}/{repo}:{tag}")
+            return f"{registry}/{repo}:{tag}"
         else:
-            return (repo, f"{registry}/{repo}")
+            return f"{registry}/{repo}"
+
+    def replace_repo(self, repo: str):
+        """Return repo unmodified.
+
+        Args:
+            repo (str): Repository in format <namespace>/<product>
+        Returns:
+            str: Repository
+        """
+        return repo
 
 
 @dataclass
@@ -225,7 +233,7 @@ class ReferenceProcessorInternal:
     INTERNAL_DELIMITER = "----"
     quay_namespace: str
 
-    def __call__(self, registry: str, repo: str, tag: Optional[str] = None):
+    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None):
         """Produce full internal image reference from input.
 
         Args:
@@ -233,16 +241,13 @@ class ReferenceProcessorInternal:
             repo (str): Repository name.
             tag (Optional[str]): Tag name.
         Returns:
-            tuple: Tuple containing repository name and full image reference.
+            str: full image reference.
         """
         if repo.count("/") == 0:
             if tag:
-                return (
-                    f"{self.quay_namespace}/{repo}",
-                    f"{registry}/{self.quay_namespace}/{repo}:{tag}",
-                )
+                return f"{registry}/{self.quay_namespace}/{repo}:{tag}"
             else:
-                return (f"{self.quay_namespace}/{repo}", f"{registry}/{self.quay_namespace}/{repo}")
+                return f"{registry}/{self.quay_namespace}/{repo}"
         if repo.count("/") > 1 or repo[0] == "/" or repo[-1] == "/":
             raise ValueError(
                 "Input repository containing a delimeter should "
@@ -251,15 +256,9 @@ class ReferenceProcessorInternal:
             )
         replaced = repo.replace("/", self.INTERNAL_DELIMITER)
         if tag:
-            return (
-                f"{self.quay_namespace}/{replaced}",
-                f"{registry}/{self.quay_namespace}/{replaced}:{tag}",
-            )
+            return f"{registry}/{self.quay_namespace}/{replaced}:{tag}"
         else:
-            return (
-                f"{self.quay_namespace}/{replaced}",
-                f"{registry}/{self.quay_namespace}/{replaced}",
-            )
+            return f"{registry}/{self.quay_namespace}/{replaced}"
 
     def replace_repo(self, repo: str):
         """Convert repo to internal format.
@@ -400,7 +399,7 @@ class ItemProcesor:
         )
 
         for registry, repo, tag in self.generate_repo_dest_tags(item):
-            _, reference = self.reference_processor(registry, repo, tag)
+            reference = self.reference_processor.full_reference(registry, repo, tag)
             man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
             for mad in man_arch_digs:
                 if sign_only_arches and mad.arch not in sign_only_arches:
@@ -430,10 +429,8 @@ class ItemProcesor:
         )
 
         for repo, tag in self.generate_repo_untags(item):
-            ref_repo, reference = self.reference_processor(None, repo, tag)
-            man_arch_digs = self.extractor.extract_manifests(
-                f"{self.source_registry}/{ref_repo}:{tag}", media_types
-            )
+            reference = self.reference_processor.full_reference(self.source_registry, repo, tag)
+            man_arch_digs = self.extractor.extract_manifests(reference, media_types)
             for mad in man_arch_digs:
                 to_unsign.append(
                     {"reference": reference, "digest": mad.digest, "repo": repo, "arch": mad.arch}
@@ -451,7 +448,7 @@ class ItemProcesor:
         """
         existing_tag_entries = []
         for repo in self._generate_src_repo(item):
-            ref_repo, _ = self.reference_processor(self.source_registry, repo, tag=None)
+            ref_repo = self.reference_processor.replace_repo(repo)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
             for tag in tags:
                 existing_tag_entries.append((self.source_registry, repo, tag))
@@ -470,7 +467,7 @@ class ItemProcesor:
         else:
             media_types = only_media_types
         for repo, tag in self._generate_src_repo_tag(item):
-            _, full_ref = self.reference_processor(self.source_registry, repo, tag=tag)
+            full_ref = self.reference_processor.full_reference(self.source_registry, repo, tag=tag)
             man_arch_digs = self.extractor.extract_manifests(full_ref, media_types)
             for mad in man_arch_digs:
                 if (repo, tag, mad) not in existing_manifests:

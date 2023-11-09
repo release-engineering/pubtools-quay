@@ -62,6 +62,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
     signer_wrapper_remove_signatures,
+    fixture_run_in_parallel,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -250,6 +251,7 @@ def test_push_docker_multiarch_simple_workflow(
     fake_cert_key_paths,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
+    fixture_run_in_parallel,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()

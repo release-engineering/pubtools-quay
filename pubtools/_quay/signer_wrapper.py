@@ -36,6 +36,7 @@ class SignerWrapper:
 
     def __init__(self, config_file: Optional[str] = None, settings: Dict[str, Any] = None):
         """Initialize SignerWrapper.
+
         Args:
             config_file (str): Path to config file for the signer.
             settings (dict): Settings for the signer.
