@@ -226,7 +226,7 @@ def task_iib_add_bundles(
         metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
-    existing_manifests = item_processor.generate_existing_manifests(vitem)
+    existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
         if man_arch_dig.arch in ("amd64", "x86_64"):
@@ -346,7 +346,7 @@ def task_iib_remove_operators(
         metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
-    existing_manifests = item_processor.generate_existing_manifests(vitem)
+    existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
         if man_arch_dig.arch in ("amd64", "x86_64"):
@@ -464,7 +464,7 @@ def task_iib_build_from_scratch(
         metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
-    outdated_manifests = item_processor.generate_existing_manifests(vitem)
+    outdated_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,

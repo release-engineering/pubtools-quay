@@ -514,7 +514,7 @@ class TagDocker:
             )
             outdated_manifests = []
 
-            existing_manifests = item_processor.generate_existing_manifests(push_item)
+            existing_manifests = item_processor.generate_existing_manifests_metadata(push_item)
             for repo, tag, mad in existing_manifests:
                 if not mad:
                     continue
@@ -601,7 +601,7 @@ class TagDocker:
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
-            for repo, tag, mad in item_processor.generate_existing_manifests(push_item):
+            for repo, tag, mad in item_processor.generate_existing_manifests_metadata(push_item):
                 if not mad:
                     continue
                 outdated_manifests.append((mad.digest, tag, repo))

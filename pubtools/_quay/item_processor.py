@@ -501,7 +501,7 @@ class ItemProcesor:
                 ).setdefault(tag, mad)
         return mapping_existing
 
-    def generate_existing_manifests(self, item: PushItem, only_media_types=None):
+    def generate_existing_manifests_metadata(self, item: PushItem, only_media_types=None):
         """Generate list of existing manifests for given push item.
 
         Args:
@@ -517,7 +517,7 @@ class ItemProcesor:
             existing_manifests.append((repo, tag, mad))
         return existing_manifests
 
-    def generate_all_existing_manifests(self, item: PushItem):
+    def generate_all_existing_manifests_metadata(self, item: PushItem):
         """Return manifests for all existing tags in all repositories for given push item.
 
         Args:
@@ -532,7 +532,7 @@ class ItemProcesor:
             metadata={"tags": repo_tags_map},
             repos={repo: [] for repo in repo_tags_map.keys()},
         )
-        return self.generate_existing_manifests(item2)
+        return self.generate_existing_manifests_metadata(item2)
 
 
 def item_processor_for_external_data(quay_client, external_registries, retry_sleep_time):

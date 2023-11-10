@@ -116,7 +116,7 @@ def remove_repositories(repositories, settings):
         metadata={"tags": {repo: [] for repo in parsed_repositories}},
         repos={repo: [] for repo in parsed_repositories},
     )
-    existing_manifests = item_processor.generate_all_existing_manifests(item)
+    existing_manifests = item_processor.generate_all_existing_manifests_metadata(item)
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
