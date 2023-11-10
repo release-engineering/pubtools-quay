@@ -441,14 +441,13 @@ def task_iib_build_from_scratch(
         build_tags=["{0}-{1}".format(index_image_tag, task_id)],
         target_settings=target_settings,
     )
+    if not build_details:
+        sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
     index_stamp = timestamp()
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
-
-    if not build_details:
-        sys.exit(1)
     quay_client = QuayClient(
         target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
     )
