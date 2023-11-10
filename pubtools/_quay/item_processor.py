@@ -54,26 +54,32 @@ class ManifestArchDigest:
     type_: str
 
 
-@dataclass
 class ContentExtractor:
-    """Class is used to extract specific content from container registry based on provided input.
-
-    Args:
-        quay_client (QuayClient): Quay client used to communicate with container registry.
-        sleep_time (int): Time to sleep between retries.
-        timeout (int): Timeout for HTTP requests.
-        poll_rate (int): Poll rate for HTTP requests.
-    """
+    """Class is used to extract specific content from container registry based on provided input."""
 
     _MEDIA_TYPES_PRIORITY = {
         QuayClient.MANIFEST_LIST_TYPE: 30,
         QuayClient.MANIFEST_V2S2_TYPE: 20,
         QuayClient.MANIFEST_V2S1_TYPE: 10,
     }
-    quay_client: QuayClient
-    sleep_time: int = 5
-    timeout: int = 60
-    poll_rate: int = 5
+
+    def __init__(self,
+                 quay_client: QuayClient,
+                 sleep_time: int = 5,
+                 timeout: int = 60,
+                 poll_rate: int = 5):
+        """Initialize the class.
+
+        Args:
+            quay_client (QuayClient): Quay client used to communicate with container registry.
+            sleep_time (int): Time to sleep between retries.
+            timeout (int): Timeout for HTTP requests.
+            poll_rate (int): Poll rate for HTTP requests.
+        """
+        self.quay_client = quay_client
+        self.sleep_time: int = sleep_time
+        self.timeout: int = timeout
+        self.poll_rate: int = poll_rate
 
     def _extract_ml_manifest(
         self, image_ref: str, _manifest: str, mtype: str
@@ -146,7 +152,8 @@ class ContentExtractor:
         Returns:
             list: List of ManifestArchDigest objects.
         """
-        mtypes = media_types or self._MEDIA_TYPES_PRIORITY.keys()
+        mtypes = sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x]) or\
+            self._MEDIA_TYPES_PRIORITY.keys()
         results = []
         for mtype in mtypes:
             for i in range(self.timeout // self.poll_rate):
@@ -174,6 +181,7 @@ class ContentExtractor:
                     results.extend(ret)
                 else:
                     results.append(ret)
+                break
         return results
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True):
