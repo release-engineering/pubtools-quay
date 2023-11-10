@@ -9,11 +9,12 @@ import pytest
 
 def test_instrument_func():
     os.environ["PUB_OTEL_TRACING"] = "true"
+    os.environ["traceparent"] = "00-cefb2b8db35d5f3c0dfdf79d5aab1451-1f2bb7927f140744-01"
 
     mock_export = Mock()
     OTLPSpanExporter.export = mock_export
 
-    @instrument_func(args_to_attr=True)
+    @instrument_func(args_to_attr=True, is_context_to_env=True)
     def func_normal():
         return 1
 

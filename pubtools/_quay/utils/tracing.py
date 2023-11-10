@@ -10,7 +10,7 @@ import os
 import functools
 import logging
 
-from opentelemetry import trace
+from opentelemetry import trace, context
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry.sdk.resources import Resource, SERVICE_NAME
 from opentelemetry.sdk.trace import TracerProvider
@@ -21,9 +21,11 @@ from opentelemetry.propagate import set_global_textmap
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from opentelemetry import baggage
+from opentelemetry.baggage.propagation import W3CBaggagePropagator
 
 
 propagator = TraceContextTextMapPropagator()
+baggage_propagator = W3CBaggagePropagator()
 log = logging.getLogger(__name__)
 
 
@@ -57,7 +59,7 @@ class TracingWrapper:
 tracing_wrapper = TracingWrapper()
 
 
-def instrument_func(span_name=None, args_to_attr=False):
+def instrument_func(span_name=None, args_to_attr=False, is_context_to_env=False):
     """Instrument tracing for a function.
 
     Args:
@@ -66,7 +68,10 @@ def instrument_func(span_name=None, args_to_attr=False):
         task_info: dict
             Pub task information, which contains trace context.
         args_to_attr: boolean
-            Add function parameters into span attributes
+            Add function parameters into span attributes.
+        is_context_to_env: boolean
+            Write trace context to environment variables. In multiple scenario, sub-threads
+            are able to extract trace context from environment variables.
 
     Returns:
         The decorated function or class
@@ -79,6 +84,12 @@ def instrument_func(span_name=None, args_to_attr=False):
             if not os.getenv("PUB_OTEL_TRACING", "").lower() == "true":
                 return func(*args, **kwargs)
 
+            trace_ctx = None
+            # Try to extract trace context from environment variables.
+            if not context.get_current():
+                trace_ctx = propagator.extract(carrier=os.environ)
+                trace_ctx = baggage_propagator.extract(carrier=os.environ, context=trace_ctx)
+
             attributes = {
                 "function_name": func.__qualname__,
             }
@@ -89,8 +100,14 @@ def instrument_func(span_name=None, args_to_attr=False):
             with tracer.start_as_current_span(
                 name=span_name or func.__qualname__,
                 attributes=attributes,
+                context=trace_ctx or context.get_current(),
             ) as span:
                 try:
+                    # Put trace context in environment variables.
+                    if is_context_to_env:
+                        propagator.inject(os.environ)
+                        baggage_propagator.inject(os.environ)
+
                     result = func(*args, **kwargs)
                 except Exception as exc:
                     span.set_status(Status(StatusCode.ERROR))
