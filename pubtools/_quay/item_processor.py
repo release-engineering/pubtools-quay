@@ -114,6 +114,8 @@ class ContentExtractor:
 
         Args:
             unused (str): This parameter is unused for this specific method.
+            It's definied like this to simply  keep same signature as similar
+            method `_extract_ml_manifest`
             manifest (str): Manifest
             mtype (str): Media type of the manifest.
         Returns:
@@ -208,7 +210,7 @@ class ContentExtractor:
 class ReferenceProcessorExternal:
     """Class is used to produce full image reference or repo reference from input."""
 
-    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None):
+    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None) -> str:
         """Produce full image reference from input.
 
         Args:
@@ -223,7 +225,7 @@ class ReferenceProcessorExternal:
         else:
             return f"{registry}/{repo}"
 
-    def replace_repo(self, repo: str):
+    def replace_repo(self, repo: str) -> str:
         """Return repo unmodified.
 
         External reference processor does not modify repo.
@@ -243,7 +245,7 @@ class ReferenceProcessorInternal:
     INTERNAL_DELIMITER = "----"
     quay_namespace: str
 
-    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None):
+    def full_reference(self, registry: str, repo: str, tag: Optional[str] = None) -> str:
         """Produce full internal image reference from input.
 
         Args:
@@ -270,7 +272,7 @@ class ReferenceProcessorInternal:
         else:
             return f"{registry}/{self.quay_namespace}/{replaced}"
 
-    def replace_repo(self, repo: str):
+    def replace_repo(self, repo: str) -> str:
         """Convert repo to internal format.
 
         Args:
@@ -335,7 +337,7 @@ class ItemProcesor:
         """
         return list(item.repos.keys())
 
-    def _generate_src_repo_tag(self, item: PushItem):
+    def _generate_src_repo_tag(self, item: PushItem) -> List[Tuple[str, str]]:
         """Return list of tuples of (<source-repo>, <tag>).
 
         Args:
@@ -349,7 +351,7 @@ class ItemProcesor:
                 src_repo_tag.append((repo, tag))
         return src_repo_tag
 
-    def generate_repo_dest_tags(self, item: PushItem):
+    def generate_repo_dest_tags(self, item: PushItem) -> List[Tuple[str, str, str]]:
         """Return list of destination repositories and tags.
 
         Args:
@@ -364,7 +366,7 @@ class ItemProcesor:
                     ret.append((registry, repo, tag))
         return ret
 
-    def generate_repo_untags(self, item: PushItem):
+    def generate_repo_untags(self, item: PushItem) -> List[Tuple[str, str]]:
         """Return list of repositories and tags which are destined to be untag.
 
         Args:
@@ -378,7 +380,7 @@ class ItemProcesor:
                 ret.append((repo, tag))
         return ret
 
-    def generate_repo_dest_tag_map(self, item: PushItem):
+    def generate_repo_dest_tag_map(self, item: PushItem) -> Dict[str, Dict[str, List[str]]]:
         """Return map of destination repositories and tags.
 
         Args:
@@ -425,7 +427,7 @@ class ItemProcesor:
                 )
         return to_sign
 
-    def generate_to_unsign(self, item: PushItem):
+    def generate_to_unsign(self, item: PushItem) -> List[Dict[str, Any]]:
         """Generate list of images to unsign.
 
         Args:
@@ -447,7 +449,9 @@ class ItemProcesor:
                 )
         return to_unsign
 
-    def generate_existing_tags(self, item: PushItem, tolerate_missing: bool = True):
+    def generate_existing_tags(
+        self, item: PushItem, tolerate_missing: bool = True
+    ) -> List[Tuple[str, str, str]]:
         """Generate list of existing tags for given push item.
 
         Args:
@@ -466,7 +470,17 @@ class ItemProcesor:
                 existing_tag_entries.append((self.source_registry, repo, None))
         return existing_tag_entries
 
-    def _generate_existing_manifests(self, item: PushItem, only_media_types=None):
+    def _generate_existing_manifests(
+        self, item: PushItem, only_media_types=None
+    ) -> List[Tuple[str, str, Optional[ManifestArchDigest]]]:
+        """Generate list of existing manifests data for given push item.
+
+        Args:
+            item (PushItem): Push item.
+            only_media_types (list): Restrict to specific media types.
+        Returns:
+            list: List of tuples containing repository, tag and ManifestArchDigest.
+        """
         existing_manifests = []
         if not only_media_types:
             media_types = [
@@ -488,7 +502,9 @@ class ItemProcesor:
                     existing_manifests.append((repo, tag, None))
         return existing_manifests
 
-    def generate_existing_manifests_map(self, item: PushItem, only_media_types=None):
+    def generate_existing_manifests_map(
+        self, item: PushItem, only_media_types=None
+    ) -> Dict[str, Dict[str, Dict[str, List[ManifestArchDigest]]]]:
         """Generate existing manifests map for given push item.
 
         Args:
@@ -511,7 +527,9 @@ class ItemProcesor:
                 ).setdefault(tag, mad)
         return mapping_existing
 
-    def generate_existing_manifests_metadata(self, item: PushItem, only_media_types=None):
+    def generate_existing_manifests_metadata(
+        self, item: PushItem, only_media_types=None
+    ) -> List[Tuple[str, str, ManifestArchDigest]]:
         """Generate list of existing manifests for given push item.
 
         Args:
@@ -527,7 +545,9 @@ class ItemProcesor:
             existing_manifests.append((repo, tag, mad))
         return existing_manifests
 
-    def generate_all_existing_manifests_metadata(self, item: PushItem):
+    def generate_all_existing_manifests_metadata(
+        self, item: PushItem
+    ) -> List[Tuple[str, str, ManifestArchDigest]]:
         """Return manifests for all existing tags in all repositories for given push item.
 
         Args:
@@ -545,7 +565,9 @@ class ItemProcesor:
         return self.generate_existing_manifests_metadata(item2)
 
 
-def item_processor_for_external_data(quay_client, external_registries, retry_sleep_time):
+def item_processor_for_external_data(
+    quay_client, external_registries, retry_sleep_time
+) -> ItemProcesor:
     """Get instance of item processor configured to produce destination data.
 
     Args:
@@ -566,7 +588,7 @@ def item_processor_for_external_data(quay_client, external_registries, retry_sle
 
 def item_processor_for_internal_data(
     quay_client, internal_registry, retry_sleep_time, internal_namespace
-):
+) -> ItemProcesor:
     """Get instance of item processor configured to produce internal data.
 
     Args:
