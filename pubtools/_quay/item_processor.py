@@ -63,11 +63,9 @@ class ContentExtractor:
         QuayClient.MANIFEST_V2S1_TYPE: 10,
     }
 
-    def __init__(self,
-                 quay_client: QuayClient,
-                 sleep_time: int = 5,
-                 timeout: int = 60,
-                 poll_rate: int = 5):
+    def __init__(
+        self, quay_client: QuayClient, sleep_time: int = 5, timeout: int = 60, poll_rate: int = 5
+    ):
         """Initialize the class.
 
         Args:
@@ -152,8 +150,10 @@ class ContentExtractor:
         Returns:
             list: List of ManifestArchDigest objects.
         """
-        mtypes = sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x]) or\
-            self._MEDIA_TYPES_PRIORITY.keys()
+        mtypes = (
+            sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x])
+            or self._MEDIA_TYPES_PRIORITY.keys()
+        )
         results = []
         for mtype in mtypes:
             for i in range(self.timeout // self.poll_rate):
@@ -225,6 +225,8 @@ class ReferenceProcessorExternal:
 
     def replace_repo(self, repo: str):
         """Return repo unmodified.
+
+        External reference processor does not modify repo.
 
         Args:
             repo (str): Repository in format <namespace>/<product>
