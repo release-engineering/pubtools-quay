@@ -228,7 +228,6 @@ def operator_push_item_unkwown_op_type():
 @pytest.fixture
 def fixture_pyxis_get_ocp_versions():
     with mock.patch("pkg_resources.load_entry_point") as mocked:
-        print(mocked())
         yield mocked()
 
 
