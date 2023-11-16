@@ -120,12 +120,14 @@ def clear_repositories(repositories, settings):
         repos={repo: [] for repo in parsed_repositories},
     )
     existing_manifests = item_processor.generate_all_existing_manifests_metadata(item)
+    # print(existing_manifests)
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
     for repo, tag, mad in existing_manifests:
         outdated_manifests.append((mad.digest, tag, repo))
 
+    print("OUTDATED MANIFESTS", outdated_manifests)
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
         _signer = signercls(config_file=signer_configs[n], settings=settings)
