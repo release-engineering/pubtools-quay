@@ -28,6 +28,8 @@ from .utils.misc import (
     timestamp,
     pyxis_get_repo_metadata,
     set_aws_kms_environment_variables,
+    run_in_parallel,
+    FData,
 )
 
 # TODO: do we want this, or should I remove it?
@@ -558,6 +560,17 @@ class PushDocker:
             to_sign_entries.extend(
                 item_processor.generate_to_sign(item, sign_only_arches=["amd64", "x86_64"])
             )
+        to_sign_map = run_in_parallel(
+            item_processor.generate_to_sign,
+            [
+                FData(args=(item,), kwargs={"sign_only_arches": ["amd64", "x86_64"]})
+                for item in docker_push_items
+            ],
+        )
+
+        for to_sign_entries in to_sign_map.values():
+            to_sign_entries.extend(to_sign_entries)
+
         for sign_entry in to_sign_entries:
             current_signatures.append(
                 (sign_entry.reference, sign_entry.digest, sign_entry.signing_key)

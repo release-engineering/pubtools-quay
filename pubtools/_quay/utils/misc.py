@@ -1,6 +1,7 @@
 import argparse
 import base64
 import contextlib
+from dataclasses import dataclass, field
 import functools
 import json
 import logging
@@ -9,7 +10,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-
+from typing import Iterable, Any, Callable, Dict, List
 
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -23,7 +24,20 @@ INTERNAL_DELIMITER = "----"
 MAX_RETRY_WAIT = 120
 
 
-def run_in_parallel(func, data, threads=10):
+@dataclass
+class FData:
+    """Dataclass for holding data for a function execution.
+
+    Args:
+        args (Iterable[Any]): Arguments for the function.
+        kwargs (Dict[str, Any]): Keyword arguments for the function.
+    """
+
+    args: Iterable[Any]
+    kwargs: Dict[str, Any] = field(default_factory=dict)
+
+
+def run_in_parallel(func: Callable, data: List[FData], threads=10):
     """Run method on data in parallel.
 
     Args:
@@ -36,7 +50,8 @@ def run_in_parallel(func, data, threads=10):
     results = {}
     with ThreadPoolExecutor(max_workers=threads) as executor:
         future_results = {
-            executor.submit(func, *data_entry): n for n, data_entry in enumerate(data)
+            executor.submit(func, *data_entry.args, **data_entry.kwargs): n
+            for n, data_entry in enumerate(data)
         }
         for future in futures.as_completed(future_results):
             if future.exception():
