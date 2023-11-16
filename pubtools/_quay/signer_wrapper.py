@@ -150,8 +150,8 @@ class MsgSignerSettingsSchema(Schema):
     """Validation schema for messaging signer settings."""
 
     pyxis_server = fields.String(required=True)
-    pyxis_ssl_crtfile = fields.String(required=True)
-    pyxis_ssl_keyfile = fields.String(required=True)
+    pyxis_ssl_crtfile = fields.String(required=False)
+    pyxis_ssl_keyfile = fields.String(required=False)
     num_thread_pyxis = fields.Integer(required=False, default=7)
 
 

@@ -71,6 +71,7 @@ class PushDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
+        self._src_quay_client = None
         self._dest_quay_client = None
         self._dest_operator_quay_client = None
         self._dest_quay_api_client = None
@@ -92,6 +93,17 @@ class PushDocker:
                 self.quay_host,
             )
         return self._dest_quay_client
+
+    @property
+    def src_quay_client(self):
+        """Create and access QuayClient for source image."""
+        if self._src_quay_client is None:
+            self._src_quay_client = QuayClient(
+                self.target_settings["source_quay_user"],
+                self.target_settings["source_quay_password"],
+                self.target_settings.get("source_quay_host") or self.quay_host,
+            )
+        return self._src_quay_client
 
     @property
     def dest_operator_quay_client(self):
@@ -482,7 +494,6 @@ class PushDocker:
             for repo, tag_digests in repo_tags.items():
                 for tag, digests in tag_digests.items():
                     for type_, digest_key in digests.items():
-                        print(digest_key)
                         digest, key = digest_key
                         to_sign_entries.append(
                             SignEntry(
@@ -493,7 +504,6 @@ class PushDocker:
                                 arch="amd64",
                             )
                         )
-                        print(to_sign_entries[-1])
                         current_signatures.append((reference, digest, key))
 
         for signer in self.target_settings["signing"]:
@@ -538,7 +548,7 @@ class PushDocker:
         index_stamp = timestamp()
 
         item_processor = item_processor_for_external_data(
-            self.dest_quay_client,
+            self.src_quay_client,
             self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
         )
