@@ -9,11 +9,7 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from marshmallow import Schema, fields, EXCLUDE
 
-from .utils.misc import (
-    run_entrypoint,
-    get_pyxis_ssl_paths,
-    run_in_parallel,
-)
+from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel, log_step
 from .item_processor import SignEntry
 
 
@@ -123,6 +119,7 @@ class SignerWrapper:
         )
         self._store_signed(signed)
 
+    @log_step("Sign container images")
     def sign_containers(
         self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
     ):
@@ -340,6 +337,7 @@ class MsgSignerWrapper(SignerWrapper):
                 )
         return sig_ids_to_remove
 
+    @log_step("Remove outdated signatures")
     def remove_signatures(
         self,
         signatures: List[Tuple[str, str, str]],
