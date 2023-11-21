@@ -463,7 +463,11 @@ def task_iib_build_from_scratch(
         metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
-    outdated_manifests = item_processor.generate_existing_manifests_metadata(vitem)
+    existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
+    outdated_manifests = []
+    for ref, tag, man_arch_dig in existing_manifests:
+        if man_arch_dig.arch in ("amd64", "x86_64"):
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,

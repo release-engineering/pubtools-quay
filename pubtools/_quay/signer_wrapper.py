@@ -9,11 +9,8 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from marshmallow import Schema, fields, EXCLUDE
 
-from .utils.misc import (
-    run_entrypoint,
-    get_pyxis_ssl_paths,
-    run_in_parallel,
-)
+from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel
+from .quay_api_client import QuayApiClient
 from .item_processor import SignEntry
 
 
@@ -355,6 +352,97 @@ class MsgSignerWrapper(SignerWrapper):
         """
         _signatures = list(signatures)
         to_remove = self._filter_to_remove(_signatures, _exclude=_exclude)
+        self._remove_signatures(to_remove)
+
+
+class CosignSignerSettingsSchema(Schema):
+    """Validation schema for cosign signer settings."""
+
+    quay_namespace = fields.String(required=True)
+    quay_host = fields.String(required=True)
+    dest_quay_api_token = fields.String(required=True)
+
+
+class CosignSignerWrapper(SignerWrapper):
+    """Wrapper for cosign signer functionality."""
+
+    label = "cosign_signer"
+    entry_point_conf = ["pubtools-sign", "modules", "pubtools-sign-cosign-container-sign"]
+
+    SCHEMA = CosignSignerSettingsSchema
+
+    def _list_signatures(self, repository):
+        full_reference = (
+            f"{self.settings['quay_host']}/"
+            + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+        )
+        existing_signatures = run_entrypoint(
+            ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]
+        )
+        return [
+            (repository, e.split(":")[-1].replace(".sig", "").replace("-", ":"))
+            for e in existing_signatures[1]
+        ]
+
+    def _filter_to_remove(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> List[str]:
+        """Filter signatures to remove.
+
+        Args:
+            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)
+            tuples of signautres to remove.
+            _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
+        """
+        repos = list(set([x[2] for x in signatures]))
+        signatures_to_remove = [(x[2], x[0]) for x in signatures]
+        signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
+        existing_signatures = sum(
+            run_in_parallel(self._list_signatures, [(repo,) for repo in repos]).values(), []
+        )
+        to_remove = []
+        for existing_signature in existing_signatures:
+            if (
+                existing_signature in signatures_to_remove
+                and existing_signature not in signatures_to_exclude
+            ):
+                to_remove.append(existing_signature)
+                LOG.debug(
+                    f"Removing signature "
+                    f"Repository: {existing_signature[0]}, "
+                    f"Digest: {existing_signature[1]}, "
+                )
+        return to_remove
+
+    def _run_remove_signatures(self, signatures_to_remove: List[str]):
+        """Remove signatures from the sigstore.
+
+        Args:
+            signatures_to_remove (List[str]): List of signatures to remove.
+        """
+        qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
+        for sig_to_remove in signatures_to_remove:
+            ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
+            sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
+            qc.delete_tag(ref, sig_tag)
+
+    def remove_signatures(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ):
+        """Remove signatures from sigstore.
+
+        Args:
+            signatures (list): List of tuples containing (digest, reference, repository) of
+            signatures to remove.
+            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
+        """
+        to_remove = self._filter_to_remove(signatures, _exclude=_exclude)
         self._remove_signatures(to_remove)
 
 

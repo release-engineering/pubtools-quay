@@ -930,7 +930,10 @@ def target_settings():
         "cosign_rekor_url": "https://some-rekor.com",
         "pyxis_ssl_crtfile": "/pyxis.crt",
         "pyxis_ssl_keyfile": "/pyxis.key",
-        "signing": [{"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"}],
+        "signing": [
+            {"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"},
+            {"enabled": True, "label": "cosign_signer", "config_file": "test-config.yml"},
+        ],
         "retry_sleep_time": 0,
     }
 
@@ -2016,6 +2019,15 @@ def msg_signer_settings():
         "pyxis_server": "test-server",
         "pyxis_ssl_crtfile": "test-cert-file",
         "pyxis_ssl_keyfile": "test-key-file",
+    }
+
+
+@pytest.fixture
+def cosign_signer_settings():
+    return {
+        "quay_host": "test-quay.io",
+        "quay_namespace": "testing",
+        "dest_quay_api_token": "testing-quay-api-token",
     }
 
 

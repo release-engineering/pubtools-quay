@@ -83,14 +83,72 @@ def test_push_docker_multiarch_merge_ml_operator(
         {"fbc_opt_in": False},
         {"fbc_opt_in": False},
     ]
-    signer_wrapper_run_entry_point.return_value = [
-        {
-            "_id": 1,
-            "manifest_digest": "sha256:6666666666",
-            "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
-            "sig_key_id": "some-key",
-            "repository": "operators/index-image",
-        }
+    signer_wrapper_run_entry_point.side_effect = [
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry1.com/target/repo:latest-test-tag",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry1.com/target/repo:latest-test-tag",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry2.com/target/repo:latest-test-tag",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
     ]
     mock_run_entrypoint_operator_pusher.side_effect = [
         # pubtools-pyxis-get-operator-indices
@@ -184,6 +242,7 @@ def test_push_docker_multiarch_merge_ml_operator(
         push_docker.run()
         signer_wrapper_entry_point.assert_has_calls(
             [
+                # msg signing wrapper
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
@@ -199,6 +258,40 @@ def test_push_docker_multiarch_merge_ml_operator(
                     digest="sha256:5555555555",
                     task_id="1",
                     repo="target/repo",
+                ),
+                # cosign
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry1.com/target/repo:latest-test-tag",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry2.com/target/repo:latest-test-tag",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="target/repo",
+                ),
+                # msg signer
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry1.com/namespace/operators/index-image:v4.5",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry2.com/namespace/operators/index-image:v4.5",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -232,9 +325,29 @@ def test_push_docker_multiarch_merge_ml_operator(
                     task_id="1",
                     repo="operators/index-image",
                 ),
+                # cosign
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry1.com/namespace/operators/index-image:v4.6",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference="some-registry2.com/namespace/operators/index-image:v4.6",
+                    digest="sha256:5555555555",
+                    task_id="1",
+                    repo="operators/index-image",
+                ),
             ]
         )
-        signer_wrapper_remove_signatures.assert_called_with([1])
+        assert signer_wrapper_remove_signatures.mock_calls == [
+            mock.call([1]),
+            mock.call([("operators/index-image", "sha256:6666666666")]),
+        ]
 
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
