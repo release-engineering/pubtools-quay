@@ -16,6 +16,7 @@ from .utils.misc import (
 from .quay_client import QuayClient
 from .tag_images import tag_images
 from .manifest_list_merger import ManifestListMerger
+from .utils.tracing import instrument_func
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -293,6 +294,7 @@ class ContainerImagePusher:
         destination image contains more architectures than source.
         """
 
+        @instrument_func()
         def push_container_image(item):
             """
             Push container images to Quay.

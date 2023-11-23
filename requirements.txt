@@ -12,3 +12,6 @@ iiblib
 pubtools-iib
 kerberos
 marshmallow
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp
