@@ -371,7 +371,18 @@ class CosignSignerWrapper(SignerWrapper):
 
     SCHEMA = CosignSignerSettingsSchema
 
-    def _list_signatures(self, repository):
+    def _list_signatures(self, repository: str) -> List[Tuple[str, str]]:
+        """List cosign signatures for given repository.
+
+        This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
+        return list of full references to signature tags in format sha256-<digest>.sig
+
+        Args:
+            repository (str): Repository to list signatures for.
+        Returns:
+            List[Tuple[str, str]]: List of (repository, signature tag) tuples
+            for existing signatures.
+        """
         full_reference = (
             f"{self.settings['quay_host']}/"
             + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
@@ -417,11 +428,11 @@ class CosignSignerWrapper(SignerWrapper):
                 )
         return to_remove
 
-    def _run_remove_signatures(self, signatures_to_remove: List[str]):
+    def _run_remove_signatures(self, signatures_to_remove: List[Tuple[str, str]]):
         """Remove signatures from the sigstore.
 
         Args:
-            signatures_to_remove (List[str]): List of signatures to remove.
+            signatures_to_remove (List[Tuple(str, str)]): List of signatures to remove.
         """
         qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
         for sig_to_remove in signatures_to_remove:
