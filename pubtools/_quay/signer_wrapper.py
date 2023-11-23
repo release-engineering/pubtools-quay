@@ -371,7 +371,7 @@ class CosignSignerWrapper(SignerWrapper):
 
     SCHEMA = CosignSignerSettingsSchema
 
-    def _list_signatures(self, repository: str) -> List[Tuple[str, str]]:
+    def _list_signatures(self, repository: str, tag: str) -> List[Tuple[str, str]]:
         """List cosign signatures for given repository.
 
         This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
@@ -379,6 +379,7 @@ class CosignSignerWrapper(SignerWrapper):
 
         Args:
             repository (str): Repository to list signatures for.
+            tag (str): Tag to list signatures for.
         Returns:
             List[Tuple[str, str]]: List of (repository, signature tag) tuples
             for existing signatures.
@@ -386,6 +387,7 @@ class CosignSignerWrapper(SignerWrapper):
         full_reference = (
             f"{self.settings['quay_host']}/"
             + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+            + f":{tag}"
         )
         existing_signatures = run_entrypoint(
             ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]
@@ -408,11 +410,16 @@ class CosignSignerWrapper(SignerWrapper):
             _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
             tuples of signautres to keep.
         """
-        repos = list(set([x[2] for x in signatures]))
+        repo_tag_list = list(set([(x[2], x[1]) for x in signatures]))
         signatures_to_remove = [(x[2], x[0]) for x in signatures]
         signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
-        existing_signatures = sum(
-            run_in_parallel(self._list_signatures, [(repo,) for repo in repos]).values(), []
+        existing_signatures = set(
+            sum(
+                run_in_parallel(
+                    self._list_signatures, [repo_tag for repo_tag in repo_tag_list]
+                ).values(),
+                [],
+            )
         )
         to_remove = []
         for existing_signature in existing_signatures:
