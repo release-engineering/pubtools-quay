@@ -188,8 +188,7 @@ def test_run(
     signer_wrapper_run_entry_point.return_value = [
         {
             "_id": 1,
-            "manifest_digest": "sha256:96d07bfc2cfd3adb180"
-            "b3e0ef23b38ebb9a30ec49f7a6636209215e83d9e231b",
+            "manifest_digest": "sha256:3333333333",
             "reference": "registry.io/namespace/image:1",
             "sig_key_id": "key",
             "repository": "namespace/image",
@@ -269,16 +268,14 @@ def test_run_multiple_repos(
     signer_wrapper_run_entry_point.return_value = [
         {
             "_id": 1,
-            "manifest_digest": "sha256:96d07bfc2cfd3adb180"
-            "b3e0ef23b38ebb9a30ec49f7a6636209215e83d9e231b",
+            "manifest_digest": "sha256:5555555555",
             "reference": "registry.io/namespace/image2:3",
             "sig_key_id": "key",
             "repository": "namespace/image2",
         },
         {
             "_id": 2,
-            "manifest_digest": "sha256:96d07bfc2cfd3adb180"
-            "b3e0ef23b38ebb9a30ec49f7a6636209215e83d9e231b",
+            "manifest_digest": "sha256:1111111111",
             "reference": "registry.io/namespace/image2:3",
             "sig_key_id": "key",
             "repository": "namespace/image2",

@@ -153,7 +153,7 @@ class ContentExtractor:
             list: List of ManifestArchDigest objects.
         """
         mtypes = (
-            sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x])
+            sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x], reverse=True)
             or self._MEDIA_TYPES_PRIORITY.keys()
         )
         results = []
@@ -409,7 +409,6 @@ class ItemProcesor:
         media_types = (
             item.metadata.get("build", {}).get("extra", {}).get("image", {}).get("media_types", [])
         )
-
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
             man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)

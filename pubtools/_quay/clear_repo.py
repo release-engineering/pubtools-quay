@@ -88,22 +88,23 @@ def clear_repositories(repositories, settings):
     Args:
         repository (str):
             External repositories to clear. Comma separated values.
-        quay_org (str):
-            Quay organization in which repositories reside.
-        quay_api_token (str):
-            OAuth token for authentication of Quay REST API.
-        quay_user (str):
-            Quay username for Docker HTTP API.
-        quay_password (str):
-            Quay password for Docker HTTP API.
-        pyxis_server (str):
-            Pyxis service hostname:
-        pyxis_ssl_crtfile (str):
-            Path to .crt file for SSL authentication.
-        pyxis_ssl_keyfile (str):
-            Path to .key file for SSL authentication.
-        pyxis_request_threads:
-            Maximum number of threads to use for parallel pyxis request.
+        settings (dict):
+            quay_org (str):
+                Quay organization in which repositories reside.
+            quay_api_token (str):
+                OAuth token for authentication of Quay REST API.
+            quay_user (str):
+                Quay username for Docker HTTP API.
+            quay_password (str):
+                Quay password for Docker HTTP API.
+            pyxis_server (str):
+                Pyxis service hostname:
+            pyxis_ssl_crtfile (str):
+                Path to .crt file for SSL authentication.
+            pyxis_ssl_keyfile (str):
+                Path to .key file for SSL authentication.
+            pyxis_request_threads:
+                Maximum number of threads to use for parallel pyxis request.
     """
     parsed_repositories = repositories.split(",")
 
