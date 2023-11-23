@@ -392,10 +392,14 @@ class CosignSignerWrapper(SignerWrapper):
         existing_signatures = run_entrypoint(
             ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]
         )
-        return [
-            (repository, e.split(":")[-1].replace(".sig", "").replace("-", ":"))
-            for e in existing_signatures[1]
-        ]
+        if existing_signatures[0]:
+            return [
+                (repository, e.split(":")[-1].replace(".sig", "").replace("-", ":"))
+                for e in existing_signatures[1]
+            ]
+        else:
+            LOG.warning("Fetch existing signatures error:" + existing_signatures[1])
+            return []
 
     def _filter_to_remove(
         self,
