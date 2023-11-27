@@ -16,7 +16,7 @@ from .utils.misc import (
 from .quay_client import QuayClient
 from .tag_images import tag_images
 from .manifest_list_merger import ManifestListMerger
-from .utils.tracing import instrument_func
+from pubtools.tracing import instrument_func
 
 LOG = logging.getLogger("pubtools.quay")
 

@@ -22,7 +22,7 @@ from .utils.misc import (
 from .quay_client import QuayClient
 from .utils.misc import parse_index_image, pyxis_get_repo_metadata
 from .models import BuildIndexImageParam
-from .utils.tracing import instrument_func
+from pubtools.tracing import instrument_func
 
 LOG = logging.getLogger("pubtools.quay")
 

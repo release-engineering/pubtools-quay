@@ -15,7 +15,7 @@ import docker
 import paramiko
 from shlex import quote
 
-from .utils.tracing import instrument_func
+from pubtools.tracing import instrument_func
 
 LOG = logging.getLogger("pubtools.quay")
 

@@ -17,7 +17,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from pubtools.pluggy import pm
 
-from .tracing import instrument_func
+from pubtools.tracing import instrument_func
 
 LOG = logging.getLogger("pubtools.quay")
 
