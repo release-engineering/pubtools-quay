@@ -152,15 +152,63 @@ def fake_setup(
         "some-registry.com/iib-namespace/iib@sha256:a1a1a1",
         ["8-1"],
     )
-    signer_wrapper_run_entry_point.return_value = [
-        {
-            "_id": 1,
-            "manifest_digest": "sha256:5555555555",
-            "reference": "some-registry.com/operators/index-image:8",
-            "sig_key_id": "key",
-            "repository": "operators/index-image",
-        }
+    signer_wrapper_run_entry_point_sf = [
+        # get signatures from pyxis
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8-timestamp",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ],
+        # store signatures to pyxis
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8-timestamp",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ],
     ]
+    signer_wrapper_run_entry_point_sf.append(
+        # remove signatures from pyxis (fetch existing)
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ]
+    )
+    signer_wrapper_run_entry_point_sf.append((True, ["quay.io/testing/repo:sha256-5555555555.sig"]))
+    signer_wrapper_run_entry_point_sf.append((True, ["quay.io/testing/repo:sha256-5555555555.sig"]))
+
+    signer_wrapper_run_entry_point.side_effect = signer_wrapper_run_entry_point_sf
+
     mock_iib_add_bundles.return_value = build_details
     signer_wrapper_entry_point.return_value = {
         "signer_result": {
@@ -188,7 +236,6 @@ def test_task_iib_add_bundles(
     mock_timestamp,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
-    signer_wrapper_store_signed,
     signer_wrapper_remove_signatures,
     msg_signer_wrapper_save_signatures_file,
     target_settings,
@@ -267,40 +314,6 @@ def test_task_iib_add_bundles(
             ),
         ]
     )
-    signer_wrapper_store_signed.assert_called_with(
-        {
-            "signer_result": {"status": "ok"},
-            "operation": {
-                "references": ["some-registry.com/iib-namespace/new-index-image:8"],
-                "manifests": [
-                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"
-                ],
-            },
-            "operation_results": [
-                [
-                    {
-                        "i": 0,
-                        "msg": {
-                            "errors": [],
-                            "manifest_digest": "sha256:bd6eba96070ef"
-                            "e86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
-                            "pub_task_id": "12345",
-                            "repo": "iib-namespace/new-index-image",
-                            "request_id": "89cf86e0-8403-46e0-b5ed-5984a635e89e",
-                            "request_received_time": "2023-10-17T08:08:01.544757",
-                            "sig_key_id": "37036783",
-                            "sig_keyname": "testing",
-                            "signature_type": "container_signature",
-                            "signed_claim": "claim1",
-                        },
-                    },
-                    {},
-                ]
-            ],
-            "signing_key": "sig-key",
-        }
-    )
-
     assert mock_run_tag_images.call_count == 2
     assert mock_run_tag_images.call_args_list[0] == mock.call(
         "some-registry.com/iib-namespace/new-index-image:8",
@@ -318,7 +331,10 @@ def test_task_iib_add_bundles(
         True,
         target_settings,
     )
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    assert signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
 
 
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -481,7 +497,10 @@ def test_task_iib_add_bundles_operator_ns(
         True,
         target_settings,
     )
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    assert signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
 
 
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -560,7 +579,10 @@ def test_task_iib_remove_operators(
         True,
         target_settings,
     )
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
 
 
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -633,7 +655,10 @@ def test_task_iib_remove_operators_operator_ns(
         True,
         target_settings,
     )
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
 
 
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
@@ -647,6 +672,7 @@ def test_task_iib_build_from_scratch(
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
     msg_signer_wrapper_save_signatures_file,
+    signer_wrapper_remove_signatures,
     fake_quay_client_get_operator_quay_client,
     target_settings,
     fake_cert_key_paths,
@@ -803,6 +829,7 @@ def test_task_iib_build_from_scratch_operator_ns(
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
     msg_signer_wrapper_save_signatures_file,
+    signer_wrapper_remove_signatures,
     fake_quay_client_get_operator_quay_client,
     target_settings,
     fake_cert_key_paths,
