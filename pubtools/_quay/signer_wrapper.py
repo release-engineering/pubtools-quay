@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from marshmallow import Schema, fields, EXCLUDE
 
 from .quay_api_client import QuayApiClient
-from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel, log_step
+from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel, log_step, FData
 from .item_processor import SignEntry
 
 
@@ -132,7 +132,9 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         run_in_parallel(
-            self.sign_container, zip(to_sign_entries, [task_id] * len(to_sign_entries)), parallelism
+            self.sign_container,
+            [FData(args=x) for x in zip(to_sign_entries, [task_id] * len(to_sign_entries))],
+            parallelism,
         )
 
     def validate_settings(self, settings: Dict[str, Any] = None):
@@ -422,7 +424,7 @@ class CosignSignerWrapper(SignerWrapper):
         existing_signatures = set(
             sum(
                 run_in_parallel(
-                    self._list_signatures, [repo_tag for repo_tag in repo_tag_list]
+                    self._list_signatures, [FData(args=repo_tag) for repo_tag in repo_tag_list]
                 ).values(),
                 [],
             )

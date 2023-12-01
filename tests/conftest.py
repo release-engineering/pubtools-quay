@@ -10,6 +10,7 @@ import pytest
 from pubtools.pluggy import pm, hookimpl, hookspec
 
 from pubtools._quay.utils.logger import Logger
+from pubtools._quay.utils.misc import FData
 
 # flake8: noqa: E501
 
@@ -2034,7 +2035,7 @@ def cosign_signer_settings():
 def run_in_serial(func, data, threads):
     ret = []
     for dentry in data:
-        ret.append(func(*data))
+        ret.append(func(*dentry.args, **dentry.kwargs))
     return ret
 
 
