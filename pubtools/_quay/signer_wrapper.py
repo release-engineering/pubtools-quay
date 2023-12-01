@@ -424,7 +424,7 @@ class CosignSignerWrapper(SignerWrapper):
         existing_signatures = set(
             sum(
                 run_in_parallel(
-                    self._list_signatures, [repo_tag for repo_tag in repo_tag_list]
+                    self._list_signatures, [FData(args=repo_tag) for repo_tag in repo_tag_list]
                 ).values(),
                 [],
             )
