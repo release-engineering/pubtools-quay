@@ -8,6 +8,7 @@ import base64
 from dataclasses import dataclass
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Any
 
 from .quay_client import QuayClient
 from .utils.misc import get_internal_container_repo_name, log_step
@@ -31,7 +32,7 @@ class SecurityManifestPusher:
 
     COSIGN_TRIANGULATE_TYPES = ("attestation", "sbom", "signature")
 
-    def __init__(self, push_items: list, target_settings: dict):
+    def __init__(self, push_items: list[object], target_settings: dict[str, Any]) -> None:
         """
         Initialize.
 
@@ -48,11 +49,11 @@ class SecurityManifestPusher:
         self.cosign_public_key_path = self.target_settings["cosign_public_key_path"]
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._src_quay_client = None
-        self._dest_quay_api_client = None
+        self._src_quay_client: QuayClient | None = None
+        self._dest_quay_api_client: QuayApiClient | None = None
 
     @property
-    def src_quay_client(self):
+    def src_quay_client(self) -> QuayClient:
         """Create and access QuayClient for source image."""
         if self._src_quay_client is None:
             self._src_quay_client = QuayClient(
@@ -63,7 +64,7 @@ class SecurityManifestPusher:
         return self._src_quay_client
 
     @property
-    def dest_quay_api_client(self):
+    def dest_quay_api_client(self) -> QuayApiClient:
         """Create and access QuayApiClient for dest image."""
         if self._dest_quay_api_client is None:
             self._dest_quay_api_client = QuayApiClient(
@@ -95,7 +96,7 @@ class SecurityManifestPusher:
         return True
 
     def cosign_get_existing_attestation(
-        self, image_ref: str, output_file: str, rekor_url: str = None
+        self, image_ref: str, output_file: str, rekor_url: str | None = None
     ) -> bool:
         """
         Use cosign to verify and get an attestation, if it exists.
@@ -131,8 +132,8 @@ class SecurityManifestPusher:
         return True
 
     def cosign_attest_security_manifest(
-        self, security_manifest_path: str, image_ref: str, rekor_url: str = None
-    ):
+        self, security_manifest_path: str, image_ref: str, rekor_url: str | None = None
+    ) -> None:
         """
         Use cosign to attest a security manifest and push the created image to the destination.
 
@@ -210,7 +211,7 @@ class SecurityManifestPusher:
         with open(reference_file, "r") as f:
             return f.read().strip()
 
-    def get_security_manifest_from_attestation(self, file_path: str) -> dict:
+    def get_security_manifest_from_attestation(self, file_path: str) -> dict[Any, Any] | Any:
         """
         Parse image attestation and extract a security manifest.
 
@@ -226,7 +227,7 @@ class SecurityManifestPusher:
 
         return json.loads(data)
 
-    def security_manifest_get_products(self, security_manifest: dict) -> set[str]:
+    def security_manifest_get_products(self, security_manifest: dict[Any, Any]) -> set[str]:
         """
         Get a list of products from an already uploaded security manifest.
 
@@ -255,7 +256,7 @@ class SecurityManifestPusher:
 
         return products
 
-    def get_destination_repos(self, item: object) -> list[str]:
+    def get_destination_repos(self, item: Any) -> list[str]:
         """
         Get a list of destination refs (without tag/digest) of a push item.
 
@@ -279,7 +280,9 @@ class SecurityManifestPusher:
 
         return list(set(dest_repos))
 
-    def security_manifest_add_products(self, security_manifest_path: str, products: set) -> str:
+    def security_manifest_add_products(
+        self, security_manifest_path: str, products: set[str]
+    ) -> str:
         """
         Add product names of the shipped image to the security manifest.
 
@@ -309,7 +312,7 @@ class SecurityManifestPusher:
 
         return modified_security_manifest_path
 
-    def delete_existing_attestation(self, image_ref: str, dir_path: str):
+    def delete_existing_attestation(self, image_ref: str, dir_path: str) -> None:
         """
         Delete an existing attestation image.
 
@@ -336,11 +339,11 @@ class SecurityManifestPusher:
 
     def merge_and_push_security_manifest(
         self,
-        item,
+        item: Any,
         image_manifest: DigestSecurityManifest,
         destination_repos: list[str],
         dir_path: str,
-    ):
+    ) -> None:
         """
         Add products to security manifest and create an attestation.
 
@@ -410,7 +413,7 @@ class SecurityManifestPusher:
             )
 
     def get_source_item_security_manifests(
-        self, item: object, dir_path: str
+        self, item: Any, dir_path: str
     ) -> list[DigestSecurityManifest]:
         """
         Get security manifest of a source image.
@@ -443,7 +446,7 @@ class SecurityManifestPusher:
         ]
 
     def get_multiarch_item_security_manifests(
-        self, item: object, dir_path: str
+        self, item: Any, dir_path: str
     ) -> list[DigestSecurityManifest]:
         """
         Get security manifests of a multiarch image.
@@ -467,35 +470,35 @@ class SecurityManifestPusher:
             source_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
         )
 
-        for arch in manifest_list["manifests"]:
-            image_ref = f"{source_repo}@{arch['digest']}"
+        for arch in manifest_list["manifests"]:  # type: ignore
+            image_ref = f"{source_repo}@{arch['digest']}"  # type: ignore
             security_manifest_path = os.path.join(
                 dir_path,
-                f"security_manifest_{arch['platform']['architecture']}_{uuid.uuid4().hex}.json",
+                f"security_manifest_{arch['platform']['architecture']}_{uuid.uuid4().hex}.json",  # type: ignore # noqa: E501
             )
 
             result = self.cosign_get_security_manifest(image_ref, security_manifest_path)
             if not result:
                 LOG.warning(
-                    f"Image {source_ref} with architecture {arch['platform']['architecture']}"
+                    f"Image {source_ref} with architecture {arch['platform']['architecture']}"  # type: ignore # noqa: E501
                     " doesn't contain a security manifest"
                 )
             else:
                 image_manifests.append(
                     DigestSecurityManifest(
-                        digest=arch["digest"], security_manifest_path=security_manifest_path
+                        digest=arch["digest"], security_manifest_path=security_manifest_path  # type: ignore # noqa: E501
                     )
                 )
 
         # I wonder if this should be treated as an error
-        if image_manifests and len(image_manifests) != len(manifest_list["manifests"]):
+        if image_manifests and len(image_manifests) != len(manifest_list["manifests"]):  # type: ignore # noqa: E501
             LOG.error(
                 f"Only some architectures of multiarch image {source_ref} have a security manifest"
             )
 
         return image_manifests
 
-    def push_item_security_manifests(self, item: object):
+    def push_item_security_manifests(self, item: Any) -> None:
         """
         Generate and push container security manifest images of a push item.
 
@@ -535,7 +538,7 @@ class SecurityManifestPusher:
                 )
 
     @log_step("Push container security manifests")
-    def push_security_manifests(self):
+    def push_security_manifests(self) -> None:
         """
         Attest and push security manifest for each push item in parallel.
 
@@ -561,4 +564,4 @@ class SecurityManifestPusher:
             ]
             for future in futures.as_completed(future_results):
                 if future.exception():
-                    raise future.exception()  # pragma: no cover
+                    raise future.exception()  # type: ignore # pragma: no cover

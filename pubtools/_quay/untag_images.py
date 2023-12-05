@@ -1,4 +1,6 @@
 import logging
+import argparse
+from typing import Any
 
 from pubtools.pluggy import pm, task_context
 
@@ -39,7 +41,7 @@ UNTAG_IMAGES_ARGS = {
 }
 
 
-def construct_kwargs(args):
+def construct_kwargs(args: argparse.Namespace) -> dict[Any, Any]:
     """
     Construct a kwargs dictionary based on the entered command line arguments.
 
@@ -65,7 +67,9 @@ def construct_kwargs(args):
     return kwargs
 
 
-def verify_untag_images_args(references, quay_user, quay_password):
+def verify_untag_images_args(
+    references: list[str], quay_user: str | None, quay_password: str | None
+) -> None:
     """
     Verify the presence and correctness of input parameters.
 
@@ -86,12 +90,12 @@ def verify_untag_images_args(references, quay_user, quay_password):
 
 
 def untag_images(
-    references,
-    quay_api_token,
-    remove_last=False,
-    quay_user=None,
-    quay_password=None,
-):
+    references: list[str],
+    quay_api_token: str,
+    remove_last: bool = False,
+    quay_user: str | None = None,
+    quay_password: str | None = None,
+) -> None:
     """
     Untag images from Quay.
 
@@ -117,12 +121,12 @@ def untag_images(
     pm.hook.quay_images_untagged(untag_refs=sorted(references), lost_refs=sorted(lost_images))
 
 
-def setup_args():
+def setup_args() -> argparse.ArgumentParser:
     """Set up argparser without extra parameters, this method is used for auto doc generation."""
     return setup_arg_parser(UNTAG_IMAGES_ARGS)
 
 
-def untag_images_main(sysargs=None):
+def untag_images_main(sysargs: list[str] | None = None) -> None:
     """Entrypoint for untagging images."""
     logging.basicConfig(level=logging.INFO)
 

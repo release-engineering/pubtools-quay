@@ -15,13 +15,13 @@ class ImageUntagger:
 
     def __init__(
         self,
-        references,
-        quay_api_token,
-        remove_last=False,
-        quay_user=None,
-        quay_password=None,
-        host=None,
-    ):
+        references: list[str],
+        quay_api_token: str,
+        remove_last: bool = False,
+        quay_user: str | None = None,
+        quay_password: str | None = None,
+        host: str | None = None,
+    ) -> None:
         """
         Initialize.
 
@@ -53,12 +53,12 @@ class ImageUntagger:
         self.remove_last = remove_last
 
         if quay_user and quay_password:
-            self._quay_client = QuayClient(quay_user, quay_password, self.host)
+            self._quay_client: QuayClient | None = QuayClient(quay_user, quay_password, self.host)
         else:
             self._quay_client = None
         self._quay_api_client = QuayApiClient(quay_api_token, self.host)
 
-    def set_quay_client(self, quay_client):
+    def set_quay_client(self, quay_client: QuayClient) -> None:
         """
         Set client instance to be used for the HTTP API operations.
 
@@ -68,14 +68,14 @@ class ImageUntagger:
         """
         self._quay_client = quay_client
 
-    def get_repository_tags_mapping(self):
+    def get_repository_tags_mapping(self) -> dict[str, list[str]]:
         """
         Get a mapping of which tags would be removed from given repos based on provided refs.
 
         Returns ({str: [str]}):
             Mapping of repository->tags.
         """
-        repo_tag_mapping = {}
+        repo_tag_mapping: dict[str, list[str]] = {}
         for reference in self.references:
             tag = reference.split(":")[-1]
             repo_path = reference.split(":")[0]
@@ -85,7 +85,9 @@ class ImageUntagger:
 
         return repo_tag_mapping
 
-    def construct_tag_digest_mappings(self, repository):
+    def construct_tag_digest_mappings(
+        self, repository: str
+    ) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
         """
         Create a mappings of tags->digests as well as digests->tags.
 
@@ -101,25 +103,25 @@ class ImageUntagger:
             Tuple of dictionaries mapping tags->digests and digests->tags.
         """
         LOG.info("Gathering tags and digests of repository '{0}'".format(repository))
-        tag_digest_mapping = {}
-        digest_tag_mapping = {}
+        tag_digest_mapping: dict[str, list[str]] = {}
+        digest_tag_mapping: dict[str, list[str]] = {}
         image_schema = "{0}/{1}:{2}"
-        repo_tags = self._quay_client.get_repository_tags(repository)
+        repo_tags = self._quay_client.get_repository_tags(repository)  # type: ignore
 
-        for tag in repo_tags["tags"]:
+        for tag in repo_tags["tags"]:  # type: ignore
             image = image_schema.format(self.host, repository, tag)
             try:
-                manifest = self._quay_client.get_manifest(image)
+                manifest = self._quay_client.get_manifest(image)  # type: ignore
             except requests.exceptions.HTTPError as e:
                 # Just removed tags could still be in tags list while manifests are removed
                 if e.response.status_code == 404:
                     continue
                 else:
                     raise
-            digest = self._quay_client.get_manifest_digest(image)
+            digest = self._quay_client.get_manifest_digest(image)  # type: ignore
 
             # Option 1: No manifest list, only manifest
-            if manifest.get("mediaType", None) in (
+            if manifest.get("mediaType", None) in (  # type: ignore
                 QuayClient.MANIFEST_V2S2_TYPE,
                 QuayClient.MANIFEST_OCI_V2S2_TYPE,
                 QuayClient.MANIFEST_V2S1_TYPE,
@@ -133,13 +135,18 @@ class ImageUntagger:
                 tag_digest_mapping[tag] = [digest]
                 digest_tag_mapping.setdefault(digest, []).append(tag)
 
-                for arch_manifest in manifest["manifests"]:
-                    tag_digest_mapping[tag].append(arch_manifest["digest"])
-                    digest_tag_mapping.setdefault(arch_manifest["digest"], []).append(tag)
+                for arch_manifest in manifest["manifests"]:  # type: ignore
+                    tag_digest_mapping[tag].append(arch_manifest["digest"])  # type: ignore
+                    digest_tag_mapping.setdefault(arch_manifest["digest"], []).append(tag)  # type: ignore # noqa: E501
 
         return (tag_digest_mapping, digest_tag_mapping)
 
-    def get_lost_digests(self, tags, tag_digest_mapping, digest_tag_mapping):
+    def get_lost_digests(
+        self,
+        tags: list[str],
+        tag_digest_mapping: dict[str, list[str]],
+        digest_tag_mapping: dict[str, list[str]],
+    ) -> list[str]:
         """
         Calculate a list of digests that would be lost if the provided tags were removed.
 
@@ -170,7 +177,7 @@ class ImageUntagger:
         return lost_digests
 
     def get_repo_cosign_images(
-        self, repo_images: list[str], repo_tags: list[str], image_types: Iterable[str] = None
+        self, repo_images: list[str], repo_tags: list[str], image_types: Iterable[str] | None = None
     ) -> set[str]:
         """
         Get a list of images generated by cosign associated with the provided images.
@@ -226,7 +233,7 @@ class ImageUntagger:
         LOG.info(f"{len(cosign_images)} cosign images were found for the {len(repo_images)} images")
         return cosign_images
 
-    def untag_images(self):
+    def untag_images(self) -> list[str]:
         """
         Determine if the specified tags may be removed and remove them.
 
@@ -253,11 +260,11 @@ class ImageUntagger:
                 ]
                 lost_imgs += lost_repo_images
 
-                repo_tags = self._quay_client.get_repository_tags(repo)["tags"]
+                repo_tags = self._quay_client.get_repository_tags(repo)["tags"]  # type: ignore
                 # We need to run this twice to get all secondary cosign images.
                 # First, we find sbom, att, sig images of normal images.
                 # Second, we find sig images of sbom and att images.
-                repo_lost_cosign_imgs = self.get_repo_cosign_images(lost_repo_images, repo_tags)
+                repo_lost_cosign_imgs = self.get_repo_cosign_images(lost_repo_images, repo_tags)  # type: ignore # noqa: E501
                 cosign_imgs_by_digest = sorted(
                     [
                         f"{i.split(':')[0]}@{self._quay_client.get_manifest_digest(i)}"
@@ -265,7 +272,7 @@ class ImageUntagger:
                     ]
                 )
                 repo_lost_cosign_imgs |= self.get_repo_cosign_images(
-                    cosign_imgs_by_digest, repo_tags, ["signature"]
+                    cosign_imgs_by_digest, repo_tags, ["signature"]  # type: ignore
                 )
                 lost_cosign_imgs |= repo_lost_cosign_imgs
 

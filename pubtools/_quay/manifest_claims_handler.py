@@ -2,6 +2,7 @@
 import logging
 import os
 import json
+from typing import Any, Callable, Sequence, Mapping
 
 import monotonic
 import proton
@@ -22,6 +23,36 @@ class AMQPError(Exception):
     """Base class for AMQP-specific errors."""
 
     pass
+
+
+class UMBSettings(object):
+    __slots__ = [
+        "broker_urls",
+        "radas_address",
+        "pub_cert",
+        "ca_cert",
+        "signing_timeout",
+        "signing_throttle",
+        "signing_retry",
+    ]
+
+    def __init__(
+        self,
+        broker_urls: list[str],
+        radas_address: str = "VirtualTopic.eng.robosignatory.container.sign",
+        pub_cert: str = "/etc/pub/umb-pub-cert-key.pem",
+        ca_cert: str = "/etc/pki/tls/certs/ca-bundle.crt",
+        signing_timeout: int = 600,
+        signing_throttle: int = 100,
+        signing_retry: int = 3,
+    ) -> None:
+        self.broker_urls = broker_urls
+        self.radas_address = radas_address
+        self.pub_cert = pub_cert
+        self.ca_cert = ca_cert
+        self.signing_timeout = signing_timeout
+        self.signing_throttle = signing_throttle
+        self.signing_retry = signing_retry
 
 
 class AMQPEndpointError(AMQPError):
@@ -45,21 +76,21 @@ class AMQPEndpointError(AMQPError):
 
     def __init__(
         self,
-        endpoint_name,
-        error_label="Unknown",
-        description="No error description provided.",
-    ):
+        endpoint_name: str,
+        error_label: str = "Unknown",
+        description: str = "No error description provided.",
+    ) -> None:
         msg = "({endpoint!s}) {name}: {description}".format(
             endpoint=endpoint_name, name=error_label, description=description
         )
         super(AMQPEndpointError, self).__init__(msg)
 
-    def __str__(self):
+    def __str__(self) -> str:
         # The message without the context of AMQPEndpointError doesn't mean much.
         return repr(self)
 
 
-def _get_endpoint_error_condition(endpoint):
+def _get_endpoint_error_condition(endpoint: proton.Endpoint) -> proton.Condition | None:
     """Return the error condition on this endpoint if there is one.
 
     If there's no local error condition, return the remote error
@@ -77,17 +108,17 @@ def _get_endpoint_error_condition(endpoint):
     return endpoint.condition or endpoint.remote_condition
 
 
-def do_nothing(*_, **__):
+def do_nothing(*_: Any, **__: Any) -> None:
     """A convenient placeholder function that does, as advertised, nothing."""
     pass  # pragma: no cover
 
 
-def raise_error(error):
+def raise_error(error: Any) -> None:
     """A convenient placeholder function that raises an error."""
     raise error  # pragma: no cover
 
 
-class ManifestClaimsHandler(MessagingHandler):
+class ManifestClaimsHandler(MessagingHandler):  # type: ignore
     """
     The manifest claims handler waits for messages from the UMB
     and will check against the manifest claims sent until all claims are received.
@@ -128,12 +159,12 @@ class ManifestClaimsHandler(MessagingHandler):
 
     def __init__(
         self,
-        settings,
-        claim_messages,
-        message_sender_callback,
-        on_message_callback=do_nothing,
-        on_error_callback=raise_error,
-    ):
+        settings: UMBSettings,
+        claim_messages: list[dict[str, Any]],
+        message_sender_callback: Callable[[Any], Any],
+        on_message_callback: Callable[[Any], None] = do_nothing,
+        on_error_callback: Callable[[Any], None] = raise_error,
+    ) -> None:
         super(ManifestClaimsHandler, self).__init__()
         self.umb_urls = settings.broker_urls
         self.radas_address = settings.radas_address
@@ -146,8 +177,8 @@ class ManifestClaimsHandler(MessagingHandler):
         self.message_sender_callback = message_sender_callback
         self._on_next = on_message_callback
         self._on_error = on_error_callback
-        self.awaiting_response = {}  # {request_id: monotonic.monotonic()}
-        self.retry_count = {}  # {request_id: 1/2}
+        self.awaiting_response: dict[str, Any] = {}  # {request_id: monotonic.monotonic()}
+        self.retry_count: dict[str, int] = {}  # {request_id: 1/2}
         # a mutable list caches messages to send
         self.to_send = list(claim_messages)
         # {request_id: message} a map used to find wanted message by request_id
@@ -161,7 +192,7 @@ class ManifestClaimsHandler(MessagingHandler):
         self.ssl_domain.set_trusted_ca_db(settings.ca_cert)
         self.ssl_domain.set_peer_authentication(proton.SSLDomain.ANONYMOUS_PEER)
 
-    def on_start(self, event):  # pragma: no cover
+    def on_start(self, event: proton.Event) -> None:  # pragma: no cover
         LOG.debug("Message event loop starting, connecting to brokers...")
         conn = event.container.connect(
             urls=self.umb_urls, ssl_domain=self.ssl_domain, sasl_enabled=False
@@ -171,7 +202,7 @@ class ManifestClaimsHandler(MessagingHandler):
         # schedule a timer task, if the connection to UMB could be established, raise exception.
         LOG.debug("Message event loop started")
 
-    def on_timer_task(self, event):
+    def on_timer_task(self, event: proton.Event) -> None:
         """timer task has three functionalities:
         1. if it couldn't be connected to brokers, then after self.timeout, exception
            will be raised.
@@ -215,20 +246,20 @@ class ManifestClaimsHandler(MessagingHandler):
         # schedule the next timer task
         self.timer_task = event.container.schedule(self.TIMER_TASK_DELAY, self)
 
-    def on_link_opened(self, event):
+    def on_link_opened(self, event: proton.Event) -> None:
         # do the message sending to when the connection has been opened
         # as there is the potential for messages to be dropped.
         if event.receiver == self.receiver:  # pragma: no cover
             # link's open, cancel the scheduled timer task, which was for connecting
             # timing out.
-            self.timer_task.cancel()
+            self.timer_task.cancel()  # type: ignore
             self.connected = True
             self._send_message()
             self.timer_task = event.container.schedule(self.TIMER_TASK_DELAY, self)
         else:
             LOG.warning("Unexpected on_link_opened event")
 
-    def on_message(self, event):
+    def on_message(self, event: proton.Event) -> None:
         """Once receive a message, check if it's expected by checking the awaiting_response,
         if it is, then append it to received and remove it from awaiting_response.
         """
@@ -242,54 +273,54 @@ class ManifestClaimsHandler(MessagingHandler):
             self._on_next(radas_message)
             if not self.to_send and not self.awaiting_response:
                 LOG.info("All requests satisfied, closing connection...")
-                self.receiver.close()
+                self.receiver.close()  # type: ignore
                 event.connection.close()
-                self.timer_task.cancel()
+                self.timer_task.cancel()  # type: ignore
                 LOG.info("Connection closed.")
         else:
             LOG.debug("Ignored signing response: %s", radas_message["request_id"])
 
-    def on_connection_closing(self, event):
+    def on_connection_closing(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: connection_closing")
 
-    def on_connection_closed(self, event):
+    def on_connection_closed(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: connection_closed")
 
-    def on_connection_error(self, event):
+    def on_connection_error(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: connection_error")
         self._endpoint_error(event, event.connection)
 
-    def on_session_closing(self, event):
+    def on_session_closing(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: session_closing")
 
-    def on_session_closed(self, event):
+    def on_session_closed(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: session_closed")
 
-    def on_session_error(self, event):
+    def on_session_error(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: session_error")
         self._endpoint_error(event, event.session)
 
-    def on_link_closing(self, event):
+    def on_link_closing(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: link_closing")
 
-    def on_link_closed(self, event):
+    def on_link_closed(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: link_closed")
 
-    def on_link_error(self, event):
+    def on_link_error(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: link_error")
         self._endpoint_error(event, event.link)
 
-    def on_transport_error(self, event):
+    def on_transport_error(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: transport_error")
         # transport errors appear to be handled by Proton
         # in most cases, so check for a known case where
         # that isn't true, and consider that an actual error
         self._endpoint_error_if_unhandled(event, event.transport)
 
-    def on_disconnected(self, event):
+    def on_disconnected(self, event: proton.Event) -> None:
         LOG.debug("Messaging event: disconnected")
 
-    def _endpoint_error(self, event, endpoint):
+    def _endpoint_error(self, event: proton.Event, endpoint: str) -> None:
         condition = _get_endpoint_error_condition(endpoint)
         if condition is None:
             error = AMQPEndpointError(endpoint_name=endpoint.__class__.__name__)
@@ -303,14 +334,14 @@ class ManifestClaimsHandler(MessagingHandler):
         event.container.stop()
         self._on_error(error)
 
-    def _endpoint_error_if_unhandled(self, event, endpoint):
+    def _endpoint_error_if_unhandled(self, event: proton.Event, endpoint: proton.Endpoint) -> None:
         condition = _get_endpoint_error_condition(endpoint)
         if condition is not None:
             error_tag = "{condition.name}#{condition.description}".format(condition=condition)
             if error_tag in self._PROTON_KNOWN_UNHANDLED_ERRORS:
                 self._endpoint_error(event, endpoint)
 
-    def _send_message(self, count=None):
+    def _send_message(self, count: int | None = None) -> None:
         if not self.to_send:  # pragma: no cover
             return
 
@@ -350,25 +381,30 @@ class _ManifestClaimsRunner(object):
 
     """
 
-    def __init__(self, settings, claim_messages, send_action):
+    def __init__(
+        self,
+        settings: UMBSettings,
+        claim_messages: list[dict[str, Any]],
+        send_action: Callable[[Sequence[Mapping[str, Any]]], None],
+    ):
         self._settings = settings
         self._claim_messages = claim_messages
         self._send_action = send_action
         self._retry_attempts = 0
         self._maximum_retries = settings.signing_retry
-        self._received_messages = {}
+        self._received_messages: dict[Any, Any] = {}
 
     @property
-    def received_messages(self):  # pragma: no cover
+    def received_messages(self) -> Sequence[Mapping[str, Any]]:  # pragma: no cover
         """:obj:`Sequence[Mapping[str, Any]]`: The set of received messages."""
         return list(self._received_messages.values())
 
-    def on_next(self, message):  # pragma: no cover
+    def on_next(self, message: dict[str, Any]) -> None:  # pragma: no cover
         """Track incoming response messages."""
         request_id = message["request_id"]
         self._received_messages.setdefault(request_id, message)
 
-    def on_error(self, error):
+    def on_error(self, error: str) -> None:
         """Determines if messaging can and needs to be restarted, and does so if necessary."""
         LOG.error("Error in message handler: %s", error)
 
@@ -393,11 +429,11 @@ class _ManifestClaimsRunner(object):
         )
         self._run(missing)
 
-    def start(self):  # pragma: no cover
+    def start(self) -> None:  # pragma: no cover
         """Start manifest claim messaging for the first time."""
         self._run(self._claim_messages)
 
-    def _run(self, claims):  # pragma: no cover
+    def _run(self, claims: list[dict[str, Any]]) -> None:  # pragma: no cover
         """Run manifest claim messaging with the given set of claims."""
         handler = ManifestClaimsHandler(
             self._settings,
@@ -407,33 +443,3 @@ class _ManifestClaimsRunner(object):
             on_error_callback=self.on_error,
         )
         Container(handler).run()
-
-
-class UMBSettings(object):
-    __slots__ = [
-        "broker_urls",
-        "radas_address",
-        "pub_cert",
-        "ca_cert",
-        "signing_timeout",
-        "signing_throttle",
-        "signing_retry",
-    ]
-
-    def __init__(
-        self,
-        broker_urls,
-        radas_address="VirtualTopic.eng.robosignatory.container.sign",
-        pub_cert="/etc/pub/umb-pub-cert-key.pem",
-        ca_cert="/etc/pki/tls/certs/ca-bundle.crt",
-        signing_timeout=600,
-        signing_throttle=100,
-        signing_retry=3,
-    ):
-        self.broker_urls = broker_urls
-        self.radas_address = radas_address
-        self.pub_cert = pub_cert
-        self.ca_cert = ca_cert
-        self.signing_timeout = signing_timeout
-        self.signing_throttle = signing_throttle
-        self.signing_retry = signing_retry

@@ -1,5 +1,6 @@
 import logging
 import sys
+from typing import Any
 
 from .container_image_pusher import ContainerImagePusher
 from .exceptions import InvalidTargetSettings
@@ -22,7 +23,7 @@ from .quay_client import QuayClient
 LOG = logging.getLogger("pubtools.quay")
 
 
-def verify_target_settings(target_settings):
+def verify_target_settings(target_settings: dict[str, Any]) -> None:
     """
     Verify the presence and validity of target settings.
 
@@ -61,7 +62,7 @@ def verify_target_settings(target_settings):
             )
 
 
-def _get_operator_quay_client(target_settings):
+def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
     """Create and access QuayClient for dest image."""
     return QuayClient(
         target_settings.get("index_image_quay_user", target_settings["dest_quay_user"]),
@@ -70,9 +71,15 @@ def _get_operator_quay_client(target_settings):
     )
 
 
+# TOFIX: dest_tags wrong docstring
+# TOFIX: index_stamp wrong docstring
 def _index_image_to_sign_entries(
-    src_index_image, dest_namespace, dest_tags, signing_keys, target_settings
-):
+    src_index_image: str,
+    dest_namespace: str,
+    dest_tags: list[str],
+    signing_keys: list[str],
+    target_settings: dict[str, Any],
+) -> list[SignEntry]:
     """Generate entries to sign.
 
     Method generates sign entries for index image with <dest_tag> and <dest_tag>-<index_stamp> tags
@@ -93,9 +100,9 @@ def _index_image_to_sign_entries(
         src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
     )
     index_image_digests = [
-        m["digest"]
-        for m in manifest_list["manifests"]
-        if m["platform"]["architecture"] in ["amd64", "x86_64"]
+        m["digest"]  # type: ignore
+        for m in manifest_list["manifests"]  # type: ignore
+        if m["platform"]["architecture"] in ["amd64", "x86_64"]  # type: ignore
     ]
     to_sign_entries = []
     for registry in dest_registries:
@@ -115,7 +122,10 @@ def _index_image_to_sign_entries(
     return to_sign_entries
 
 
-def _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings):
+# TOFIX: remove_signatures expect bool but list is given
+def _remove_index_image_signatures(
+    outdated_manifests: list[str], current_signatures: list[Any], target_settings: dict[str, Any]
+) -> None:
     """Remove signatures of outdated manifests with confitured signers for the target.
 
     Args:
@@ -130,9 +140,16 @@ def _remove_index_image_signatures(outdated_manifests, current_signatures, targe
             signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
 
 
+# TOFIX: dest_tags wrong docstring
+# TOFIX: index_stamp wrong docstring
 def _sign_index_image(
-    built_index_image, namespace, dest_tags, signing_keys, task_id, target_settings
-):
+    built_index_image: str,
+    namespace: str,
+    dest_tags: list[str],
+    signing_keys: list[str],
+    task_id: str,
+    target_settings: dict[str, Any],
+) -> list[str]:
     """Sign index image with configured signers for the target.
 
     Args:
@@ -149,26 +166,27 @@ def _sign_index_image(
     to_sign_entries = _index_image_to_sign_entries(
         built_index_image, namespace, dest_tags, signing_keys, target_settings
     )
-    current_signatures = []
+    current_signatures: list[Any] = []
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
             signer = signercls(config_file=signer["config_file"], settings=target_settings)
             signer.sign_containers(to_sign_entries, task_id=task_id)
+    # this always returns an empty list
     return current_signatures
 
 
 def task_iib_add_bundles(
-    bundles,
-    archs,
-    index_image,
-    deprecation_list,
-    signing_keys,
-    hub,
-    task_id,
-    target_settings,
-    target_name,
-):
+    bundles: list[str],
+    archs: list[str],
+    index_image: str,
+    deprecation_list: list[str],
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """
     Perform all the necessary actions for the 'PushAddIIBBundles' entrypoint.
 
@@ -228,9 +246,10 @@ def task_iib_add_bundles(
     )
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
+    # TOFIX: man_arch_dig can be None
     for ref, tag, man_arch_dig in existing_manifests:
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
@@ -289,8 +308,15 @@ def task_iib_add_bundles(
 
 
 def task_iib_remove_operators(
-    operators, archs, index_image, signing_keys, hub, task_id, target_settings, target_name
-):
+    operators: list[str],
+    archs: list[str],
+    index_image: str,
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """
     Perform all the necessary actions for the 'PushRemoveIIBOperators' entrypoint.
 
@@ -349,8 +375,9 @@ def task_iib_remove_operators(
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        # TOFIX: man_arch_dig can be None
+        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
@@ -404,12 +431,20 @@ def task_iib_remove_operators(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
 
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
+    # TOFIX: outdated_manifests can contain None
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)  # type: ignore # noqa: E501
 
 
 def task_iib_build_from_scratch(
-    bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings, target_name
-):
+    bundles: list[str],
+    archs: list[str],
+    index_image_tag: str,
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """
     Perform all the necessary actions for the 'PushIIBBuildFromScratch' entrypoint.
 
@@ -466,8 +501,9 @@ def task_iib_build_from_scratch(
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        # TOFIX: existing_manifests can be None
+        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
@@ -520,20 +556,21 @@ def task_iib_build_from_scratch(
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
+    # TOFIX: outdated_manifests can be None
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)  # type: ignore # noqa: E501
 
 
 def iib_add_entrypoint(
-    bundles,
-    archs,
-    index_image,
-    deprecation_list,
-    signing_keys,
-    hub,
-    task_id,
-    target_settings,
-    target_name,
-):
+    bundles: list[str],
+    archs: list[str],
+    index_image: str,
+    deprecation_list: list[str],
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """Entry point for use in another python code."""
     task_iib_add_bundles(
         bundles,
@@ -549,8 +586,15 @@ def iib_add_entrypoint(
 
 
 def iib_remove_entrypoint(
-    operators, archs, index_image, signing_keys, hub, task_id, target_settings, target_name
-):
+    operators: list[str],
+    archs: list[str],
+    index_image: str,
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """Entry point for use in another python code."""
     task_iib_remove_operators(
         operators, archs, index_image, signing_keys, hub, task_id, target_settings, target_name
@@ -558,8 +602,15 @@ def iib_remove_entrypoint(
 
 
 def iib_from_scratch_entrypoint(
-    bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings, target_name
-):
+    bundles: list[str],
+    archs: list[str],
+    index_image_tag: str,
+    signing_keys: list[str],
+    hub: Any,
+    task_id: str,
+    target_settings: dict[str, Any],
+    target_name: str,
+) -> None:
     """Entry point for use in another python code."""
     task_iib_build_from_scratch(
         bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings, target_name

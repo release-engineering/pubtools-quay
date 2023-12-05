@@ -12,3 +12,4 @@ iiblib
 pubtools-iib
 kerberos
 marshmallow
+urllib3<2

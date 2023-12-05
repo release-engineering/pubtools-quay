@@ -1,5 +1,7 @@
 import logging
 
+import requests
+
 from .quay_session import QuaySession
 
 LOG = logging.getLogger("pubtools.quay")
@@ -8,7 +10,7 @@ LOG = logging.getLogger("pubtools.quay")
 class QuayApiClient:
     """Class for performing Quay REST API queries."""
 
-    def __init__(self, token, host=None):
+    def __init__(self, token: str, host: str | None = None) -> None:
         """
         Initialize.
 
@@ -22,7 +24,7 @@ class QuayApiClient:
         self.session = QuaySession(hostname=host, api="quay")
         self.session.set_auth_token(self.token)
 
-    def delete_tag(self, repository, tag):
+    def delete_tag(self, repository: str, tag: str) -> requests.Response:
         """
         Delete a tag from a repository.
 
@@ -46,7 +48,7 @@ class QuayApiClient:
 
         return response
 
-    def delete_repository(self, repository):
+    def delete_repository(self, repository: str) -> requests.Response:
         """
         Delete a Quay repository.
 

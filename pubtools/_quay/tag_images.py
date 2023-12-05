@@ -1,5 +1,7 @@
 import functools
 import logging
+import argparse
+from typing import Any
 
 from pubtools.pluggy import pm, task_context
 
@@ -139,7 +141,7 @@ TAG_IMAGES_ARGS = {
 }
 
 
-def construct_kwargs(args):
+def construct_kwargs(args: argparse.Namespace) -> dict[Any, Any]:
     """
     Construct a kwargs dictionary based on the entered command line arguments.
 
@@ -165,30 +167,30 @@ def construct_kwargs(args):
 
 
 def tag_images(
-    source_ref,
-    dest_refs,
-    all_arch=False,
-    quay_user=None,
-    quay_password=None,
-    source_quay_host=None,
-    source_quay_user=None,
-    source_quay_password=None,
-    remote_exec=False,
-    ssh_remote_host=None,
-    ssh_remote_host_port=None,
-    ssh_reject_unknown_host=False,
-    ssh_username=None,
-    ssh_password=None,
-    ssh_key_filename=None,
-    container_exec=False,
-    container_image=None,
-    docker_url="unix://var/run/docker.sock",
-    docker_timeout=None,
-    docker_verify_tls=False,
-    docker_cert_path=None,
-    registry_username=None,
-    registry_password=None,
-):
+    source_ref: str,
+    dest_refs: list[str],
+    all_arch: bool = False,
+    quay_user: str | None = None,
+    quay_password: str | None = None,
+    source_quay_host: str | None = None,
+    source_quay_user: str | None = None,
+    source_quay_password: str | None = None,
+    remote_exec: bool = False,
+    ssh_remote_host: str | None = None,
+    ssh_remote_host_port: str | None = None,
+    ssh_reject_unknown_host: bool = False,
+    ssh_username: str | None = None,
+    ssh_password: str | None = None,
+    ssh_key_filename: str | None = None,
+    container_exec: bool = False,
+    container_image: str | None = None,
+    docker_url: str = "unix://var/run/docker.sock",
+    docker_timeout: int | None = None,
+    docker_verify_tls: bool = False,
+    docker_cert_path: str | None = None,
+    registry_username: str | None = None,
+    registry_password: str | None = None,
+) -> None:
     """
     Tag images in Quay.
 
@@ -256,7 +258,9 @@ def tag_images(
 
     if remote_exec:
         accept_host = not ssh_reject_unknown_host if ssh_reject_unknown_host else True
-        executor_class = functools.partial(
+        executor_class: functools.partial[RemoteExecutor] | functools.partial[
+            ContainerExecutor
+        ] | functools.partial[LocalExecutor] = functools.partial(
             RemoteExecutor,
             ssh_remote_host,
             ssh_username,
@@ -292,15 +296,15 @@ def tag_images(
 
 
 def verify_tag_images_args(
-    quay_user,
-    quay_password,
-    source_quay_user,
-    source_quay_password,
-    remote_exec,
-    ssh_remote_host,
-    container_exec,
-    container_image,
-):
+    quay_user: str | None,
+    quay_password: str | None,
+    source_quay_user: str | None,
+    source_quay_password: str | None,
+    remote_exec: bool,
+    ssh_remote_host: str | None,
+    container_exec: bool,
+    container_image: str | None,
+) -> None:
     """Verify the presence of input parameters."""
     if remote_exec:
         if not ssh_remote_host:
@@ -321,12 +325,12 @@ def verify_tag_images_args(
         )
 
 
-def setup_args():
+def setup_args() -> argparse.ArgumentParser:
     """Set up argparser without extra parameters, this method is used for auto doc generation."""
     return setup_arg_parser(TAG_IMAGES_ARGS)
 
 
-def tag_images_main(sysargs=None):
+def tag_images_main(sysargs: list[str] | None = None) -> None:
     """Entrypoint for image tagging."""
     logging.basicConfig(level=logging.INFO)
 

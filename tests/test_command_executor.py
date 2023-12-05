@@ -262,7 +262,7 @@ def test_remote_executor_run_error(mock_sshclient):
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_init(mock_api_client, mock_tls_config, mock_isdir):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -301,7 +301,7 @@ def test_container_executor_init(mock_api_client, mock_tls_config, mock_isdir):
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_run_cmd(mock_api_client, mock_tls_config, mock_isdir):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -341,7 +341,7 @@ def test_container_executor_run_cmd(mock_api_client, mock_tls_config, mock_isdir
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_run_cmd_error(mock_api_client, mock_tls_config, mock_isdir):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -375,7 +375,7 @@ def test_container_executor_run_cmd_error(mock_api_client, mock_tls_config, mock
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_run_cmd_error_tolerate_error(
     mock_api_client, mock_tls_config, mock_isdir
 ):
@@ -410,7 +410,7 @@ def test_container_executor_run_cmd_error_tolerate_error(
 
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_run_cmd_no_output(mock_api_client, mock_tls_config, mock_isdir):
     mock_create_container = mock.MagicMock()
     mock_create_container.return_value = {"Id": "123"}
@@ -450,7 +450,7 @@ def test_container_executor_run_cmd_no_output(mock_api_client, mock_tls_config, 
 @mock.patch("pubtools._quay.command_executor.io.BytesIO")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_add_file(
     mock_api_client,
     mock_tls_config,
@@ -508,7 +508,7 @@ def test_container_executor_add_file(
 @mock.patch("pubtools._quay.command_executor.io.BytesIO")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_add_file_fail(
     mock_api_client,
     mock_tls_config,
@@ -556,7 +556,7 @@ def test_container_executor_add_file_fail(
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_skopeo_login(
     mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file, mock_choice
 ):
@@ -597,7 +597,7 @@ def test_container_executor_skopeo_login(
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_skopeo_login_already_logged(
     mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file
 ):
@@ -629,7 +629,7 @@ def test_container_executor_skopeo_login_already_logged(
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_skopeo_login_missing_credential(
     mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file
 ):
@@ -663,7 +663,7 @@ def test_container_executor_skopeo_login_missing_credential(
 @mock.patch("pubtools._quay.command_executor.ContainerExecutor._run_cmd")
 @mock.patch("pubtools._quay.command_executor.os.path.isdir")
 @mock.patch("pubtools._quay.command_executor.docker.tls.TLSConfig")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 def test_container_executor_skopeo_login_fail(
     mock_api_client, mock_tls_config, mock_isdir, mock_run_cmd, mock_add_file, mock_choice
 ):

@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+from typing import Any
 
 import requests
 
@@ -13,15 +14,15 @@ class ManifestListMerger:
 
     def __init__(
         self,
-        src_image,
-        dest_image,
-        src_quay_host=None,
-        src_quay_username=None,
-        src_quay_password=None,
-        dest_quay_username=None,
-        dest_quay_password=None,
-        host=None,
-    ):
+        src_image: str,
+        dest_image: str,
+        src_quay_host: str | None = None,
+        src_quay_username: str | None = None,
+        src_quay_password: str | None = None,
+        dest_quay_username: str | None = None,
+        dest_quay_password: str | None = None,
+        host: str | None = None,
+    ) -> None:
         """
         Initialize.
 
@@ -46,17 +47,19 @@ class ManifestListMerger:
         self.src_image = src_image
         self.dest_image = dest_image
         if src_quay_username and src_quay_password:
-            self._src_quay_client = QuayClient(
+            self._src_quay_client: QuayClient | None = QuayClient(
                 src_quay_username, src_quay_password, src_quay_host or host
             )
         else:
             self._src_quay_client = None
         if dest_quay_username and dest_quay_password:
-            self._dest_quay_client = QuayClient(dest_quay_username, dest_quay_password, host)
+            self._dest_quay_client: QuayClient | None = QuayClient(
+                dest_quay_username, dest_quay_password, host
+            )
         else:
             self._dest_quay_client = None
 
-    def set_quay_clients(self, src_quay_client, dest_quay_client):
+    def set_quay_clients(self, src_quay_client: QuayClient, dest_quay_client: QuayClient) -> None:
         """
         Set client instances to be used for the HTTP API operations.
 
@@ -69,7 +72,7 @@ class ManifestListMerger:
         self._src_quay_client = src_quay_client
         self._dest_quay_client = dest_quay_client
 
-    def merge_manifest_lists(self):
+    def merge_manifest_lists(self) -> None:
         """Merge manifest lists and upload to Quay. Main entrypoint method."""
         if not self._src_quay_client or not self._dest_quay_client:
             raise RuntimeError("QuayClient instance must be set for both source and dest images")
@@ -86,15 +89,17 @@ class ManifestListMerger:
             self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
         )
 
-        missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)
-        new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)
+        missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)  # type: ignore # noqa: E501
+        new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)  # type: ignore # noqa: E501
 
         LOG.info("Uploading the new manifest list to '{0}'".format(self.dest_image))
         self._dest_quay_client.upload_manifest(new_manifest_list, self.dest_image)
         LOG.info("Merging manifests lists: complete.")
 
     @staticmethod
-    def get_missing_architectures(src_manifest_list, dest_manifest_list):
+    def get_missing_architectures(
+        src_manifest_list: dict[Any, Any], dest_manifest_list: dict[Any, Any]
+    ) -> list[dict[Any, Any]]:
         """
         Get architectures which are missing from the new source image.
 
@@ -123,7 +128,9 @@ class ManifestListMerger:
         )
         return missing_archs
 
-    def _add_missing_architectures(self, src_manifest_list, missing_archs):
+    def _add_missing_architectures(
+        self, src_manifest_list: dict[Any, Any], missing_archs: dict[Any, Any]
+    ) -> dict[Any, Any]:
         """
         Add missing architectures to the source manifest list.
 
@@ -140,7 +147,9 @@ class ManifestListMerger:
 
         return new_manifest_list
 
-    def merge_manifest_lists_selected_architectures(self, eligible_archs):
+    def merge_manifest_lists_selected_architectures(
+        self, eligible_archs: list[str]
+    ) -> dict[Any, Any]:
         """
         Merge manifests lists. Only specified archs are eligible for merging.
 
@@ -172,18 +181,18 @@ class ManifestListMerger:
 
         archs_to_add = []
         manifests_to_add = []
-        for src_arch_dict in src_manifest_list["manifests"]:
-            if src_arch_dict["platform"]["architecture"] in eligible_archs:
+        for src_arch_dict in src_manifest_list["manifests"]:  # type: ignore
+            if src_arch_dict["platform"]["architecture"] in eligible_archs:  # type: ignore
                 manifests_to_add.append(deepcopy(src_arch_dict))
-                archs_to_add.append(src_arch_dict["platform"]["architecture"])
+                archs_to_add.append(src_arch_dict["platform"]["architecture"])  # type: ignore
 
         manifests_to_keep = []
         if dest_manifest_list:
-            for dest_arch_dict in dest_manifest_list["manifests"]:
-                if dest_arch_dict["platform"]["architecture"] not in archs_to_add:
+            for dest_arch_dict in dest_manifest_list["manifests"]:  # type: ignore
+                if dest_arch_dict["platform"]["architecture"] not in archs_to_add:  # type: ignore
                     manifests_to_keep.append(deepcopy(dest_arch_dict))
 
         new_manifest_list = deepcopy(src_manifest_list)
-        new_manifest_list["manifests"] = manifests_to_add + manifests_to_keep
+        new_manifest_list["manifests"] = manifests_to_add + manifests_to_keep  # type: ignore
 
-        return new_manifest_list
+        return new_manifest_list  # type: ignore

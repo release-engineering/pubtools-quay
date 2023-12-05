@@ -10,3 +10,8 @@ pushcollector
 PyHamcrest
 python-qpid-proton==0.33.0;python_version<'3.0'
 bandit==1.7.5
+mypy
+types-requests
+types-setuptools
+types-paramiko
+types-PyYAML

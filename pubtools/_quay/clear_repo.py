@@ -1,4 +1,6 @@
 import logging
+import argparse
+from typing import Any
 
 from pubtools.pluggy import task_context, pm
 
@@ -81,7 +83,7 @@ CLEAR_REPO_ARGS = {
 }
 
 
-def clear_repositories(repositories, settings):
+def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
     """
     Clear Quay repository.
 
@@ -123,13 +125,15 @@ def clear_repositories(repositories, settings):
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
+    # TOFIX: mad can be None
     for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))
+        outdated_manifests.append((mad.digest, tag, repo))  # type: ignore
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
         _signer = signercls(config_file=signer_configs[n], settings=settings)
-        _signer.remove_signatures(outdated_manifests, _exclude=[])
+        # TOFIX: outdated_manfests sould be list?, also exclude is bool?
+        _signer.remove_signatures(outdated_manifests, _exclude=[])  # type: ignore
 
     refrences_to_remove = []
     for repository in parsed_repositories:
@@ -138,7 +142,7 @@ def clear_repositories(repositories, settings):
         )
         repo_data = quay_client.get_repository_tags(internal_repo)
 
-        for tag in repo_data["tags"]:
+        for tag in repo_data["tags"]:  # type: ignore
             refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
 
     untag_images(
@@ -153,12 +157,12 @@ def clear_repositories(repositories, settings):
     pm.hook.quay_repositories_cleared(repository_ids=sorted(parsed_repositories))
 
 
-def setup_args():
+def setup_args() -> argparse.ArgumentParser:
     """Set up argparser without extra parameters, this method is used for auto doc generation."""
     return setup_arg_parser(CLEAR_REPO_ARGS)
 
 
-def clear_repositories_main(sysargs=None):
+def clear_repositories_main(sysargs: list[str] | None = None) -> None:
     """Entrypoint for clearing repositories."""
     logging.basicConfig(level=logging.INFO)
 

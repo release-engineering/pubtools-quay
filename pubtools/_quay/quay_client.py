@@ -3,9 +3,10 @@ import json
 import logging
 import requests
 import re
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 from urllib import request
 import threading
+from typing import Any
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
@@ -22,7 +23,7 @@ class QuayClient:
     MANIFEST_OCI_LIST_TYPE = "application/vnd.oci.image.index.v1+json"
     MANIFEST_OCI_V2S2_TYPE = "application/vnd.oci.image.manifest.v1+json"
 
-    def __init__(self, username, password, host=None):
+    def __init__(self, username: str, password: str, host: str | None = None) -> None:
         """
         Initialize.
 
@@ -40,13 +41,15 @@ class QuayClient:
         self.thread_local = threading.local()
 
     @property
-    def session(self):
+    def session(self) -> Any | QuaySession:
         """Create QuaySession object per thread."""
         if not hasattr(self.thread_local, "session"):
             self.thread_local.session = QuaySession(hostname=self.host, api="docker")
         return self.thread_local.session
 
-    def get_manifest(self, image, raw=False, media_type=None):
+    def get_manifest(
+        self, image: str, raw: bool = False, media_type: str | None = None
+    ) -> dict[Any, Any] | str | Any:
         """
         Get manifest of given media type.
 
@@ -114,7 +117,7 @@ class QuayClient:
         else:
             return response.json()
 
-    def get_manifest_digest(self, image, media_type=None):
+    def get_manifest_digest(self, image: str, media_type: str | None = None) -> str:
         """
         Get manifest of the specified image and calculate its digest by hashing it.
 
@@ -136,12 +139,14 @@ class QuayClient:
                 raise exc
         # SHA 256 is pretty much the standard for container images
         hasher = hashlib.sha256()
-        hasher.update(manifest.encode("utf-8"))
+        hasher.update(manifest.encode("utf-8"))  # type: ignore
         digest = hasher.hexdigest()
 
         return "sha256:{0}".format(digest)
 
-    def upload_manifest(self, manifest, image, raw=False):
+    def upload_manifest(
+        self, manifest: dict[Any, Any] | str, image: str, raw: bool = False
+    ) -> None:
         """
         Upload manifest to a specified image.
 
@@ -159,20 +164,20 @@ class QuayClient:
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
         if raw:
-            manifest_type = json.loads(manifest)["mediaType"]
+            manifest_type = json.loads(manifest)["mediaType"]  # type: ignore
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
                 "data": manifest,
             }
         else:
-            manifest_type = manifest["mediaType"]
+            manifest_type = manifest["mediaType"]  # type: ignore
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
                 "data": json.dumps(manifest, sort_keys=True, indent=4),
             }
         self._request_quay("PUT", endpoint, kwargs)
 
-    def get_repository_tags(self, repository, raw=False):
+    def get_repository_tags(self, repository: str, raw: bool = False) -> list[str] | str | Any:
         """
         Get tags of a provided repository.
 
@@ -205,7 +210,9 @@ class QuayClient:
         else:
             return tags
 
-    def _request_quay(self, method, endpoint, kwargs={}):
+    def _request_quay(
+        self, method: str, endpoint: str, kwargs: dict[Any, Any] = {}
+    ) -> requests.Response:
         """
         Perform a Docker HTTP API request on Quay registry. Handle authentication.
 
@@ -236,7 +243,9 @@ class QuayClient:
 
         return r
 
-    def _authenticate_quay(self, headers):
+    def _authenticate_quay(
+        self, headers: dict[Any, Any] | requests.structures.CaseInsensitiveDict[Any]
+    ) -> None:
         """
         Attempt to perform an authentication with registry's authentication server.
 
@@ -286,7 +295,7 @@ class QuayClient:
             raise RegistryAuthError("Authentication server response doesn't contain a token.")
         self.session.set_auth_token(r.json()["token"])
 
-    def _parse_and_validate_image_url(self, image):
+    def _parse_and_validate_image_url(self, image: str) -> tuple[str, str]:
         """
         Extract image repository + reference from an image and validate its data.
 
