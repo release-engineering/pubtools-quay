@@ -2,6 +2,7 @@ import functools
 import logging
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Any
 
 import requests
 
@@ -29,7 +30,7 @@ class ContainerImagePusher:
     No validation is performed, push items are expected to be correct.
     """
 
-    def __init__(self, push_items, target_settings):
+    def __init__(self, push_items: list[Any], target_settings: dict[str, Any]) -> None:
         """
         Initialize.
 
@@ -43,11 +44,11 @@ class ContainerImagePusher:
         self.target_settings = target_settings
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-        self._src_quay_client = None
-        self._dest_quay_client = None
+        self._src_quay_client: QuayClient | None = None
+        self._dest_quay_client: QuayClient | None = None
 
     @property
-    def src_quay_client(self):
+    def src_quay_client(self) -> QuayClient:
         """Create and access QuayClient for source image."""
         if self._src_quay_client is None:
             self._src_quay_client = QuayClient(
@@ -58,7 +59,7 @@ class ContainerImagePusher:
         return self._src_quay_client
 
     @property
-    def dest_quay_client(self):
+    def dest_quay_client(self) -> QuayClient:
         """Create and access QuayClient for dest image."""
         if self._dest_quay_client is None:
             self._dest_quay_client = QuayClient(
@@ -69,7 +70,9 @@ class ContainerImagePusher:
         return self._dest_quay_client
 
     @classmethod
-    def run_tag_images(cls, source_ref, dest_refs, all_arch, target_settings):
+    def run_tag_images(
+        cls, source_ref: str, dest_refs: list[str], all_arch: bool, target_settings: dict[str, Any]
+    ) -> None:
         """
         Prepare the "tag images" entrypoint with all the necessary arguments and run it.
 
@@ -113,7 +116,7 @@ class ContainerImagePusher:
             target_settings.get("tag_images_wait_time_increase", 10),
         )
 
-    def _prepare_dest_refs(self, push_item):
+    def _prepare_dest_refs(self, push_item: Any) -> list[str]:
         """Prepare destination references for push.
 
         Construct destination references based on tags and repo of push item.
@@ -139,7 +142,7 @@ class ContainerImagePusher:
                 dest_refs.append(dest_ref)
         return dest_refs
 
-    def copy_source_push_item(self, push_item):
+    def copy_source_push_item(self, push_item: Any) -> None:
         """
         Perform the tagging operation for a push item containing a source image.
 
@@ -153,7 +156,7 @@ class ContainerImagePusher:
         dest_refs = self._prepare_dest_refs(push_item)
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
-    def copy_v1_push_item(self, push_item, is_source=None):
+    def copy_v1_push_item(self, push_item: Any) -> None:
         """
         Perform the tagging operation for a push item containing a v1 image.
 
@@ -168,7 +171,7 @@ class ContainerImagePusher:
 
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
-    def run_merge_workflow(self, source_ref, dest_refs):
+    def run_merge_workflow(self, source_ref: str, dest_refs: list[str]) -> None:
         """
         Perform Docker push and manifest list merge workflow.
 
@@ -191,10 +194,10 @@ class ContainerImagePusher:
         )
 
         # copy each arch source image to all destination repos
-        for manifest in source_ml["manifests"]:
-            source_image = image_schema.format(repo=source_repo, digest=manifest["digest"])
+        for manifest in source_ml["manifests"]:  # type: ignore
+            source_image = image_schema.format(repo=source_repo, digest=manifest["digest"])  # type: ignore # noqa: E501
             dest_images = [
-                image_schema.format(repo=dest_repo, digest=manifest["digest"])
+                image_schema.format(repo=dest_repo, digest=manifest["digest"])  # type: ignore
                 for dest_repo in dest_repos
             ]
             self.run_tag_images(source_image, dest_images, False, self.target_settings)
@@ -209,7 +212,7 @@ class ContainerImagePusher:
             merger.set_quay_clients(self.src_quay_client, self.dest_quay_client)
             merger.merge_manifest_lists()
 
-    def copy_multiarch_push_item(self, push_item, source_ml):
+    def copy_multiarch_push_item(self, push_item: Any, source_ml: dict[Any, Any]) -> None:
         """
         Evaluate the correct tagging and manifest list merging strategy of multiarch push item.
 
@@ -241,7 +244,7 @@ class ContainerImagePusher:
                 )
                 try:
                     dest_ml = self.dest_quay_client.get_manifest(dest_ref)
-                    if dest_ml.get("mediaType") != QuayClient.MANIFEST_LIST_TYPE:
+                    if dest_ml.get("mediaType") != QuayClient.MANIFEST_LIST_TYPE:  # type: ignore
                         LOG.warning(
                             "Image {0} doesn't have a manifest list, it will be overwritten".format(
                                 dest_ref
@@ -255,7 +258,7 @@ class ContainerImagePusher:
                             )
                         )
                         missing_archs = ManifestListMerger.get_missing_architectures(
-                            source_ml, dest_ml
+                            source_ml, dest_ml  # type: ignore
                         )
                         # Option 1: Dest doesn't contain extra archs, ML merging is unnecessary
                         if not missing_archs:
@@ -286,7 +289,7 @@ class ContainerImagePusher:
             self.run_merge_workflow(source_ref, merge_mls_dest_refs)
 
     @log_step("Push images to Quay")
-    def push_container_images(self):
+    def push_container_images(self) -> None:
         """
         Push container images to Quay.
 
@@ -296,7 +299,7 @@ class ContainerImagePusher:
         """
 
         @tw.instrument_func()
-        def push_container_image(item):
+        def push_container_image(item: Any) -> None:
             """
             Push container images to Quay.
 
@@ -335,7 +338,7 @@ class ContainerImagePusher:
                 self.copy_v1_push_item(item)
             # Multiarch images
             else:
-                self.copy_multiarch_push_item(item, source_ml)
+                self.copy_multiarch_push_item(item, source_ml)  # type: ignore
 
         num_thread_container_push = self.target_settings.get("num_thread_container_push", 5)
 
@@ -345,4 +348,4 @@ class ContainerImagePusher:
             ]
             for future in futures.as_completed(future_results):
                 if future.exception():
-                    raise future.exception()
+                    raise future.exception()  # type: ignore

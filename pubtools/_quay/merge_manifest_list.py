@@ -1,4 +1,5 @@
 import logging
+import argparse
 
 from pubtools.pluggy import task_context
 
@@ -47,7 +48,7 @@ MERGE_MANIFEST_LIST_ARGS = {
 }
 
 
-def verify_merge_manifest_list_args(args):
+def verify_merge_manifest_list_args(args: argparse.Namespace) -> None:
     """Verify the presence and correctness of input parameters."""
     if "@" in args.dest_ref:
         raise ValueError("Destination must be specified via tag, not digest")
@@ -56,12 +57,12 @@ def verify_merge_manifest_list_args(args):
         raise ValueError("Quay password must be set for both source and dest images")
 
 
-def setup_args():
+def setup_args() -> argparse.ArgumentParser:
     """Set up argparser without extra parameters, this method is used for auto doc generation."""
     return setup_arg_parser(MERGE_MANIFEST_LIST_ARGS)
 
 
-def merge_manifest_list_main(sysargs=None):
+def merge_manifest_list_main(sysargs: list[str] | None = None) -> None:
     """Entrypoint for manifest list merging."""
     logging.basicConfig(level=logging.INFO)
 

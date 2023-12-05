@@ -9,7 +9,6 @@ import pytest
 
 from pubtools.pluggy import pm, hookimpl, hookspec
 
-from pubtools._quay.utils.logger import Logger
 from pubtools._quay.utils.misc import FData
 
 # flake8: noqa: E501
@@ -68,17 +67,6 @@ class MockContainerPushItem(object):
 
     def __lt__(self, other):
         return str(self) < str(other)
-
-
-@pytest.fixture
-def fixture_isodate_now():
-    counter = {"i": 0}
-    with mock.patch("pubtools._quay.utils.stepper.isodate_now") as mocked:
-        mocked.side_effect = lambda: [
-            counter.__setitem__("i", counter["i"] + 1),
-            "isodate_now_" + str(counter["i"]),
-        ][1]
-        yield mocked
 
 
 @pytest.fixture
@@ -698,17 +686,6 @@ def operator_push_item_no_ocp():
             "op_type": "bundle",
         },
     )
-
-
-@pytest.fixture
-def common_external_resources():
-    log = Logger()
-    return {
-        "log_info": log.log_info,
-        "log_error": log.log_error,
-        "log_warning": log.log_warning,
-        "log_debug": log.log_debug,
-    }
 
 
 @pytest.fixture

@@ -42,7 +42,7 @@ MSG_SIGNER_OPERATION_RESULT = [
 
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.utils.misc.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
@@ -369,7 +369,7 @@ def test_push_docker_multiarch_merge_ml_operator(
 
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 def test_push_docker_multiarch_simple_workflow(
     mock_run_cmd,
@@ -471,7 +471,7 @@ def test_push_docker_multiarch_simple_workflow(
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.push_docker.PushDocker.fetch_missing_push_items_digests")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 def test_push_docker_source(
     mock_run_cmd,
@@ -772,7 +772,7 @@ def test_tag_docker_multiarch_merge_ml(
 
 
 @mock.patch("subprocess.Popen")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 def test_tag_docker_source_copy_untag(
     mock_run_cmd,
@@ -958,7 +958,7 @@ def test_tag_docker_source_copy_untag(
         )
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.iib_operations.timestamp")
@@ -1070,7 +1070,7 @@ def test_task_iib_add_bundles(
         )
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.iib_operations.timestamp")
@@ -1180,7 +1180,7 @@ def test_task_iib_remove_operators(
     )
 
 
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_task_iib_build_from_scratch(
@@ -1408,7 +1408,7 @@ def test_remove_repo(
 
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
-@mock.patch("pubtools._quay.command_executor.APIClient")
+@mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 def test_push_docker_operator_verify_bundle_fail(

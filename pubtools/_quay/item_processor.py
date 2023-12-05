@@ -17,7 +17,7 @@ class VirtualPushItem:
     metadata: Dict[str, Any]
     repos: Dict[str, Any]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post init validation of the instance."""
         if "tags" not in self.metadata:
             raise ValueError("VirtualPushItem is missing 'tags' in metadata")
@@ -135,7 +135,7 @@ class ContentExtractor:
 
     def extract_manifests(
         self, image_ref: str, media_types: Optional[List[str]], tolerate_missing: bool = True
-    ):
+    ) -> list[ManifestArchDigest]:
         """Extract manifests from container registry.
 
         Method fetches manifests for all provided media types. If HTTPErrors is raised when
@@ -179,7 +179,7 @@ class ContentExtractor:
             if not manifest:
                 continue
             else:
-                ret = self._MEDIA_TYPES_PROCESS[mtype](self, image_ref, manifest, mtype)
+                ret = self._MEDIA_TYPES_PROCESS[mtype](self, image_ref, manifest, mtype)  # type: ignore # noqa: E501
                 if isinstance(ret, list):
                     results.extend(ret)
                 else:
@@ -187,7 +187,7 @@ class ContentExtractor:
                 break
         return results
 
-    def extract_tags(self, repo_ref: str, tolerate_missing: bool = True):
+    def extract_tags(self, repo_ref: str, tolerate_missing: bool = True) -> list[str]:
         """Fetch list of tags for given repo reference.
 
         Args:
@@ -205,7 +205,7 @@ class ContentExtractor:
                 repo_tags = {"tags": []}
             else:
                 raise
-        return repo_tags["tags"]
+        return repo_tags["tags"]  # type: ignore
 
 
 class ReferenceProcessorExternal:
@@ -310,7 +310,7 @@ class ItemProcesor:
     """
 
     extractor: ContentExtractor
-    reference_processor: ReferenceProcessorExternal
+    reference_processor: ReferenceProcessorExternal | ReferenceProcessorInternal
     reference_registries: List[str]
     source_registry: str
 
@@ -389,14 +389,14 @@ class ItemProcesor:
         Returns:
             dict: Dict of {registry: {repo: [tags]}}
         """
-        ret = {}
+        ret: dict[str, Dict[str, list[str]]] = {}
         for registry, repo in self._generate_dest_repo(item):
             for repo, tags in item.metadata["tags"].items():
                 for tag in tags:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item: PushItem, sign_only_arches: List[str] = []) -> List[SignEntry]:
+    def generate_to_sign(self, item: Any, sign_only_arches: List[str] = []) -> List[SignEntry]:
         """Generate list of images to sign.
 
         Args:
@@ -463,7 +463,7 @@ class ItemProcesor:
 
     def generate_existing_tags(
         self, item: PushItem, tolerate_missing: bool = True
-    ) -> List[Tuple[str, str, str]]:
+    ) -> List[Tuple[str, str, str | None]]:
         """Generate list of existing tags for given push item.
 
         Args:
@@ -472,7 +472,7 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing registry, repository and tag.
         """
-        existing_tag_entries = []
+        existing_tag_entries: list[tuple[str, str, str | None]] = []
         for repo in self._generate_src_repo(item):
             ref_repo = self.reference_processor.replace_repo(repo)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
@@ -483,7 +483,7 @@ class ItemProcesor:
         return existing_tag_entries
 
     def _generate_existing_manifests(
-        self, item: PushItem, only_media_types=None
+        self, item: PushItem, only_media_types: list[str] | None = None
     ) -> List[Tuple[str, str, Optional[ManifestArchDigest]]]:
         """Generate list of existing manifests data for given push item.
 
@@ -493,7 +493,7 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing repository, tag and ManifestArchDigest.
         """
-        existing_manifests = []
+        existing_manifests: list[tuple[str, str, ManifestArchDigest | None]] = []
         if not only_media_types:
             media_types = [
                 QuayClient.MANIFEST_LIST_TYPE,
@@ -524,7 +524,7 @@ class ItemProcesor:
         return existing_manifests
 
     def generate_existing_manifests_map(
-        self, item: PushItem, only_media_types=None
+        self, item: PushItem, only_media_types: list[str] | None = None
     ) -> Dict[str, Dict[str, Dict[str, List[ManifestArchDigest]]]]:
         """Generate existing manifests map for given push item.
 
@@ -534,10 +534,11 @@ class ItemProcesor:
         Returns:
             dict: Dict of {registry: {repo: {tag: [<ManifestArchDigest>]}}}
         """
-        mapping_existing = {}
+        mapping_existing: dict[str, dict[str, dict[str, list[ManifestArchDigest]]]] = {}
         for repo, tag, mad in self._generate_existing_manifests(
             item, only_media_types=only_media_types
         ):
+            # TOFIX: inconsistent types returned
             if mad:
                 mapping_existing.setdefault(self.source_registry, {}).setdefault(
                     repo, {}
@@ -545,12 +546,14 @@ class ItemProcesor:
             else:
                 mapping_existing.setdefault(self.source_registry, {}).setdefault(
                     repo, {}
-                ).setdefault(tag, mad)
+                ).setdefault(
+                    tag, mad  # type: ignore
+                )
         return mapping_existing
 
     def generate_existing_manifests_metadata(
-        self, item: PushItem, only_media_types=None
-    ) -> List[Tuple[str, str, ManifestArchDigest]]:
+        self, item: PushItem, only_media_types: list[str] | None = None
+    ) -> List[Tuple[str, str, ManifestArchDigest | None]]:
         """Generate list of existing manifests for given push item.
 
         Args:
@@ -568,7 +571,7 @@ class ItemProcesor:
 
     def generate_all_existing_manifests_metadata(
         self, item: PushItem
-    ) -> List[Tuple[str, str, ManifestArchDigest]]:
+    ) -> List[Tuple[str, str, ManifestArchDigest | None]]:
         """Return manifests for all existing tags in all repositories for given push item.
 
         Args:
@@ -576,7 +579,7 @@ class ItemProcesor:
         Returns:
             list: List of tuples containing repository, tag and ManifestArchDigest.
         """
-        repo_tags_map = {}
+        repo_tags_map: dict[str, list[str | None]] = {}
         for registry, repo, tag in self.generate_existing_tags(item):
             repo_tags_map.setdefault(repo, []).append(tag)
         item2 = VirtualPushItem(
@@ -587,7 +590,7 @@ class ItemProcesor:
 
 
 def item_processor_for_external_data(
-    quay_client, external_registries, retry_sleep_time
+    quay_client: QuayClient, external_registries: list[str], retry_sleep_time: int
 ) -> ItemProcesor:
     """Get instance of item processor configured to produce destination data.
 
@@ -603,12 +606,13 @@ def item_processor_for_external_data(
         extractor=extractor,
         reference_processor=ReferenceProcessorExternal(),
         reference_registries=external_registries,
-        source_registry=None,
+        # TOFIX: this shouldn't be None
+        source_registry=None,  # type: ignore
     )
 
 
 def item_processor_for_internal_data(
-    quay_client, internal_registry, retry_sleep_time, internal_namespace
+    quay_client: QuayClient, internal_registry: str, retry_sleep_time: int, internal_namespace: str
 ) -> ItemProcesor:
     """Get instance of item processor configured to produce internal data.
 

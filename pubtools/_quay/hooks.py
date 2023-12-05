@@ -7,7 +7,7 @@ from pubtools.pluggy import pm, hookspec
 
 
 @hookspec
-def quay_repositories_cleared(repository_ids):
+def quay_repositories_cleared(repository_ids: list[str]) -> None:
     """Invoked after repositories have been cleared on Quay.
 
     :param repository_ids: ID of each cleared repository.
@@ -16,7 +16,7 @@ def quay_repositories_cleared(repository_ids):
 
 
 @hookspec
-def quay_repositories_removed(repository_ids):
+def quay_repositories_removed(repository_ids: list[str]) -> None:
     """Invoked after repositories have been removed from Quay.
 
     :param repository_ids: ID of each removed repository.
@@ -25,7 +25,7 @@ def quay_repositories_removed(repository_ids):
 
 
 @hookspec
-def quay_images_tagged(source_ref, dest_refs):
+def quay_images_tagged(source_ref: str, dest_refs: list[str]) -> None:
     """Invoked after tagging image(s) on Quay.
 
     :param source_ref: Source image reference.
@@ -36,7 +36,7 @@ def quay_images_tagged(source_ref, dest_refs):
 
 
 @hookspec
-def quay_images_untagged(untag_refs, lost_refs):
+def quay_images_untagged(untag_refs: list[str], lost_refs: list[str]) -> None:
     """Invoked after untagging image(s) on Quay.
 
     :param untag_refs: Image references for which tags were removed.

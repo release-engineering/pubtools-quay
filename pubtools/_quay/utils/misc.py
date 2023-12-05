@@ -10,7 +10,8 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Iterable, Any, Callable, Dict, List
+from typing import Iterable, Any, Callable, Dict, Generator
+
 
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -40,7 +41,7 @@ class FData:
     kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
-def run_in_parallel(func: Callable, data: List[FData], threads=10):
+def run_in_parallel(func: Callable[..., Any], data: list[Any], threads: int = 10) -> dict[Any, Any]:
     """Run method on data in parallel.
 
     Args:
@@ -57,13 +58,13 @@ def run_in_parallel(func: Callable, data: List[FData], threads=10):
             for n, data_entry in enumerate(data)
         }
         for future in futures.as_completed(future_results):
-            if future.exception():
-                raise future.exception()  # pragma: no cover
+            if future.exception() is not None:
+                raise future.exception()  # type: ignore # pragma: no cover
             results[future_results[future]] = future.result()
     return dict(sorted(results.items(), key=lambda kv: kv[0]))
 
 
-def setup_arg_parser(args):
+def setup_arg_parser(args: dict[Any, Any]) -> argparse.ArgumentParser:
     """
     Set up ArgumentParser with the provided arguments.
 
@@ -74,7 +75,7 @@ def setup_arg_parser(args):
         (ArgumentParser) Configured instance of ArgumentParser.
     """
     parser = argparse.ArgumentParser()
-    arg_groups = {}
+    arg_groups: dict[Any, Any] = {}
     for aliases, arg_data in args.items():
         holder = parser
         if "group" in arg_data:
@@ -99,7 +100,9 @@ def setup_arg_parser(args):
     return parser
 
 
-def add_args_env_variables(parsed_args, args):
+def add_args_env_variables(
+    parsed_args: argparse.Namespace, args: dict[Any, Any]
+) -> argparse.Namespace:
     """
     Add argument values from environment variables.
 
@@ -120,7 +123,7 @@ def add_args_env_variables(parsed_args, args):
 
 
 @contextlib.contextmanager
-def capture_stdout():
+def capture_stdout() -> Generator[StringIO, None, None]:
     """Capture sys.stdout to stream buffer."""
     old_stdout = sys.stdout
     sys.stdout = new_stdout = StringIO()
@@ -132,7 +135,9 @@ def capture_stdout():
 
 
 @contextlib.contextmanager
-def setup_entry_point_cli(entry_tuple, name, args, environ_vars):
+def setup_entry_point_cli(
+    entry_tuple: tuple[str, str, str], name: str, args: list[str], environ_vars: dict[str, Any]
+) -> Generator[Callable[[], Any], None, None]:
     """
     Set up an entrypoint as a context manager.
 
@@ -170,7 +175,9 @@ def setup_entry_point_cli(entry_tuple, name, args, environ_vars):
             del os.environ[key]
 
 
-def run_entrypoint(entry_tuple, name, args, environ_vars):
+def run_entrypoint(
+    entry_tuple: tuple[str, str, str], name: str, args: list[str], environ_vars: dict[str, Any]
+) -> Any:
     """
     Run an entrypoint function and return its return value.
 
@@ -207,7 +214,7 @@ def run_entrypoint(entry_tuple, name, args, environ_vars):
     return pyret
 
 
-def get_internal_container_repo_name(external_name):
+def get_internal_container_repo_name(external_name: str) -> str:
     """
     Transform a repository name to an internal form in which it exists on Quay.io.
 
@@ -236,7 +243,7 @@ def get_internal_container_repo_name(external_name):
     return external_name.replace("/", INTERNAL_DELIMITER)
 
 
-def get_external_container_repo_name(internal_name):
+def get_external_container_repo_name(internal_name: str) -> str:
     """
     Transform a repository name to an external form in which it's visible to customers.
 
@@ -269,12 +276,12 @@ def get_external_container_repo_name(internal_name):
     return internal_name.replace(INTERNAL_DELIMITER, "/")
 
 
-def task_status(event):
+def task_status(event: str) -> dict[str, dict[str, str]]:
     """Helper function. Expand as necessary."""  # noqa: D401
     return dict(event={"type": event})
 
 
-def log_step(step_name):
+def log_step(step_name: str) -> Callable[[Any], Any]:
     """
     Log status for methods which constitute an entire task step.
 
@@ -284,12 +291,12 @@ def log_step(step_name):
     """
     event_name = step_name.lower().replace(" ", "-")
 
-    def decorate(fn):
+    def decorate(fn: Callable[..., Any]) -> Callable[..., Any]:
         # Add instrumentation trace for all push steps.
         fn = tw.instrument_func(span_name=event_name)(fn)
 
         @functools.wraps(fn)
-        def fn_wrapper(*args, **kwargs):
+        def fn_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 LOG.info("%s: Started", step_name, extra=task_status("%s-start" % event_name))
                 ret = fn(*args, **kwargs)
@@ -304,7 +311,7 @@ def log_step(step_name):
     return decorate
 
 
-def get_pyxis_ssl_paths(target_settings):
+def get_pyxis_ssl_paths(target_settings: dict[str, Any]) -> tuple[str, str]:
     """
     Get certificate and key paths for Pyxis SSL authentication.
 
@@ -336,12 +343,14 @@ def get_pyxis_ssl_paths(target_settings):
     return (cert, key)
 
 
-def timestamp():
+def timestamp() -> str:
     """Return now() timestamp."""
     return str(time.time()).split(".")[0]
 
 
-def run_with_retries(function, message, tries=4, wait_time_increase=10):
+def run_with_retries(
+    function: Callable[[], Any], message: str, tries: int = 4, wait_time_increase: int = 10
+) -> Any:
     """
     Run the specified function until it succeeds or maximum retries are reached.
 
@@ -378,7 +387,9 @@ def run_with_retries(function, message, tries=4, wait_time_increase=10):
             raise
 
 
-def retry(message, tries=4, wait_time_increase=10):
+def retry(
+    message: str, tries: int = 4, wait_time_increase: int = 10
+) -> Callable[[Callable[..., Any]], Any]:
     """
     Retry decorated function.
 
@@ -392,9 +403,9 @@ def retry(message, tries=4, wait_time_increase=10):
             RUN -> WAIT 0 -> RUN -> WAIT 10 -> RUN -> WAIT 20 -> RUN
     """
 
-    def inner_retry(func):
+    def inner_retry(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def wrapper_func(*args, **kwargs):
+        def wrapper_func(*args: Any, **kwargs: Any) -> Any:
             bound = functools.partial(func, *args, **kwargs)
             return run_with_retries(bound, message, tries, wait_time_increase)
 
@@ -403,7 +414,7 @@ def retry(message, tries=4, wait_time_increase=10):
     return inner_retry
 
 
-def parse_index_image(build_details):
+def parse_index_image(build_details: Any) -> tuple[str, str, str]:
     """
     Get registry, namespace and repository of a resolved internal index image.
 
@@ -419,7 +430,7 @@ def parse_index_image(build_details):
     return (registry, namespace, repo)
 
 
-def get_basic_auth(host):
+def get_basic_auth(host: str) -> tuple[str | None, str | None] | list[str]:
     """
     Look for container config file for username and password.
 
@@ -440,7 +451,7 @@ def get_basic_auth(host):
     return None, None
 
 
-def pyxis_get_repo_metadata(repo, target_settings):
+def pyxis_get_repo_metadata(repo: str, target_settings: dict[str, Any]) -> Any:
     """
     Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.
 
@@ -460,7 +471,7 @@ def pyxis_get_repo_metadata(repo, target_settings):
     args += ["--pyxis-ssl-keyfile", key]
     args += ["--repo-name", repo]
 
-    env_vars = {}
+    env_vars: dict[Any, Any] = {}
     metadata = run_entrypoint(
         ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
         "pubtools-pyxis-get-repo-metadata",
@@ -470,7 +481,7 @@ def pyxis_get_repo_metadata(repo, target_settings):
     return metadata
 
 
-def set_aws_kms_environment_variables(target_settings, profile_name):
+def set_aws_kms_environment_variables(target_settings: dict[str, Any], profile_name: str) -> None:
     """
     Set environment variables required to use an AWS KMS key.
 

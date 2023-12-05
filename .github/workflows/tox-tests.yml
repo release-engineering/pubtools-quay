@@ -67,6 +67,22 @@ jobs:
         run: pip install tox
       - name: Run Tox
         run: tox -e docs -vv
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update existing dependencies
+        run: sudo apt-get update -y
+      - name: Install system dependencies
+        run: sudo apt-get install -y libkrb5-dev
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Install Tox
+        run: pip install tox
+      - name: Run Tox
+        run: tox -e mypy -vv
   coverage:
     runs-on: ubuntu-latest
     steps:

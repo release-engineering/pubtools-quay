@@ -5,6 +5,7 @@ import json
 from typing import Tuple, List, Dict, Any
 
 import requests
+import urllib3
 
 from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
 from .utils.misc import get_internal_container_repo_name, log_step
@@ -33,9 +34,9 @@ from .utils.misc import (
 )
 
 # TODO: do we want this, or should I remove it?
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+urllib3.disable_warnings(InsecureRequestWarning)
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -47,7 +48,14 @@ class PushDocker:
         "ImageData", ["repo", "tag", "v2list_digest", "v2s2_digest", "v2s1_digest"]
     )
 
-    def __init__(self, push_items, hub, task_id, target_name, target_settings):
+    def __init__(
+        self,
+        push_items: list[Any],
+        hub: Any,
+        task_id: str,
+        target_name: str,
+        target_settings: dict[str, Any],
+    ) -> None:
         """
         Initialize.
 
@@ -73,10 +81,10 @@ class PushDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._src_quay_client = None
-        self._dest_quay_client = None
-        self._dest_operator_quay_client = None
-        self._dest_quay_api_client = None
+        self._src_quay_client: QuayClient | None = None
+        self._dest_quay_client: QuayClient | None = None
+        self._dest_operator_quay_client: QuayClient | None = None
+        self._dest_quay_api_client: QuayApiClient | None = None
         self._index_image_quay_client = None
         self.dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
         self.dest_registries = (
@@ -86,7 +94,7 @@ class PushDocker:
         )
 
     @property
-    def dest_quay_client(self):
+    def dest_quay_client(self) -> QuayClient:
         """Create and access QuayClient for dest image."""
         if self._dest_quay_client is None:
             self._dest_quay_client = QuayClient(
@@ -97,7 +105,7 @@ class PushDocker:
         return self._dest_quay_client
 
     @property
-    def src_quay_client(self):
+    def src_quay_client(self) -> QuayClient:
         """Create and access QuayClient for source image."""
         if self._src_quay_client is None:
             self._src_quay_client = QuayClient(
@@ -108,7 +116,7 @@ class PushDocker:
         return self._src_quay_client
 
     @property
-    def dest_operator_quay_client(self):
+    def dest_operator_quay_client(self) -> QuayClient:
         """Create and access QuayClient for dest image."""
         if self._dest_operator_quay_client is None:
             self._dest_operator_quay_client = QuayClient(
@@ -123,7 +131,7 @@ class PushDocker:
         return self._dest_operator_quay_client
 
     @property
-    def dest_quay_api_client(self):
+    def dest_quay_api_client(self) -> QuayApiClient:
         """Create and access QuayApiClient for dest image."""
         if self._dest_quay_api_client is None:
             self._dest_quay_api_client = QuayApiClient(
@@ -131,7 +139,7 @@ class PushDocker:
             )
         return self._dest_quay_api_client
 
-    def verify_target_settings(self):
+    def verify_target_settings(self) -> None:
         """Verify that target settings contains all the necessary data."""
         LOG.info("Verifying the necessary target settings")
         required_settings = [
@@ -163,7 +171,7 @@ class PushDocker:
                 )
 
     @log_step("Get container push items")
-    def get_docker_push_items(self):
+    def get_docker_push_items(self) -> list[Any]:
         """
         Filter push items to only include docker ones.
 
@@ -175,7 +183,7 @@ class PushDocker:
             Docker push items.
         """
         docker_push_items = []
-        url_items = {}
+        url_items: dict[str, Any] = {}
         for item in self.push_items:
             if item.file_type != "docker":
                 LOG.warning("Push item {0} doesn't have 'docker' type, skipping.".format(item))
@@ -203,7 +211,7 @@ class PushDocker:
         return docker_push_items
 
     @log_step("Get operator push items")
-    def get_operator_push_items(self):
+    def get_operator_push_items(self) -> list[Any]:
         """
         Filter out push items to only include operator ones.
 
@@ -240,7 +248,9 @@ class PushDocker:
         return operator_push_items
 
     @classmethod
-    def check_repos_validity(cls, push_items, hub, target_settings):
+    def check_repos_validity(
+        cls, push_items: list[Any], hub: Any, target_settings: dict[str, Any]
+    ) -> None:
         """
         Check if specified repos are valid and pushing to them is allowed.
 
@@ -308,7 +318,9 @@ class PushDocker:
                         raise
 
     @log_step("Generate backup mapping")
-    def generate_backup_mapping(self, push_items) -> Tuple[Dict[str, Any], List[ImageData]]:
+    def generate_backup_mapping(
+        self, push_items: list[Any]
+    ) -> Tuple[Dict[ImageData, str], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
@@ -359,15 +371,15 @@ class PushDocker:
                                     for m in man_arch_digs
                                     if m.type_ == QuayClient.MANIFEST_LIST_TYPE
                                 ]
-                                or [None]
+                                or [None]  # type: ignore
                             )[0]
                             v2s1_mad = (
                                 [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
-                                or [None]
+                                or [None]  # type: ignore
                             )[0]
                             v2s2_mad = (
                                 [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
-                                or [None]
+                                or [None]  # type: ignore
                             )[0]
                             image_data = PushDocker.ImageData(
                                 full_repo,
@@ -387,7 +399,7 @@ class PushDocker:
         return (backup_tags, rollback_tags)
 
     @log_step("Perform rollback")
-    def rollback(self, backup_tags, rollback_tags):
+    def rollback(self, backup_tags: dict[ImageData, str], rollback_tags: list[ImageData]) -> None:
         """
         Perform a rollback.
 
@@ -418,7 +430,9 @@ class PushDocker:
                 if e.response.status_code != 404 and e.response.status_code != 401:
                     raise
 
-    def get_outdated_manifests(self, backup_tags) -> List[Tuple[str, str, str]]:
+    def get_outdated_manifests(
+        self, backup_tags: dict[ImageData, str]
+    ) -> List[Tuple[str, str, str]]:
         """Return list of existing manifests which are being replaced with new ones.
 
         Args:
@@ -437,7 +451,9 @@ class PushDocker:
                 outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
         return outdated_signatures
 
-    def fetch_missing_push_items_digests(self, push_items):
+    def fetch_missing_push_items_digests(
+        self, push_items: list[Any]
+    ) -> dict[str, dict[str, dict[str, dict[str, tuple[str, Any]]]]]:
         """Fetch digests for media types which weren't originally pushed.
 
         In order to be able to sign v2s1 for images which were pushed as
@@ -456,7 +472,7 @@ class PushDocker:
             self.target_settings["quay_namespace"],
         )
 
-        new_digests = {}
+        new_digests: dict[str, dict[str, dict[str, dict[str, tuple[str, Any]]]]] = {}
         for item in push_items:
             missing_media_types = set(
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
@@ -481,7 +497,7 @@ class PushDocker:
                             )
         return new_digests
 
-    def sign_new_manifests(self, docker_push_items):
+    def sign_new_manifests(self, docker_push_items: list[Any]) -> list[tuple[str, str, Any]]:
         """Sign newly pushed images with signers enabled in target settings.
 
         Args:
@@ -515,7 +531,7 @@ class PushDocker:
                 signer.sign_containers(to_sign_entries, self.task_id)
         return current_signatures
 
-    def run(self):
+    def run(self) -> None:
         """
         Perform the full push-docker workflow.
 
@@ -630,8 +646,9 @@ class PushDocker:
                     repo=iib_intermediate_repo,
                     tag=iib_result.build_tags[0],
                 )
+                # TOFIX: current_signatures can contain different types of data
                 current_signatures.extend(
-                    _sign_index_image(
+                    _sign_index_image(  # type: ignore
                         permanent_index_image,
                         iib_namespace,
                         iib_details["destination_tags"],
@@ -677,7 +694,9 @@ class PushDocker:
             sys.exit(1)
 
 
-def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
+def mod_entry_point(
+    push_items: list[Any], hub: Any, task_id: str, target_name: str, target_settings: dict[str, Any]
+) -> None:
     """Entry point for use in another python code."""
     push = PushDocker(push_items, hub, task_id, target_name, target_settings)
     push.run()

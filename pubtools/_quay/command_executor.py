@@ -10,6 +10,8 @@ import subprocess
 import tarfile
 import time
 import textwrap
+from types import TracebackType
+from typing import Any, Self, Optional, Type, Generator
 
 import docker
 import paramiko
@@ -21,18 +23,10 @@ tw = get_trace_wrapper()
 LOG = logging.getLogger("pubtools.quay")
 
 
-# Docker client is called differently based on the version used. Unify the calls.
-# Only use old call if version 1.X.X is used
-class APIClient(docker.APIClient if int(docker.__version__[0]) > 1 else docker.client.Client):
-    """Unify the call of Docker client for old and new version."""
-
-    pass
-
-
 # Python 2.6 version of paramiko doesn't support the usage
 # of SSHClient as a context manager. This wrapper adds the functionality
 @contextlib.contextmanager
-def open_ssh_client():
+def open_ssh_client() -> Generator[paramiko.client.SSHClient, None, None]:
     """Use SSHClient as a context manager."""
     client = paramiko.client.SSHClient()
     try:
@@ -50,19 +44,32 @@ class Executor(object):
     implemented in this class.
     """
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         """Use the class as context manager. Returns instance upon invocation."""
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         """Cleanup when used as context manager. No-op by default."""
         pass
 
-    def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
+    def _run_cmd(
+        self,
+        cmd: str,
+        err_msg: str | None = None,
+        tolerate_err: bool = False,
+        stdin: str | None = None,
+    ) -> tuple[str, str]:
         """Run a bash command."""
         raise NotImplementedError  # pragma: no cover"
 
-    def skopeo_login(self, host="quay.io", username=None, password=None):
+    def skopeo_login(
+        self, host: str = "quay.io", username: str | None = None, password: str | None = None
+    ) -> None:
         """
         Attempt to login to Quay if no login credentials are present.
 
@@ -97,7 +104,7 @@ class Executor(object):
                 "STDOUT: '{0}', STDERR: '{1}'".format(out, err)
             )
 
-    def tag_images(self, source_ref, dest_refs, all_arch=False):
+    def tag_images(self, source_ref: str, dest_refs: list[str], all_arch: bool = False) -> None:
         """
         Copy image from source to destination(s) using skopeo.
 
@@ -121,7 +128,7 @@ class Executor(object):
 
         LOG.info("Tagging complete.")
 
-    def skopeo_inspect(self, image_ref, raw=False):
+    def skopeo_inspect(self, image_ref: str, raw: bool = False) -> Any:
         """
         Run skopeo inspect and return the result.
 
@@ -149,7 +156,7 @@ class Executor(object):
 class LocalExecutor(Executor):
     """Run commands locally."""
 
-    def __init__(self, params={}):
+    def __init__(self, params: dict[str, Any] = {}) -> None:
         """
         Initialize.
 
@@ -164,7 +171,13 @@ class LocalExecutor(Executor):
         self.params.setdefault("stdin", subprocess.PIPE)
 
     @tw.instrument_func(args_to_attr=True)
-    def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
+    def _run_cmd(
+        self,
+        cmd: str,
+        err_msg: str | None = None,
+        tolerate_err: bool = False,
+        stdin: str | None = None,
+    ) -> tuple[str, str]:
         """
         Run a command locally.
 
@@ -200,13 +213,13 @@ class RemoteExecutor(Executor):
 
     def __init__(
         self,
-        hostname,
-        username=None,
-        key_filename=None,
-        password=None,
-        port=None,
-        accept_unknown_host=True,
-    ):
+        hostname: str,
+        username: str | None = None,
+        key_filename: str | None = None,
+        password: str | None = None,
+        port: int | None = None,
+        accept_unknown_host: bool = True,
+    ) -> None:
         """
         Initialize.
 
@@ -229,12 +242,20 @@ class RemoteExecutor(Executor):
         self.key_filename = key_filename
         self.password = password
         if accept_unknown_host:
-            self.missing_host_policy = paramiko.client.WarningPolicy()
+            self.missing_host_policy: paramiko.client.WarningPolicy | paramiko.client.RejectPolicy = (  # noqa: E501
+                paramiko.client.WarningPolicy()
+            )
         else:
             self.missing_host_policy = paramiko.client.RejectPolicy()
         self.port = port if port else 22
 
-    def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
+    def _run_cmd(
+        self,
+        cmd: str,
+        err_msg: str | None = None,
+        tolerate_err: bool = False,
+        stdin: str | None = None,
+    ) -> tuple[str, str]:
         """
         Run a command remotely via SSH.
 
@@ -267,7 +288,7 @@ class RemoteExecutor(Executor):
                 cmd = cmd + " --authfile $HOME/.docker/config.json"
             ssh_in, out, err = client.exec_command(quote(cmd))  # nosec B601
             if stdin:
-                ssh_in.channel.send(stdin)
+                ssh_in.channel.send(stdin)  # type: ignore
                 ssh_in.channel.shutdown_write()
 
             out_text = out.read().decode("utf-8")
@@ -286,14 +307,14 @@ class ContainerExecutor(Executor):
 
     def __init__(
         self,
-        image,
-        base_url="unix://var/run/docker.sock",
-        timeout=None,
-        verify_tls=False,
-        cert_path=None,
-        registry_username=None,
-        registry_password=None,
-    ):
+        image: str,
+        base_url: str = "unix://var/run/docker.sock",
+        timeout: int | None = None,
+        verify_tls: bool = False,
+        cert_path: str | None = None,
+        registry_username: str | None = None,
+        registry_password: str | None = None,
+    ) -> None:
         """
         Initialize.
 
@@ -318,7 +339,7 @@ class ContainerExecutor(Executor):
         """
         self.image = image
 
-        kwargs = {}
+        kwargs: dict[Any, Any] = {}
         kwargs["base_url"] = base_url
         kwargs["version"] = "auto"
         if timeout:
@@ -335,7 +356,7 @@ class ContainerExecutor(Executor):
                     verify=os.path.join(cert_path, "ca.pem"),
                 )
 
-        self.client = APIClient(**kwargs)
+        self.client = docker.APIClient(**kwargs)
         repo, tag = self.image.split(":", 1)
         if registry_username and registry_password:
             self.client.login(
@@ -348,11 +369,22 @@ class ContainerExecutor(Executor):
         self.container = self.client.create_container(self.image, detach=True, tty=True)
         self.client.start(self.container["Id"])
 
-    def __exit__(self, exc_type, exc_value, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         """Cleanup the container when used as a context manager."""
         self.client.remove_container(self.container["Id"], force=True)
 
-    def _run_cmd(self, cmd, err_msg=None, tolerate_err=False, stdin=None):
+    def _run_cmd(
+        self,
+        cmd: str,
+        err_msg: str | None = None,
+        tolerate_err: bool = False,
+        stdin: str | None = None,
+    ) -> tuple[str, str]:
         """
         Run a command locally.
 
@@ -392,7 +424,7 @@ class ContainerExecutor(Executor):
 
         return (out_str, out_str)
 
-    def _add_file(self, data, file_name):
+    def _add_file(self, data: str, file_name: str) -> None:
         """
         Add a text file to the running container.
 
@@ -410,7 +442,7 @@ class ContainerExecutor(Executor):
         encoded_data = data.encode("utf-8")
         tarinfo = tarfile.TarInfo(name=file_name)
         tarinfo.size = len(encoded_data)
-        tarinfo.mtime = time.time()
+        tarinfo.mtime = int(time.time())
         data_tar.addfile(tarinfo, io.BytesIO(encoded_data))
         data_tar.close()
 
@@ -422,7 +454,9 @@ class ContainerExecutor(Executor):
         if not success:
             raise RuntimeError("File was not successfully added to the container")
 
-    def skopeo_login(self, host="quay.io", username=None, password=None):
+    def skopeo_login(
+        self, host: str = "quay.io", username: str | None = None, password: str | None = None
+    ) -> None:
         """
         Attempt to login to Quay if no login credentials are present.
 

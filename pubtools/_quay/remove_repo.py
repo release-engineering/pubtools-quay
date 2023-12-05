@@ -1,4 +1,6 @@
 import logging
+import argparse
+from typing import Any
 
 from pubtools.pluggy import pm, task_context
 
@@ -78,7 +80,7 @@ REMOVE_REPO_ARGS = {
 }
 
 
-def remove_repositories(repositories, settings):
+def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
     """
     Remove Quay repository.
 
@@ -123,7 +125,7 @@ def remove_repositories(repositories, settings):
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
     for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))
+        outdated_manifests.append((mad.digest, tag, repo))  # type: ignore
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
@@ -141,12 +143,12 @@ def remove_repositories(repositories, settings):
     pm.hook.quay_repositories_removed(repository_ids=sorted(parsed_repositories))
 
 
-def setup_args():
+def setup_args() -> argparse.ArgumentParser:
     """Set up argparser without extra parameters, this method is used for auto doc generation."""
     return setup_arg_parser(REMOVE_REPO_ARGS)
 
 
-def remove_repositories_main(sysargs=None):
+def remove_repositories_main(sysargs: list[str] | None = None) -> None:
     """Entrypoint for removing repositories."""
     logging.basicConfig(level=logging.INFO)
 

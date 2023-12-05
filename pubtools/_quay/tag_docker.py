@@ -2,6 +2,8 @@ from collections import namedtuple
 from copy import deepcopy
 import json
 import logging
+import urllib3
+from typing import Any
 
 import requests
 
@@ -18,11 +20,12 @@ from .untag_images import untag_images
 from .push_docker import PushDocker
 from .signer_wrapper import SIGNER_BY_LABEL
 from .item_processor import item_processor_for_internal_data, SignEntry
+from .command_executor import Executor
 
 # TODO: do we want this, or should I remove it?
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning
 
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+urllib3.disable_warnings(InsecureRequestWarning)
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -34,7 +37,14 @@ class TagDocker:
     MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
     MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 
-    def __init__(self, push_items, hub, task_id, target_name, target_settings):
+    def __init__(
+        self,
+        push_items: list[Any],
+        hub: Any,
+        task_id: str,
+        target_name: str,
+        target_settings: dict[str, Any],
+    ) -> None:
         """
         Initialize.
 
@@ -56,7 +66,7 @@ class TagDocker:
         self.target_name = target_name
         self.target_settings = target_settings
 
-        self._quay_client = None
+        self._quay_client: QuayClient | None = None
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
@@ -71,7 +81,7 @@ class TagDocker:
         self.verify_input_data()
 
     @property
-    def quay_client(self):
+    def quay_client(self) -> QuayClient:
         """Create and access QuayClient for source and dest images."""
         if self._quay_client is None:
             self._quay_client = QuayClient(
@@ -81,7 +91,7 @@ class TagDocker:
             )
         return self._quay_client
 
-    def verify_target_settings(self):
+    def verify_target_settings(self) -> None:
         """Verify that target settings contains all the necessary data."""
         LOG.info("Verifying the necessary target settings")
         required_settings = [
@@ -109,7 +119,7 @@ class TagDocker:
                     "'{0}' must be present in the docker settings.".format(setting)
                 )
 
-    def verify_input_data(self):
+    def verify_input_data(self) -> None:
         """Verify that the data specified for the TagDocker operation are correct."""
         LOG.info("Verifying the input data")
         for item in self.push_items:
@@ -124,7 +134,7 @@ class TagDocker:
             if item.metadata["tag_source"] and ":" in item.metadata["tag_source"]:
                 raise BadPushItem("Specifying source via digest is not allowed.")
 
-    def check_input_validity(self):
+    def check_input_validity(self) -> None:
         """
         Check if input data satisfies tag-docker specific constraints.
 
@@ -181,7 +191,7 @@ class TagDocker:
                             )
                         )
 
-    def get_image_details(self, reference, executor):
+    def get_image_details(self, reference: str, executor: Executor) -> ImageDetails | None:
         """
         Create an ImageDetails namedtuple for the given image reference.
 
@@ -203,12 +213,12 @@ class TagDocker:
             else:
                 raise
 
-        manifest_type = manifest["mediaType"]
+        manifest_type = manifest["mediaType"]  # type: ignore
         if manifest_type not in [TagDocker.MANIFEST_V2S2_TYPE, TagDocker.MANIFEST_LIST_TYPE]:
             raise BadPushItem("Image {0} has manifest type different than V2S2 or manifest list")
 
         # Check arch if the image is V2S2 manifest
-        if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:
+        if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:  # type: ignore
             arch = executor.skopeo_inspect(reference)["Architecture"]
             # Arch check is not a great way to verify that this is a source image, but there are
             # no better options without having build details
@@ -220,9 +230,9 @@ class TagDocker:
 
         digest = self.quay_client.get_manifest_digest(reference)
 
-        return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)
+        return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)  # type: ignore # noqa: E501
 
-    def is_arch_relevant(self, push_item, arch):
+    def is_arch_relevant(self, push_item: Any, arch: str) -> bool:
         """
         Find out if an operation should be performed on a given architecture.
 
@@ -241,7 +251,9 @@ class TagDocker:
         else:
             return arch in push_item.metadata["archs"]
 
-    def tag_remove_calculate_archs(self, push_item, tag, executor):
+    def tag_remove_calculate_archs(
+        self, push_item: Any, tag: str, executor: Executor
+    ) -> tuple[list[str], list[str]]:
         """
         Calculate which architectures would be removed, and which would remain from a given tag.
 
@@ -299,7 +311,12 @@ class TagDocker:
                 push_item, source_details, dest_details
             )
 
-    def tag_remove_calculate_archs_source_image(self, push_item, source_details, dest_details):
+        # this should never happen
+        return ([], [])  # pragma: no cover
+
+    def tag_remove_calculate_archs_source_image(
+        self, push_item: Any, source_details: ImageDetails | None, dest_details: ImageDetails
+    ) -> tuple[list[str], list[str]]:
         """
         Calculate which archs would be removed if the specified images were source images.
 
@@ -337,7 +354,9 @@ class TagDocker:
         else:
             return ([], ["amd64"])
 
-    def tag_remove_calculate_archs_multiarch_image(self, push_item, source_details, dest_details):
+    def tag_remove_calculate_archs_multiarch_image(
+        self, push_item: Any, source_details: ImageDetails | None, dest_details: ImageDetails
+    ) -> tuple[list[str], list[str]]:
         """
         Calculate which archs would be removed if the specified images were multiarch images.
 
@@ -392,7 +411,9 @@ class TagDocker:
 
         return (remove_archs, keep_archs)
 
-    def tag_add_calculate_archs(self, push_item, tag, executor):
+    def tag_add_calculate_archs(
+        self, push_item: Any, tag: str, executor: Executor
+    ) -> list[str] | None:
         """
         Calculate which architectures are present in a given tag, and which ones would be added.
 
@@ -450,7 +471,10 @@ class TagDocker:
             ]
             return add_archs
 
-    def copy_tag_sign_images(self, push_item, tag, executor):
+        # this should never happen
+        return []  # pragma: no cover
+
+    def copy_tag_sign_images(self, push_item: Any, tag: str, executor: Executor) -> None:
         """
         Copy image from source to the destination tag and sign new manifest claims.
 
@@ -486,11 +510,11 @@ class TagDocker:
         )
 
         to_sign_entries = []
-        current_signatures = []
+        current_signatures: list[Any] = []
         details = self.get_image_details(source_image, executor)
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
-        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:
+        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:  # type: ignore # noqa: E501
             for registry in registries:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -499,7 +523,7 @@ class TagDocker:
                     SignEntry(
                         repo=repo,
                         reference=reference,
-                        digest=details.digest,
+                        digest=details.digest,  # type: ignore
                         signing_key=push_item.claims_signing_key,
                         arch="amd64",
                     )
@@ -526,15 +550,18 @@ class TagDocker:
                     signer = signercls(
                         config_file=signer["config_file"], settings=self.target_settings
                     )
+                    # exclude should be bool, and outdated manifests should be list?
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
-        elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
+        elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:  # type: ignore
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
-    def merge_manifest_lists_sign_images(self, push_item, tag, add_archs):
+    def merge_manifest_lists_sign_images(
+        self, push_item: Any, tag: str, add_archs: list[str]
+    ) -> None:
         """
         Merge manifest lists between source and destination tag and sign manifest claims.
 
@@ -571,7 +598,7 @@ class TagDocker:
         new_manifest_list = merger.merge_manifest_lists_selected_architectures(add_archs)
         dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
-        current_signatures = []
+        current_signatures: list[Any] = []
         if push_item.claims_signing_key:
             outdated_manifests = []
             current_signatures = []
@@ -625,14 +652,16 @@ class TagDocker:
         if sorted(
             new_manifest_list["manifests"], key=lambda manifest: manifest["digest"]
         ) == sorted(
-            json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]
+            json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]  # type: ignore # noqa: E501
         ):
             self.quay_client.upload_manifest(raw_src_manifest, dest_image, raw=True)
         else:
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
     @classmethod
-    def run_untag_images(cls, references, remove_last, target_settings):
+    def run_untag_images(
+        cls, references: list[str], remove_last: bool, target_settings: dict[str, Any]
+    ) -> None:
         """
         Prepare the "untag images" entrypoint with all the necessary arguments and run it.
 
@@ -652,7 +681,7 @@ class TagDocker:
             quay_password=target_settings["dest_quay_password"],
         )
 
-    def untag_image(self, push_item, tag):
+    def untag_image(self, push_item: Any, tag: str) -> None:
         """
         Untag image specified by tag.
 
@@ -691,7 +720,7 @@ class TagDocker:
 
         self.run_untag_images([dest_image], True, self.target_settings)
 
-    def manifest_list_remove_archs(self, push_item, tag, remove_archs):
+    def manifest_list_remove_archs(self, push_item: Any, tag: str, remove_archs: list[str]) -> None:
         """
         Remove specified archs from a manifest list and upload a new manifest list to Quay.
 
@@ -718,19 +747,19 @@ class TagDocker:
 
         keep_manifests = []
         remove_manifest_sigs = []
-        for manifest in manifest_list["manifests"]:
-            if manifest["platform"]["architecture"] not in remove_archs:
+        for manifest in manifest_list["manifests"]:  # type: ignore
+            if manifest["platform"]["architecture"] not in remove_archs:  # type: ignore
                 keep_manifests.append(deepcopy(manifest))
             else:
                 remove_manifest_sigs.append(manifest)
 
         new_manifest_list = deepcopy(manifest_list)
-        new_manifest_list["manifests"] = keep_manifests
+        new_manifest_list["manifests"] = keep_manifests  # type: ignore
 
         to_remove_sig_entries = []
         for to_remove_man in remove_manifest_sigs:
             to_remove_sig_entries.append(
-                (to_remove_man["digest"], tag, list(push_item.repos.keys())[0])
+                (to_remove_man["digest"], tag, list(push_item.repos.keys())[0])  # type: ignore
             )
 
         for signer in self.target_settings["signing"]:
@@ -741,7 +770,7 @@ class TagDocker:
 
         self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
-    def run(self):
+    def run(self) -> None:
         """
         Perform the full tag-docker workflow.
 
@@ -801,7 +830,9 @@ class TagDocker:
                         self.manifest_list_remove_archs(item, tag, remove_archs)
 
 
-def mod_entry_point(push_items, hub, task_id, target_name, target_settings):
+def mod_entry_point(
+    push_items: list[Any], hub: Any, task_id: str, target_name: str, target_settings: dict[str, Any]
+) -> None:
     """Entry point for use in another python code."""
     tag_docker = TagDocker(push_items, hub, task_id, target_name, target_settings)
     return tag_docker.run()

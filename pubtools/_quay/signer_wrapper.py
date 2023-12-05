@@ -5,7 +5,7 @@ import pkg_resources
 import tempfile
 import json
 
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple, Generator
 
 from marshmallow import Schema, fields, EXCLUDE
 
@@ -25,13 +25,26 @@ class NoSchema(Schema):
     """Schema that does not validate anything."""
 
 
+class MsgSignerSettingsSchema(Schema):
+    """Validation schema for messaging signer settings."""
+
+    pyxis_server = fields.String(required=True)
+    pyxis_ssl_crtfile = fields.String(required=False)
+    pyxis_ssl_keyfile = fields.String(required=False)
+    num_thread_pyxis = fields.Integer(required=False, default=7)
+
+
 class SignerWrapper:
     """Wrapper providing functionality to sign containers with a generic signer."""
 
-    SCHEMA = NoSchema
+    label = "unused"
+
+    SCHEMA: type[Schema] = NoSchema
     entry_point_conf = ["signer", "group", "signer"]
 
-    def __init__(self, config_file: Optional[str] = None, settings: Dict[str, Any] = None):
+    def __init__(
+        self, config_file: Optional[str] = None, settings: Dict[str, Any] | None = None
+    ) -> None:
         """Initialize SignerWrapper.
 
         Args:
@@ -44,22 +57,22 @@ class SignerWrapper:
         self.validate_settings()
 
     @property
-    def entry_point(self):
+    def entry_point(self) -> Any:
         """Load and return entry point for pubtools-sign project."""
         if self._ep is None:
             self._ep = pkg_resources.load_entry_point(*self.entry_point_conf)
         return self._ep
 
-    def remove_signatures(self, signatures: List[str], _exclude: bool = None):
+    def remove_signatures(self, signatures: List[Any], _exclude: bool | None = None) -> None:
         """Remove signatures from a sigstore."""
         LOG.debug("Removing signatures %s", signatures)
         self._remove_signatures(signatures)
 
     @abc.abstractmethod
-    def _run_remove_signatures(self, signatures_to_remove: List[str]):
+    def _run_remove_signatures(self, signatures_to_remove: List[Any]) -> None:
         pass  # pragma: no cover
 
-    def _remove_signatures(self, signatures_to_remove: List[str]):
+    def _remove_signatures(self, signatures_to_remove: List[str]) -> None:
         """Remove signatures from sigstore.
 
         This is helper to make testing easier.
@@ -69,15 +82,15 @@ class SignerWrapper:
         self._run_remove_signatures(signatures_to_remove)
 
     @abc.abstractmethod
-    def _run_store_signed(self, signatures: List[Dict[str, Any]]):
+    def _run_store_signed(self, signatures: Dict[str, Any]) -> None:
         pass  # pragma: no cover
 
-    def _store_signed(self, signatures: List[Dict[str, Any]]):
+    def _store_signed(self, signatures: Dict[str, Any]) -> None:
         """Store signatures in sigstore.
 
         This is helper to make testing easier.
         Args:
-            signatures (list): Signatures to store.
+            signatures (dict): Signatures to store.
         """
         LOG.debug("Storing signatures %s", signatures)
         self._run_store_signed(signatures)
@@ -86,7 +99,7 @@ class SignerWrapper:
         self,
         sign_entry: SignEntry,
         task_id: Optional[str] = None,
-    ):
+    ) -> None:
         """Sign a specific reference and digest with given signing key.
 
         Args:
@@ -123,7 +136,7 @@ class SignerWrapper:
     @log_step("Sign container images")
     def sign_containers(
         self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
-    ):
+    ) -> None:
         """Sign signing entries.
 
         Args:
@@ -137,22 +150,13 @@ class SignerWrapper:
             parallelism,
         )
 
-    def validate_settings(self, settings: Dict[str, Any] = None):
+    def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
         """Validate provided settings for the SignerWrapper."""
         settings = settings or self.settings
         if settings is None:
             raise ValueError("Settings must be provided")
         schema = self.SCHEMA(unknown=EXCLUDE)
         schema.load(settings)
-
-
-class MsgSignerSettingsSchema(Schema):
-    """Validation schema for messaging signer settings."""
-
-    pyxis_server = fields.String(required=True)
-    pyxis_ssl_crtfile = fields.String(required=False)
-    pyxis_ssl_keyfile = fields.String(required=False)
-    num_thread_pyxis = fields.Integer(required=False, default=7)
 
 
 class MsgSignerWrapper(SignerWrapper):
@@ -165,7 +169,7 @@ class MsgSignerWrapper(SignerWrapper):
     SCHEMA = MsgSignerSettingsSchema
 
     @contextmanager
-    def _save_signatures_file(self, signatures: List[Dict[str, Any]]):
+    def _save_signatures_file(self, signatures: List[Dict[str, Any]]) -> Generator[Any, None, None]:
         """Save signatures to a temporary file and yield the file."""
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="pubtools_quay_upload_signatures_"
@@ -174,7 +178,9 @@ class MsgSignerWrapper(SignerWrapper):
             signature_file.flush()
             yield signature_file
 
-    def _fetch_signatures(self, manifest_digests: List[str]):
+    def _fetch_signatures(
+        self, manifest_digests: List[str]
+    ) -> Generator[dict[str, Any], None, None]:
         """Fetch signatures from sigstore.
 
         Args:
@@ -182,19 +188,20 @@ class MsgSignerWrapper(SignerWrapper):
         Returns:
             List[Dict[str, Any]]: List of fetched signatures.
         """
-        cert, key = get_pyxis_ssl_paths(self.settings)
+        # TOFIX: settings can be None
+        cert, key = get_pyxis_ssl_paths(self.settings)  # type: ignore
         chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
         manifest_digests = sorted(list(set(manifest_digests)))
 
-        args = ["--pyxis-server", self.settings["pyxis_server"]]
+        args = ["--pyxis-server", self.settings["pyxis_server"]]  # type: ignore
         args += ["--pyxis-ssl-crtfile", cert]
         args += ["--pyxis-ssl-keyfile", key]
-        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
+        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]  # type: ignore
 
         for chunk_start in range(0, len(manifest_digests), chunk_size):
             chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
 
-            args = ["--pyxis-server", self.settings["pyxis_server"]]
+            args = ["--pyxis-server", self.settings["pyxis_server"]]  # type: ignore
             args += ["--pyxis-ssl-crtfile", cert]
             args += ["--pyxis-ssl-keyfile", key]
 
@@ -206,7 +213,7 @@ class MsgSignerWrapper(SignerWrapper):
                     signature_fetch_file.flush()
                     args += ["--manifest-digest", "@{0}".format(signature_fetch_file.name)]
 
-                env_vars = {}
+                env_vars: dict[Any, Any] = {}
                 chunk_results = run_entrypoint(
                     ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                     "pubtools-pyxis-get-signatures",
@@ -217,7 +224,8 @@ class MsgSignerWrapper(SignerWrapper):
             for result in chunk_results:
                 yield result
 
-    def _run_store_signed(self, signed_results: List[Dict[str, Any]]):
+    # TOFIX: wrong docstring
+    def _run_store_signed(self, signed_results: Dict[str, Any]) -> None:
         """
         Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.
 
@@ -260,17 +268,17 @@ class MsgSignerWrapper(SignerWrapper):
                 f"Key: {sig['sig_key_id']}"
             )
 
-        cert, key = get_pyxis_ssl_paths(self.settings)
+        cert, key = get_pyxis_ssl_paths(self.settings)  # type: ignore
 
-        args = ["--pyxis-server", self.settings["pyxis_server"]]
+        args = ["--pyxis-server", self.settings["pyxis_server"]]  # type: ignore
         args += ["--pyxis-ssl-crtfile", cert]
         args += ["--pyxis-ssl-keyfile", key]
-        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
+        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]  # type: ignore
 
         with self._save_signatures_file(signatures) as signature_file:
             args += ["--signatures", "@{0}".format(signature_file.name)]
             LOG.info("Uploading {0} new signatures".format(len(signatures)))
-            env_vars = {}
+            env_vars: dict[Any, Any] = {}
             run_entrypoint(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
@@ -278,18 +286,18 @@ class MsgSignerWrapper(SignerWrapper):
                 env_vars,
             )
 
-    def _run_remove_signatures(self, signatures_to_remove: List[str]):
+    def _run_remove_signatures(self, signatures_to_remove: List[str]) -> None:
         """Remove signatures from the sigstore.
 
         Args:
             signatures_to_remove (List[str]): List of signatures to remove.
         """
-        cert, key = get_pyxis_ssl_paths(self.settings)
+        cert, key = get_pyxis_ssl_paths(self.settings)  # type: ignore
         args = []
-        args = ["--pyxis-server", self.settings["pyxis_server"]]
+        args = ["--pyxis-server", self.settings["pyxis_server"]]  # type: ignore
         args += ["--pyxis-ssl-crtfile", cert]
         args += ["--pyxis-ssl-keyfile", key]
-        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
+        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]  # type: ignore
 
         with tempfile.NamedTemporaryFile(mode="w") as temp:
             json.dump(signatures_to_remove, temp)
@@ -297,7 +305,7 @@ class MsgSignerWrapper(SignerWrapper):
 
             args += ["--ids", "@%s" % temp.name]
 
-            env_vars = {}
+            env_vars: dict[Any, Any] = {}
             run_entrypoint(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-delete-signatures"),
                 "pubtools-pyxis-delete-signatures",
@@ -345,7 +353,7 @@ class MsgSignerWrapper(SignerWrapper):
         self,
         signatures: List[Tuple[str, str, str]],
         _exclude: Optional[List[Tuple[str, str, str]]] = None,
-    ):
+    ) -> None:
         """Remove signatures from sigstore.
 
         Args:
@@ -388,13 +396,15 @@ class CosignSignerWrapper(SignerWrapper):
             List[Tuple[str, str]]: List of (repository, signature tag) tuples
             for existing signatures.
         """
+        # TOFIX: settings can be None
         full_reference = (
-            f"{self.settings['quay_host']}/"
-            + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+            f"{self.settings['quay_host']}/"  # type: ignore
+            + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"  # type: ignore
             + f":{tag}"
         )
-        existing_signatures = run_entrypoint(
-            ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]
+        # TOFIX: run_entrypoint name and environ_vars missing
+        existing_signatures = run_entrypoint(  # type: ignore
+            ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]  # type: ignore # noqa: E501
         )
         if existing_signatures[0]:
             return [
@@ -443,23 +453,25 @@ class CosignSignerWrapper(SignerWrapper):
                 )
         return to_remove
 
-    def _run_remove_signatures(self, signatures_to_remove: List[Tuple[str, str]]):
+    def _run_remove_signatures(self, signatures_to_remove: List[Tuple[str, str]]) -> None:
         """Remove signatures from the sigstore.
 
         Args:
             signatures_to_remove (List[Tuple(str, str)]): List of signatures to remove.
         """
-        qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
+        # TOFIX: settings can be None
+        qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])  # type: ignore # noqa: E501
         for sig_to_remove in signatures_to_remove:
-            ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
+            ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")  # type: ignore # noqa: E501
             sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
             qc.delete_tag(ref, sig_tag)
 
+    # TOFIX: exclude should be bool
     def remove_signatures(
         self,
         signatures: List[Tuple[str, str, str]],
-        _exclude: Optional[List[Tuple[str, str, str]]] = None,
-    ):
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,  # type: ignore
+    ) -> None:
         """Remove signatures from sigstore.
 
         Args:
