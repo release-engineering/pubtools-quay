@@ -729,8 +729,10 @@ class PushDocker:
                 self.dest_operator_quay_client
             )
             if operator_pusher.ensure_bundles_present():
+                bundles_presence_check_failed = False
                 iib_results = operator_pusher.build_index_images()
             else:
+                bundles_presence_check_failed = True
                 iib_results = {}
             # Sign operator images
 
@@ -747,7 +749,11 @@ class PushDocker:
                 operator_pusher.push_index_images(successful_iib_results, index_stamp)
 
             # Rollback only when all index image builds fails or there are failed items
-            if not any([x["iib_result"] for x in iib_results.values()]) or failed_items:
+            # Empty iib_results is not an error and shouldn't fail the push. The only exception is
+            # when bundles presence check failed.
+            if (iib_results or bundles_presence_check_failed) and (
+                not any([x["iib_result"] for x in iib_results.values()]) or failed_items
+            ):
                 if failed_items:
                     LOG.error("There are failed push items. Cannot continue, running rollback.")
                 else:
