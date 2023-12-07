@@ -11,4 +11,4 @@ pubtools>=0.3.0
 iiblib
 pubtools-iib
 kerberos
-marshmallow
+

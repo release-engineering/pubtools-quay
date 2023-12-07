@@ -15,7 +15,6 @@ import docker
 import paramiko
 from shlex import quote
 
-
 LOG = logging.getLogger("pubtools.quay")
 
 

@@ -1,6 +1,5 @@
 import mock
 import pytest
-import json
 
 from pubtools._quay import remove_repo
 
@@ -27,15 +26,16 @@ def test_arg_constructor_required_args(mock_remove_repositories):
         "/path/to/file.key",
     ]
     remove_repo.remove_repositories_main(required_args)
-    repositories, settings = mock_remove_repositories.call_args[0]
-    assert repositories == "namespace/image"
-    assert settings["quay_org"] == "quay-organization"
-    assert settings["quay_user"] == "some-user"
-    assert settings["quay_password"] == "some-password"
-    assert settings["quay_api_token"] == "some-token"
-    assert settings["pyxis_server"] == "pyxis-url.com"
-    assert settings["pyxis_ssl_crtfile"] == "/path/to/file.crt"
-    assert settings["pyxis_ssl_keyfile"] == "/path/to/file.key"
+    _, called_args = mock_remove_repositories.call_args
+
+    assert called_args["repositories"] == "namespace/image"
+    assert called_args["quay_org"] == "quay-organization"
+    assert called_args["quay_user"] == "some-user"
+    assert called_args["quay_password"] == "some-password"
+    assert called_args["quay_api_token"] == "some-token"
+    assert called_args["pyxis_server"] == "pyxis-url.com"
+    assert called_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
+    assert called_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
 
 
 @mock.patch.dict("os.environ", {"QUAY_API_TOKEN": "api_token", "QUAY_PASSWORD": "some-password"})
@@ -57,15 +57,16 @@ def test_arg_constructor_all_args(mock_remove_repositories):
         "/path/to/file.key",
     ]
     remove_repo.remove_repositories_main(all_args)
-    repositories, called_kw_args = mock_remove_repositories.call_args[0]
-    assert repositories == "namespace/image"
-    assert called_kw_args["quay_org"] == "quay-organization"
-    assert called_kw_args["quay_user"] == "some-user"
-    assert called_kw_args["quay_password"] == "some-password"
-    assert called_kw_args["pyxis_server"] == "pyxis-url.com"
-    assert called_kw_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
-    assert called_kw_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
-    assert called_kw_args["quay_api_token"] == "api_token"
+    _, called_args = mock_remove_repositories.call_args
+
+    assert called_args["repositories"] == "namespace/image"
+    assert called_args["quay_org"] == "quay-organization"
+    assert called_args["quay_user"] == "some-user"
+    assert called_args["quay_password"] == "some-password"
+    assert called_args["pyxis_server"] == "pyxis-url.com"
+    assert called_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
+    assert called_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
+    assert called_args["quay_api_token"] == "api_token"
 
 
 @mock.patch("pubtools._quay.remove_repo.remove_repositories")
@@ -148,19 +149,9 @@ def test_args_missing_quay_password(mock_remove_repositories):
     mock_remove_repositories.assert_not_called()
 
 
-@mock.patch("pubtools._quay.remove_repo.QuayClient")
+@mock.patch("pubtools._quay.remove_repo.SignatureRemover")
 @mock.patch("pubtools._quay.remove_repo.QuayApiClient")
-def test_run(
-    mock_quay_api_client,
-    mock_quay_client,
-    hookspy,
-    src_manifest_list,
-    v2s1_manifest,
-    fake_cert_key_paths,
-    signer_wrapper_remove_signatures,
-    signer_wrapper_entry_point,
-    signer_wrapper_run_entry_point,
-):
+def test_run(mock_quay_api_client, mock_signature_remover, hookspy):
     args = [
         "dummy",
         "--repositories",
@@ -179,60 +170,40 @@ def test_run(
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
-        "--signers",
-        "msg_signer",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
+    mock_remove_repository_signatures = mock.MagicMock()
+    mock_signature_remover.return_value.remove_repository_signatures = (
+        mock_remove_repository_signatures
+    )
 
-    mock_get_repo_tags = mock.MagicMock()
-    mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
-    mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
-
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
-
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
-    signer_wrapper_run_entry_point.return_value = [
-        {
-            "_id": 1,
-            "manifest_digest": "sha256:3333333333",
-            "reference": "some-registry.com/namespace/image:1",
-            "sig_key_id": "key",
-            "repository": "namespace/image",
-        }
-    ]
     remove_repo.remove_repositories_main(args)
 
     mock_quay_api_client.assert_called_once_with("some-token")
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    mock_signature_remover.assert_called_once_with(
+        quay_user="some-user", quay_password="some-password"
+    )
+    mock_remove_repository_signatures.assert_called_once_with(
+        "namespace/image",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
+        7,
+    )
     mock_delete_repo.assert_called_once_with("quay-organization/namespace----image")
 
     assert hookspy == [
         ("task_start", {}),
-        ("get_cert_key_paths", {"server_url": "pyxis-url.com"}),
         ("quay_repositories_removed", {"repository_ids": ["namespace/image"]}),
         ("task_stop", {"failed": False}),
     ]
 
 
-@mock.patch("pubtools._quay.remove_repo.QuayClient")
+@mock.patch("pubtools._quay.remove_repo.SignatureRemover")
 @mock.patch("pubtools._quay.remove_repo.QuayApiClient")
-def test_run_multiple_repos(
-    mock_quay_api_client,
-    mock_quay_client,
-    hookspy,
-    src_manifest_list,
-    v2s1_manifest,
-    fake_cert_key_paths,
-    signer_wrapper_remove_signatures,
-    signer_wrapper_entry_point,
-    signer_wrapper_run_entry_point,
-):
+def test_run_multiple_repos(mock_quay_api_client, mock_signature_remover):
     args = [
         "dummy",
         "--repositories",
@@ -251,38 +222,38 @@ def test_run_multiple_repos(
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
-        "--signers",
-        "msg_signer",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
-
-    mock_get_repo_tags = mock.MagicMock()
-    mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
-    mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
-
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
-
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
-    signer_wrapper_run_entry_point.return_value = [
-        {
-            "_id": 1,
-            "manifest_digest": "sha256:3333333333",
-            "reference": "some-registry.com/namespace/image2:1",
-            "sig_key_id": "key",
-            "repository": "namespace/image2",
-        }
-    ]
+    mock_remove_repository_signatures = mock.MagicMock()
+    mock_signature_remover.return_value.remove_repository_signatures = (
+        mock_remove_repository_signatures
+    )
 
     remove_repo.remove_repositories_main(args)
 
     mock_quay_api_client.assert_called_once_with("some-token")
-    signer_wrapper_remove_signatures.assert_called_once_with([1])
+    mock_signature_remover.assert_called_once_with(
+        quay_user="some-user", quay_password="some-password"
+    )
+    assert mock_remove_repository_signatures.call_count == 2
+    assert mock_remove_repository_signatures.call_args_list[0] == mock.call(
+        "namespace/image",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
+        7,
+    )
+    assert mock_remove_repository_signatures.call_args_list[1] == mock.call(
+        "namespace/image2",
+        "quay-organization",
+        "pyxis-url.com",
+        "/path/to/file.crt",
+        "/path/to/file.key",
+        7,
+    )
+
     assert mock_delete_repo.call_count == 2
     assert mock_delete_repo.call_args_list[0] == mock.call("quay-organization/namespace----image")
     assert mock_delete_repo.call_args_list[1] == mock.call("quay-organization/namespace----image2")

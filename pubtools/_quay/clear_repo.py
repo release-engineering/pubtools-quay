@@ -2,6 +2,7 @@ import logging
 
 from pubtools.pluggy import task_context, pm
 
+from .signature_remover import SignatureRemover
 from .quay_client import QuayClient
 from .untag_images import untag_images
 from .utils.misc import (
@@ -9,11 +10,6 @@ from .utils.misc import (
     add_args_env_variables,
     get_internal_container_repo_name,
 )
-from .item_processor import (
-    item_processor_for_internal_data,
-    VirtualPushItem,
-)
-from .signer_wrapper import SIGNER_BY_LABEL
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -66,76 +62,63 @@ CLEAR_REPO_ARGS = {
         "default": 7,
         "type": int,
     },
-    ("--signers",): {
-        "help": "Comma separated list of signers",
-        "required": False,
-        "type": str,
-        "default": "",
-    },
-    ("--signer-configs",): {
-        "help": "Comma separated list of paths to signer configs",
-        "required": False,
-        "type": str,
-        "default": "",
-    },
 }
 
 
-def clear_repositories(repositories, settings):
+def clear_repositories(
+    repositories,
+    quay_org,
+    quay_api_token,
+    quay_user,
+    quay_password,
+    pyxis_server,
+    pyxis_ssl_crtfile,
+    pyxis_ssl_keyfile,
+    pyxis_request_threads,
+):
     """
     Clear Quay repository.
 
     Args:
         repository (str):
             External repositories to clear. Comma separated values.
-        settings (dict):
-            quay_org (str):
-                Quay organization in which repositories reside.
-            quay_api_token (str):
-                OAuth token for authentication of Quay REST API.
-            quay_user (str):
-                Quay username for Docker HTTP API.
-            quay_password (str):
-                Quay password for Docker HTTP API.
-            pyxis_server (str):
-                Pyxis service hostname:
-            pyxis_ssl_crtfile (str):
-                Path to .crt file for SSL authentication.
-            pyxis_ssl_keyfile (str):
-                Path to .key file for SSL authentication.
-            pyxis_request_threads:
-                Maximum number of threads to use for parallel pyxis request.
+        quay_org (str):
+            Quay organization in which repositories reside.
+        quay_api_token (str):
+            OAuth token for authentication of Quay REST API.
+        quay_user (str):
+            Quay username for Docker HTTP API.
+        quay_password (str):
+            Quay password for Docker HTTP API.
+        pyxis_server (str):
+            Pyxis service hostname:
+        pyxis_ssl_crtfile (str):
+            Path to .crt file for SSL authentication.
+        pyxis_ssl_keyfile (str):
+            Path to .key file for SSL authentication.
+        pyxis_request_threads:
+            Maximum number of threads to use for parallel pyxis request.
     """
     parsed_repositories = repositories.split(",")
 
     LOG.info("Clearing repositories '{0}'".format(repositories))
-    quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
-    item_processor = item_processor_for_internal_data(
-        quay_client, "quay.io", 5, settings["quay_org"]
-    )
-    # Clear repository doesn't work with pushitem so we need to create a virtual push item
-    # to use existing code to generate needed data for clearing the repository
-    item = VirtualPushItem(
-        metadata={"tags": {repo: [] for repo in parsed_repositories}},
-        repos={repo: [] for repo in parsed_repositories},
-    )
-    existing_manifests = item_processor.generate_all_existing_manifests_metadata(item)
-    signers = settings["signers"].split(",")
-    signer_configs = settings["signer_configs"].split(",")
-    outdated_manifests = []
-    for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))
+    quay_client = QuayClient(quay_user, quay_password)
 
-    for n, signer in enumerate(signers):
-        signercls = SIGNER_BY_LABEL[signer]
-        _signer = signercls(config_file=signer_configs[n], settings=settings)
-        _signer.remove_signatures(outdated_manifests, _exclude=[])
+    sig_remover = SignatureRemover()
+    sig_remover.set_quay_client(quay_client)
 
     refrences_to_remove = []
     for repository in parsed_repositories:
-        internal_repo = "{0}/{1}".format(
-            settings["quay_org"], get_internal_container_repo_name(repository)
+        sig_remover.remove_repository_signatures(
+            repository,
+            quay_org,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
+            pyxis_request_threads,
         )
+
+        internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
         repo_data = quay_client.get_repository_tags(internal_repo)
 
         for tag in repo_data["tags"]:
@@ -143,10 +126,10 @@ def clear_repositories(repositories, settings):
 
     untag_images(
         sorted(refrences_to_remove),
-        settings["quay_api_token"],
+        quay_api_token,
         remove_last=True,
-        quay_user=settings["quay_user"],
-        quay_password=settings["quay_password"],
+        quay_user=quay_user,
+        quay_password=quay_password,
     )
 
     LOG.info("Repositories have been cleared")
@@ -175,7 +158,6 @@ def clear_repositories_main(sysargs=None):
         raise ValueError("--quay-password must be specified")
 
     kwargs = args.__dict__
-    repositories = kwargs.pop("repositories")
 
     with task_context():
-        clear_repositories(repositories, kwargs)
+        clear_repositories(**kwargs)
