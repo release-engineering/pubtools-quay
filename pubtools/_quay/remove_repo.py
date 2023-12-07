@@ -2,15 +2,13 @@ import logging
 
 from pubtools.pluggy import pm, task_context
 
-from .quay_client import QuayClient
+from .signature_remover import SignatureRemover
 from .quay_api_client import QuayApiClient
 from .utils.misc import (
     setup_arg_parser,
     add_args_env_variables,
     get_internal_container_repo_name,
 )
-from .item_processor import item_processor_for_internal_data, VirtualPushItem
-from .signer_wrapper import SIGNER_BY_LABEL
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -63,81 +61,64 @@ REMOVE_REPO_ARGS = {
         "default": 7,
         "type": int,
     },
-    ("--signers",): {
-        "help": "Comma separated list of signerrs",
-        "required": False,
-        "type": str,
-        "default": "",
-    },
-    ("--signer-configs",): {
-        "help": "Comma separated list of signerrs",
-        "required": False,
-        "type": str,
-        "default": "",
-    },
 }
 
 
-def remove_repositories(repositories, settings):
+def remove_repositories(
+    repositories,
+    quay_org,
+    quay_api_token,
+    quay_user,
+    quay_password,
+    pyxis_server,
+    pyxis_ssl_crtfile,
+    pyxis_ssl_keyfile,
+    pyxis_request_threads,
+):
     """
     Remove Quay repository.
 
     Args:
         repositories (str):
             External repositories to remove. Comma separated values.
-        settings (dict):
-            Settings dictionary with following keys:
-                quay_org (str):
-                    Quay organization in which repositories reside.
-                quay_api_token (str):
-                    OAuth token for authentication of Quay REST API.
-                quay_user (str):
-                    Quay username for Docker HTTP API.
-                quay_password (str):
-                    Quay password for Docker HTTP API.
-                pyxis_server (str):
-                    Pyxis service hostname:
-                pyxis_ssl_crtfile (str):
-                    Path to .crt file for SSL authentication.
-                pyxis_ssl_keyfile (str):
-                    Path to .key file for SSL authentication.
-                pyxis_request_threads:
-                    Maximum number of threads to use for parallel pyxis request.
+        quay_org (str):
+            Quay organization in which repositories reside.
+        quay_api_token (str):
+            OAuth token for authentication of Quay REST API.
+        quay_user (str):
+            Quay username for Docker HTTP API.
+        quay_password (str):
+            Quay password for Docker HTTP API.
+        pyxis_server (str):
+            Pyxis service hostname:
+        pyxis_ssl_crtfile (str):
+            Path to .crt file for SSL authentication.
+        pyxis_ssl_keyfile (str):
+            Path to .key file for SSL authentication.
+        pyxis_request_threads:
+            Maximum number of threads to use for parallel pyxis request.
     """
     parsed_repositories = repositories.split(",")
 
     LOG.info("Removing repositories '{0}'".format(repositories))
-    quay_api_client = QuayApiClient(settings["quay_api_token"])
-    quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
-    item_processor = item_processor_for_internal_data(
-        quay_client, "quay.io", 5, settings["quay_org"]
-    )
-    # Remove repository doesn't work with push item by default, therefore we create VirtualPushItem
-    # to support existing code to generate needed repository data.
-    item = VirtualPushItem(
-        metadata={"tags": {repo: [] for repo in parsed_repositories}},
-        repos={repo: [] for repo in parsed_repositories},
-    )
-    existing_manifests = item_processor.generate_all_existing_manifests_metadata(item)
-    signers = settings["signers"].split(",")
-    signer_configs = settings["signer_configs"].split(",")
-    outdated_manifests = []
-    for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))
+    quay_api_client = QuayApiClient(quay_api_token)
 
-    for n, signer in enumerate(signers):
-        signercls = SIGNER_BY_LABEL[signer]
-        signer = signercls(config_file=signer_configs[0], settings=settings)
-        signer.remove_signatures(outdated_manifests, _exclude=[])
+    sig_remover = SignatureRemover(quay_user=quay_user, quay_password=quay_password)
 
     for repository in parsed_repositories:
-        internal_repo = "{0}/{1}".format(
-            settings["quay_org"], get_internal_container_repo_name(repository)
+        sig_remover.remove_repository_signatures(
+            repository,
+            quay_org,
+            pyxis_server,
+            pyxis_ssl_crtfile,
+            pyxis_ssl_keyfile,
+            pyxis_request_threads,
         )
+
+        internal_repo = "{0}/{1}".format(quay_org, get_internal_container_repo_name(repository))
         quay_api_client.delete_repository(internal_repo)
 
     LOG.info("Repositories have been removed")
-
     pm.hook.quay_repositories_removed(repository_ids=sorted(parsed_repositories))
 
 
@@ -165,5 +146,4 @@ def remove_repositories_main(sysargs=None):
     kwargs = args.__dict__
 
     with task_context():
-        repositories = kwargs.pop("repositories")
-        remove_repositories(repositories, kwargs)
+        remove_repositories(**kwargs)

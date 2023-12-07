@@ -2,7 +2,6 @@ import contextlib
 import mock
 import pkg_resources
 import re
-import json
 
 # flake8: noqa: D200, D107, D102, D105
 
@@ -110,26 +109,3 @@ class IIBRes:
         self.index_image = index_image
         self.internal_index_image_copy_resolved = internal_index_image_copy_resolved
         self.build_tags = build_tags
-
-
-def mock_manifest_list_requests(m, uri, manifest_list, manifests):
-    m.get(
-        uri,
-        json=manifest_list,
-        headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-    )
-    base_uri = uri.rsplit("/", 1)[0]
-    if isinstance(manifests, list):
-        for man1, man2 in zip(manifest_list["manifests"], manifests):
-            m.get(
-                base_uri + "/" + man1["digest"],
-                text=json.dumps(man2, sort_keys=True),
-                headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
-            )
-    else:
-        for man in manifest_list["manifests"]:
-            m.get(
-                base_uri + "/" + man["digest"],
-                text=json.dumps(manifests, sort_keys=True),
-                headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
-            )
