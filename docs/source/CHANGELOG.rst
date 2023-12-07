@@ -1,6 +1,13 @@
 ChangeLog
 =========
 
+0.15.0 (2023-12-07)
+-------------------
+
+* End task when IIB request fails
+* Set AWS KMS credentials from target settings
+* Fix a bug where 0 IIB builds cause a push to fail
+
 0.14.0 (2023-10-17)
 -------------------
 
