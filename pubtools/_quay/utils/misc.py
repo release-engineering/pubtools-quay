@@ -1,6 +1,7 @@
 import argparse
 import base64
 import contextlib
+from dataclasses import dataclass, field
 import functools
 import json
 import logging
@@ -9,6 +10,10 @@ import pkg_resources
 import sys
 import textwrap
 import time
+from typing import Iterable, Any, Callable, Dict, List
+
+from concurrent import futures
+from concurrent.futures.thread import ThreadPoolExecutor
 
 from io import StringIO
 from pubtools.pluggy import pm
@@ -17,6 +22,42 @@ LOG = logging.getLogger("pubtools.quay")
 
 INTERNAL_DELIMITER = "----"
 MAX_RETRY_WAIT = 120
+
+
+@dataclass
+class FData:
+    """Dataclass for holding data for a function execution.
+
+    Args:
+        args (Iterable[Any]): Arguments for the function.
+        kwargs (Dict[str, Any]): Keyword arguments for the function.
+    """
+
+    args: Iterable[Any]
+    kwargs: Dict[str, Any] = field(default_factory=dict)
+
+
+def run_in_parallel(func: Callable, data: List[FData], threads=10):
+    """Run method on data in parallel.
+
+    Args:
+        func (function): Function to run on data
+        data (list): List of tuples which are used as arguments for the function
+    Returns:
+        dict: List of result in the same order as data.
+    """
+    future_results = {}
+    results = {}
+    with ThreadPoolExecutor(max_workers=threads) as executor:
+        future_results = {
+            executor.submit(func, *data_entry.args, **data_entry.kwargs): n
+            for n, data_entry in enumerate(data)
+        }
+        for future in futures.as_completed(future_results):
+            if future.exception():
+                raise future.exception()  # pragma: no cover
+            results[future_results[future]] = future.result()
+    return dict(sorted(results.items(), key=lambda kv: kv[0]))
 
 
 def setup_arg_parser(args):

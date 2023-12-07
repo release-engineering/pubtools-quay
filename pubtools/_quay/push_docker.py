@@ -1,25 +1,35 @@
 from collections import namedtuple
 import logging
 import sys
-from time import sleep
+import json
+from typing import Tuple, List, Dict, Any
 
 import requests
 
-from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository, ManifestNotFoundError
+from .exceptions import BadPushItem, InvalidTargetSettings, InvalidRepository
 from .utils.misc import get_internal_container_repo_name, log_step
 from .quay_api_client import QuayApiClient
 from .quay_client import QuayClient
+from .iib_operations import _sign_index_image
 from .container_image_pusher import ContainerImagePusher
 from .security_manifest_pusher import SecurityManifestPusher
-from .signature_handler import ContainerSignatureHandler, OperatorSignatureHandler
-from .signature_remover import SignatureRemover
+
 from .operator_pusher import OperatorPusher
+from .item_processor import (
+    item_processor_for_external_data,
+    item_processor_for_internal_data,
+    SignEntry,
+)
+from .utils.misc import parse_index_image
+from .signer_wrapper import SIGNER_BY_LABEL
+
 from .utils.misc import (
     get_external_container_repo_name,
-    get_pyxis_ssl_paths,
     timestamp,
     pyxis_get_repo_metadata,
     set_aws_kms_environment_variables,
+    run_in_parallel,
+    FData,
 )
 
 # TODO: do we want this, or should I remove it?
@@ -33,7 +43,9 @@ LOG = logging.getLogger("pubtools.quay")
 class PushDocker:
     """Handle full Docker push workflow."""
 
-    ImageData = namedtuple("ImageData", ["repo", "tag", "digest", "v2s1_digest"])
+    ImageData = namedtuple(
+        "ImageData", ["repo", "tag", "v2list_digest", "v2s2_digest", "v2s1_digest"]
+    )
 
     def __init__(self, push_items, hub, task_id, target_name, target_settings):
         """
@@ -61,9 +73,17 @@ class PushDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
+        self._src_quay_client = None
         self._dest_quay_client = None
         self._dest_operator_quay_client = None
         self._dest_quay_api_client = None
+        self._index_image_quay_client = None
+        self.dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
+        self.dest_registries = (
+            self.dest_registries
+            if isinstance(self.dest_registries, list)
+            else [self.dest_registries]
+        )
 
     @property
     def dest_quay_client(self):
@@ -75,6 +95,17 @@ class PushDocker:
                 self.quay_host,
             )
         return self._dest_quay_client
+
+    @property
+    def src_quay_client(self):
+        """Create and access QuayClient for source image."""
+        if self._src_quay_client is None:
+            self._src_quay_client = QuayClient(
+                self.target_settings["source_quay_user"],
+                self.target_settings["source_quay_password"],
+                self.target_settings.get("source_quay_host") or self.quay_host,
+            )
+        return self._src_quay_client
 
     @property
     def dest_operator_quay_client(self):
@@ -277,7 +308,7 @@ class PushDocker:
                         raise
 
     @log_step("Generate backup mapping")
-    def generate_backup_mapping(self, push_items):
+    def generate_backup_mapping(self, push_items) -> Tuple[Dict[str, Any], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
@@ -298,125 +329,62 @@ class PushDocker:
         """
         backup_tags = {}
         rollback_tags = []
-        repo_schema = "{namespace}/{repo}"
-        image_schema = "{host}/{repo}@{digest}"
-        image_schema_tag = "{host}/{repo}:{tag}"
-        namespace = self.target_settings["quay_namespace"]
-
+        internal_item_processor = item_processor_for_internal_data(
+            self.dest_quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
+        )
+        external_item_processor = item_processor_for_external_data(
+            self.dest_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
+        )
         for item in push_items:
-            for repo, tags in sorted(item.metadata["tags"].items()):
-                internal_repo = get_internal_container_repo_name(repo)
-                full_repo = repo_schema.format(namespace=namespace, repo=internal_repo)
-                LOG.info("Generating backup mapping for repository '{0}'".format(repo))
-                # try to get repo data
-                try:
-                    repo_tags = self.dest_quay_client.get_repository_tags(full_repo)
-                except requests.exceptions.HTTPError as e:
-                    # When robot account is used, 401 is returned instead of 404
-                    if e.response.status_code == 404 or e.response.status_code == 401:
-                        repo_tags = None
-                    else:
-                        raise
-
-                for tag in tags:
-                    # repo doesn't exist, add to rollback tags
-                    if not repo_tags:
-                        # for rollback tags digest is not known
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
-                        continue
-                    # tag exists in the repo, add to backup tags
-                    if tag in repo_tags.get("tags", {}):
-                        image_tag = image_schema_tag.format(
-                            host=self.quay_host, repo=full_repo, tag=tag
-                        )
-                        # it's possible that there will be a mismatch between the two calls
-                        try:
-                            digest = self.dest_quay_client.get_manifest_digest(image_tag)
-                        except requests.exceptions.HTTPError as e:
-                            # When robot account is used, 401 may be returned instead of 404
-                            if e.response.status_code == 404 or e.response.status_code == 401:
-                                digest = self._poll_tag_inconsistency(full_repo, tag)
-                            else:
-                                raise
-
-                        # It was determined that the image doesn't actually exist
-                        if not digest:
-                            rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
-                            continue
-
-                        # skip getting v2s1 for non-amd64 image
-                        if item.metadata["arch"] in ["amd64", "x86_64"]:
-                            v2s1_digest = self.dest_quay_client.get_manifest_digest(
-                                image_tag, media_type=QuayClient.MANIFEST_V2S1_TYPE
+            destination_tags = external_item_processor.generate_repo_dest_tag_map(item)
+            existing_manifests = internal_item_processor.generate_existing_manifests_map(item)
+            for registry, repos in existing_manifests.items():
+                for e_repo, _ in repos.items():
+                    full_repo = internal_item_processor.reference_processor.replace_repo(e_repo)
+                    for d_tag in destination_tags[list(destination_tags.keys())[0]][e_repo]:
+                        if (
+                            d_tag in existing_manifests[registry][e_repo]
+                            and existing_manifests[registry][e_repo][d_tag]
+                        ):
+                            man_arch_digs = existing_manifests[registry][e_repo][d_tag]
+                            amd64_mads = [m for m in man_arch_digs if m.arch == "amd64"]
+                            v2list_mad = (
+                                [
+                                    m
+                                    for m in man_arch_digs
+                                    if m.type_ == QuayClient.MANIFEST_LIST_TYPE
+                                ]
+                                or [None]
+                            )[0]
+                            v2s1_mad = (
+                                [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
+                                or [None]
+                            )[0]
+                            v2s2_mad = (
+                                [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
+                                or [None]
+                            )[0]
+                            image_data = PushDocker.ImageData(
+                                full_repo,
+                                d_tag,
+                                v2list_mad.digest if v2list_mad else None,
+                                v2s2_mad.digest if v2s2_mad else None,
+                                v2s1_mad.digest if v2s1_mad else None,
                             )
+                            mad = v2s2_mad or v2s1_mad or v2list_mad
+                            if mad:
+                                backup_tags[image_data] = json.loads(mad.manifest)
                         else:
-                            v2s1_digest = None
-                        # for backup tags store also digest
-                        image_data = PushDocker.ImageData(full_repo, tag, digest, v2s1_digest)
-                        image = image_schema.format(
-                            host=self.quay_host,
-                            repo=full_repo,
-                            digest=digest,
-                        )
-                        manifest = self.dest_quay_client.get_manifest(image)
-                        backup_tags[image_data] = manifest
-                    # tag doesn't exist in the repo, add to rollback tags
-                    else:
-                        # for rollback tags digest is not known
-                        rollback_tags.append(PushDocker.ImageData(full_repo, tag, None, None))
-
-        # it's possible that rollback tags will contain duplicate entries
+                            rollback_tags.append(
+                                PushDocker.ImageData(full_repo, d_tag, None, None, None)
+                            )
         rollback_tags = sorted(list(set(rollback_tags)))
         return (backup_tags, rollback_tags)
-
-    def _poll_tag_inconsistency(self, full_repo, tag, poll_rate=30, timeout=120):
-        """
-        Resolve an inconsistency between repo tags reported by Docker API and tag actually existing.
-
-        This scenario occurs when Docker API claims that a tag exists, but attempting to get the
-        tag's digest results in a 404. It could be caused by a delay between two data sources
-        becoming consistent, or by repo tag being removed between the two calls. Attempt to
-        reconcile the difference by periodically calling the two sources. If the data is still
-        inconsistent after timeout, assume that the image doesn't exist and continue.
-
-        Args:
-            full_repo (str):
-                Repo name to poll for tags
-            tag (str):
-                Tag to poll for manifest digest.
-            poll_rate (int, optional):
-                How many seconds to wait between polling. Defaults to 30.
-            timeout (int, optional):
-                How many seconds to poll before giving up and assuming that the image doesn't exist.
-                Defaults to 120.
-        Returns (str, None):
-            Image digest, or None if digest doesn't exist (or timeout is reached).
-        """
-        image_schema_tag = "{host}/{repo}:{tag}"
-        image_tag = image_schema_tag.format(host=self.quay_host, repo=full_repo, tag=tag)
-
-        for i in range(timeout // poll_rate):
-            sleep(poll_rate)
-            repo_tags = self.dest_quay_client.get_repository_tags(full_repo)
-
-            try:
-                digest = self.dest_quay_client.get_manifest_digest(image_tag)
-            except requests.exceptions.HTTPError as e:
-                # When robot account is used, 401 may be returned instead of 404
-                if e.response.status_code == 404 or e.response.status_code == 401:
-                    digest = None
-                else:
-                    raise
-
-            if tag in repo_tags.get("tags", {}) and digest:
-                return digest
-            if tag not in repo_tags.get("tags", {}) and digest is None:
-                return None
-
-        LOG.warning(
-            "Unable to determine if image '{0}' exists, assuming it doesn't.".format(image_tag)
-        )
-        return None
 
     @log_step("Perform rollback")
     def rollback(self, backup_tags, rollback_tags):
@@ -450,171 +418,26 @@ class PushDocker:
                 if e.response.status_code != 404 and e.response.status_code != 401:
                     raise
 
-    @log_step("Remove outdated signatures")
-    def remove_old_signatures(
-        self,
-        push_items,
-        existing_index_images,
-        iib_results,
-        backup_tags,
-        rollback_tags,
-        container_signature_handler,
-        operator_signature_handler,
-        signature_remover,
-        claim_messages,
-        ii_claim_messages,
-    ):
-        """
-        Remove signatures of containers for tags which were overwritten in the current push.
-
-        Method fetches all existing signatures for digests in backup tags. Only signatures with
-        repo, tag pairs  matching to backup tags are then processes forward as also signatures
-        for different repos could be returned. From those, only signature not
-        matching signatures which were just created for current push are removed.
-        Mechanism is the same for index images signatures, except those are not compared to
-        any backup tags.
+    def get_outdated_manifests(self, backup_tags) -> List[Tuple[str, str, str]]:
+        """Return list of existing manifests which are being replaced with new ones.
 
         Args:
-            push_items ([_PushItem]):
-                List of container push items.
-            existing_index_images: ([(digest, version)]):
-                List of tuple of digest + version(tag) of index images which existed
-                before new index image was pushed in the current task
-            iib_results (({str:dict})):
-                Dictionary containing IIB results and signing keys for all OPM versions.
-            backup_tags ({ImageData: str}):
-                Dictionary of ImageData (repo, tag, digest) -> manifest
-                holding containers which were overwritten in the currently running task
-            rollback_tags ({ImageData: str}):
-                List of ImageData [(repo, tag, digest)]
-                holding containers which were overwritten in the currently running task
-            container_signature_handler (ContainerSignatureHandler):
-                ContanerSignatureHandler instance.
-            operator_signature_handler (OperatorSignatureHandler):
-                ContanerSignatureHandler instance.
-            operator_signature_handler (SignatureRemover):
-                SignatureRemover instance.
-            claims_messages (list(dict)):
-                claim messages created for new container items
-            ii_claims_message (list(dict)):
-                claim messages created for new index image(s)
-
+            backup_tags (dict({ImageData: str}): backup tags generated with generate_backup_mapping.
+        Returns:
+            List of tuples containing digest, tag, repo identifying manifests
         """
-        # if there are no rollback tags, it means content is repushed. And therefore nothing
-        # should be removed.
-        if not rollback_tags:
-            return
-        new_signatures = [(m["manifest_digest"], m["docker_reference"]) for m in claim_messages]
         outdated_signatures = []
-
         for image_data, manifest in backup_tags.items():
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
-            if "manifests" in manifest:
-                for arch_manifest in manifest["manifests"]:
-                    outdated_signatures.append((arch_manifest["digest"], image_data.tag, ext_repo))
-            else:
-                outdated_signatures.append((image_data.digest, image_data.tag, ext_repo))
-            # also add V2S1 signature (only one per tag)
+            if image_data.v2s2_digest:
+                outdated_signatures.append((image_data.v2s2_digest, image_data.tag, ext_repo))
+            if image_data.v2list_digest:
+                outdated_signatures.append((image_data.v2list_digest, image_data.tag, ext_repo))
             if image_data.v2s1_digest:
                 outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
+        return outdated_signatures
 
-        signatures_to_remove = []
-        for existing_signature in container_signature_handler.get_signatures_from_pyxis(
-            [sig[0] for sig in outdated_signatures]
-        ):
-            if (
-                (
-                    existing_signature["manifest_digest"],
-                    existing_signature["reference"].split(":")[-1],
-                    existing_signature["repository"],
-                )
-                in outdated_signatures
-                and existing_signature["reference"] in [s[1] for s in new_signatures]
-                and (
-                    existing_signature["manifest_digest"],
-                    existing_signature["reference"],
-                )
-                not in new_signatures
-            ):
-                signatures_to_remove.append(existing_signature["_id"])
-                LOG.debug(
-                    f"Removing signature. Reference: {existing_signature['reference']}, "
-                    f"Repository: {existing_signature['repository']}, "
-                    f"Digest: {existing_signature['manifest_digest']}, "
-                    f"Key: {existing_signature['sig_key_id']}"
-                )
-
-        cert, key = get_pyxis_ssl_paths(self.target_settings)
-
-        if signatures_to_remove:
-            signature_remover.remove_signatures_from_pyxis(
-                signatures_to_remove,
-                self.target_settings["pyxis_server"],
-                cert,
-                key,
-                self.target_settings.get("num_thread_pyxis", 7),
-            )
-
-        signatures_to_remove = []
-        if existing_index_images:
-            new_operator_signatures = [
-                (m["manifest_digest"], m["docker_reference"]) for m in ii_claim_messages
-            ]
-
-            for existing_signature in container_signature_handler.get_signatures_from_pyxis(
-                [digest_version[0] for digest_version in existing_index_images]
-            ):
-                if (
-                    existing_signature["manifest_digest"],
-                    existing_signature["reference"],
-                ) not in new_operator_signatures and (
-                    existing_signature["manifest_digest"],
-                    existing_signature["reference"].split(":")[-1],
-                    existing_signature["repository"],
-                ) in existing_index_images:
-                    signatures_to_remove.append(existing_signature["_id"])
-                    LOG.debug(
-                        f"Removing operator signature. "
-                        f"Reference: {existing_signature['reference']}, "
-                        f"Repository: {existing_signature['repository']}, "
-                        f"Digest: {existing_signature['manifest_digest']}, "
-                        f"Key: {existing_signature['sig_key_id']}"
-                    )
-            if signatures_to_remove:
-                signature_remover.remove_signatures_from_pyxis(
-                    signatures_to_remove,
-                    self.target_settings["pyxis_server"],
-                    cert,
-                    key,
-                    self.target_settings.get("num_thread_pyxis", 7),
-                )
-
-    def _fetch_digest(self, repo, tag, media_type):
-        """Fetch digest of repo and tag for given media type.
-
-        Args:
-            repo(str):
-                Repository name.
-            tag(str):
-                Image tag.
-            mtype(str):
-                Media type for requested digest.
-                (can be only application/vnd.docker.distribution.manifest.v2+json,
-                application/vnd.docker.distribution.manifest.v1+json)
-
-        Returns(str): Manifest digest of the container.
-        """
-        image_schema = "{host}/{namespace}/{repo}:{tag}"
-        dest_ref = image_schema.format(
-            host=self.quay_host,
-            namespace=self.target_settings["quay_namespace"],
-            repo=repo,
-            tag=tag,
-        )
-        digest = self.dest_quay_client.get_manifest_digest(dest_ref, media_type=media_type)
-        return digest
-
-    def fetch_missing_push_items_digests(self, push_items, target_settings):
+    def fetch_missing_push_items_digests(self, push_items):
         """Fetch digests for media types which weren't originally pushed.
 
         In order to be able to sign v2s1 for images which were pushed as
@@ -626,37 +449,71 @@ class PushDocker:
             push_items(list): List of push items.
             target_settings(dict): Target settings.
         """
+        item_processor = item_processor_for_internal_data(
+            self.dest_quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
+        )
+
+        new_digests = {}
         for item in push_items:
-            item.metadata["new_digests"] = {}
             missing_media_types = set(
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
             ) - set(item.metadata["build"]["extra"]["image"]["media_types"])
-
             # Always add v2s1 due to possible digest change
             missing_media_types.add(QuayClient.MANIFEST_V2S1_TYPE)
-            for repo, tags in item.metadata["tags"].items():
-                internal_repo = get_internal_container_repo_name(repo)
-                v2_sch2_cache = {}
-                for tag in tags:
-                    for mtype in missing_media_types:
-                        if mtype == QuayClient.MANIFEST_V2S2_TYPE:
-                            if repo not in v2_sch2_cache:
-                                try:
-                                    v2_sch2_cache[repo] = self._fetch_digest(
-                                        internal_repo, tag, mtype
-                                    )
-                                    item.metadata["new_digests"].setdefault((repo, tag), {})[
-                                        mtype
-                                    ] = v2_sch2_cache[repo]
-                                # Tolarate missing v2ch2 manifest in the case repo has
-                                # no amd64 arch and has only manifest list and sch2v1
-                                except ManifestNotFoundError:
-                                    pass
-                        # Fetch v2s1 only for amd64 image
-                        elif item.metadata["arch"] in ["amd64", "x86_64"]:
-                            item.metadata["new_digests"].setdefault((repo, tag), {})[
-                                mtype
-                            ] = self._fetch_digest(internal_repo, tag, mtype)
+            existing_manifests = item_processor.generate_existing_manifests_map(
+                item, only_media_types=list(missing_media_types)
+            )
+            for reference, repos in existing_manifests.items():
+                new_digests.setdefault(reference, {})
+                for repo, tags in repos.items():
+                    new_digests.setdefault(reference, {}).setdefault(repo, {})
+                    for tag, man_arch_digs in tags.items():
+                        if not man_arch_digs:
+                            continue
+                        new_digests[reference][repo].setdefault(tag, {})
+                        for mad in man_arch_digs:
+                            new_digests[reference][repo][tag][mad.type_] = (
+                                mad.digest,
+                                item.claims_signing_key,
+                            )
+        return new_digests
+
+    def sign_new_manifests(self, docker_push_items):
+        """Sign newly pushed images with signers enabled in target settings.
+
+        Args:
+            docker_push_items(List[PushItem]): list of docker push items.
+        Returns:
+            List of tuple (reference, digest, key) representing currently signed images.
+        """
+        current_signatures = []
+        to_sign_new_entries = self.fetch_missing_push_items_digests(docker_push_items)
+        to_sign_entries = []
+        for reference, repo_tags in to_sign_new_entries.items():
+            for repo, tag_digests in repo_tags.items():
+                for tag, digests in tag_digests.items():
+                    for type_, digest_key in digests.items():
+                        digest, key = digest_key
+                        to_sign_entries.append(
+                            SignEntry(
+                                reference=reference,
+                                repo=repo,
+                                digest=digest,
+                                signing_key=key,
+                                arch="amd64",
+                            )
+                        )
+                        current_signatures.append((reference, digest, key))
+
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.sign_containers(to_sign_entries, self.task_id)
+        return current_signatures
 
     def run(self):
         """
@@ -691,26 +548,44 @@ class PushDocker:
         iib_results = None
         successful_iib_results = dict()
         index_stamp = timestamp()
-        # Sign container images
-        container_signature_handler = ContainerSignatureHandler(
-            self.hub, self.task_id, self.target_settings, self.target_name
-        )
-        operator_signature_handler = OperatorSignatureHandler(
-            self.hub, self.task_id, self.target_settings, self.target_name
-        )
-        sig_remover = SignatureRemover()
-        sig_remover.set_quay_client(self.dest_quay_client)
 
-        manifest_claims = container_signature_handler.sign_container_images(docker_push_items)
+        item_processor = item_processor_for_external_data(
+            self.src_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
+        )
+        to_sign_entries = []
+        current_signatures = []
+        for item in docker_push_items:
+            to_sign_entries.extend(
+                item_processor.generate_to_sign(item, sign_only_arches=["amd64", "x86_64"])
+            )
+        to_sign_map = run_in_parallel(
+            item_processor.generate_to_sign,
+            [
+                FData(args=(item,), kwargs={"sign_only_arches": ["amd64", "x86_64"]})
+                for item in docker_push_items
+            ],
+        )
+
+        for to_sign_entries in to_sign_map.values():
+            to_sign_entries.extend(to_sign_entries)
+
+        for sign_entry in to_sign_entries:
+            current_signatures.append(
+                (sign_entry.reference, sign_entry.digest, sign_entry.signing_key)
+            )
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.sign_containers(to_sign_entries, self.task_id)
+
         # Push container images
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
 
-        # fetch missing digests
-        self.fetch_missing_push_items_digests(docker_push_items, self.target_settings)
-
-        # sign missing images
-        container_signature_handler.sign_container_images_new_digests(docker_push_items)
+        self.sign_new_manifests(docker_push_items)
 
         if self.target_settings.get("push_security_manifests_enabled", False):
             # Generate and push security manifests (if enabled in target settings)
@@ -720,7 +595,6 @@ class PushDocker:
 
         failed = False
 
-        ii_manifest_claims = []
         if operator_push_items:
             # Build index images
             operator_pusher = OperatorPusher(
@@ -735,15 +609,38 @@ class PushDocker:
             else:
                 bundles_presence_check_failed = True
                 iib_results = {}
-            # Sign operator images
 
+            # Sign operator images
             failed_items = [item for item in operator_push_items if item.errors]
             successful_iib_results = dict(
                 [(key, val) for key, val in iib_results.items() if val["iib_result"]]
             )
-            ii_manifest_claims += operator_signature_handler.sign_operator_images(
-                successful_iib_results, index_stamp
-            )
+
+            image_schema = "{host}/{namespace}/{repo}:{tag}"
+
+            for version, iib_details in sorted(successful_iib_results.items()):
+                iib_result = iib_details["iib_result"]
+                iib_namespace = self.target_settings.get(
+                    "quay_operator_namespace", self.target_settings["quay_namespace"]
+                )
+                _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
+                permanent_index_image = image_schema.format(
+                    host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
+                    namespace=iib_namespace,
+                    repo=iib_intermediate_repo,
+                    tag=iib_result.build_tags[0],
+                )
+                current_signatures.extend(
+                    _sign_index_image(
+                        permanent_index_image,
+                        iib_namespace,
+                        iib_details["destination_tags"],
+                        iib_details["signing_keys"],
+                        self.task_id,
+                        self.target_settings,
+                    )
+                )
+
             # If there are any failed items, skip pushing
             if not failed_items:
                 # Push index images to Quay
@@ -766,18 +663,15 @@ class PushDocker:
                 failed = True
 
         # Remove old signatures
-        self.remove_old_signatures(
-            docker_push_items,
-            existing_index_images,
-            dict([(k, v) for k, v in successful_iib_results.items() if v["iib_result"]]),
-            backup_tags,
-            rollback_tags,
-            container_signature_handler,
-            operator_signature_handler,
-            sig_remover,
-            manifest_claims,
-            ii_manifest_claims,
-        )
+        outdated_manifests = self.get_outdated_manifests(backup_tags)
+        outdated_manifests.extend(existing_index_images)
+
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"]:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+
         if failed:
             # Why???
             sys.exit(1)
