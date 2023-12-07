@@ -22,8 +22,9 @@ from .utils.misc import (
 from .quay_client import QuayClient
 from .utils.misc import parse_index_image, pyxis_get_repo_metadata
 from .models import BuildIndexImageParam
-from pubtools.tracing import instrument_func
+from pubtools.tracing import get_trace_wrapper
 
+tx = get_trace_wrapper()
 LOG = logging.getLogger("pubtools.quay")
 
 
@@ -263,7 +264,7 @@ class OperatorPusher:
         return (args, env_vars)
 
     @classmethod
-    @instrument_func()
+    @tx.instrument_func()
     def iib_add_bundles(
         cls,
         bundles=None,
@@ -326,7 +327,7 @@ class OperatorPusher:
             return False
 
     @classmethod
-    @instrument_func()
+    @tx.instrument_func()
     def iib_remove_operators(
         cls,
         operators=None,

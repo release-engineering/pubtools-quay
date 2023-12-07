@@ -17,8 +17,9 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from io import StringIO
 from pubtools.pluggy import pm
 
-from pubtools.tracing import instrument_func
+from pubtools.tracing import get_trace_wrapper
 
+tw = get_trace_wrapper()
 LOG = logging.getLogger("pubtools.quay")
 
 INTERNAL_DELIMITER = "----"
@@ -270,7 +271,7 @@ def log_step(step_name):
 
     def decorate(fn):
         # Add instrumentation trace for all push steps.
-        fn = instrument_func()(fn)
+        fn = tw.instrument_func()(fn)
 
         @functools.wraps(fn)
         def fn_wrapper(*args, **kwargs):
