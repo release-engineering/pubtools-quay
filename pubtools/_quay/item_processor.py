@@ -7,6 +7,7 @@ import json
 
 from .quay_client import QuayClient
 from .exceptions import ManifestTypeError
+from .utils.misc import run_in_parallel, FData
 
 
 @dataclass
@@ -64,7 +65,7 @@ class ContentExtractor:
     }
 
     def __init__(
-        self, quay_client: QuayClient, sleep_time: int = 5, timeout: int = 60, poll_rate: int = 5
+        self, quay_client: QuayClient, sleep_time: int = 5, timeout: int = 30, poll_rate: int = 5
     ):
         """Initialize the class.
 
@@ -153,7 +154,7 @@ class ContentExtractor:
             list: List of ManifestArchDigest objects.
         """
         mtypes = (
-            sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x])
+            sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x], reverse=True)
             or self._MEDIA_TYPES_PRIORITY.keys()
         )
         results = []
@@ -410,9 +411,9 @@ class ItemProcesor:
             item.metadata.get("build", {}).get("extra", {}).get("image", {}).get("media_types", [])
         )
 
+        man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
-            man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
             for mad in man_arch_digs:
                 if sign_only_arches and mad.arch not in sign_only_arches:
                     continue
@@ -439,13 +440,24 @@ class ItemProcesor:
         media_types = (
             item.metadata.get("build", {}).get("extra", {}).get("image", {}).get("media_types", [])
         )
-
+        references = []
         for repo, tag in self.generate_repo_untags(item):
-            reference = self.reference_processor.full_reference(self.source_registry, repo, tag)
-            man_arch_digs = self.extractor.extract_manifests(reference, media_types)
+            references.append(
+                self.reference_processor.full_reference(self.source_registry, repo, tag)
+            )
+
+        man_arch_digs_map = run_in_parallel(
+            self.extractor.extract_manifests, [FData(args=(ref, media_types)) for ref in references]
+        )
+        for ref_index, man_arch_digs in man_arch_digs_map.items():
             for mad in man_arch_digs:
                 to_unsign.append(
-                    {"reference": reference, "digest": mad.digest, "repo": repo, "arch": mad.arch}
+                    {
+                        "reference": references[ref_index],
+                        "digest": mad.digest,
+                        "repo": repo,
+                        "arch": mad.arch,
+                    }
                 )
         return to_unsign
 
@@ -490,9 +502,18 @@ class ItemProcesor:
             ]
         else:
             media_types = only_media_types
+
+        references = []
         for repo, tag in self._generate_src_repo_tag(item):
             full_ref = self.reference_processor.full_reference(self.source_registry, repo, tag=tag)
-            man_arch_digs = self.extractor.extract_manifests(full_ref, media_types)
+            references.append((full_ref, repo, tag))
+
+        man_arch_digs_map = run_in_parallel(
+            self.extractor.extract_manifests,
+            [FData(args=(ref_meta[0], media_types)) for ref_meta in references],
+        )
+        for ref_index, man_arch_digs in man_arch_digs_map.items():
+            reference, repo, tag = references[ref_index]
             for mad in man_arch_digs:
                 if (repo, tag, mad) not in existing_manifests:
                     existing_manifests.append((repo, tag, mad))

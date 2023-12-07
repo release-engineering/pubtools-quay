@@ -9,11 +9,8 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from marshmallow import Schema, fields, EXCLUDE
 
-from .utils.misc import (
-    run_entrypoint,
-    get_pyxis_ssl_paths,
-    run_in_parallel,
-)
+from .quay_api_client import QuayApiClient
+from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel, log_step, FData
 from .item_processor import SignEntry
 
 
@@ -123,6 +120,7 @@ class SignerWrapper:
         )
         self._store_signed(signed)
 
+    @log_step("Sign container images")
     def sign_containers(
         self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
     ):
@@ -134,7 +132,9 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         run_in_parallel(
-            self.sign_container, zip(to_sign_entries, [task_id] * len(to_sign_entries)), parallelism
+            self.sign_container,
+            [FData(args=x) for x in zip(to_sign_entries, [task_id] * len(to_sign_entries))],
+            parallelism,
         )
 
     def validate_settings(self, settings: Dict[str, Any] = None):
@@ -150,8 +150,8 @@ class MsgSignerSettingsSchema(Schema):
     """Validation schema for messaging signer settings."""
 
     pyxis_server = fields.String(required=True)
-    pyxis_ssl_crtfile = fields.String(required=True)
-    pyxis_ssl_keyfile = fields.String(required=True)
+    pyxis_ssl_crtfile = fields.String(required=False)
+    pyxis_ssl_keyfile = fields.String(required=False)
     num_thread_pyxis = fields.Integer(required=False, default=7)
 
 
@@ -340,6 +340,7 @@ class MsgSignerWrapper(SignerWrapper):
                 )
         return sig_ids_to_remove
 
+    @log_step("Remove outdated signatures")
     def remove_signatures(
         self,
         signatures: List[Tuple[str, str, str]],
@@ -355,6 +356,119 @@ class MsgSignerWrapper(SignerWrapper):
         """
         _signatures = list(signatures)
         to_remove = self._filter_to_remove(_signatures, _exclude=_exclude)
+        self._remove_signatures(to_remove)
+
+
+class CosignSignerSettingsSchema(Schema):
+    """Validation schema for cosign signer settings."""
+
+    quay_namespace = fields.String(required=True)
+    quay_host = fields.String(required=True)
+    dest_quay_api_token = fields.String(required=True)
+
+
+class CosignSignerWrapper(SignerWrapper):
+    """Wrapper for cosign signer functionality."""
+
+    label = "cosign_signer"
+    entry_point_conf = ["pubtools-sign", "modules", "pubtools-sign-cosign-container-sign"]
+
+    SCHEMA = CosignSignerSettingsSchema
+
+    def _list_signatures(self, repository: str, tag: str) -> List[Tuple[str, str]]:
+        """List cosign signatures for given repository.
+
+        This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
+        return list of full references to signature tags in format sha256-<digest>.sig
+
+        Args:
+            repository (str): Repository to list signatures for.
+            tag (str): Tag to list signatures for.
+        Returns:
+            List[Tuple[str, str]]: List of (repository, signature tag) tuples
+            for existing signatures.
+        """
+        full_reference = (
+            f"{self.settings['quay_host']}/"
+            + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+            + f":{tag}"
+        )
+        existing_signatures = run_entrypoint(
+            ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"), [full_reference]
+        )
+        if existing_signatures[0]:
+            return [
+                (repository, e.split(":")[-1].replace(".sig", "").replace("-", ":"))
+                for e in existing_signatures[1]
+            ]
+        else:
+            LOG.warning("Fetch existing signatures error:" + existing_signatures[1])
+            return []
+
+    def _filter_to_remove(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> List[str]:
+        """Filter signatures to remove.
+
+        Args:
+            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)
+            tuples of signautres to remove.
+            _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
+        """
+        repo_tag_list = list(set([(x[2], x[1]) for x in signatures]))
+        signatures_to_remove = [(x[2], x[0]) for x in signatures]
+        signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
+        existing_signatures = set(
+            sum(
+                run_in_parallel(
+                    self._list_signatures, [FData(args=repo_tag) for repo_tag in repo_tag_list]
+                ).values(),
+                [],
+            )
+        )
+        to_remove = []
+        for existing_signature in existing_signatures:
+            if (
+                existing_signature in signatures_to_remove
+                and existing_signature not in signatures_to_exclude
+            ):
+                to_remove.append(existing_signature)
+                LOG.debug(
+                    f"Removing signature "
+                    f"Repository: {existing_signature[0]}, "
+                    f"Digest: {existing_signature[1]}, "
+                )
+        return to_remove
+
+    def _run_remove_signatures(self, signatures_to_remove: List[Tuple[str, str]]):
+        """Remove signatures from the sigstore.
+
+        Args:
+            signatures_to_remove (List[Tuple(str, str)]): List of signatures to remove.
+        """
+        qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
+        for sig_to_remove in signatures_to_remove:
+            ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
+            sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
+            qc.delete_tag(ref, sig_tag)
+
+    def remove_signatures(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ):
+        """Remove signatures from sigstore.
+
+        Args:
+            signatures (list): List of tuples containing (digest, reference, repository) of
+            signatures to remove.
+            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signautres to keep.
+        """
+        to_remove = self._filter_to_remove(signatures, _exclude=_exclude)
         self._remove_signatures(to_remove)
 
 

@@ -10,6 +10,7 @@ import pytest
 from pubtools.pluggy import pm, hookimpl, hookspec
 
 from pubtools._quay.utils.logger import Logger
+from pubtools._quay.utils.misc import FData
 
 # flake8: noqa: E501
 
@@ -930,7 +931,10 @@ def target_settings():
         "cosign_rekor_url": "https://some-rekor.com",
         "pyxis_ssl_crtfile": "/pyxis.crt",
         "pyxis_ssl_keyfile": "/pyxis.key",
-        "signing": [{"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"}],
+        "signing": [
+            {"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"},
+            {"enabled": True, "label": "cosign_signer", "config_file": "test-config.yml"},
+        ],
         "retry_sleep_time": 0,
     }
 
@@ -2019,10 +2023,19 @@ def msg_signer_settings():
     }
 
 
+@pytest.fixture
+def cosign_signer_settings():
+    return {
+        "quay_host": "test-quay.io",
+        "quay_namespace": "testing",
+        "dest_quay_api_token": "testing-quay-api-token",
+    }
+
+
 def run_in_serial(func, data, threads):
     ret = []
     for dentry in data:
-        ret.append(func(*data))
+        ret.append(func(*dentry.args, **dentry.kwargs))
     return ret
 
 

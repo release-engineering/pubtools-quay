@@ -680,6 +680,7 @@ def test_generate_backup_mapping(
     container_push_item_ok,
     src_manifest_list,
     v2s1_manifest,
+    fixture_run_in_parallel,
 ):
     hub = mock.MagicMock()
 
