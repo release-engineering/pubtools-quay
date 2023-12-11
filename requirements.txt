@@ -7,7 +7,7 @@ pubtools-pyxis
 python-qpid-proton
 monotonic
 docker
-pubtools>=0.3.0
+pubtools>=1.4.0
 iiblib
 pubtools-iib
 kerberos

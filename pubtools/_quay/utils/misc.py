@@ -13,6 +13,9 @@ import time
 from io import StringIO
 from pubtools.pluggy import pm
 
+from pubtools.tracing import get_trace_wrapper
+
+tw = get_trace_wrapper()
 LOG = logging.getLogger("pubtools.quay")
 
 INTERNAL_DELIMITER = "----"
@@ -241,6 +244,9 @@ def log_step(step_name):
     event_name = step_name.lower().replace(" ", "-")
 
     def decorate(fn):
+        # Add instrumentation trace for all push steps.
+        fn = tw.instrument_func(span_name=event_name)(fn)
+
         @functools.wraps(fn)
         def fn_wrapper(*args, **kwargs):
             try:
