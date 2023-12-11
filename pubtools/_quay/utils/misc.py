@@ -245,7 +245,7 @@ def log_step(step_name):
 
     def decorate(fn):
         # Add instrumentation trace for all push steps.
-        fn = tw.instrument_func()(fn)
+        fn = tw.instrument_func(span_name=event_name)(fn)
 
         @functools.wraps(fn)
         def fn_wrapper(*args, **kwargs):
