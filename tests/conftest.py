@@ -10,7 +10,6 @@ import pytest
 from pubtools.pluggy import pm, hookimpl, hookspec
 
 from pubtools._quay.utils.logger import Logger
-from pubtools._quay.utils.misc import FData
 
 # flake8: noqa: E501
 
@@ -130,7 +129,6 @@ def container_push_item_external_repos():
                 "repo": "test-repo",
                 "tag": "test-tag",
             },
-            "pull_url": "some-registry/src/repo:1",
             "build": {
                 "build_id": 123456,
                 "extra": {
@@ -159,7 +157,7 @@ def container_push_item_no_metadata():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         state="NOTPUSHED",
         claims_signing_key="some-key",
@@ -176,7 +174,7 @@ def container_push_item_empty_file_path():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -194,7 +192,7 @@ def container_push_item_not_container():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -212,7 +210,7 @@ def container_push_item_errors():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -245,7 +243,7 @@ def operator_push_item_ok():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -258,7 +256,6 @@ def operator_push_item_ok():
             },
             "com.redhat.openshift.versions": "v4.5",
             "op_type": "bundle",
-            "pull_url": "some-registry/src/repo:1",
             "build": {
                 "build_id": 123456,
                 "extra": {
@@ -284,7 +281,7 @@ def operator_push_item_fbc_inconsistent():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -322,7 +319,7 @@ def operator_push_item_fbc():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -360,7 +357,7 @@ def operator_push_item_fbc_hotfix():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -399,7 +396,7 @@ def operator_push_item_pre_release():
         file_size=0,
         file_info=None,
         origin="RHBA-1234:4567",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -439,7 +436,7 @@ def operator_push_item_pre_release2():
         file_size=0,
         file_info=None,
         origin="RHBA-1234:4567",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -479,7 +476,7 @@ def operator_push_item_hotfix():
         file_size=0,
         file_info=None,
         origin="RHBA-1234:4567",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -518,7 +515,7 @@ def operator_push_item_hotfix_invalid_origin():
         file_size=0,
         file_info=None,
         origin="non-advisory-origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -557,7 +554,7 @@ def operator_push_item_prerelease_invalid_origin():
         file_size=0,
         file_info=None,
         origin="non-advisory-origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -596,7 +593,7 @@ def operator_push_item_ok2():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -626,7 +623,7 @@ def operator_push_item_appregistry():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -652,7 +649,7 @@ def operator_push_item_unknown_op_type():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -684,7 +681,7 @@ def operator_push_item_no_ocp():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -929,13 +926,6 @@ def target_settings():
         "cosign_public_key_path": "path/to/key.pub",
         "push_security_manifests_enabled": True,
         "cosign_rekor_url": "https://some-rekor.com",
-        "pyxis_ssl_crtfile": "/pyxis.crt",
-        "pyxis_ssl_keyfile": "/pyxis.key",
-        "signing": [
-            {"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"},
-            {"enabled": True, "label": "cosign_signer", "config_file": "test-config.yml"},
-        ],
-        "retry_sleep_time": 0,
     }
 
 
@@ -1093,7 +1083,7 @@ def operator_push_item_vr():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1123,7 +1113,7 @@ def operator_push_item_no_vr():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1153,7 +1143,7 @@ def operator_push_item_different_version():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1520,7 +1510,7 @@ def operator_signing_push_item():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={"repo1": ["tag1", "tag2"], "repo2": ["tag2"]},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1573,7 +1563,7 @@ def operator_push_item_errors():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1605,7 +1595,7 @@ def operator_push_item_no_op_type():
         file_size=0,
         file_info=None,
         origin="push_item_origin",
-        repos={},
+        repos=[],
         build="push_item_build",
         checksums={},
         state="NOTPUSHED",
@@ -1669,7 +1659,6 @@ def tag_docker_push_item_add():
         claims_signing_key="some-key",
         metadata={
             "destination": {"tags": ["v1.6", "v1.7"]},
-            "tags": {"namespace/test_repo": ["v1.6", "v1.7"]},
             "tag_source": "v1.5",
             "add_tags": ["v1.6", "v1.7"],
             "remove_tags": [],
@@ -1900,7 +1889,6 @@ def dest_manifest_list():
 def v2s1_manifest():
     return {
         "schemaVersion": 1,
-        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
         "tag": "5",
         "name": "some-repo/some-image",
         "architecture": "amd64",
@@ -1931,7 +1919,6 @@ def tag_docker_push_item_add_integration():
         claims_signing_key="some-key",
         metadata={
             "destination": {"tags": ["v1.6"]},
-            "tags": {"namespace/test_repo": ["v1.6"]},
             "tag_source": "v1.5",
             "add_tags": ["v1.6"],
             "remove_tags": [],
@@ -1958,7 +1945,6 @@ def tag_docker_push_item_remove_no_src_integration():
         claims_signing_key="some-key",
         metadata={
             "destination": {"tags": []},
-            "tags": {},
             "tag_source": "",
             "add_tags": [],
             "remove_tags": ["v1.8"],
@@ -1982,65 +1968,3 @@ def fake_cert_key_paths():
     pm.register(fake_paths)
     yield
     pm.unregister(fake_paths)
-
-
-@pytest.fixture
-def signer_wrapper_entry_point():
-    with mock.patch("pubtools._quay.signer_wrapper.SignerWrapper.entry_point") as mocked:
-        yield mocked
-
-
-@pytest.fixture
-def signer_wrapper_run_entry_point():
-    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mocked:
-        yield mocked
-
-
-@pytest.fixture
-def signer_wrapper_remove_signatures():
-    with mock.patch("pubtools._quay.signer_wrapper.SignerWrapper._remove_signatures") as mocked:
-        yield mocked
-
-
-@pytest.fixture
-def signer_wrapper_filter_to_remove():
-    with mock.patch("pubtools._quay.signer_wrapper.SignerWrapper._filter_to_remove") as mocked:
-        yield mocked
-
-
-@pytest.fixture
-def signer_wrapper_store_signed():
-    with mock.patch("pubtools._quay.signer_wrapper.SignerWrapper._store_signed") as mocked:
-        yield mocked
-
-
-@pytest.fixture
-def msg_signer_settings():
-    return {
-        "pyxis_server": "test-server",
-        "pyxis_ssl_crtfile": "test-cert-file",
-        "pyxis_ssl_keyfile": "test-key-file",
-    }
-
-
-@pytest.fixture
-def cosign_signer_settings():
-    return {
-        "quay_host": "test-quay.io",
-        "quay_namespace": "testing",
-        "dest_quay_api_token": "testing-quay-api-token",
-    }
-
-
-def run_in_serial(func, data, threads):
-    ret = []
-    for dentry in data:
-        ret.append(func(*dentry.args, **dentry.kwargs))
-    return ret
-
-
-@pytest.fixture
-def fixture_run_in_parallel():
-    with mock.patch("pubtools._quay.utils.misc.run_in_parallel") as patched:
-        patched.side_effect = run_in_serial
-        yield patched
