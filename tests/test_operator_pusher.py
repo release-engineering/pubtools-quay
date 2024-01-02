@@ -522,6 +522,22 @@ def test_push_operators_extra_ns(
     )
 
 
+class Mock_iib_add_bundles:
+    def __init__(self, responses):
+        self.responses = responses
+
+    def __call__(
+        self,
+        bundles=None,
+        archs=None,
+        index_image=None,
+        deprecation_list=None,
+        build_tags=None,
+        target_settings={},
+    ):
+        return self.responses[index_image]
+
+
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
@@ -563,7 +579,15 @@ def test_push_operators_not_all_successful(
             ["v4.7-3"],
         ),
     ]
-    mock_add_bundles.side_effect = iib_results
+    mock_add_bundles.side_effect = Mock_iib_add_bundles(
+        {
+            "registry.com/rh-osbs/iib-pub-pending:v4.5": iib_results[0],
+            "registry.com/rh-osbs/iib-pub-pending:v4.6": None,
+            "registry.com/rh-osbs/iib-pub-pending:v4.7": iib_results[2],
+        }
+    )
+
+    iib_results
     pusher = operator_pusher.OperatorPusher(
         [operator_push_item_ok, operator_push_item_different_version], "3", target_settings
     )
