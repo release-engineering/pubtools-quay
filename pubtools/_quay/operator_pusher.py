@@ -441,8 +441,8 @@ class OperatorPusher:
         bundles = [self.public_bundle_ref(i) for i in self.push_items]
         for bundle in bundles:
             registry = bundle.split("/", 1)[0]
-            username, password = get_basic_auth(registry)
-            quay_client = QuayClient(username, password, registry)  # type: ignore
+            username, password = get_basic_auth(registry) or ("", "")
+            quay_client = QuayClient(username, password, registry)
             try:
                 get_manifest_partial = functools.partial(quay_client.get_manifest, bundle)
                 run_with_retries(

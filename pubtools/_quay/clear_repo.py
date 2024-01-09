@@ -1,6 +1,6 @@
 import logging
 import argparse
-from typing import Any
+from typing import Any, Dict, List, cast
 
 from pubtools.pluggy import task_context, pm
 
@@ -125,24 +125,24 @@ def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
     signers = settings["signers"].split(",")
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
-    # TOFIX: mad can be None
     for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))  # type: ignore
+        if not mad:
+            continue
+        outdated_manifests.append((mad.digest, tag, repo))
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
         _signer = signercls(config_file=signer_configs[n], settings=settings)
-        # TOFIX: outdated_manfests sould be list?, also exclude is bool?
-        _signer.remove_signatures(outdated_manifests, _exclude=[])  # type: ignore
+        _signer.remove_signatures(outdated_manifests, _exclude=[])
 
     refrences_to_remove = []
     for repository in parsed_repositories:
         internal_repo = "{0}/{1}".format(
             settings["quay_org"], get_internal_container_repo_name(repository)
         )
-        repo_data = quay_client.get_repository_tags(internal_repo)
+        repo_data = cast(Dict[str, List[str]], quay_client.get_repository_tags(internal_repo))
 
-        for tag in repo_data["tags"]:  # type: ignore
+        for tag in repo_data["tags"]:
             refrences_to_remove.append("{0}/{1}:{2}".format("quay.io", internal_repo, tag))
 
     untag_images(

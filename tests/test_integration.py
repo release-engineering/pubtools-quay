@@ -10,6 +10,7 @@ from pubtools._quay.tag_docker import TagDocker
 from pubtools._quay import iib_operations
 from pubtools._quay import clear_repo
 from pubtools._quay import remove_repo
+from pubtools._quay.exceptions import BadPushItem
 from .utils.misc import (
     sort_dictionary_sortable_values,
     compare_logs,
@@ -134,24 +135,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
                 "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -956,6 +939,173 @@ def test_tag_docker_source_copy_untag(
                 ),
             ]
         )
+
+
+# @mock.patch("subprocess.Popen")
+# @mock.patch("pubtools._quay.command_executor.docker.APIClient")
+# @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
+# def test_tag_docker_source_copy_untag_missing_source_tags(
+#     mock_run_cmd,
+#     mock_api_client,
+#     mock_popen,
+#     target_settings,
+#     tag_docker_push_item_add_integration,
+#     tag_docker_push_item_remove_no_src_integration,
+#     v2s2_manifest_data,
+#     fake_cert_key_paths,
+#     signer_wrapper_entry_point,
+#     signer_wrapper_run_entry_point,
+# ):
+#     hub = mock.MagicMock()
+#     mock_get_target_info = mock.MagicMock()
+#     mock_get_target_info.return_value = {
+#         "settings": {
+#             "quay_namespace": "stage-namespace",
+#             "dest_quay_user": "stage-user",
+#             "dest_quay_password": "stage-password",
+#             "signing": [{"enabled": True, "label": "msg_signer", "config_file": "test-config.yml"}],
+#         }
+#     }
+#     hub.worker.get_target_info = mock_get_target_info
+#     target_settings["propagated_from"] = "test-target"
+#
+#     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"
+#     mock_api_client.return_value.exec_inspect.return_value = {"ExitCode": 0}
+#     mock_popen.return_value.communicate.side_effect = [
+#         ("something", "err"),
+#         ("Login Succeeded", "err"),
+#         ('{"Architecture": "amd64"}', "err"),
+#         ('{"Architecture": "amd64"}', "err"),
+#         ('{"Architecture": "amd64"}', "err"),
+#         ('{"Architecture": "amd64"}', "err"),
+#     ]
+#     mock_popen.return_value.returncode = 0
+#     signer_wrapper_entry_point.return_value = {
+#         "signer_result": {
+#             "status": "ok",
+#         },
+#         "operation": {
+#             "references": ["some-registry.com/iib-namespace/new-index-image:8"],
+#             "manifests": [
+#                 "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"
+#             ],
+#         },
+#         "operation_results": MSG_SIGNER_OPERATION_RESULT,
+#         "signing_key": "sig-key",
+#     }
+#
+#     with requests_mock.Mocker() as m:
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.5",
+#             status_code=404,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.5",
+#             json=v2s2_manifest_data,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/test_repo2/manifests/v1.6",
+#             json=v2s2_manifest_data,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/v2/stage-namespace/namespace----test_repo/tags/list",
+#             json={
+#                 "name": "namespace----test_repo",
+#                 "tags": [
+#                     "v1.5",
+#                     "v1.6",
+#                 ],
+#             },
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo/tags/list",
+#             json={
+#                 "name": "namespace----test_repo",
+#                 "tags": [
+#                     "v1.5",
+#                     "v1.6",
+#                 ],
+#             },
+#         )
+#         m.get(
+#             "https://quay.io/v2/stage-namespace/namespace----test_repo2/tags/list",
+#             json={
+#                 "name": "namespace----test_repo2",
+#                 "tags": [
+#                     "v1.5",
+#                     "v1.6",
+#                 ],
+#             },
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo2/tags/list",
+#             json={
+#                 "name": "namespace----test_repo2",
+#                 "tags": [
+#                     "v1.5",
+#                     "v1.6",
+#                 ],
+#             },
+#         )
+#         m.get(
+#             "https://quay.io/v2/stage-namespace/namespace----test_repo/manifests/v1.6",
+#             json=v2s2_manifest_data,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
+#             json=v2s2_manifest_data,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/v2/stage-namespace/namespace----test_repo2/manifests/v1.8",
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#             json=v2s2_manifest_data,
+#         )
+#         m.get(
+#             "https://quay.io/api/v1/repository/some-namespace/test_repo?includeTags=True",
+#             json={
+#                 "tags": {
+#                     "v1.5": {"manifest_digest": "a1a1a1"},
+#                     "v1.6": {"manifest_digest": "b2b2b2"},
+#                 }
+#             },
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.6",
+#             status_code=404
+#         )
+#         m.put(
+#             "https://quay.io/v2/some-namespace/test_repo/manifests/v1.6",
+#         )
+#         m.get(
+#             "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.8",
+#             json=v2s2_manifest_data,
+#             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+#         )
+#         m.get(
+#             "https://quay.io/api/v1/repository/some-namespace/test_repo2?includeTags=True",
+#             json={"tags": {"v1.8": {"manifest_digest": "c3c3c3", "image_id": "some-id"}}},
+#         )
+#         m.put(
+#             "https://quay.io/v2/some-namespace/test_repo2/manifests/v1.8",
+#         )
+#         m.delete(
+#             "https://quay.io/api/v1/repository/some-namespace/namespace----test_repo2/tag/v1.8",
+#         )
+#
+#         tag_docker_instance = TagDocker(
+#             [tag_docker_push_item_add_integration, tag_docker_push_item_remove_no_src_integration],
+#             hub,
+#             "1",
+#             "some-target",
+#             target_settings,
+#         )
+#         with pytest.raises(BadPushItem):
+#             tag_docker_instance.run()
 
 
 @mock.patch("pubtools._quay.command_executor.docker.APIClient")

@@ -10,6 +10,7 @@ from pubtools._quay import exceptions
 from pubtools._quay import quay_client
 from pubtools._quay import tag_docker
 from .utils.misc import sort_dictionary_sortable_values, compare_logs, mock_manifest_list_requests
+from pubtools._quay.exceptions import BadPushItem
 
 # flake8: noqa: E501
 
@@ -1644,6 +1645,76 @@ def test_copy_all_archs_sign_images_source(
         True,
         target_settings,
     )
+
+
+@mock.patch("pubtools._quay.tag_docker.LocalExecutor")
+@mock.patch("pubtools._quay.tag_docker.ContainerImagePusher.run_tag_images")
+def test_copy_all_archs_sign_images_404(
+    mock_run_tag_images,
+    mock_local_executor,
+    target_settings,
+    tag_docker_push_item_add,
+    v2s2_manifest_data,
+    fake_cert_key_paths,
+    signer_wrapper_entry_point,
+    signer_wrapper_run_entry_point,
+    src_manifest_list,
+    v2s1_manifest,
+):
+    hub = mock.MagicMock()
+    sig_handler = mock.MagicMock()
+    mock_sign_claim_messages = mock.MagicMock()
+    sig_handler.sign_claim_messages = mock_sign_claim_messages
+
+    signer_wrapper_entry_point.return_value = {
+        "signer_result": {
+            "status": "ok",
+        },
+        "operation": {
+            "references": ["some-registry.com/iib-namespace/new-index-image:8"],
+            "manifests": [
+                "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"
+            ],
+        },
+        "operation_results": MSG_SIGNER_OPERATION_RESULT,
+        "signing_key": "sig-key",
+    }
+    tag_docker_instance = tag_docker.TagDocker(
+        [tag_docker_push_item_add],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.5",
+            status_code=404,
+            text="Not found",
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        # mock_manifest_list_requests(
+        #     m,
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
+        #     src_manifest_list,
+        #     v2s1_manifest,
+        # )
+        # m.get(
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.7",
+        #     status_code=404,
+        #     text="Not found",
+        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        # )
+        # m.put(
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
+        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        # )
+        with pytest.raises(BadPushItem):
+            tag_docker_instance.copy_tag_sign_images(
+                tag_docker_push_item_add, "v1.6", mock_local_executor.return_value
+            )
+
+    mock_run_tag_images.assert_not_called()
 
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")

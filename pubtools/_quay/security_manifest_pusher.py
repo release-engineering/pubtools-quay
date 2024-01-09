@@ -8,13 +8,14 @@ import base64
 from dataclasses import dataclass
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Any
+from typing import Any, cast
 
 from .quay_client import QuayClient
 from .utils.misc import get_internal_container_repo_name, log_step
 from .command_executor import LocalExecutor
 from .quay_api_client import QuayApiClient
 from .exceptions import ManifestTypeError
+from .types import ManifestList
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -466,32 +467,33 @@ class SecurityManifestPusher:
         source_ref = item.metadata["pull_url"]
         # Get only repo so that we can attach arch digests to it
         source_repo = source_ref.split(":")[0]
-        manifest_list = self.src_quay_client.get_manifest(
-            source_ref, media_type=QuayClient.MANIFEST_LIST_TYPE
+        manifest_list = cast(
+            ManifestList,
+            self.src_quay_client.get_manifest(source_ref, media_type=QuayClient.MANIFEST_LIST_TYPE),
         )
 
-        for arch in manifest_list["manifests"]:  # type: ignore
-            image_ref = f"{source_repo}@{arch['digest']}"  # type: ignore
+        for arch in manifest_list["manifests"]:
+            image_ref = f"{source_repo}@{arch['digest']}"
             security_manifest_path = os.path.join(
                 dir_path,
-                f"security_manifest_{arch['platform']['architecture']}_{uuid.uuid4().hex}.json",  # type: ignore # noqa: E501
+                f"security_manifest_{arch['platform']['architecture']}_{uuid.uuid4().hex}.json",
             )
 
             result = self.cosign_get_security_manifest(image_ref, security_manifest_path)
             if not result:
                 LOG.warning(
-                    f"Image {source_ref} with architecture {arch['platform']['architecture']}"  # type: ignore # noqa: E501
+                    f"Image {source_ref} with architecture {arch['platform']['architecture']}"
                     " doesn't contain a security manifest"
                 )
             else:
                 image_manifests.append(
                     DigestSecurityManifest(
-                        digest=arch["digest"], security_manifest_path=security_manifest_path  # type: ignore # noqa: E501
+                        digest=arch["digest"], security_manifest_path=security_manifest_path
                     )
                 )
 
         # I wonder if this should be treated as an error
-        if image_manifests and len(image_manifests) != len(manifest_list["manifests"]):  # type: ignore # noqa: E501
+        if image_manifests and len(image_manifests) != len(manifest_list["manifests"]):
             LOG.error(
                 f"Only some architectures of multiarch image {source_ref} have a security manifest"
             )
@@ -564,4 +566,19 @@ class SecurityManifestPusher:
             ]
             for future in futures.as_completed(future_results):
                 if future.exception():
-                    raise future.exception()  # type: ignore # pragma: no cover
+                    raise cast(BaseException, future.exception())  # pragma: no cover
+        #     m,
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
+        #     src_manifest_list,
+        #     v2s1_manifest,
+        # )
+        # m.get(
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.7",
+        #     status_code=404,
+        #     text="Not found",
+        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        # )
+        # m.put(
+        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
+        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        # )

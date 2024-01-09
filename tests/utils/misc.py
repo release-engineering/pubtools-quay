@@ -133,3 +133,20 @@ def mock_manifest_list_requests(m, uri, manifest_list, manifests):
                 text=json.dumps(manifests, sort_keys=True),
                 headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
             )
+
+
+class GetManifestSideEffect:
+    def __init__(self, v2s1_manifest, manifest_list):
+        self.called_times = 0
+        self.v2s1_manifest = v2s1_manifest
+        self.manifest_list = manifest_list
+
+    def __call__(self, image, raw=False, media_type=False):
+        if self.called_times == 1:
+            return None
+        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
+            content = self.manifest_list
+        else:
+            content = self.v2s1_manifest
+        self.called_times += 1
+        return json.dumps(content) if raw else content

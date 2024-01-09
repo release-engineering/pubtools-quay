@@ -617,26 +617,35 @@ def test_push_operators_not_all_successful(
         },
     }
     assert mock_add_bundles.call_count == 3
-    assert mock_add_bundles.call_args_list[0] == mock.call(
-        bundles=["some-registry1.com/repo:1.0"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
-        deprecation_list=["bundle1", "bundle2"],
-        build_tags=["v4.5-3"],
-        target_settings=target_settings,
+    assert (
+        mock.call(
+            bundles=["some-registry1.com/repo:1.0"],
+            index_image="registry.com/rh-osbs/iib-pub-pending:v4.5",
+            deprecation_list=["bundle1", "bundle2"],
+            build_tags=["v4.5-3"],
+            target_settings=target_settings,
+        )
+        in mock_add_bundles.call_args_list
     )
-    assert mock_add_bundles.call_args_list[1] == mock.call(
-        bundles=["some-registry1.com/repo:1.0"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
-        deprecation_list=["bundle3"],
-        build_tags=["v4.6-3"],
-        target_settings=target_settings,
+    assert (
+        mock.call(
+            bundles=["some-registry1.com/repo:1.0"],
+            index_image="registry.com/rh-osbs/iib-pub-pending:v4.6",
+            deprecation_list=["bundle3"],
+            build_tags=["v4.6-3"],
+            target_settings=target_settings,
+        )
+        in mock_add_bundles.call_args_list
     )
-    assert mock_add_bundles.call_args_list[2] == mock.call(
-        bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
-        index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
-        deprecation_list=[],
-        build_tags=["v4.7-3"],
-        target_settings=target_settings,
+    assert (
+        mock.call(
+            bundles=["some-registry1.com/repo:1.0", "some-registry1.com/repo2:5.0.0"],
+            index_image="registry.com/rh-osbs/iib-pub-pending:v4.7",
+            deprecation_list=[],
+            build_tags=["v4.7-3"],
+            target_settings=target_settings,
+        )
+        in mock_add_bundles.call_args_list
     )
 
     pusher.push_index_images(results)

@@ -1,10 +1,11 @@
 from copy import deepcopy
 import logging
-from typing import Any
+from typing import List, cast
 
 import requests
 
 from .quay_client import QuayClient
+from .types import ManifestList, Manifest
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -82,15 +83,21 @@ class ManifestListMerger:
                 self.src_image, self.dest_image
             )
         )
-        src_manifest_list = self._src_quay_client.get_manifest(
-            self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        src_manifest_list = cast(
+            ManifestList,
+            self._src_quay_client.get_manifest(
+                self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            ),
         )
-        dest_manifest_list = self._dest_quay_client.get_manifest(
-            self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        dest_manifest_list = cast(
+            ManifestList,
+            self._dest_quay_client.get_manifest(
+                self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            ),
         )
 
-        missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)  # type: ignore # noqa: E501
-        new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)  # type: ignore # noqa: E501
+        missing_archs = self.get_missing_architectures(src_manifest_list, dest_manifest_list)
+        new_manifest_list = self._add_missing_architectures(src_manifest_list, missing_archs)
 
         LOG.info("Uploading the new manifest list to '{0}'".format(self.dest_image))
         self._dest_quay_client.upload_manifest(new_manifest_list, self.dest_image)
@@ -98,8 +105,8 @@ class ManifestListMerger:
 
     @staticmethod
     def get_missing_architectures(
-        src_manifest_list: dict[Any, Any], dest_manifest_list: dict[Any, Any]
-    ) -> list[dict[Any, Any]]:
+        src_manifest_list: ManifestList, dest_manifest_list: ManifestList
+    ) -> List[Manifest]:
         """
         Get architectures which are missing from the new source image.
 
@@ -114,7 +121,7 @@ class ManifestListMerger:
         Returns ([dict]):
             List of arch manifest data present in destination image but missing from source.
         """
-        missing_archs = []
+        missing_archs: List[Manifest] = []
         missing_archs_log = []
         src_archs = [arch["platform"]["architecture"] for arch in src_manifest_list["manifests"]]
 
@@ -129,8 +136,8 @@ class ManifestListMerger:
         return missing_archs
 
     def _add_missing_architectures(
-        self, src_manifest_list: dict[Any, Any], missing_archs: dict[Any, Any]
-    ) -> dict[Any, Any]:
+        self, src_manifest_list: ManifestList, missing_archs: List[Manifest]
+    ) -> ManifestList:
         """
         Add missing architectures to the source manifest list.
 
@@ -149,7 +156,7 @@ class ManifestListMerger:
 
     def merge_manifest_lists_selected_architectures(
         self, eligible_archs: list[str]
-    ) -> dict[Any, Any]:
+    ) -> ManifestList:
         """
         Merge manifests lists. Only specified archs are eligible for merging.
 
@@ -164,14 +171,20 @@ class ManifestListMerger:
         if not self._src_quay_client or not self._dest_quay_client:
             raise RuntimeError("QuayClient instance must be set for both source and dest images")
 
-        src_manifest_list = self._src_quay_client.get_manifest(
-            self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        src_manifest_list = cast(
+            ManifestList,
+            self._src_quay_client.get_manifest(
+                self.src_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            ),
         )
         # It's possible that destination doesn't exist in this workflow. ML merging logic is still
         # necessary due to only some archs being eligible
         try:
-            dest_manifest_list = self._dest_quay_client.get_manifest(
-                self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            dest_manifest_list = cast(
+                ManifestList,
+                self._dest_quay_client.get_manifest(
+                    self.dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+                ),
             )
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404 or e.response.status_code == 401:
@@ -181,18 +194,18 @@ class ManifestListMerger:
 
         archs_to_add = []
         manifests_to_add = []
-        for src_arch_dict in src_manifest_list["manifests"]:  # type: ignore
-            if src_arch_dict["platform"]["architecture"] in eligible_archs:  # type: ignore
+        for src_arch_dict in src_manifest_list["manifests"]:
+            if src_arch_dict["platform"]["architecture"] in eligible_archs:
                 manifests_to_add.append(deepcopy(src_arch_dict))
-                archs_to_add.append(src_arch_dict["platform"]["architecture"])  # type: ignore
+                archs_to_add.append(src_arch_dict["platform"]["architecture"])
 
         manifests_to_keep = []
         if dest_manifest_list:
-            for dest_arch_dict in dest_manifest_list["manifests"]:  # type: ignore
-                if dest_arch_dict["platform"]["architecture"] not in archs_to_add:  # type: ignore
+            for dest_arch_dict in dest_manifest_list["manifests"]:
+                if dest_arch_dict["platform"]["architecture"] not in archs_to_add:
                     manifests_to_keep.append(deepcopy(dest_arch_dict))
 
         new_manifest_list = deepcopy(src_manifest_list)
-        new_manifest_list["manifests"] = manifests_to_add + manifests_to_keep  # type: ignore
+        new_manifest_list["manifests"] = manifests_to_add + manifests_to_keep
 
-        return new_manifest_list  # type: ignore
+        return new_manifest_list

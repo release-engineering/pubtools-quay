@@ -3,7 +3,7 @@ from copy import deepcopy
 import json
 import logging
 import urllib3
-from typing import Any
+from typing import Any, cast
 
 import requests
 
@@ -21,6 +21,7 @@ from .push_docker import PushDocker
 from .signer_wrapper import SIGNER_BY_LABEL
 from .item_processor import item_processor_for_internal_data, SignEntry
 from .command_executor import Executor
+from .types import Manifest, ManifestList
 
 # TODO: do we want this, or should I remove it?
 from urllib3.exceptions import InsecureRequestWarning
@@ -205,7 +206,7 @@ class TagDocker:
         """
         LOG.info("Getting image details of {0}".format(reference))
         try:
-            manifest = self.quay_client.get_manifest(reference)
+            manifest = cast(Manifest | ManifestList, self.quay_client.get_manifest(reference))
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404 or e.response.status_code == 401:
                 LOG.info("Image '{0}' doesn't exist".format(reference))
@@ -213,12 +214,12 @@ class TagDocker:
             else:
                 raise
 
-        manifest_type = manifest["mediaType"]  # type: ignore
+        manifest_type = manifest["mediaType"]
         if manifest_type not in [TagDocker.MANIFEST_V2S2_TYPE, TagDocker.MANIFEST_LIST_TYPE]:
             raise BadPushItem("Image {0} has manifest type different than V2S2 or manifest list")
 
         # Check arch if the image is V2S2 manifest
-        if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:  # type: ignore
+        if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:
             arch = executor.skopeo_inspect(reference)["Architecture"]
             # Arch check is not a great way to verify that this is a source image, but there are
             # no better options without having build details
@@ -230,7 +231,7 @@ class TagDocker:
 
         digest = self.quay_client.get_manifest_digest(reference)
 
-        return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)  # type: ignore # noqa: E501
+        return TagDocker.ImageDetails(reference, manifest, manifest["mediaType"], digest)
 
     def is_arch_relevant(self, push_item: Any, arch: str) -> bool:
         """
@@ -512,9 +513,11 @@ class TagDocker:
         to_sign_entries = []
         current_signatures: list[Any] = []
         details = self.get_image_details(source_image, executor)
+        if not details:
+            raise BadPushItem("Source image must be specified if add operation was requested")
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
-        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:  # type: ignore # noqa: E501
+        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:
             for registry in registries:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -523,7 +526,7 @@ class TagDocker:
                     SignEntry(
                         repo=repo,
                         reference=reference,
-                        digest=details.digest,  # type: ignore
+                        digest=details.digest,
                         signing_key=push_item.claims_signing_key,
                         arch="amd64",
                     )
@@ -554,7 +557,7 @@ class TagDocker:
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
-        elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:  # type: ignore
+        elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
@@ -642,8 +645,11 @@ class TagDocker:
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
-        raw_src_manifest = self.quay_client.get_manifest(
-            source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
+        raw_src_manifest = cast(
+            str,
+            self.quay_client.get_manifest(
+                source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
+            ),
         )
 
         # Special case: if the source manifest and the merged manifest are the same, upload the
@@ -652,7 +658,7 @@ class TagDocker:
         if sorted(
             new_manifest_list["manifests"], key=lambda manifest: manifest["digest"]
         ) == sorted(
-            json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]  # type: ignore # noqa: E501
+            json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]
         ):
             self.quay_client.upload_manifest(raw_src_manifest, dest_image, raw=True)
         else:
@@ -741,25 +747,26 @@ class TagDocker:
             host=self.quay_host, namespace=namespace, repo=internal_repo
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
-        manifest_list = self.quay_client.get_manifest(
-            dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        manifest_list = cast(
+            ManifestList,
+            self.quay_client.get_manifest(dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE),
         )
 
         keep_manifests = []
         remove_manifest_sigs = []
-        for manifest in manifest_list["manifests"]:  # type: ignore
-            if manifest["platform"]["architecture"] not in remove_archs:  # type: ignore
+        for manifest in manifest_list["manifests"]:
+            if manifest["platform"]["architecture"] not in remove_archs:
                 keep_manifests.append(deepcopy(manifest))
             else:
                 remove_manifest_sigs.append(manifest)
 
         new_manifest_list = deepcopy(manifest_list)
-        new_manifest_list["manifests"] = keep_manifests  # type: ignore
+        new_manifest_list["manifests"] = keep_manifests
 
         to_remove_sig_entries = []
         for to_remove_man in remove_manifest_sigs:
             to_remove_sig_entries.append(
-                (to_remove_man["digest"], tag, list(push_item.repos.keys())[0])  # type: ignore
+                (to_remove_man["digest"], tag, list(push_item.repos.keys())[0])
             )
 
         for signer in self.target_settings["signing"]:

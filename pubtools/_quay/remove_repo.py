@@ -125,7 +125,9 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
     signer_configs = settings["signer_configs"].split(",")
     outdated_manifests = []
     for repo, tag, mad in existing_manifests:
-        outdated_manifests.append((mad.digest, tag, repo))  # type: ignore
+        if not mad:
+            continue
+        outdated_manifests.append((mad.digest, tag, repo))
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]

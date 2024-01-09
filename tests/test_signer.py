@@ -22,11 +22,6 @@ def test_signer_remove_signatures():
         )
 
 
-def test_missing_settings():
-    with pytest.raises(ValueError):
-        SignerWrapper(config_file="fake-config-file", settings=None)
-
-
 def test_sign_container_failed():
     with mock.patch("pkg_resources.load_entry_point") as mock_load_entry_point:
         sw = SignerWrapper(config_file="fake-config-file", settings={})

@@ -2,7 +2,7 @@ from collections import namedtuple
 import logging
 import sys
 import json
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, cast
 
 import requests
 import urllib3
@@ -20,6 +20,7 @@ from .item_processor import (
     item_processor_for_external_data,
     item_processor_for_internal_data,
     SignEntry,
+    ManifestArchDigest,
 )
 from .utils.misc import parse_index_image
 from .signer_wrapper import SIGNER_BY_LABEL
@@ -364,22 +365,43 @@ class PushDocker:
                             and existing_manifests[registry][e_repo][d_tag]
                         ):
                             man_arch_digs = existing_manifests[registry][e_repo][d_tag]
-                            amd64_mads = [m for m in man_arch_digs if m.arch == "amd64"]
-                            v2list_mad = (
-                                [
-                                    m
-                                    for m in man_arch_digs
-                                    if m.type_ == QuayClient.MANIFEST_LIST_TYPE
-                                ]
-                                or [None]  # type: ignore
+                            amd64_mads = [
+                                m
+                                for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                if m.arch == "amd64"
+                            ]
+                            v2list_mad: ManifestArchDigest | None = (
+                                cast(
+                                    List[ManifestArchDigest | None],
+                                    [
+                                        m
+                                        for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                        if m.type_ == QuayClient.MANIFEST_LIST_TYPE
+                                    ]
+                                    or [None],
+                                )
                             )[0]
-                            v2s1_mad = (
-                                [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
-                                or [None]  # type: ignore
+                            v2s1_mad: ManifestArchDigest | None = (
+                                cast(
+                                    List[ManifestArchDigest | None],
+                                    [
+                                        m
+                                        for m in amd64_mads
+                                        if m.type_ == QuayClient.MANIFEST_V2S1_TYPE
+                                    ]
+                                    or [None],
+                                )
                             )[0]
-                            v2s2_mad = (
-                                [m for m in amd64_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
-                                or [None]  # type: ignore
+                            v2s2_mad: ManifestArchDigest | None = (
+                                cast(
+                                    List[ManifestArchDigest | None],
+                                    [
+                                        m
+                                        for m in amd64_mads
+                                        if m.type_ == QuayClient.MANIFEST_V2S2_TYPE
+                                    ]
+                                    or [None],
+                                )
                             )[0]
                             image_data = PushDocker.ImageData(
                                 full_repo,
@@ -572,10 +594,6 @@ class PushDocker:
         )
         to_sign_entries = []
         current_signatures = []
-        for item in docker_push_items:
-            to_sign_entries.extend(
-                item_processor.generate_to_sign(item, sign_only_arches=["amd64", "x86_64"])
-            )
         to_sign_map = run_in_parallel(
             item_processor.generate_to_sign,
             [
@@ -584,8 +602,8 @@ class PushDocker:
             ],
         )
 
-        for to_sign_entries in to_sign_map.values():
-            to_sign_entries.extend(to_sign_entries)
+        for _to_sign_entries in to_sign_map.values():
+            to_sign_entries.extend(_to_sign_entries)
 
         for sign_entry in to_sign_entries:
             current_signatures.append(
@@ -648,7 +666,7 @@ class PushDocker:
                 )
                 # TOFIX: current_signatures can contain different types of data
                 current_signatures.extend(
-                    _sign_index_image(  # type: ignore
+                    _sign_index_image(
                         permanent_index_image,
                         iib_namespace,
                         iib_details["destination_tags"],

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import hashlib
-from typing import List, Dict, Any, Optional, TypeAlias, Tuple
+from typing import List, Dict, Any, Optional, TypeAlias, Tuple, cast
 import requests
 import time
 import json
@@ -161,7 +161,9 @@ class ContentExtractor:
         for mtype in mtypes:
             for i in range(self.timeout // self.poll_rate):
                 try:
-                    manifest = self.quay_client.get_manifest(image_ref, media_type=mtype, raw=True)
+                    manifest = cast(
+                        str, self.quay_client.get_manifest(image_ref, media_type=mtype, raw=True)
+                    )
                 except requests.exceptions.HTTPError as e:
                     # When robot account is used, 401 may be returned instead of 404
                     if (
@@ -179,7 +181,7 @@ class ContentExtractor:
             if not manifest:
                 continue
             else:
-                ret = self._MEDIA_TYPES_PROCESS[mtype](self, image_ref, manifest, mtype)  # type: ignore # noqa: E501
+                ret = self._MEDIA_TYPES_PROCESS[mtype](self, image_ref, manifest, mtype)
                 if isinstance(ret, list):
                     results.extend(ret)
                 else:
@@ -198,14 +200,14 @@ class ContentExtractor:
             list: List of tags.
         """
         try:
-            repo_tags = self.quay_client.get_repository_tags(repo_ref)
+            repo_tags = cast(dict[str, list[str]], self.quay_client.get_repository_tags(repo_ref))
         except requests.exceptions.HTTPError as e:
             # When robot account is used, 401 is returned instead of 404
             if tolerate_missing and e.response.status_code == 404 or e.response.status_code == 401:
                 repo_tags = {"tags": []}
             else:
                 raise
-        return repo_tags["tags"]  # type: ignore
+        return repo_tags["tags"]
 
 
 class ReferenceProcessorExternal:
@@ -312,7 +314,7 @@ class ItemProcesor:
     extractor: ContentExtractor
     reference_processor: ReferenceProcessorExternal | ReferenceProcessorInternal
     reference_registries: List[str]
-    source_registry: str
+    source_registry: Optional[str]
 
     INTERNAL_DELIMITER = "----"
 
@@ -443,7 +445,7 @@ class ItemProcesor:
         references = []
         for repo, tag in self.generate_repo_untags(item):
             references.append(
-                self.reference_processor.full_reference(self.source_registry, repo, tag)
+                self.reference_processor.full_reference(cast(str, self.source_registry), repo, tag)
             )
 
         man_arch_digs_map = run_in_parallel(
@@ -477,9 +479,9 @@ class ItemProcesor:
             ref_repo = self.reference_processor.replace_repo(repo)
             tags = self.extractor.extract_tags(ref_repo, tolerate_missing=tolerate_missing)
             for tag in tags:
-                existing_tag_entries.append((self.source_registry, repo, tag))
+                existing_tag_entries.append((cast(str, self.source_registry), repo, tag))
             if not tags:
-                existing_tag_entries.append((self.source_registry, repo, None))
+                existing_tag_entries.append((cast(str, self.source_registry), repo, None))
         return existing_tag_entries
 
     def _generate_existing_manifests(
@@ -505,7 +507,9 @@ class ItemProcesor:
 
         references = []
         for repo, tag in self._generate_src_repo_tag(item):
-            full_ref = self.reference_processor.full_reference(self.source_registry, repo, tag=tag)
+            full_ref = self.reference_processor.full_reference(
+                cast(str, self.source_registry), repo, tag=tag
+            )
             references.append((full_ref, repo, tag))
 
         man_arch_digs_map = run_in_parallel(
@@ -525,7 +529,7 @@ class ItemProcesor:
 
     def generate_existing_manifests_map(
         self, item: PushItem, only_media_types: list[str] | None = None
-    ) -> Dict[str, Dict[str, Dict[str, List[ManifestArchDigest]]]]:
+    ) -> Dict[str, Dict[str, Dict[str, List[ManifestArchDigest] | None]]]:
         """Generate existing manifests map for given push item.
 
         Args:
@@ -534,21 +538,22 @@ class ItemProcesor:
         Returns:
             dict: Dict of {registry: {repo: {tag: [<ManifestArchDigest>]}}}
         """
-        mapping_existing: dict[str, dict[str, dict[str, list[ManifestArchDigest]]]] = {}
+        mapping_existing: dict[str, dict[str, dict[str, List[ManifestArchDigest] | None]]] = {}
         for repo, tag, mad in self._generate_existing_manifests(
             item, only_media_types=only_media_types
         ):
-            # TOFIX: inconsistent types returned
             if mad:
-                mapping_existing.setdefault(self.source_registry, {}).setdefault(
-                    repo, {}
-                ).setdefault(tag, []).append(mad)
+                cast(
+                    List[ManifestArchDigest],
+                    mapping_existing.setdefault(cast(str, self.source_registry), {})
+                    .setdefault(repo, {})
+                    .setdefault(tag, []),
+                ).append(mad)
             else:
-                mapping_existing.setdefault(self.source_registry, {}).setdefault(
+                mad = cast(None, mad)
+                mapping_existing.setdefault(cast(str, self.source_registry), {}).setdefault(
                     repo, {}
-                ).setdefault(
-                    tag, mad  # type: ignore
-                )
+                ).setdefault(tag, mad)
         return mapping_existing
 
     def generate_existing_manifests_metadata(
@@ -606,8 +611,7 @@ def item_processor_for_external_data(
         extractor=extractor,
         reference_processor=ReferenceProcessorExternal(),
         reference_registries=external_registries,
-        # TOFIX: this shouldn't be None
-        source_registry=None,  # type: ignore
+        source_registry=None,
     )
 
 

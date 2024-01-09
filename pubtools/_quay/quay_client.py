@@ -6,10 +6,11 @@ import re
 from urllib3.util.retry import Retry
 from urllib import request
 import threading
-from typing import Any
+from typing import Any, cast, Dict, List
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
+from .types import ManifestList, Manifest
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -23,7 +24,7 @@ class QuayClient:
     MANIFEST_OCI_LIST_TYPE = "application/vnd.oci.image.index.v1+json"
     MANIFEST_OCI_V2S2_TYPE = "application/vnd.oci.image.manifest.v1+json"
 
-    def __init__(self, username: str, password: str, host: str | None = None) -> None:
+    def __init__(self, username: str | None, password: str | None, host: str | None = None) -> None:
         """
         Initialize.
 
@@ -49,7 +50,7 @@ class QuayClient:
 
     def get_manifest(
         self, image: str, raw: bool = False, media_type: str | None = None
-    ) -> dict[Any, Any] | str | Any:
+    ) -> ManifestList | Manifest | str:
         """
         Get manifest of given media type.
 
@@ -93,9 +94,9 @@ class QuayClient:
                     "Image {0} doesn't have a {1} manifest".format(image, media_type)
                 )
             if raw:
-                return response.text
+                return str(response.text)
             else:
-                return response.json()
+                return cast(ManifestList, response.json())
 
         # If type is not specified, try to get manifests in this order
         # If somehow none of these match, we'll accept whatever we got
@@ -115,7 +116,7 @@ class QuayClient:
         if raw:
             return response.text
         else:
-            return response.json()
+            return cast(ManifestList, response.json())
 
     def get_manifest_digest(self, image: str, media_type: str | None = None) -> str:
         """
@@ -131,7 +132,7 @@ class QuayClient:
             Manifest digest of the image.
         """
         try:
-            manifest = self.get_manifest(image, raw=True, media_type=media_type)
+            manifest = cast(str, self.get_manifest(image, raw=True, media_type=media_type))
         except requests.exceptions.HTTPError as exc:
             if exc.response.status_code == 404:
                 raise ManifestNotFoundError()
@@ -139,14 +140,12 @@ class QuayClient:
                 raise exc
         # SHA 256 is pretty much the standard for container images
         hasher = hashlib.sha256()
-        hasher.update(manifest.encode("utf-8"))  # type: ignore
+        hasher.update(manifest.encode("utf-8"))
         digest = hasher.hexdigest()
 
         return "sha256:{0}".format(digest)
 
-    def upload_manifest(
-        self, manifest: dict[Any, Any] | str, image: str, raw: bool = False
-    ) -> None:
+    def upload_manifest(self, manifest: ManifestList | str, image: str, raw: bool = False) -> None:
         """
         Upload manifest to a specified image.
 
@@ -164,20 +163,20 @@ class QuayClient:
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
         if raw:
-            manifest_type = json.loads(manifest)["mediaType"]  # type: ignore
+            manifest_type = json.loads(cast(str, manifest))["mediaType"]
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
-                "data": manifest,
+                "data": cast(str, manifest),
             }
         else:
-            manifest_type = manifest["mediaType"]  # type: ignore
+            manifest_type = cast(ManifestList, manifest)["mediaType"]
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
-                "data": json.dumps(manifest, sort_keys=True, indent=4),
+                "data": json.dumps(cast(ManifestList, manifest), sort_keys=True, indent=4),
             }
         self._request_quay("PUT", endpoint, kwargs)
 
-    def get_repository_tags(self, repository: str, raw: bool = False) -> list[str] | str | Any:
+    def get_repository_tags(self, repository: str, raw: bool = False) -> str | Dict[str, List[str]]:
         """
         Get tags of a provided repository.
 
@@ -208,7 +207,7 @@ class QuayClient:
         if raw:
             return json.dumps(tags)
         else:
-            return tags
+            return cast(Dict[str, List[str]], tags)
 
     def _request_quay(
         self, method: str, endpoint: str, kwargs: dict[Any, Any] = {}
@@ -288,7 +287,9 @@ class QuayClient:
         session.mount("https://", adapter)
         # Make an authentication request to the specified realm with the provided REST parameters.
         # Basic username + password authentication is expected.
-        r = session.get(host, params=params, auth=(self.username, self.password), timeout=10)
+        r = session.get(
+            host, params=params, auth=(self.username or "", self.password or ""), timeout=10
+        )
         r.raise_for_status()
 
         if "token" not in r.json():
