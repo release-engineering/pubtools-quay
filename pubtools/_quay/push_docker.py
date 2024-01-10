@@ -609,8 +609,10 @@ class PushDocker:
             current_signatures.append(
                 (sign_entry.reference, sign_entry.digest, sign_entry.signing_key)
             )
+        # Sign containers with signers that doesn't need have pushed containers
+        # in destination registry
         for signer in self.target_settings["signing"]:
-            if signer["enabled"]:
+            if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
                 signer.sign_containers(to_sign_entries, self.task_id)
@@ -618,6 +620,13 @@ class PushDocker:
         # Push container images
         container_pusher = ContainerImagePusher(docker_push_items, self.target_settings)
         container_pusher.push_container_images()
+
+        # Sign containers with signers which requires pushed containers in destination registry
+        for signer in self.target_settings["signing"]:
+            if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
+                signercls = SIGNER_BY_LABEL[signer["label"]]
+                signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
+                signer.sign_containers(to_sign_entries, self.task_id)
 
         self.sign_new_manifests(docker_push_items)
 

@@ -38,6 +38,7 @@ class SignerWrapper:
     """Wrapper providing functionality to sign containers with a generic signer."""
 
     label = "unused"
+    pre_push = False
 
     SCHEMA: type[Schema] = NoSchema
     entry_point_conf = ["signer", "group", "signer"]
@@ -165,6 +166,8 @@ class MsgSignerWrapper(SignerWrapper):
     """Wrapper for messaging signer functionality."""
 
     label = "msg_signer"
+    pre_push = True
+
     entry_point_conf = ["pubtools-sign", "modules", "pubtools-sign-msg-container-sign"]
 
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
@@ -378,6 +381,8 @@ class CosignSignerWrapper(SignerWrapper):
     """Wrapper for cosign signer functionality."""
 
     label = "cosign_signer"
+    pre_push = False
+
     entry_point_conf = ["pubtools-sign", "modules", "pubtools-sign-cosign-container-sign"]
 
     SCHEMA = CosignSignerSettingsSchema
