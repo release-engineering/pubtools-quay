@@ -11,7 +11,8 @@ import tarfile
 import time
 import textwrap
 from types import TracebackType
-from typing import Any, Self, Optional, Type, Generator
+from typing import Any, Optional, Type, Generator
+from typing_extensions import Self
 
 import docker
 import paramiko

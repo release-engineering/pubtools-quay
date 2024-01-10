@@ -6,6 +6,9 @@ from collections.abc import Iterable
 from .quay_client import QuayClient
 from .quay_api_client import QuayApiClient
 from .security_manifest_pusher import SecurityManifestPusher
+from .types import Manifest, ManifestList
+
+from typing import cast, List, Dict
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -106,22 +109,27 @@ class ImageUntagger:
         tag_digest_mapping: dict[str, list[str]] = {}
         digest_tag_mapping: dict[str, list[str]] = {}
         image_schema = "{0}/{1}:{2}"
-        repo_tags = self._quay_client.get_repository_tags(repository)  # type: ignore
+        repo_tags = cast(
+            Dict[str, List[str]],
+            cast(QuayClient, self._quay_client).get_repository_tags(repository),
+        )
 
-        for tag in repo_tags["tags"]:  # type: ignore
+        for tag in repo_tags["tags"]:
             image = image_schema.format(self.host, repository, tag)
             try:
-                manifest = self._quay_client.get_manifest(image)  # type: ignore
+                manifest = cast(
+                    ManifestList | Manifest, cast(QuayClient, self._quay_client).get_manifest(image)
+                )
             except requests.exceptions.HTTPError as e:
                 # Just removed tags could still be in tags list while manifests are removed
                 if e.response.status_code == 404:
                     continue
                 else:
                     raise
-            digest = self._quay_client.get_manifest_digest(image)  # type: ignore
+            digest = cast(QuayClient, self._quay_client).get_manifest_digest(image)
 
             # Option 1: No manifest list, only manifest
-            if manifest.get("mediaType", None) in (  # type: ignore
+            if manifest.get("mediaType", None) in (
                 QuayClient.MANIFEST_V2S2_TYPE,
                 QuayClient.MANIFEST_OCI_V2S2_TYPE,
                 QuayClient.MANIFEST_V2S1_TYPE,
@@ -135,9 +143,9 @@ class ImageUntagger:
                 tag_digest_mapping[tag] = [digest]
                 digest_tag_mapping.setdefault(digest, []).append(tag)
 
-                for arch_manifest in manifest["manifests"]:  # type: ignore
-                    tag_digest_mapping[tag].append(arch_manifest["digest"])  # type: ignore
-                    digest_tag_mapping.setdefault(arch_manifest["digest"], []).append(tag)  # type: ignore # noqa: E501
+                for arch_manifest in cast(ManifestList, manifest)["manifests"]:
+                    tag_digest_mapping[tag].append(arch_manifest["digest"])
+                    digest_tag_mapping.setdefault(arch_manifest["digest"], []).append(tag)
 
         return (tag_digest_mapping, digest_tag_mapping)
 
@@ -260,11 +268,13 @@ class ImageUntagger:
                 ]
                 lost_imgs += lost_repo_images
 
-                repo_tags = self._quay_client.get_repository_tags(repo)["tags"]  # type: ignore
+                repo_tags: List[str] = cast(
+                    Dict[str, List[str]], self._quay_client.get_repository_tags(repo)
+                )["tags"]
                 # We need to run this twice to get all secondary cosign images.
                 # First, we find sbom, att, sig images of normal images.
                 # Second, we find sig images of sbom and att images.
-                repo_lost_cosign_imgs = self.get_repo_cosign_images(lost_repo_images, repo_tags)  # type: ignore # noqa: E501
+                repo_lost_cosign_imgs = self.get_repo_cosign_images(lost_repo_images, repo_tags)
                 cosign_imgs_by_digest = sorted(
                     [
                         f"{i.split(':')[0]}@{self._quay_client.get_manifest_digest(i)}"
@@ -272,7 +282,7 @@ class ImageUntagger:
                     ]
                 )
                 repo_lost_cosign_imgs |= self.get_repo_cosign_images(
-                    cosign_imgs_by_digest, repo_tags, ["signature"]  # type: ignore
+                    cosign_imgs_by_digest, repo_tags, ["signature"]
                 )
                 lost_cosign_imgs |= repo_lost_cosign_imgs
 

@@ -2,7 +2,7 @@
 import logging
 import os
 import json
-from typing import Any, Callable, Sequence, Mapping
+from typing import Any, Callable, Sequence, Mapping, cast, Optional
 
 import monotonic
 import proton

@@ -340,6 +340,117 @@ def test_task_iib_add_bundles(
 @mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+def test_task_iib_add_bundles_missing_manifest_list(
+    mock_verify_target_settings,
+    mock_iib_add_bundles,
+    mock_run_tag_images,
+    fake_quay_client_get_operator_quay_client,
+    mock_timestamp,
+    signer_wrapper_entry_point,
+    signer_wrapper_run_entry_point,
+    signer_wrapper_remove_signatures,
+    msg_signer_wrapper_save_signatures_file,
+    target_settings,
+    fake_cert_key_paths,
+    v2s1_manifest,
+    src_manifest_list,
+):
+    fake_setup(
+        fake_quay_client_get_operator_quay_client,
+        mock_iib_add_bundles,
+        signer_wrapper_entry_point,
+        signer_wrapper_run_entry_point,
+    )
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            json=None,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        mock_hub = mock.MagicMock()
+        iib_operations.task_iib_add_bundles(
+            ["bundle1", "bundle2"],
+            ["arch1", "arch2"],
+            "some-registry.com/redhat-namespace/new-index-image:8",
+            ["bundle3", "bundle4"],
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
+
+    mock_verify_target_settings.assert_called_once_with(target_settings)
+    mock_iib_add_bundles.assert_called_once_with(
+        bundles=["bundle1", "bundle2"],
+        archs=["arch1", "arch2"],
+        index_image="some-registry.com/redhat-namespace/new-index-image:8",
+        deprecation_list=["bundle3", "bundle4"],
+        build_tags=["8-1"],
+        target_settings=target_settings,
+    )
+    signer_wrapper_entry_point.assert_has_calls(
+        [
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+        ]
+    )
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "some-registry.com/iib-namespace/iib:8-1",
+        [
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
+        True,
+        target_settings,
+    )
+    assert signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([]),
+        mock.call([]),
+    ]
+
+
+@mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.iib_operations.verify_target_settings")
 def test_task_iib_add_bundles_operator_ns(
     mock_verify_target_settings,
     mock_iib_add_bundles,
@@ -528,12 +639,6 @@ def test_task_iib_remove_operators(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    # mock_get_index_image_signatures)
-
-    # mock_remove_signatures_from_pyxis = mock.MagicMock()
-    # mock_signature_remover.return_value.remove_signatures_from_pyxis = (
-    #     mock_remove_signatures_from_pyxis
-    # )
     mock_hub = mock.MagicMock()
 
     with requests_mock.Mocker() as m:
@@ -560,6 +665,81 @@ def test_task_iib_remove_operators(
         archs=["arch1", "arch2"],
         index_image="some-registry.com/redhat-namespace/new-index-image:5",
         build_tags=["5-1"],
+        target_settings=target_settings,
+    )
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "some-registry.com/iib-namespace/iib:8-1",
+        [
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
+        True,
+        target_settings,
+    )
+    signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
+
+
+@mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_remove_operators")
+@mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+def test_task_iib_remove_operators_missing_manifest_list(
+    mock_verify_target_settings,
+    mock_iib_remove_operators,
+    mock_run_tag_images,
+    mock_timestamp,
+    signer_wrapper_entry_point,
+    signer_wrapper_run_entry_point,
+    msg_signer_wrapper_save_signatures_file,
+    signer_wrapper_remove_signatures,
+    fake_quay_client_get_operator_quay_client,
+    target_settings,
+    fake_cert_key_paths,
+    v2s1_manifest,
+    src_manifest_list,
+    fixture_run_in_parallel,
+):
+    fake_setup(
+        fake_quay_client_get_operator_quay_client,
+        mock_iib_remove_operators,
+        signer_wrapper_entry_point,
+        signer_wrapper_run_entry_point,
+    )
+    mock_hub = mock.MagicMock()
+
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            json=None,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        iib_operations.task_iib_remove_operators(
+            ["operator1", "operator2"],
+            ["arch1", "arch2"],
+            "some-registry.com/iib-namespace/new-index-image:8",
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
+
+    mock_verify_target_settings.assert_called_once_with(target_settings)
+    mock_iib_remove_operators.assert_called_once_with(
+        operators=["operator1", "operator2"],
+        archs=["arch1", "arch2"],
+        index_image="some-registry.com/iib-namespace/new-index-image:8",
+        build_tags=["8-1"],
         target_settings=target_settings,
     )
     assert mock_run_tag_images.call_count == 2
@@ -693,6 +873,161 @@ def test_task_iib_build_from_scratch(
             "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
             src_manifest_list,
             v2s1_manifest,
+        )
+        iib_operations.task_iib_build_from_scratch(
+            ["bundle1", "bundle2"],
+            ["arch1", "arch2"],
+            "8",
+            ["some-key"],
+            mock_hub,
+            "1",
+            target_settings,
+            "some-target",
+        )
+
+    mock_verify_target_settings.assert_called_once_with(target_settings)
+    mock_iib_add_bundles.assert_called_once_with(
+        bundles=["bundle1", "bundle2"],
+        archs=["arch1", "arch2"],
+        build_tags=["8-1"],
+        target_settings=target_settings,
+    )
+    signer_wrapper_entry_point.assert_has_calls(
+        [
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry1.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference="some-registry2.com/some-namespace/operators/index-image:8-timestamp",
+                digest="sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                task_id="1",
+                repo="operators/index-image",
+            ),
+        ]
+    )
+    signer_wrapper_run_entry_point.assert_has_calls(
+        [
+            mock.call(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                "pubtools-pyxis-upload-signature",
+                [
+                    "--pyxis-server",
+                    "pyxis-url.com",
+                    "--pyxis-ssl-crtfile",
+                    "/path/to/file.crt",
+                    "--pyxis-ssl-keyfile",
+                    "/path/to/file.key",
+                    "--request-threads",
+                    "7",
+                    "--signatures",
+                    "@signature_file",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                "pubtools-pyxis-upload-signature",
+                [
+                    "--pyxis-server",
+                    "pyxis-url.com",
+                    "--pyxis-ssl-crtfile",
+                    "/path/to/file.crt",
+                    "--pyxis-ssl-keyfile",
+                    "/path/to/file.key",
+                    "--request-threads",
+                    "7",
+                    "--signatures",
+                    "@signature_file",
+                ],
+                {},
+            ),
+        ]
+    )
+    msg_signer_wrapper_save_signatures_file.assert_any_call(
+        [
+            {
+                "manifest_digest": "sha256:bd6eba96070efe"
+                "86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                "reference": "some-registry.com/iib-namespace/new-index-image:8",
+                "repository": "iib-namespace/new-index-image",
+                "sig_key_id": "sig-key",
+                "signature_data": "claim1",
+            }
+        ]
+    )
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "some-registry.com/iib-namespace/iib:8-1",
+        [
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
+        True,
+        target_settings,
+    )
+
+
+@mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
+@mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+def test_task_iib_build_from_scratch_missing_manifest_list(
+    mock_verify_target_settings,
+    mock_iib_add_bundles,
+    mock_run_tag_images,
+    mock_timestamp,
+    signer_wrapper_entry_point,
+    signer_wrapper_run_entry_point,
+    msg_signer_wrapper_save_signatures_file,
+    signer_wrapper_remove_signatures,
+    fake_quay_client_get_operator_quay_client,
+    target_settings,
+    fake_cert_key_paths,
+    src_manifest_list,
+    v2s1_manifest,
+    fixture_run_in_parallel,
+):
+    fake_setup(
+        fake_quay_client_get_operator_quay_client,
+        mock_iib_add_bundles,
+        signer_wrapper_entry_point,
+        signer_wrapper_run_entry_point,
+    )
+    mock_hub = mock.MagicMock()
+    with requests_mock.Mocker() as m:
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            json=None,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
         iib_operations.task_iib_build_from_scratch(
             ["bundle1", "bundle2"],

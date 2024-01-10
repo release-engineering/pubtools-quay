@@ -3,6 +3,7 @@ import pytest
 import json
 
 from pubtools._quay import clear_repo
+from tests.utils.misc import GetManifestSideEffect
 
 
 @mock.patch("pubtools._quay.clear_repo.clear_repositories")
@@ -192,18 +193,11 @@ def test_run(
             "reference": "registry.io/namespace/image:1",
             "sig_key_id": "key",
             "repository": "namespace/image",
-        }
+        },
     ]
-
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
-
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
-
+    mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
+        v2s1_manifest, src_manifest_list
+    )
     clear_repo.clear_repositories_main(args)
 
     mock_quay_client.assert_called_once_with("some-user", "some-password")

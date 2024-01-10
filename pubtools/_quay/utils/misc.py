@@ -10,7 +10,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Iterable, Any, Callable, Dict, Generator
+from typing import Iterable, Any, Callable, Dict, Generator, cast
 
 
 from concurrent import futures
@@ -59,7 +59,7 @@ def run_in_parallel(func: Callable[..., Any], data: list[Any], threads: int = 10
         }
         for future in futures.as_completed(future_results):
             if future.exception() is not None:
-                raise future.exception()  # type: ignore # pragma: no cover
+                raise cast(BaseException, future.exception())
             results[future_results[future]] = future.result()
     return dict(sorted(results.items(), key=lambda kv: kv[0]))
 

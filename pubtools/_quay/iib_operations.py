@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Any
+from typing import Any, List, Tuple, cast
 
 from .container_image_pusher import ContainerImagePusher
 from .exceptions import InvalidTargetSettings
@@ -19,6 +19,7 @@ from .item_processor import (
 )
 
 from .quay_client import QuayClient
+from .types import ManifestList
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -71,8 +72,6 @@ def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
     )
 
 
-# TOFIX: dest_tags wrong docstring
-# TOFIX: index_stamp wrong docstring
 def _index_image_to_sign_entries(
     src_index_image: str,
     dest_namespace: str,
@@ -82,13 +81,13 @@ def _index_image_to_sign_entries(
 ) -> list[SignEntry]:
     """Generate entries to sign.
 
-    Method generates sign entries for index image with <dest_tag> and <dest_tag>-<index_stamp> tags
+    Method generates sign entries for index image with <dest_tags> tags
     and given signing_keys. Only manifests with architecture amd64 are included in the output.
 
     Args:
         src_index_image (str): Source index image.
         dest_namespace (str): Destination internal namespace.
-        dest_tag (str): Destination tag.
+        dest_tags (List[str]): Destination tags.
         index_stamp (str): Index stamp.
         signing_keys (list): List of signing keys.
     """
@@ -96,13 +95,16 @@ def _index_image_to_sign_entries(
     dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
     dest_registries = dest_registries if isinstance(dest_registries, list) else [dest_registries]
     dest_operator_quay_client = _get_operator_quay_client(target_settings)
-    manifest_list = dest_operator_quay_client.get_manifest(
-        src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+    manifest_list = cast(
+        ManifestList,
+        dest_operator_quay_client.get_manifest(
+            src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+        ),
     )
     index_image_digests = [
-        m["digest"]  # type: ignore
-        for m in manifest_list["manifests"]  # type: ignore
-        if m["platform"]["architecture"] in ["amd64", "x86_64"]  # type: ignore
+        m["digest"]
+        for m in manifest_list["manifests"]
+        if m["platform"]["architecture"] in ["amd64", "x86_64"]
     ]
     to_sign_entries = []
     for registry in dest_registries:
@@ -122,9 +124,10 @@ def _index_image_to_sign_entries(
     return to_sign_entries
 
 
-# TOFIX: remove_signatures expect bool but list is given
 def _remove_index_image_signatures(
-    outdated_manifests: list[str], current_signatures: list[Any], target_settings: dict[str, Any]
+    outdated_manifests: List[Tuple[str, str, str]],
+    current_signatures: List[Tuple[str, str, str]],
+    target_settings: dict[str, Any],
 ) -> None:
     """Remove signatures of outdated manifests with confitured signers for the target.
 
@@ -140,8 +143,6 @@ def _remove_index_image_signatures(
             signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
 
 
-# TOFIX: dest_tags wrong docstring
-# TOFIX: index_stamp wrong docstring
 def _sign_index_image(
     built_index_image: str,
     namespace: str,
@@ -149,16 +150,15 @@ def _sign_index_image(
     signing_keys: list[str],
     task_id: str,
     target_settings: dict[str, Any],
-) -> list[str]:
+) -> list[tuple[str, str, str]]:
     """Sign index image with configured signers for the target.
 
     Args:
         built_index_image (str): Index image built results.
         namespace (str): Namespace of internal organization in container registry.
-        dest_tag (str): Destination tag.
+        dest_tags (List[str]): Destination tag.
         signing_keys (list): List of signing keys.
         task_id (str): Task ID.
-        index_stamp (str): timestamp used as suffix in destination timestamp tag
         target_settings (dict): Target settings.
     Returns:
         list: List of current signatures.
@@ -166,13 +166,14 @@ def _sign_index_image(
     to_sign_entries = _index_image_to_sign_entries(
         built_index_image, namespace, dest_tags, signing_keys, target_settings
     )
-    current_signatures: list[Any] = []
+    current_signatures: list[tuple[str, str, str]] = [
+        (e.reference, e.digest, e.signing_key) for e in to_sign_entries
+    ]
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
             signer = signercls(config_file=signer["config_file"], settings=target_settings)
             signer.sign_containers(to_sign_entries, task_id=task_id)
-    # this always returns an empty list
     return current_signatures
 
 
@@ -246,10 +247,11 @@ def task_iib_add_bundles(
     )
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
-    # TOFIX: man_arch_dig can be None
     for ref, tag, man_arch_dig in existing_manifests:
-        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
+        if not man_arch_dig:
+            continue
+        if man_arch_dig.arch in ("amd64", "x86_64"):
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
@@ -300,11 +302,7 @@ def task_iib_add_bundles(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
 
-    for signer in target_settings["signing"]:
-        if signer["enabled"]:
-            signercls = SIGNER_BY_LABEL[signer["label"]]
-            signer = signercls(config_file=signer["config_file"], settings=target_settings)
-            signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
 
 def task_iib_remove_operators(
@@ -375,9 +373,10 @@ def task_iib_remove_operators(
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
-        # TOFIX: man_arch_dig can be None
-        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
+        if not man_arch_dig:
+            continue
+        if man_arch_dig.arch in ("amd64", "x86_64"):
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
@@ -430,9 +429,7 @@ def task_iib_remove_operators(
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
-
-    # TOFIX: outdated_manifests can contain None
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)  # type: ignore # noqa: E501
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
 
 def task_iib_build_from_scratch(
@@ -501,9 +498,10 @@ def task_iib_build_from_scratch(
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
-        # TOFIX: existing_manifests can be None
-        if man_arch_dig.arch in ("amd64", "x86_64"):  # type: ignore
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))  # type: ignore
+        if not man_arch_dig:
+            continue
+        if man_arch_dig.arch in ("amd64", "x86_64"):
+            outdated_manifests.append((man_arch_dig.digest, tag, ref))
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
@@ -556,8 +554,7 @@ def task_iib_build_from_scratch(
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
-    # TOFIX: outdated_manifests can be None
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)  # type: ignore # noqa: E501
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
 
 def iib_add_entrypoint(

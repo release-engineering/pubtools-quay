@@ -4,6 +4,8 @@ import json
 
 from pubtools._quay import remove_repo
 
+from tests.utils.misc import GetManifestSideEffect
+
 
 @mock.patch("pubtools._quay.remove_repo.remove_repositories")
 def test_arg_constructor_required_args(mock_remove_repositories):
@@ -196,7 +198,9 @@ def test_run(
             content = v2s1_manifest
         return json.dumps(content) if raw else content
 
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
+    mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
+        v2s1_manifest, src_manifest_list
+    )
     signer_wrapper_run_entry_point.return_value = [
         {
             "_id": 1,
