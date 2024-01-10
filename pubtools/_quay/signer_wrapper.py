@@ -240,7 +240,7 @@ class MsgSignerWrapper(SignerWrapper):
 
         Args:
             signed_results: (Dict[str, Any]):
-                Dictionary of {"operation":..., "operation_results":..., "signing_key":...}"}
+                Dictionary of {"signer_result":..., "operation_results":..., "signing_key":...}"}
                 holding signed manifest claims data
         """
         LOG.info("Sending new signatures to Pyxis")

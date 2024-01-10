@@ -118,7 +118,7 @@ class ImageUntagger:
             image = image_schema.format(self.host, repository, tag)
             try:
                 manifest = cast(
-                    Manifest | Manifest, cast(QuayClient, self._quay_client).get_manifest(image)
+                    ManifestList | Manifest, cast(QuayClient, self._quay_client).get_manifest(image)
                 )
             except requests.exceptions.HTTPError as e:
                 # Just removed tags could still be in tags list while manifests are removed

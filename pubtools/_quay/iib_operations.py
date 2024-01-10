@@ -81,7 +81,7 @@ def _index_image_to_sign_entries(
 ) -> list[SignEntry]:
     """Generate entries to sign.
 
-    Method generates sign entries for index image with <dest_tag> and <dest_tag> tags
+    Method generates sign entries for index image with <dest_tags> tags
     and given signing_keys. Only manifests with architecture amd64 are included in the output.
 
     Args:
@@ -554,9 +554,7 @@ def task_iib_build_from_scratch(
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
-    _remove_index_image_signatures(
-        outdated_manifests, current_signatures, target_settings
-    )  # noqa: E501
+    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
 
 def iib_add_entrypoint(

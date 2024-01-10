@@ -664,7 +664,6 @@ class PushDocker:
                     repo=iib_intermediate_repo,
                     tag=iib_result.build_tags[0],
                 )
-                # TOFIX: current_signatures can contain different types of data
                 current_signatures.extend(
                     _sign_index_image(
                         permanent_index_image,

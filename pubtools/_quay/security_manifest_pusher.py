@@ -567,18 +567,3 @@ class SecurityManifestPusher:
             for future in futures.as_completed(future_results):
                 if future.exception():
                     raise cast(BaseException, future.exception())  # pragma: no cover
-        #     m,
-        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
-        #     src_manifest_list,
-        #     v2s1_manifest,
-        # )
-        # m.get(
-        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.7",
-        #     status_code=404,
-        #     text="Not found",
-        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        # )
-        # m.put(
-        #     "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
-        #     headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
-        # )
