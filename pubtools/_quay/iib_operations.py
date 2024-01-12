@@ -171,9 +171,14 @@ def _sign_index_image(
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
     ]
     if pre_push:
-        pre_push_test = lambda x: x
+
+        def pre_push_test(x: bool) -> bool:
+            return x
+
     else:
-        pre_push_test  = lambda x: not x
+
+        def pre_push_test(x: bool) -> bool:
+            return not x
 
     for signer in target_settings["signing"]:
         if signer["enabled"] and pre_push_test(SIGNER_BY_LABEL[signer["label"]].pre_push):

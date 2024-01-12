@@ -681,7 +681,7 @@ class PushDocker:
                         iib_details["signing_keys"],
                         self.task_id,
                         self.target_settings,
-                        pre_push=True
+                        pre_push=True,
                     )
                 )
 
@@ -710,7 +710,7 @@ class PushDocker:
                         iib_details["signing_keys"],
                         self.task_id,
                         self.target_settings,
-                        pre_push=False
+                        pre_push=False,
                     )
                 )
 
