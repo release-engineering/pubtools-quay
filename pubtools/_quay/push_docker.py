@@ -570,7 +570,7 @@ class PushDocker:
         - Add operator bundles to index images by using IIB
         - Sign index images using RADAS and upload signatures to Pyxis
         - Push the index images to Quay
-        - Remove outdated container signatures
+        - Remove outdated container signaturespush
         - (in case of failure) Rollback destination repos to the pre-push state
         """
         # TODO: Do we need to manage push item state?
@@ -681,6 +681,7 @@ class PushDocker:
                         iib_details["signing_keys"],
                         self.task_id,
                         self.target_settings,
+                        pre_push=True
                     )
                 )
 
@@ -688,6 +689,30 @@ class PushDocker:
             if not failed_items:
                 # Push index images to Quay
                 operator_pusher.push_index_images(successful_iib_results, index_stamp)
+
+            for version, iib_details in sorted(successful_iib_results.items()):
+                iib_result = iib_details["iib_result"]
+                iib_namespace = self.target_settings.get(
+                    "quay_operator_namespace", self.target_settings["quay_namespace"]
+                )
+                _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
+                permanent_index_image = image_schema.format(
+                    host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
+                    namespace=iib_namespace,
+                    repo=iib_intermediate_repo,
+                    tag=iib_result.build_tags[0],
+                )
+                current_signatures.extend(
+                    _sign_index_image(
+                        permanent_index_image,
+                        iib_namespace,
+                        iib_details["destination_tags"],
+                        iib_details["signing_keys"],
+                        self.task_id,
+                        self.target_settings,
+                        pre_push=False
+                    )
+                )
 
             # Rollback only when all index image builds fails or there are failed items
             # Empty iib_results is not an error and shouldn't fail the push. The only exception is
