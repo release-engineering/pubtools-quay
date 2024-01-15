@@ -136,6 +136,7 @@ def _remove_index_image_signatures(
         current_signatures (list): List of current signatures.
         target_settings (dict): Target settings.
     """
+    set_aws_kms_environment_variables(target_settings, "cosign_signer")
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
