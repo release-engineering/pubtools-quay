@@ -570,7 +570,7 @@ class PushDocker:
         - Add operator bundles to index images by using IIB
         - Sign index images using RADAS and upload signatures to Pyxis
         - Push the index images to Quay
-        - Remove outdated container signaturespush
+        - Remove outdated container signatures
         - (in case of failure) Rollback destination repos to the pre-push state
         """
         # TODO: Do we need to manage push item state?

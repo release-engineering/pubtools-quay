@@ -161,6 +161,7 @@ def _sign_index_image(
         signing_keys (list): List of signing keys.
         task_id (str): Task ID.
         target_settings (dict): Target settings.
+        pre_push (bool): Whether to sign before push.
     Returns:
         list: List of current signatures.
     """
@@ -170,18 +171,8 @@ def _sign_index_image(
     current_signatures: list[tuple[str, str, str]] = [
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
     ]
-    if pre_push:
-
-        def pre_push_test(x: bool) -> bool:
-            return x
-
-    else:
-
-        def pre_push_test(x: bool) -> bool:
-            return not x
-
     for signer in target_settings["signing"]:
-        if signer["enabled"] and pre_push_test(SIGNER_BY_LABEL[signer["label"]].pre_push):
+        if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push == pre_push:
             signercls = SIGNER_BY_LABEL[signer["label"]]
             signer = signercls(config_file=signer["config_file"], settings=target_settings)
             signer.sign_containers(to_sign_entries, task_id=task_id)
