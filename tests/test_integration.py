@@ -125,7 +125,7 @@ def test_push_docker_multiarch_merge_ml_operator(
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
+                "reference": "some-registry2.com/namespace/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -143,7 +143,7 @@ def test_push_docker_multiarch_merge_ml_operator(
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
+                "reference": "some-registry2.com/namespace/operators/index-image:v4.6",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -290,38 +290,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference="some-registry2.com/namespace/operators/index-image:v4.5",
-                    digest="sha256:5555555555",
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference="some-registry1.com/namespace/operators/index-image:v4.5",
-                    digest="sha256:5555555555",
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference="some-registry2.com/namespace/operators/index-image:v4.5",
-                    digest="sha256:5555555555",
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference="some-registry1.com/namespace/operators/index-image:v4.6",
-                    digest="sha256:5555555555",
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference="some-registry2.com/namespace/operators/index-image:v4.6",
                     digest="sha256:5555555555",
                     task_id="1",
                     repo="operators/index-image",

@@ -150,6 +150,7 @@ def _sign_index_image(
     signing_keys: list[str],
     task_id: str,
     target_settings: dict[str, Any],
+    pre_push: bool = False,
 ) -> list[tuple[str, str, str]]:
     """Sign index image with configured signers for the target.
 
@@ -160,6 +161,7 @@ def _sign_index_image(
         signing_keys (list): List of signing keys.
         task_id (str): Task ID.
         target_settings (dict): Target settings.
+        pre_push (bool): Whether to sign before push.
     Returns:
         list: List of current signatures.
     """
@@ -170,7 +172,7 @@ def _sign_index_image(
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
     ]
     for signer in target_settings["signing"]:
-        if signer["enabled"]:
+        if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push == pre_push:
             signercls = SIGNER_BY_LABEL[signer["label"]]
             signer = signercls(config_file=signer["config_file"], settings=target_settings)
             signer.sign_containers(to_sign_entries, task_id=task_id)
@@ -253,6 +255,8 @@ def task_iib_add_bundles(
         if man_arch_dig.arch in ("amd64", "x86_64"):
             outdated_manifests.append((man_arch_dig.digest, tag, ref))
 
+    # pre push sign
+
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         iib_namespace,
@@ -260,6 +264,7 @@ def task_iib_add_bundles(
         signing_keys,
         task_id,
         target_settings,
+        pre_push=True,
     )
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -300,6 +305,17 @@ def task_iib_add_bundles(
     )
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
+    )
+
+    # after push sign
+    current_signatures = _sign_index_image(
+        build_details.internal_index_image_copy_resolved,
+        iib_namespace,
+        [tag, f"{tag}-{index_stamp}"],
+        signing_keys,
+        task_id,
+        target_settings,
+        pre_push=False,
     )
 
     _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
@@ -385,6 +401,7 @@ def task_iib_remove_operators(
         signing_keys,
         task_id,
         target_settings,
+        pre_push=True,
     )
     iib_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
@@ -428,6 +445,15 @@ def task_iib_remove_operators(
     )
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
+    )
+    current_signatures = _sign_index_image(
+        build_details.internal_index_image_copy_resolved,
+        iib_namespace,
+        [tag, f"{tag}-{index_stamp}"],
+        signing_keys,
+        task_id,
+        target_settings,
+        pre_push=False,
     )
     _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
@@ -509,6 +535,7 @@ def task_iib_build_from_scratch(
         signing_keys,
         task_id,
         target_settings,
+        pre_push=True,
     )
 
     iib_namespace = target_settings.get(
@@ -553,6 +580,15 @@ def task_iib_build_from_scratch(
     )
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
+    )
+    current_signatures = _sign_index_image(
+        build_details.internal_index_image_copy_resolved,
+        iib_namespace,
+        [tag, f"{tag}-{index_stamp}"],
+        signing_keys,
+        task_id,
+        target_settings,
+        pre_push=False,
     )
     _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
 
