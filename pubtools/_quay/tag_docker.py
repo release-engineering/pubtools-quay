@@ -611,9 +611,8 @@ class TagDocker:
         dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
 
         current_signatures: list[Any] = []
+        outdated_manifests = []
         if push_item.claims_signing_key:
-            outdated_manifests = []
-            current_signatures = []
             to_sign_entries = []
             for manifest in new_manifest_list["manifests"]:
                 for registry in dest_registries:
@@ -646,7 +645,7 @@ class TagDocker:
                 outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
-                if signer["enabled"]:
+                if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push:
                     signercls = SIGNER_BY_LABEL[signer["label"]]
                     signer = signercls(
                         config_file=signer["config_file"], settings=self.target_settings
@@ -672,6 +671,16 @@ class TagDocker:
             self.quay_client.upload_manifest(raw_src_manifest, dest_image, raw=True)
         else:
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
+
+        if push_item.claims_signing_key:
+            for signer in self.target_settings["signing"]:
+                if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
+                    signercls = SIGNER_BY_LABEL[signer["label"]]
+                    signer = signercls(
+                        config_file=signer["config_file"], settings=self.target_settings
+                    )
+                    signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
 
     @classmethod
     def run_untag_images(
