@@ -662,7 +662,6 @@ class PushDocker:
 
             image_schema = "{host}/{namespace}/{repo}:{tag}"
 
-            set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
             for version, iib_details in sorted(successful_iib_results.items()):
                 iib_result = iib_details["iib_result"]
                 iib_namespace = self.target_settings.get(
