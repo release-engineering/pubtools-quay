@@ -611,6 +611,7 @@ class PushDocker:
             )
         # Sign containers with signers that doesn't need have pushed containers
         # in destination registry
+        set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
         for signer in self.target_settings["signing"]:
             if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push:
                 signercls = SIGNER_BY_LABEL[signer["label"]]

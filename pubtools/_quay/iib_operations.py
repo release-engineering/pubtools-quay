@@ -10,6 +10,7 @@ from .utils.misc import (
     get_internal_container_repo_name,
     timestamp,
     parse_index_image,
+    set_aws_kms_environment_variables,
 )
 from .signer_wrapper import SIGNER_BY_LABEL
 from .item_processor import (
@@ -171,6 +172,7 @@ def _sign_index_image(
     current_signatures: list[tuple[str, str, str]] = [
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
     ]
+    set_aws_kms_environment_variables(target_settings, "cosign_signer")
     for signer in target_settings["signing"]:
         if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push == pre_push:
             signercls = SIGNER_BY_LABEL[signer["label"]]

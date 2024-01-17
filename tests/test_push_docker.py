@@ -1150,8 +1150,11 @@ def test_push_docker_full_success(
         [container_multiarch_push_item], target_settings
     )
     mock_push_container_images.assert_called_once_with()
-    mock_set_aws_kms_environment_variables.assert_called_once_with(
-        target_settings, "security_manifest_signer"
+    mock_set_aws_kms_environment_variables.assert_has_calls(
+        [
+            mock.call(target_settings, "cosign_signer"),
+            mock.call(target_settings, "security_manifest_signer"),
+        ]
     )
     mock_security_manifest_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
