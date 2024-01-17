@@ -259,7 +259,7 @@ class MsgSignerWrapper(SignerWrapper):
 
         signatures: List[Dict[str, Any]] = []
         for reference, op_res in zip(
-            signed_results["operation_results"]["references"], signed_results["operation_results"]
+            signed_results["operation"]["references"], signed_results["operation_results"]
         ):
             signatures.append(
                 {

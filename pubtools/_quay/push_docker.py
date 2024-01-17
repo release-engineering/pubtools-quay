@@ -467,8 +467,6 @@ class PushDocker:
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
             if image_data.v2s2_digest:
                 outdated_signatures.append((image_data.v2s2_digest, image_data.tag, ext_repo))
-            if image_data.v2list_digest:
-                outdated_signatures.append((image_data.v2list_digest, image_data.tag, ext_repo))
             if image_data.v2s1_digest:
                 outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
         return outdated_signatures
@@ -726,7 +724,17 @@ class PushDocker:
                 failed = True
 
         # Remove old signatures
-        outdated_manifests = self.get_outdated_manifests(backup_tags)
+        # run generate backup mapping again tu push new digest of pushed containers
+        backup_tags2, _ = self.generate_backup_mapping(docker_push_items)
+        # if new backup tag has differnet digest, it means it was overwritten during the push
+        # and old signature should be removed. If manifest is the same it means, same item
+        # was just repushed
+        outdated_tags = {}
+        for bt1, bt2 in zip(backup_tags.items(), backup_tags2.items()):
+            if bt1[1] != bt2[1]:
+                outdated_tags[bt1[0]] = bt1[1]
+
+        outdated_manifests = self.get_outdated_manifests(outdated_tags)
         outdated_manifests.extend(existing_index_images)
 
         for signer in self.target_settings["signing"]:
