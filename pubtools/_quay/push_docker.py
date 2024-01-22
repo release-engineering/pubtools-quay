@@ -596,10 +596,7 @@ class PushDocker:
         current_signatures = []
         to_sign_map = run_in_parallel(
             item_processor.generate_to_sign,
-            [
-                FData(args=(item,), kwargs={"sign_only_arches": ["amd64", "x86_64"]})
-                for item in docker_push_items
-            ],
+            [FData(args=(item,), kwargs={}) for item in docker_push_items],
         )
 
         for _to_sign_entries in to_sign_map.values():

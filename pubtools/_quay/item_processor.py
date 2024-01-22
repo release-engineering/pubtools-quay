@@ -397,7 +397,7 @@ class ItemProcesor:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item: Any, sign_only_arches: List[str] = []) -> List[SignEntry]:
+    def generate_to_sign(self, item: Any) -> List[SignEntry]:
         """Generate list of images to sign.
 
         Args:
@@ -416,8 +416,6 @@ class ItemProcesor:
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
             for mad in man_arch_digs:
-                if sign_only_arches and mad.arch not in sign_only_arches:
-                    continue
                 to_sign.append(
                     SignEntry(
                         repo=repo,
