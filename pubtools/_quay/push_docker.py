@@ -724,13 +724,24 @@ class PushDocker:
                 failed = True
 
         # Remove old signatures
-        # run generate backup mapping again tu push new digest of pushed containers
+        # run generate backup mapping again to fetch new digests of pushed containers
         backup_tags2, _ = self.generate_backup_mapping(docker_push_items)
         # if new backup tag has differnet digest, it means it was overwritten during the push
-        # and old signature should be removed. If manifest is the same it means, same item
+        # and old signature should be removed. If the digest is the same it means, same item
         # was just repushed
         outdated_tags = {}
-        for bt1, bt2 in zip(backup_tags.items(), backup_tags2.items()):
+        backup_tags2_shared = {}
+
+        # Backup tags can contain new tags which were orignally rollback_tags
+        # limit the comparision for outdated manifests to original backup_tags only
+        for bt2 in backup_tags2.items():
+            if bt2[0] in backup_tags:
+                backup_tags2_shared[bt2[0]] = bt2[1]
+
+        for bt1, bt2 in zip(
+            sorted(backup_tags.items(), key=lambda x: x[0].tag),
+            sorted(backup_tags2_shared.items(), key=lambda x: x[0].tag),
+        ):
             if bt1[1] != bt2[1]:
                 outdated_tags[bt1[0]] = bt1[1]
 
