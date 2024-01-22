@@ -158,6 +158,30 @@ def test_push_docker_multiarch_merge_ml_operator(
         # remove signatures (list signatures)
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        # remove existing signatures
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry2.com/namespace/operators/index-image:v4.5",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:6666666666",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
+                "sig_key_id": "some-key",
+                "repository": "operators/index-image",
+            }
+        ],
+        # remove signatures (list signatures)
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
     ]
     mock_run_entrypoint_operator_pusher.side_effect = [
         # pubtools-pyxis-get-operator-indices
@@ -1402,6 +1426,31 @@ def test_task_iib_add_bundles(
                     task_id="1-3",
                     repo="operators/index-image",
                 ),
+                # cosign
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:8"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:8"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                    digest=["sha256:5555555555"],
+                ),
             ]
         )
 
@@ -1511,6 +1560,31 @@ def test_task_iib_remove_operators(
                 digest=["sha256:5555555555"],
                 task_id="1-3",
                 repo="operators/index-image",
+            ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:5555555555"],
             ),
         ]
     )

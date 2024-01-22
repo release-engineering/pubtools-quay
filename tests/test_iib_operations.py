@@ -314,6 +314,31 @@ def test_task_iib_add_bundles(
                 task_id="1-3",
                 repo="operators/index-image",
             ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
         ]
     )
     assert mock_run_tag_images.call_count == 2
@@ -424,6 +449,31 @@ def test_task_iib_add_bundles_missing_manifest_list(
                 digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
                 task_id="1-3",
                 repo="operators/index-image",
+            ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
             ),
         ]
     )
@@ -539,6 +589,31 @@ def test_task_iib_add_bundles_operator_ns(
                 digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
                 task_id="1-3",
                 repo="operators/index-image",
+            ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
             ),
         ]
     )
@@ -928,6 +1003,31 @@ def test_task_iib_build_from_scratch(
                 task_id="1-3",
                 repo="operators/index-image",
             ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
         ]
     )
     signer_wrapper_run_entry_point.assert_has_calls(
@@ -1082,6 +1182,31 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                 digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
                 task_id="1-3",
                 repo="operators/index-image",
+            ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
             ),
         ]
     )
