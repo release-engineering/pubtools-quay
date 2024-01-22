@@ -186,7 +186,6 @@ class ContentExtractor:
                     results.extend(ret)
                 else:
                     results.append(ret)
-                break
         return results
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True) -> list[str]:
