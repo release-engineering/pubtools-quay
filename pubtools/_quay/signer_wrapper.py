@@ -123,8 +123,8 @@ class SignerWrapper:
         signed = self.entry_point(
             config_file=self.config_file,
             signing_key=sign_entry.signing_key,
-            reference=sign_entry.reference,
-            digest=sign_entry.digest,
+            reference=[sign_entry.reference],
+            digest=[sign_entry.digest],
             **opt_args,
         )
         if signed["signer_result"]["status"] != "ok":
