@@ -12,7 +12,11 @@ from .exceptions import (
     BadPushItem,
     InvalidTargetSettings,
 )
-from .utils.misc import get_internal_container_repo_name, get_pyxis_ssl_paths
+from .utils.misc import (
+    get_internal_container_repo_name,
+    get_pyxis_ssl_paths,
+    set_aws_kms_environment_variables,
+)
 from .quay_client import QuayClient
 from .container_image_pusher import ContainerImagePusher
 from .manifest_list_merger import ManifestListMerger
@@ -673,6 +677,7 @@ class TagDocker:
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
         if push_item.claims_signing_key:
+            set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
             for signer in self.target_settings["signing"]:
                 if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
                     signercls = SIGNER_BY_LABEL[signer["label"]]
