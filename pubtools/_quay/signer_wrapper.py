@@ -151,7 +151,16 @@ class SignerWrapper:
         """
         run_in_parallel(
             self.sign_container,
-            [FData(args=x) for x in zip(to_sign_entries, [task_id] * len(to_sign_entries))],
+            [
+                FData(args=x)
+                for x in zip(
+                    to_sign_entries,
+                    [
+                        str(task_id) + "-" + str(z % parallelism)
+                        for z in range(len(to_sign_entries))
+                    ],
+                )
+            ],
             parallelism,
         )
 

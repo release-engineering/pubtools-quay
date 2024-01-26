@@ -249,7 +249,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -257,7 +257,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="target/repo",
                 ),
                 # cosign
@@ -266,7 +266,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -274,7 +274,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="target/repo",
                 ),
                 # msg signer
@@ -283,7 +283,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry1.com/operators/index-image:v4.5"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="operators/index-image",
                 ),
                 mock.call(
@@ -291,7 +291,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry2.com/operators/index-image:v4.5"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="operators/index-image",
                 ),
                 # cosign
@@ -300,7 +300,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry1.com/operators/index-image:v4.6"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="operators/index-image",
                 ),
                 mock.call(
@@ -308,7 +308,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry2.com/operators/index-image:v4.6"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="operators/index-image",
                 ),
             ]
@@ -405,7 +405,7 @@ def test_push_docker_multiarch_simple_workflow(
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -413,7 +413,7 @@ def test_push_docker_multiarch_simple_workflow(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="target/repo",
                 ),
             ]
@@ -538,7 +538,7 @@ def test_push_docker_source(
                     signing_key="fake-sign-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["fake-digest-0"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -546,7 +546,7 @@ def test_push_docker_source(
                     signing_key="fake-sign-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["fake-digest-0"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="target/repo",
                 ),
             ]
@@ -699,7 +699,7 @@ def test_tag_docker_multiarch_merge_ml(
                     signing_key="some-key",
                     reference=["some-registry1.com/namespace/test_repo:v1.6"],
                     digest=["sha256:1111111111"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="namespace/test_repo",
                 ),
                 mock.call(
@@ -707,7 +707,7 @@ def test_tag_docker_multiarch_merge_ml(
                     signing_key="some-key",
                     reference=["some-registry2.com/namespace/test_repo:v1.6"],
                     digest=["sha256:1111111111"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="namespace/test_repo",
                 ),
                 mock.call(
@@ -715,7 +715,7 @@ def test_tag_docker_multiarch_merge_ml(
                     signing_key="some-key",
                     reference=["some-registry1.com/namespace/test_repo:v1.6"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-2",
                     repo="namespace/test_repo",
                 ),
                 mock.call(
@@ -723,7 +723,7 @@ def test_tag_docker_multiarch_merge_ml(
                     signing_key="some-key",
                     reference=["some-registry2.com/namespace/test_repo:v1.6"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-3",
                     repo="namespace/test_repo",
                 ),
             ]
@@ -904,7 +904,7 @@ def test_tag_docker_source_copy_untag(
                     digest=[
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d"
                     ],
-                    task_id="1",
+                    task_id="1-0",
                     repo="namespace/test_repo",
                 ),
                 mock.call(
@@ -914,7 +914,7 @@ def test_tag_docker_source_copy_untag(
                     digest=[
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d"
                     ],
-                    task_id="1",
+                    task_id="1-1",
                     repo="namespace/test_repo",
                 ),
             ]
@@ -1169,7 +1169,7 @@ def test_task_iib_add_bundles(
                     signing_key="some-key",
                     reference=["some-registry1.com/operators/index-image:8"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="operators/index-image",
                 ),
                 mock.call(
@@ -1177,7 +1177,7 @@ def test_task_iib_add_bundles(
                     signing_key="some-key",
                     reference=["some-registry1.com/operators/index-image:8-timestamp"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="operators/index-image",
                 ),
                 mock.call(
@@ -1185,7 +1185,7 @@ def test_task_iib_add_bundles(
                     signing_key="some-key",
                     reference=["some-registry2.com/operators/index-image:8"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-2",
                     repo="operators/index-image",
                 ),
                 mock.call(
@@ -1193,7 +1193,7 @@ def test_task_iib_add_bundles(
                     signing_key="some-key",
                     reference=["some-registry2.com/operators/index-image:8-timestamp"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-3",
                     repo="operators/index-image",
                 ),
             ]
@@ -1279,7 +1279,7 @@ def test_task_iib_remove_operators(
                 signing_key="some-key",
                 reference=["some-registry1.com/operators/index-image:8"],
                 digest=["sha256:5555555555"],
-                task_id="1",
+                task_id="1-0",
                 repo="operators/index-image",
             ),
             mock.call(
@@ -1287,7 +1287,7 @@ def test_task_iib_remove_operators(
                 signing_key="some-key",
                 reference=["some-registry1.com/operators/index-image:8-timestamp"],
                 digest=["sha256:5555555555"],
-                task_id="1",
+                task_id="1-1",
                 repo="operators/index-image",
             ),
             mock.call(
@@ -1295,7 +1295,7 @@ def test_task_iib_remove_operators(
                 signing_key="some-key",
                 reference=["some-registry2.com/operators/index-image:8"],
                 digest=["sha256:5555555555"],
-                task_id="1",
+                task_id="1-2",
                 repo="operators/index-image",
             ),
             mock.call(
@@ -1303,7 +1303,7 @@ def test_task_iib_remove_operators(
                 signing_key="some-key",
                 reference=["some-registry2.com/operators/index-image:8-timestamp"],
                 digest=["sha256:5555555555"],
-                task_id="1",
+                task_id="1-3",
                 repo="operators/index-image",
             ),
         ]
@@ -1658,7 +1658,7 @@ def test_push_docker_operator_verify_bundle_fail(
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-0",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -1666,7 +1666,7 @@ def test_push_docker_operator_verify_bundle_fail(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1",
+                    task_id="1-1",
                     repo="target/repo",
                 ),
             ]
