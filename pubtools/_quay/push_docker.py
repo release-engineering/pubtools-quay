@@ -530,21 +530,23 @@ class PushDocker:
         current_signatures = []
         to_sign_new_entries = self.fetch_missing_push_items_digests(docker_push_items)
         to_sign_entries = []
-        for reference, repo_tags in to_sign_new_entries.items():
+        for _, repo_tags in to_sign_new_entries.items():
             for repo, tag_digests in repo_tags.items():
                 for tag, digests in tag_digests.items():
                     for type_, digest_key in digests.items():
                         digest, key = digest_key
-                        to_sign_entries.append(
-                            SignEntry(
-                                reference=reference,
-                                repo=repo,
-                                digest=digest,
-                                signing_key=key,
-                                arch="amd64",
+                        for registry in self.dest_registries:
+                            reference = f"{registry}/{repo}:{tag}"
+                            to_sign_entries.append(
+                                SignEntry(
+                                    reference=reference,
+                                    repo=repo,
+                                    digest=digest,
+                                    signing_key=key,
+                                    arch="amd64",
+                                )
                             )
-                        )
-                        current_signatures.append((reference, digest, key))
+                            current_signatures.append((reference, digest, key))
 
         for signer in self.target_settings["signing"]:
             if signer["enabled"]:
