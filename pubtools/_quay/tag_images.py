@@ -258,9 +258,11 @@ def tag_images(
 
     if remote_exec:
         accept_host = not ssh_reject_unknown_host if ssh_reject_unknown_host else True
-        executor_class: functools.partial[RemoteExecutor] | functools.partial[
-            ContainerExecutor
-        ] | functools.partial[LocalExecutor] = functools.partial(
+        executor_class: (
+            functools.partial[RemoteExecutor]
+            | functools.partial[ContainerExecutor]
+            | functools.partial[LocalExecutor]
+        ) = functools.partial(
             RemoteExecutor,
             ssh_remote_host,
             ssh_username,
