@@ -65,10 +65,11 @@ def verify_target_settings(target_settings: dict[str, Any]) -> None:
 
 
 def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
-    """Create and access QuayClient for dest image."""
+    """Create and access QuayClient for src index image."""
+    index_image_credential = target_settings["iib_overwrite_from_index_token"].split(":")
     return QuayClient(
-        target_settings.get("index_image_quay_user", target_settings["dest_quay_user"]),
-        target_settings.get("index_image_quay_password", target_settings["dest_quay_password"]),
+        index_image_credential[0],
+        index_image_credential[1],
         target_settings.get("quay_host", "quay.io").rstrip("/"),
     )
 
@@ -234,34 +235,32 @@ def task_iib_add_bundles(
         sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
     index_stamp = timestamp()
-    iib_namespace = target_settings.get(
+    quay_operator_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
     item_processor = item_processor_for_internal_data(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
         target_settings.get("retry_sleep_time", 5),
-        iib_namespace,
+        quay_operator_namespace,
     )
     # Add bundles task doesn't work with pushitem so we create VirtualPushItem to enable
     # existing code for fetching needed data.
     vitem = VirtualPushItem(
-        metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
+        metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
-    for ref, tag, man_arch_dig in existing_manifests:
+    for ref, _tag, man_arch_dig in existing_manifests:
         if not man_arch_dig:
             continue
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        outdated_manifests.append((man_arch_dig.digest, _tag, ref))
 
     # pre push sign
-
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
+        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -270,18 +269,15 @@ def task_iib_add_bundles(
     )
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=iib_namespace,
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag=tag,
     )
     dest_image_stamp = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings.get("quay_operator_namespace", target_settings["quay_namespace"]),
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag="%s-%s" % (tag, index_stamp),
-    )
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
     )
 
     # Push image to Quay
@@ -312,7 +308,7 @@ def task_iib_add_bundles(
     # after push sign
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
+        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -370,7 +366,7 @@ def task_iib_remove_operators(
         sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
     index_stamp = timestamp()
-    iib_namespace = target_settings.get(
+    quay_operator_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
     quay_client = QuayClient(
@@ -380,44 +376,41 @@ def task_iib_remove_operators(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
         target_settings.get("retry_sleep_time", 5),
-        iib_namespace,
+        quay_operator_namespace,
     )
     # Remove operators task doesn't work with pushitem so we create VirtualPushItem to enable
     # existing code for fetching needed data.
     vitem = VirtualPushItem(
-        metadata={"tags": {target_settings["quay_operator_repository"]: tag}},
+        metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
         repos={target_settings["quay_operator_repository"]: [tag]},
     )
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
-    for ref, tag, man_arch_dig in existing_manifests:
+    for ref, _tag, man_arch_dig in existing_manifests:
         if not man_arch_dig:
             continue
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        outdated_manifests.append((man_arch_dig.digest, _tag, ref))
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
+        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
         target_settings,
         pre_push=True,
     )
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
+
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=iib_namespace,
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag=tag,
     )
 
     dest_image_stamp = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings.get("quay_operator_namespace", target_settings["quay_namespace"]),
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
         tag="%s-%s" % (tag, index_stamp),
     )
@@ -450,7 +443,7 @@ def task_iib_remove_operators(
     )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
+        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -503,9 +496,8 @@ def task_iib_build_from_scratch(
     )
     if not build_details:
         sys.exit(1)
-    _, tag = build_details.index_image.split(":", 1)
     index_stamp = timestamp()
-    iib_namespace = target_settings.get(
+    quay_operator_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
     )
     quay_client = QuayClient(
@@ -515,48 +507,41 @@ def task_iib_build_from_scratch(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
         target_settings.get("retry_sleep_time", 5),
-        iib_namespace,
+        quay_operator_namespace,
     )
     # Build from scratch task doesn't work with pushitem so we create VirtualPushItem to enable
     # existing code for fetching needed data.
     vitem = VirtualPushItem(
-        metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
-        repos={target_settings["quay_operator_repository"]: [tag]},
+        metadata={"tags": {target_settings["quay_operator_repository"]: [index_image_tag]}},
+        repos={target_settings["quay_operator_repository"]: [index_image_tag]},
     )
     existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
     outdated_manifests = []
     for ref, tag, man_arch_dig in existing_manifests:
         if not man_arch_dig:
             continue
-        if man_arch_dig.arch in ("amd64", "x86_64"):
-            outdated_manifests.append((man_arch_dig.digest, tag, ref))
+        outdated_manifests.append((man_arch_dig.digest, tag, ref))
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
-        [tag, f"{tag}-{index_stamp}"],
+        quay_operator_namespace,
+        [index_image_tag, f"{index_image_tag}-{index_stamp}"],
         signing_keys,
         task_id,
         target_settings,
         pre_push=True,
     )
 
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=iib_namespace,
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag=tag,
+        tag=index_image_tag,
     )
     dest_image_stamp = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=target_settings.get("quay_operator_namespace", target_settings["quay_namespace"]),
+        namespace=quay_operator_namespace,
         repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag="%s-%s" % (tag, index_stamp),
-    )
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
+        tag="%s-%s" % (index_image_tag, index_stamp),
     )
 
     # Push image to Quay
@@ -585,8 +570,8 @@ def task_iib_build_from_scratch(
     )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        iib_namespace,
-        [tag, f"{tag}-{index_stamp}"],
+        quay_operator_namespace,
+        [index_image_tag, f"{index_image_tag}-{index_stamp}"],
         signing_keys,
         task_id,
         target_settings,

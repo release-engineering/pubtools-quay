@@ -243,9 +243,9 @@ class RemoteExecutor(Executor):
         self.key_filename = key_filename
         self.password = password
         if accept_unknown_host:
-            self.missing_host_policy: paramiko.client.WarningPolicy | paramiko.client.RejectPolicy = (  # noqa: E501
-                paramiko.client.WarningPolicy()
-            )
+            self.missing_host_policy: (
+                paramiko.client.WarningPolicy | paramiko.client.RejectPolicy
+            ) = paramiko.client.WarningPolicy()  # noqa: E501
         else:
             self.missing_host_policy = paramiko.client.RejectPolicy()
         self.port = port if port else 22
