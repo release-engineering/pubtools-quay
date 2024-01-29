@@ -45,7 +45,7 @@ class SignEntry:
     arch: str
 
 
-@dataclass
+@dataclass(frozen=True)
 class ManifestArchDigest:
     """Data structure to hold information about container manifest."""
 
@@ -186,7 +186,7 @@ class ContentExtractor:
                     results.extend(ret)
                 else:
                     results.append(ret)
-        return results
+        return list(set(results))
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True) -> list[str]:
         """Fetch list of tags for given repo reference.
