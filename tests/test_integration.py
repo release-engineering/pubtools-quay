@@ -1348,7 +1348,7 @@ def test_task_iib_build_from_scratch(
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
-            "https://quay.io/v2/some-namespace/operators----index-image/manifests/12",
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
             src_manifest_list,
             v2s1_manifest,
         )
