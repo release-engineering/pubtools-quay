@@ -736,10 +736,20 @@ class PushDocker:
                 backup_tags2_shared[bt2[0]] = bt2[1]
 
         for bt1, bt2 in zip(
-            sorted(backup_tags.items(), key=lambda x: x[0].tag),
-            sorted(backup_tags2_shared.items(), key=lambda x: x[0].tag),
+            sorted(
+                backup_tags.items(),
+                key=lambda x: (x[0].tag, x[0].v2list_digest, x[0].v2s2_digest, x[0].v2s1_digest),
+            ),
+            sorted(
+                backup_tags2_shared.items(),
+                key=lambda x: (x[0].tag, x[0].v2list_digest, x[0].v2s2_digest, x[0].v2s1_digest),
+            ),
         ):
-            if bt1[1] != bt2[1]:
+            if (
+                bt1[0].v2list_digest != bt2[0].v2list_digest
+                or bt1[0].v2s2_digest != bt2[0].v2s2_digest
+                or bt1[0].v2s1_digest != bt2[0].v2s1_digest
+            ):
                 outdated_tags[bt1[0]] = bt1[1]
 
         outdated_manifests = self.get_outdated_manifests(outdated_tags)

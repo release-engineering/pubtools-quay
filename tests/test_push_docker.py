@@ -1103,7 +1103,11 @@ def test_push_docker_full_success(
         (
             {
                 push_docker.PushDocker.ImageData(
-                    "some-ns/orig-ns----some-repo", "sometag", "some-digest", None, "some-digest"
+                    "some-ns/orig-ns----some-repo",
+                    "sometag",
+                    "some-new-digest",
+                    None,
+                    "some-digest",
                 ): {"digest": "some-digest-new"},
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo",
@@ -1284,11 +1288,11 @@ def test_push_docker_full_prerelease(
                     "sometag",
                     "some-digest-list",
                     "some-digest-sch2",
-                    "some-digest-sch1",
+                    "some-digest-sch1-new",
                 ): {"digest": "some-digest"},
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag2", None, "some-digest", None
-                ): {"manifests": [{"digest": "some-digest-new"}]},
+                ): {"manifests": [{"digest": "some-digest"}]},
             },
             ["item1", "item2"],
         ),

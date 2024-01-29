@@ -88,8 +88,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry1.com/target/repo:latest-test-tag",
+                "manifest_digest": ["sha256:5555555555"],
+                "reference": ["some-registry1.com/target/repo:latest-test-tag"],
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -97,8 +97,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry1.com/target/repo:latest-test-tag",
+                "manifest_digest": ["sha256:5555555555"],
+                "reference": ["some-registry1.com/target/repo:latest-test-tag"],
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -106,8 +106,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry2.com/target/repo:latest-test-tag",
+                "manifest_digest": ["sha256:5555555555"],
+                "reference": ["some-registry2.com/target/repo:latest-test-tag"],
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -142,8 +142,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry2.com/namespace/operators/index-image:v4.6",
+                "manifest_digest": ["sha256:6666666666"],
+                "reference": ["some-registry2.com/namespace/operators/index-image:v4.6"],
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
