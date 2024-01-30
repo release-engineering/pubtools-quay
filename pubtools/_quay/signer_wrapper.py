@@ -100,6 +100,20 @@ class SignerWrapper:
         LOG.debug("Storing signatures %s", signatures)
         self._run_store_signed(signatures)
 
+    def sign_container_opt_args(
+        self, sign_entry: SignEntry, task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return optional arguments for signing a container.
+
+        Args:
+            sign_entry (SignEntry): SignEntry to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+
+        Returns:
+            dict: Optional arguments for signing a container.
+        """
+        return {}
+
     def sign_container(
         self,
         sign_entry: SignEntry,
@@ -117,9 +131,7 @@ class SignerWrapper:
             sign_entry.digest,
             sign_entry.signing_key,
         )
-        opt_args = {
-            k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None
-        }
+        opt_args = self.sign_container_opt_args(sign_entry, task_id)
         signed = self.entry_point(
             config_file=self.config_file,
             signing_key=sign_entry.signing_key,
@@ -181,6 +193,20 @@ class MsgSignerWrapper(SignerWrapper):
 
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
     SCHEMA = MsgSignerSettingsSchema
+
+    def sign_container_opt_args(
+        self, sign_entry: SignEntry, task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return optional arguments for signing a container.
+
+        Args:
+            sign_entry (SignEntry): SignEntry to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+
+        Returns:
+            dict: Optional arguments for signing a container.
+        """
+        return {k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None}
 
     @contextmanager
     def _save_signatures_file(self, signatures: List[Dict[str, Any]]) -> Generator[Any, None, None]:
