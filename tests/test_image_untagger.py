@@ -43,9 +43,11 @@ def register_manifest_url(mocker, repo, manifest, data, mlist=False):
     mocker.get(
         "https://stage.quay.io/v2/name/%s/manifests/%s" % (repo, manifest),
         text=json.dumps(data, sort_keys=True),
-        headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"}
-        if mlist
-        else {"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        headers=(
+            {"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"}
+            if mlist
+            else {"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"}
+        ),
     )
 
 
