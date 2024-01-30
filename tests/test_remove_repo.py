@@ -26,6 +26,8 @@ def test_arg_constructor_required_args(mock_remove_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
     remove_repo.remove_repositories_main(required_args)
     repositories, settings = mock_remove_repositories.call_args[0]
@@ -37,6 +39,7 @@ def test_arg_constructor_required_args(mock_remove_repositories):
     assert settings["pyxis_server"] == "pyxis-url.com"
     assert settings["pyxis_ssl_crtfile"] == "/path/to/file.crt"
     assert settings["pyxis_ssl_keyfile"] == "/path/to/file.key"
+    assert settings["quay_host"] == "quay-host.com"
 
 
 @mock.patch.dict("os.environ", {"QUAY_API_TOKEN": "api_token", "QUAY_PASSWORD": "some-password"})
@@ -56,6 +59,8 @@ def test_arg_constructor_all_args(mock_remove_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
     remove_repo.remove_repositories_main(all_args)
     repositories, called_kw_args = mock_remove_repositories.call_args[0]
@@ -67,6 +72,7 @@ def test_arg_constructor_all_args(mock_remove_repositories):
     assert called_kw_args["pyxis_ssl_crtfile"] == "/path/to/file.crt"
     assert called_kw_args["pyxis_ssl_keyfile"] == "/path/to/file.key"
     assert called_kw_args["quay_api_token"] == "api_token"
+    assert called_kw_args["quay_host"] == "quay-host.com"
 
 
 @mock.patch("pubtools._quay.remove_repo.remove_repositories")
@@ -87,6 +93,8 @@ def test_args_missing_repository(mock_remove_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
 
     with pytest.raises(SystemExit) as system_error:
@@ -115,6 +123,8 @@ def test_args_missing_api_token(mock_remove_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
 
     with pytest.raises(ValueError, match="--quay-api-token must be specified"):
@@ -141,6 +151,8 @@ def test_args_missing_quay_password(mock_remove_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
 
     with pytest.raises(ValueError, match="--quay-password must be specified"):
@@ -182,6 +194,8 @@ def test_run(
         "/path/to/file.key",
         "--signers",
         "msg_signer",
+        "--quay-host",
+        "quay-host.com",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo
@@ -256,6 +270,8 @@ def test_run_multiple_repos(
         "/path/to/file.key",
         "--signers",
         "msg_signer",
+        "--quay-host",
+        "quay-host.com",
     ]
     mock_delete_repo = mock.MagicMock()
     mock_quay_api_client.return_value.delete_repository = mock_delete_repo

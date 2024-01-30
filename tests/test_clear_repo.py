@@ -25,6 +25,8 @@ def test_arg_constructor_required_args(mock_clear_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
     clear_repo.clear_repositories_main(required_args)
     repositories, settings = mock_clear_repositories.call_args[0]
@@ -36,6 +38,7 @@ def test_arg_constructor_required_args(mock_clear_repositories):
     assert settings["pyxis_server"] == "pyxis-url.com"
     assert settings["pyxis_ssl_crtfile"] == "/path/to/file.crt"
     assert settings["pyxis_ssl_keyfile"] == "/path/to/file.key"
+    assert settings["quay_host"] == "quay-host.com"
 
 
 @mock.patch.dict("os.environ", {"QUAY_API_TOKEN": "api_token", "QUAY_PASSWORD": "some-password"})
@@ -55,6 +58,8 @@ def test_arg_constructor_all_args(mock_clear_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
     clear_repo.clear_repositories_main(all_args)
     repositories, settings = mock_clear_repositories.call_args[0]
@@ -67,6 +72,7 @@ def test_arg_constructor_all_args(mock_clear_repositories):
     assert settings["pyxis_ssl_crtfile"] == "/path/to/file.crt"
     assert settings["pyxis_ssl_keyfile"] == "/path/to/file.key"
     assert settings["quay_api_token"] == "api_token"
+    assert settings["quay_host"] == "quay-host.com"
 
 
 @mock.patch("pubtools._quay.clear_repo.clear_repositories")
@@ -115,6 +121,8 @@ def test_args_missing_api_token(mock_clear_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
 
     with pytest.raises(ValueError, match="--quay-api-token must be specified"):
@@ -141,6 +149,8 @@ def test_args_missing_quay_password(mock_clear_repositories):
         "/path/to/file.crt",
         "--pyxis-ssl-keyfile",
         "/path/to/file.key",
+        "--quay-host",
+        "quay-host.com",
     ]
 
     with pytest.raises(ValueError, match="--quay-password must be specified"):
@@ -181,6 +191,8 @@ def test_run(
         "/path/to/file.key",
         "--signers",
         "msg_signer",
+        "--quay-host",
+        "quay-host.com",
     ]
     mock_get_repo_tags = mock.MagicMock()
     mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
@@ -249,6 +261,8 @@ def test_run_multiple_repos(
         "/path/to/file.key",
         "--signers",
         "msg_signer",
+        "--quay-host",
+        "quay-host.com",
     ]
     mock_get_repo_tags = mock.MagicMock()
     mock_get_repo_tags.side_effect = [
