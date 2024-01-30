@@ -726,6 +726,12 @@ def test_generate_backup_mapping(
             status_code=404,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        m.get(
+            "https://quay.io/v2/some-namespace/target----repo1/manifests/tag2",
+            text="Not Found",
+            status_code=404,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
         mock_manifest_list_requests(
             m,
             "https://quay.io/v2/some-namespace/target----repo2/manifests/tag3",
@@ -739,7 +745,15 @@ def test_generate_backup_mapping(
                 container_push_item_ok,
             ]
         )
+
     assert backup_tags == {
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo1",
+            tag="tag1",
+            v2s2_digest=None,
+            v2s1_digest=None,
+            v2list_digest="manifest_list_digest",
+        ): src_manifest_list,
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo1",
             tag="tag1",
@@ -748,15 +762,29 @@ def test_generate_backup_mapping(
             v2list_digest=None,
         ): v2s1_manifest,
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/test-repo",
-            tag="latest-test-tag",
+            repo="some-namespace/target----repo2",
+            tag="tag3",
+            v2s2_digest=None,
+            v2s1_digest=None,
+            v2list_digest="manifest_list_digest",
+        ): src_manifest_list,
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/target----repo2",
+            tag="tag3",
             v2s2_digest="sha256:5555555555",
             v2s1_digest=None,
             v2list_digest=None,
         ): v2s1_manifest,
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo2",
-            tag="tag3",
+            repo="some-namespace/test-repo",
+            tag="latest-test-tag",
+            v2s2_digest=None,
+            v2s1_digest=None,
+            v2list_digest="manifest_list_digest",
+        ): src_manifest_list,
+        push_docker.PushDocker.ImageData(
+            repo="some-namespace/test-repo",
+            tag="latest-test-tag",
             v2s2_digest="sha256:5555555555",
             v2s1_digest=None,
             v2list_digest=None,

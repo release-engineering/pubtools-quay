@@ -2009,15 +2009,36 @@ def cosign_signer_settings():
     }
 
 
-def run_in_serial(func, data, threads):
-    ret = []
-    for dentry in data:
-        ret.append(func(*dentry.args, **dentry.kwargs))
+def run_in_serial(func, data, threads=1):
+    ret = {}
+    for n, dentry in enumerate(data):
+        ret[n] = func(*dentry.args, **dentry.kwargs)
     return ret
 
 
 @pytest.fixture
 def fixture_run_in_parallel():
     with mock.patch("pubtools._quay.utils.misc.run_in_parallel") as patched:
+        patched.side_effect = run_in_serial
+        yield patched
+
+
+@pytest.fixture
+def fixture_run_in_parallel_signer():
+    with mock.patch("pubtools._quay.signer_wrapper.run_in_parallel") as patched:
+        patched.side_effect = run_in_serial
+        yield patched
+
+
+@pytest.fixture
+def fixture_run_in_parallel_push_docker():
+    with mock.patch("pubtools._quay.push_docker.run_in_parallel") as patched:
+        patched.side_effect = run_in_serial
+        yield patched
+
+
+@pytest.fixture
+def fixture_run_in_parallel_item_processor():
+    with mock.patch("pubtools._quay.item_processor.run_in_parallel") as patched:
         patched.side_effect = run_in_serial
         yield patched

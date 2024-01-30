@@ -1,6 +1,5 @@
 import mock
 import pytest
-import json
 
 from pubtools._quay import remove_repo
 
@@ -191,15 +190,15 @@ def test_run(
     mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
     mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
 
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
+    # def get_manifest_side_effect(image, raw=False, media_type=False):
+    #     if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
+    #         content = src_manifest_list
+    #     else:
+    #         content = v2s1_manifest
+    #     return json.dumps(content) if raw else content
 
     mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
-        v2s1_manifest, src_manifest_list
+        v2s1_manifest, src_manifest_list, call_limit=5
     )
     signer_wrapper_run_entry_point.return_value = [
         {
@@ -265,14 +264,16 @@ def test_run_multiple_repos(
     mock_get_repo_tags.return_value = {"tags": ["1", "2"]}
     mock_quay_client.return_value.get_repository_tags = mock_get_repo_tags
 
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
+    # def get_manifest_side_effect(image, raw=False, media_type=False):
+    #     if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
+    #         content = src_manifest_list
+    #     else:
+    #         content = v2s1_manifest
+    #     return json.dumps(content) if raw else content
 
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
+    mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
+        v2s1_manifest, src_manifest_list, call_limit=30
+    )
     signer_wrapper_run_entry_point.return_value = [
         {
             "_id": 1,

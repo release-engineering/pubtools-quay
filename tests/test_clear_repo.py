@@ -1,6 +1,5 @@
 import mock
 import pytest
-import json
 
 from pubtools._quay import clear_repo
 from tests.utils.misc import GetManifestSideEffect
@@ -196,7 +195,7 @@ def test_run(
         },
     ]
     mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
-        v2s1_manifest, src_manifest_list
+        v2s1_manifest, src_manifest_list, call_limit=16
     )
     clear_repo.clear_repositories_main(args)
 
@@ -276,14 +275,9 @@ def test_run_multiple_repos(
         },
     ]
 
-    def get_manifest_side_effect(image, raw=False, media_type=False):
-        if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
-            content = src_manifest_list
-        else:
-            content = v2s1_manifest
-        return json.dumps(content) if raw else content
-
-    mock_quay_client.return_value.get_manifest.side_effect = get_manifest_side_effect
+    mock_quay_client.return_value.get_manifest.side_effect = GetManifestSideEffect(
+        v2s1_manifest, src_manifest_list, call_limit=20
+    )
 
     clear_repo.clear_repositories_main(args)
 

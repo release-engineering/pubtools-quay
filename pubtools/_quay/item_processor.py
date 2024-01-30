@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import hashlib
-from typing import List, Dict, Any, Optional, TypeAlias, Tuple, cast
+from typing import List, Dict, Any, Optional, TypeAlias, Tuple, cast, Callable
 import requests
 import time
 import json
@@ -81,19 +81,27 @@ class ContentExtractor:
         self.poll_rate: int = poll_rate
 
     def _extract_ml_manifest(
-        self, image_ref: str, _manifest: str, mtype: str
+        self, image_ref: str, _manifest_list: str, mtype: str, ret_headers: Dict[str, Any]
     ) -> List[ManifestArchDigest]:
         """Extract manifests from manifest list.
 
         Args:
             image_ref (str): Image reference in format <registry>/<repo>:<tag>
-            _manifest (str): Manifest list in JSON format.
+            _manifest_list (str): Manifest list in JSON format.
             mtype (str): NOT USED
         Returns:
             list: List of ManifestArchDigest objects.
         """
         mads = []
-        manifest = json.loads(_manifest)
+        manifest = json.loads(_manifest_list)
+        mads.append(
+            ManifestArchDigest(
+                manifest=_manifest_list,
+                digest=ret_headers.get("docker-content-digest", ""),
+                arch="",
+                type_=QuayClient.MANIFEST_LIST_TYPE,
+            )
+        )
         for arch_manifest in manifest["manifests"]:
             manifest = self.quay_client.get_manifest(
                 f"{image_ref.rsplit(':')[0]}@{arch_manifest['digest']}",
@@ -110,7 +118,9 @@ class ContentExtractor:
             )
         return mads
 
-    def _extract_manifest(self, unused: str, manifest: str, mtype: str) -> ManifestArchDigest:
+    def _extract_manifest(
+        self, unused: str, manifest: str, mtype: str, ret_headers: Dict[str, Any]
+    ) -> ManifestArchDigest:
         """Calculate information from given manifest.
 
         Args:
@@ -127,7 +137,12 @@ class ContentExtractor:
         digest = f"sha256:{hasher.hexdigest()}"
         return ManifestArchDigest(manifest=manifest, digest=digest, arch="amd64", type_=mtype)
 
-    _MEDIA_TYPES_PROCESS = {
+    _MEDIA_TYPES_PROCESS: dict[
+        str,
+        Callable[
+            [Any, str, str, str, Dict[str, Any]], ManifestArchDigest | List[ManifestArchDigest]
+        ],
+    ] = {
         QuayClient.MANIFEST_LIST_TYPE: _extract_ml_manifest,
         QuayClient.MANIFEST_V2S2_TYPE: _extract_manifest,
         QuayClient.MANIFEST_V2S1_TYPE: _extract_manifest,
@@ -161,9 +176,16 @@ class ContentExtractor:
         for mtype in mtypes:
             for i in range(self.timeout // self.poll_rate):
                 try:
-                    manifest = cast(
-                        str, self.quay_client.get_manifest(image_ref, media_type=mtype, raw=True)
+                    ret = cast(
+                        Tuple[str, Dict[str, Any]],
+                        self.quay_client.get_manifest(
+                            image_ref, media_type=mtype, raw=True, return_headers=True
+                        ),
                     )
+                    if ret:
+                        manifest, ret_headers = ret
+                    else:
+                        manifest = None
                 except requests.exceptions.HTTPError as e:
                     # When robot account is used, 401 may be returned instead of 404
                     if (
@@ -181,12 +203,15 @@ class ContentExtractor:
             if not manifest:
                 continue
             else:
-                ret = self._MEDIA_TYPES_PROCESS[mtype](self, image_ref, manifest, mtype)
-                if isinstance(ret, list):
-                    results.extend(ret)
+                mret: ManifestArchDigest | List[ManifestArchDigest] = self._MEDIA_TYPES_PROCESS[
+                    mtype
+                ](self, image_ref, manifest, mtype, ret_headers)
+                if isinstance(mret, list):
+                    results.extend(mret)
                 else:
-                    results.append(ret)
-        return list(set(results))
+                    results.append(mret)
+        seen = set()
+        return [x for x in results if x not in seen or seen.add(x)]  # type: ignore
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True) -> list[str]:
         """Fetch list of tags for given repo reference.
@@ -416,6 +441,8 @@ class ItemProcesor:
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
             for mad in man_arch_digs:
+                if mad.type_ == QuayClient.MANIFEST_LIST_TYPE:
+                    continue
                 to_sign.append(
                     SignEntry(
                         repo=repo,

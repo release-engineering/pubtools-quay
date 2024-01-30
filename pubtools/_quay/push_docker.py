@@ -403,16 +403,30 @@ class PushDocker:
                                     or [None],
                                 )
                             )[0]
-                            image_data = PushDocker.ImageData(
-                                full_repo,
-                                d_tag,
-                                v2list_mad.digest if v2list_mad else None,
-                                v2s2_mad.digest if v2s2_mad else None,
-                                v2s1_mad.digest if v2s1_mad else None,
-                            )
-                            mad = v2s2_mad or v2s1_mad or v2list_mad
-                            if mad:
-                                backup_tags[image_data] = json.loads(mad.manifest)
+                            for mad, digest_mask in zip(
+                                (v2s1_mad, v2s2_mad, v2list_mad), (1, 2, 3)
+                            ):
+                                if mad:
+                                    image_data = PushDocker.ImageData(
+                                        full_repo,
+                                        d_tag,
+                                        (
+                                            cast(ManifestArchDigest, v2list_mad).digest
+                                            if digest_mask == 3
+                                            else None
+                                        ),
+                                        (
+                                            cast(ManifestArchDigest, v2s2_mad).digest
+                                            if digest_mask == 2
+                                            else None
+                                        ),
+                                        (
+                                            cast(ManifestArchDigest, v2s1_mad).digest
+                                            if digest_mask == 1
+                                            else None
+                                        ),
+                                    )
+                                    backup_tags[image_data] = json.loads(mad.manifest)
                         else:
                             rollback_tags.append(
                                 PushDocker.ImageData(full_repo, d_tag, None, None, None)
@@ -738,11 +752,21 @@ class PushDocker:
         for bt1, bt2 in zip(
             sorted(
                 backup_tags.items(),
-                key=lambda x: (x[0].tag, x[0].v2list_digest, x[0].v2s2_digest, x[0].v2s1_digest),
+                key=lambda x: (
+                    x[0].tag,
+                    x[0].v2list_digest or "",
+                    x[0].v2s2_digest or "",
+                    x[0].v2s1_digest or "",
+                ),
             ),
             sorted(
                 backup_tags2_shared.items(),
-                key=lambda x: (x[0].tag, x[0].v2list_digest, x[0].v2s2_digest, x[0].v2s1_digest),
+                key=lambda x: (
+                    x[0].tag,
+                    x[0].v2list_digest or "",
+                    x[0].v2s2_digest or "",
+                    x[0].v2s1_digest or "",
+                ),
             ),
         ):
             if (
