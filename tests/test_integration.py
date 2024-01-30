@@ -1421,46 +1421,7 @@ def test_task_iib_add_bundles(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference=[
-                        "some-registry2.com/some-namespace/operators/index-image:8-timestamp"
-                    ],
-                    digest=["sha256:5555555555"],
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                # cosign
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference=["some-registry1.com/some-namespace/operators/index-image:8"],
-                    digest=["sha256:5555555555"],
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference=[
-                        "some-registry1.com/some-namespace/operators/index-image:8-timestamp"
-                    ],
-                    digest=["sha256:5555555555"],
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference=["some-registry2.com/some-namespace/operators/index-image:8"],
-                    digest=["sha256:5555555555"],
-                    task_id="1",
-                    repo="operators/index-image",
-                ),
-                mock.call(
-                    config_file="test-config.yml",
-                    signing_key="some-key",
-                    reference=[
-                        "some-registry2.com/some-namespace/operators/index-image:8-timestamp"
-                    ],
+                    reference=["some-registry2.com/operators/index-image:8-timestamp"],
                     digest=["sha256:5555555555"],
                     task_id="1-3",
                     repo="operators/index-image",
