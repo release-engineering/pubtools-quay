@@ -123,6 +123,36 @@ def test_cosign_get_existing_attestation_rekor_url(
 
 
 @mock.patch("subprocess.run")
+def test_cosign_get_existing_attestation_disable_rekor(
+    mock_run, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 0
+
+    res = pusher.cosign_get_existing_attestation(
+        "quay.io/org/repo@sha256:abcdef", "/temp/file.txt", "https://some-rekor.com", True
+    )
+    assert res
+    mock_run.assert_called_once_with(
+        [
+            "cosign",
+            "verify-attestation",
+            "--insecure-ignore-tlog=true",
+            "--key",
+            "path/to/key.pub",
+            "quay.io/org/repo@sha256:abcdef",
+            "--output-file",
+            "/temp/file.txt",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+
+@mock.patch("subprocess.run")
 def test_cosign_get_existing_attestation_err(
     mock_run, target_settings, container_multiarch_push_item
 ):
@@ -177,6 +207,36 @@ def test_cosign_attest_security_manifest_rekor_url(
             "cosign",
             "attest",
             "--rekor-url=https://some-rekor.com",
+            "--predicate",
+            "/temp/file.txt",
+            "--key",
+            "path/to/key.key",
+            "-y",
+            "quay.io/org/repo@sha256:abcdef",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+
+@mock.patch("subprocess.run")
+def test_cosign_attest_security_manifest_disable_rekor(
+    mock_run, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 0
+
+    pusher.cosign_attest_security_manifest(
+        "/temp/file.txt", "quay.io/org/repo@sha256:abcdef", "https://some-rekor.com", True
+    )
+    mock_run.assert_called_once_with(
+        [
+            "cosign",
+            "attest",
+            "--tlog-upload=false",
             "--predicate",
             "/temp/file.txt",
             "--key",
@@ -428,7 +488,10 @@ def test_merge_and_push_security_manifest(
     )
 
     mock_get_attestation.assert_called_once_with(
-        "quay.io/org/repo@abcdef", "/temp/temp_path/attestation_abcd.json", "https://some-rekor.com"
+        "quay.io/org/repo@abcdef",
+        "/temp/temp_path/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
     )
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
     mock_add_products.assert_called_once_with(
@@ -436,7 +499,7 @@ def test_merge_and_push_security_manifest(
     )
     mock_delete_attestation.assert_called_once_with("quay.io/org/repo@abcdef", "/temp/temp_path")
     mock_attest.assert_called_once_with(
-        "/path/to/final/manifest.json", "quay.io/org/repo@abcdef", "https://some-rekor.com"
+        "/path/to/final/manifest.json", "quay.io/org/repo@abcdef", "https://some-rekor.com", False
     )
 
 
@@ -457,7 +520,7 @@ def test_merge_and_push_security_manifest(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_existing_attestation"
 )
 @mock.patch("uuid.uuid4")
-def test_merge_and_push_security_manifest_no_existing_attestation(
+def test_merge_and_push_security_manifest_no_existing_attestation_also_disable_rekor(
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
@@ -467,6 +530,8 @@ def test_merge_and_push_security_manifest_no_existing_attestation(
     target_settings,
     container_multiarch_push_item,
 ):
+    target_settings["cosign_sbom_skip_verify_rekor"] = True
+    target_settings["cosign_sbom_skip_upload_rekor"] = True
     pusher = security_manifest_pusher.SecurityManifestPusher(
         [container_multiarch_push_item], target_settings
     )
@@ -486,13 +551,16 @@ def test_merge_and_push_security_manifest_no_existing_attestation(
     )
 
     mock_get_attestation.assert_called_once_with(
-        "quay.io/org/repo@abcdef", "/temp/temp_path/attestation_abcd.json", "https://some-rekor.com"
+        "quay.io/org/repo@abcdef",
+        "/temp/temp_path/attestation_abcd.json",
+        "https://some-rekor.com",
+        True,
     )
     mock_get_manifest.assert_not_called()
     mock_delete_attestation.assert_not_called()
     mock_add_products.assert_called_once_with("path/to/manifest", {"new-product"})
     mock_attest.assert_called_once_with(
-        "/path/to/final/manifest.json", "quay.io/org/repo@abcdef", "https://some-rekor.com"
+        "/path/to/final/manifest.json", "quay.io/org/repo@abcdef", "https://some-rekor.com", True
     )
 
 
@@ -543,7 +611,10 @@ def test_merge_and_push_security_manifest_already_pushed(
     )
 
     mock_get_attestation.assert_called_once_with(
-        "quay.io/org/repo@abcdef", "/temp/temp_path/attestation_abcd.json", "https://some-rekor.com"
+        "quay.io/org/repo@abcdef",
+        "/temp/temp_path/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
     )
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
     mock_delete_attestation.assert_not_called()
@@ -598,7 +669,10 @@ def test_merge_and_push_security_manifest_no_product_existing_attestation(
     )
 
     mock_get_attestation.assert_called_once_with(
-        "quay.io/org/repo@abcdef", "/temp/temp_path/attestation_abcd.json", "https://some-rekor.com"
+        "quay.io/org/repo@abcdef",
+        "/temp/temp_path/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
     )
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
     mock_add_products.assert_not_called()
@@ -653,13 +727,16 @@ def test_merge_and_push_security_manifest_no_product_no_existing_attestation(
     )
 
     mock_get_attestation.assert_called_once_with(
-        "quay.io/org/repo@abcdef", "/temp/temp_path/attestation_abcd.json", "https://some-rekor.com"
+        "quay.io/org/repo@abcdef",
+        "/temp/temp_path/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
     )
     mock_get_manifest.assert_not_called()
     mock_add_products.assert_not_called()
     mock_delete_attestation.assert_not_called()
     mock_attest.assert_called_once_with(
-        "path/to/manifest", "quay.io/org/repo@abcdef", "https://some-rekor.com"
+        "path/to/manifest", "quay.io/org/repo@abcdef", "https://some-rekor.com", False
     )
 
 

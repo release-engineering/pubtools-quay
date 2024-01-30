@@ -97,7 +97,11 @@ class SecurityManifestPusher:
         return True
 
     def cosign_get_existing_attestation(
-        self, image_ref: str, output_file: str, rekor_url: str | None = None
+        self,
+        image_ref: str,
+        output_file: str,
+        rekor_url: str | None = None,
+        skip_verify_rekor: bool = False,
     ) -> bool:
         """
         Use cosign to verify and get an attestation, if it exists.
@@ -109,6 +113,10 @@ class SecurityManifestPusher:
                 File where to save the attestation.
             rekor_url (str):
                 URL of the rekor instance to use. If unset, default will be used.
+            skip_verify_rekor (bool):
+                Whether to skip rekor log verification. This option is recommended for when an
+                attestation was created without uploading a transparency log to rekor. rekor_url
+                parameter is ignored if this option is enabled.
         Returns (bool):
             Whether the attestation was gathered successfully (True) or not (False).
         """
@@ -121,7 +129,9 @@ class SecurityManifestPusher:
             "--output-file",
             output_file,
         ]
-        if rekor_url:
+        if skip_verify_rekor:
+            cmd.insert(2, "--insecure-ignore-tlog=true")
+        elif rekor_url:
             cmd.insert(2, f"--rekor-url={rekor_url}")
         LOG.info(f"Running command '{' '.join(cmd)}'")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -133,7 +143,11 @@ class SecurityManifestPusher:
         return True
 
     def cosign_attest_security_manifest(
-        self, security_manifest_path: str, image_ref: str, rekor_url: str | None = None
+        self,
+        security_manifest_path: str,
+        image_ref: str,
+        rekor_url: str | None = None,
+        skip_upload_rekor: bool = False,
     ) -> None:
         """
         Use cosign to attest a security manifest and push the created image to the destination.
@@ -145,6 +159,9 @@ class SecurityManifestPusher:
                 Image to which the security manifest should be attested to.
             rekor_url (str):
                 URL of the rekor instance to use. If unset, default will be used.
+            skip_upload_rekor (bool):
+                Whether to skip uploading transparency log to rekor. rekor_url parameter is ignored
+                if this option is enabled.
         Raises:
             RuntimeError:
                 If the command fails.
@@ -159,7 +176,9 @@ class SecurityManifestPusher:
             "-y",
             image_ref,
         ]
-        if rekor_url:
+        if skip_upload_rekor:
+            cmd.insert(2, "--tlog-upload=false")
+        elif rekor_url:
             cmd.insert(2, f"--rekor-url={rekor_url}")
         LOG.info(f"Running command '{' '.join(cmd)}'")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -370,7 +389,10 @@ class SecurityManifestPusher:
             image_ref = f"{repo}@{image_manifest.digest}"
             attestation_file = os.path.join(dir_path, f"attestation_{uuid.uuid4().hex}.json")
             attestation_exist = self.cosign_get_existing_attestation(
-                image_ref, attestation_file, self.target_settings.get("cosign_rekor_url", None)
+                image_ref,
+                attestation_file,
+                self.target_settings.get("cosign_rekor_url", None),
+                self.target_settings.get("cosign_sbom_skip_verify_rekor", False),
             )
 
             if attestation_exist:
@@ -411,6 +433,7 @@ class SecurityManifestPusher:
                 full_security_manifest_path,
                 image_ref,
                 self.target_settings.get("cosign_rekor_url", None),
+                self.target_settings.get("cosign_sbom_skip_upload_rekor", False),
             )
 
     def get_source_item_security_manifests(
