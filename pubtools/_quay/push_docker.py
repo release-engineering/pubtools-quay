@@ -664,9 +664,6 @@ class PushDocker:
 
             for version, iib_details in sorted(successful_iib_results.items()):
                 iib_result = iib_details["iib_result"]
-                iib_namespace = self.target_settings.get(
-                    "quay_operator_namespace", self.target_settings["quay_namespace"]
-                )
                 _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
                 permanent_index_image = image_schema.format(
                     host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -677,7 +674,6 @@ class PushDocker:
                 current_signatures.extend(
                     _sign_index_image(
                         permanent_index_image,
-                        iib_namespace,
                         iib_details["destination_tags"],
                         iib_details["signing_keys"],
                         self.task_id,
@@ -693,9 +689,6 @@ class PushDocker:
 
             for version, iib_details in sorted(successful_iib_results.items()):
                 iib_result = iib_details["iib_result"]
-                iib_namespace = self.target_settings.get(
-                    "quay_operator_namespace", self.target_settings["quay_namespace"]
-                )
                 _, iib_namespace, iib_intermediate_repo = parse_index_image(iib_result)
                 permanent_index_image = image_schema.format(
                     host=self.target_settings.get("quay_host", "quay.io").rstrip("/"),
@@ -706,7 +699,6 @@ class PushDocker:
                 current_signatures.extend(
                     _sign_index_image(
                         permanent_index_image,
-                        iib_namespace,
                         iib_details["destination_tags"],
                         iib_details["signing_keys"],
                         self.task_id,
