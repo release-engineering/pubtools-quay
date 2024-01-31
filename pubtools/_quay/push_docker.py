@@ -413,17 +413,17 @@ class PushDocker:
                                         (
                                             cast(ManifestArchDigest, v2list_mad).digest
                                             if digest_mask == 3
-                                            else None
+                                            else ""
                                         ),
                                         (
                                             cast(ManifestArchDigest, v2s2_mad).digest
                                             if digest_mask == 2
-                                            else None
+                                            else ""
                                         ),
                                         (
                                             cast(ManifestArchDigest, v2s1_mad).digest
                                             if digest_mask == 1
-                                            else None
+                                            else ""
                                         ),
                                     )
                                     backup_tags[image_data] = json.loads(mad.manifest)
