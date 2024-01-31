@@ -515,8 +515,8 @@ def test_push_docker_source(
             fake_digest_counter = 0
             ret = {}
             for item in push_items:
-                ret["namespace/target----repo"] = {
-                    "target----repo": {
+                ret["quay.io"] = {
+                    "target/repo": {
                         "latest-test-tag": {
                             "application/vnd.docker.distribution.manifest.v2+json": (
                                 "fake-digest-%s" % fake_digest_counter,
@@ -536,11 +536,19 @@ def test_push_docker_source(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="fake-sign-key",
-                    reference=["namespace/target----repo"],
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["fake-digest-0"],
                     task_id="1",
-                    repo="target----repo",
-                )
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="fake-sign-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["fake-digest-0"],
+                    task_id="1",
+                    repo="target/repo",
+                ),
             ]
         )
 
