@@ -86,65 +86,48 @@ def test_push_docker_multiarch_merge_ml_operator(
         {"fbc_opt_in": False},
     ]
     signer_wrapper_run_entry_point.side_effect = [
+        # fetch existing signatures
         [
             {
                 "_id": 1,
-                "manifest_digest": ["sha256:5555555555"],
-                "reference": ["some-registry1.com/target/repo:latest-test-tag"],
+                "manifest_digest": "sha256:5555555555x",
+                "reference": "some-registry1.com/target/repo:latest-test-tag",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
         ],
+        # store signed
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        # fetch existing manfiests
         [
             {
                 "_id": 1,
-                "manifest_digest": ["sha256:5555555555"],
-                "reference": ["some-registry1.com/target/repo:latest-test-tag"],
+                "manifest_digest": "sha256:6666666666a",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
         ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": ["sha256:5555555555"],
-                "reference": ["some-registry2.com/target/repo:latest-test-tag"],
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
+        # fetch existing manfiests
+        [],
+        [],
+        # store signed
+        [],
+        [],
+        # filter to remove
         [
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/operators/index-image:v4.5",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry2.com/operators/index-image:v4.5",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/operators/index-image:v4.6",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": ["sha256:6666666666"],
-                "reference": ["some-registry2.com/namespace/operators/index-image:v4.6"],
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }

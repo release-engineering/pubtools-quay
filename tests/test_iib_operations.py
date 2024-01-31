@@ -172,6 +172,8 @@ def fake_setup(
                 "repository": "operators/index-image",
             }
         ],
+        # filter existing
+        [{}],
         # store signatures to pyxis
         [
             {

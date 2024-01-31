@@ -150,6 +150,17 @@ class SignerWrapper:
         )
         self._store_signed(signed)
 
+    def _filter_to_sign(self, to_sign_entries: List[SignEntry]) -> List[SignEntry]:
+        """Filter entries to sign.
+
+        Args:
+            to_sign_entries (List[SignEntry]): list of entries to sign.
+
+        Returns:
+            List[SignEntry]: list of entries to sign.
+        """
+        return to_sign_entries
+
     @log_step("Sign container images")
     def sign_containers(
         self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
@@ -161,6 +172,7 @@ class SignerWrapper:
             task_id (str): optional identifier used in signing process.
             parallelism (int): determines how many entries should be signed in parallel.
         """
+        to_sign_entries = self._filter_to_sign(to_sign_entries)
         run_in_parallel(
             self.sign_container,
             [
@@ -193,6 +205,18 @@ class MsgSignerWrapper(SignerWrapper):
 
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
     SCHEMA = MsgSignerSettingsSchema
+
+    def _filter_to_sign(self, to_sign_entries: List[SignEntry]) -> List[SignEntry]:
+        to_sign_digests = [x.digest for x in to_sign_entries]
+        existing_signatures = [esig for esig in self._fetch_signatures(to_sign_digests)]
+        existing_signatures_drk = {
+            (x["manifest_digest"], x["reference"], x["sig_key_id"]) for x in existing_signatures
+        }
+        ret = []
+        for tse in to_sign_entries:
+            if (tse.reference, tse.digest, tse.signing_key) not in existing_signatures_drk:
+                ret.append(tse)
+        return ret
 
     def sign_container_opt_args(
         self, sign_entry: SignEntry, task_id: Optional[str] = None
