@@ -76,7 +76,6 @@ def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
 
 def _index_image_to_sign_entries(
     src_index_image: str,
-    dest_namespace: str,
     dest_tags: list[str],
     signing_keys: list[str],
     target_settings: dict[str, Any],
@@ -88,7 +87,6 @@ def _index_image_to_sign_entries(
 
     Args:
         src_index_image (str): Source index image.
-        dest_namespace (str): Destination internal namespace.
         dest_tags (List[str]): Destination tags.
         index_stamp (str): Index stamp.
         signing_keys (list): List of signing keys.
@@ -112,7 +110,7 @@ def _index_image_to_sign_entries(
     for registry in dest_registries:
         for _dest_tag in dest_tags:
             for digest in index_image_digests:
-                reference = f"{registry}/{dest_namespace}/{iib_repo}:{_dest_tag}"
+                reference = f"{registry}/{iib_repo}:{_dest_tag}"
                 for key in signing_keys:
                     to_sign_entries.append(
                         SignEntry(
@@ -147,7 +145,6 @@ def _remove_index_image_signatures(
 
 def _sign_index_image(
     built_index_image: str,
-    namespace: str,
     dest_tags: list[str],
     signing_keys: list[str],
     task_id: str,
@@ -158,7 +155,6 @@ def _sign_index_image(
 
     Args:
         built_index_image (str): Index image built results.
-        namespace (str): Namespace of internal organization in container registry.
         dest_tags (List[str]): Destination tag.
         signing_keys (list): List of signing keys.
         task_id (str): Task ID.
@@ -168,7 +164,7 @@ def _sign_index_image(
         list: List of current signatures.
     """
     to_sign_entries = _index_image_to_sign_entries(
-        built_index_image, namespace, dest_tags, signing_keys, target_settings
+        built_index_image, dest_tags, signing_keys, target_settings
     )
     current_signatures: list[tuple[str, str, str]] = [
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
@@ -260,7 +256,6 @@ def task_iib_add_bundles(
     # pre push sign
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -308,7 +303,6 @@ def task_iib_add_bundles(
     # after push sign
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -393,7 +387,6 @@ def task_iib_remove_operators(
 
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -443,7 +436,6 @@ def task_iib_remove_operators(
     )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -523,7 +515,6 @@ def task_iib_build_from_scratch(
         outdated_manifests.append((man_arch_dig.digest, tag, ref))
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [index_image_tag, f"{index_image_tag}-{index_stamp}"],
         signing_keys,
         task_id,
@@ -570,7 +561,6 @@ def task_iib_build_from_scratch(
     )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
-        quay_operator_namespace,
         [index_image_tag, f"{index_image_tag}-{index_stamp}"],
         signing_keys,
         task_id,
