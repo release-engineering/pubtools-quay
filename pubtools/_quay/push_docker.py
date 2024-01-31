@@ -746,7 +746,7 @@ class PushDocker:
         # Backup tags can contain new tags which were orignally rollback_tags
         # limit the comparision for outdated manifests to original backup_tags only
         for bt2 in backup_tags2.items():
-            if bt2[0] in backup_tags:
+            if bt2[0].tag in [x.tag for x in backup_tags.keys()]:
                 backup_tags2_shared[bt2[0]] = bt2[1]
 
         for bt1, bt2 in zip(
