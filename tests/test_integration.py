@@ -165,7 +165,7 @@ def test_push_docker_multiarch_merge_ml_operator(
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry2.com/namespace/operators/index-image:v4.5",
+                "reference": "some-registry2.com/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
@@ -174,7 +174,7 @@ def test_push_docker_multiarch_merge_ml_operator(
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
+                "reference": "some-registry1.com/operators/index-image:v4.6",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
