@@ -214,7 +214,7 @@ class MsgSignerWrapper(SignerWrapper):
         }
         ret = []
         for tse in to_sign_entries:
-            if (tse.reference, tse.digest, tse.signing_key) not in existing_signatures_drk:
+            if (tse.digest, tse.reference, tse.signing_key) not in existing_signatures_drk:
                 ret.append(tse)
         return ret
 

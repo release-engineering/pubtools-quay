@@ -211,7 +211,7 @@ class ContentExtractor:
                 else:
                     results.append(mret)
         seen = set()
-        return [x for x in results if x not in seen or seen.add(x)]  # type: ignore
+        return [x for x in results if all([x not in seen, not (seen.add(x))])]  # type: ignore
 
     def extract_tags(self, repo_ref: str, tolerate_missing: bool = True) -> list[str]:
         """Fetch list of tags for given repo reference.
