@@ -391,6 +391,7 @@ class MsgSignerWrapper(SignerWrapper):
         signatures_to_remove = list(self._fetch_signatures([x[0] for x in signatures]))
         sig_ids_to_remove = []
         for existing_signature in signatures_to_remove:
+            print("ES", existing_signature)
             if (
                 existing_signature["manifest_digest"],
                 existing_signature["reference"].split(":")[-1],

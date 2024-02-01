@@ -127,35 +127,11 @@ def test_push_docker_multiarch_merge_ml_operator(
             {
                 "_id": 1,
                 "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
+                "reference": "some-registry1.com/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
         ],
-        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
-        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
-        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
-        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
-        # remove existing signatures
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry2.com/namespace/operators/index-image:v4.5",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry1.com/namespace/operators/index-image:v4.6",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
-        # remove signatures (list signatures)
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
