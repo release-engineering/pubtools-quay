@@ -24,7 +24,7 @@ REMOVE_REPO_ARGS = {
     },
     ("--quay-host",): {
         "help": "quay host name",
-        "required": True,
+        "required": False,
         "type": str,
         "default": "quay.io",
     },

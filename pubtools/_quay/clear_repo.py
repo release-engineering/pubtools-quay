@@ -27,7 +27,7 @@ CLEAR_REPO_ARGS = {
     },
     ("--quay-host",): {
         "help": "Quay host name",
-        "required": True,
+        "required": False,
         "type": str,
         "default": "quay.io",
     },
