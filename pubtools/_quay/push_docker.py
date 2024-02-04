@@ -730,7 +730,7 @@ class PushDocker:
         outdated_manifests.extend(existing_index_images)
 
         for signer in self.target_settings["signing"]:
-            if signer["enabled"]:
+            if signer["enabled"] and outdated_manifests:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
                 signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
