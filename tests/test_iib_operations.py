@@ -635,6 +635,7 @@ def test_task_iib_add_bundles_operator_ns(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -652,6 +653,7 @@ def test_task_iib_add_bundles_operator_ns(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
         ]
     )
@@ -1048,6 +1050,7 @@ def test_task_iib_build_from_scratch(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -1065,6 +1068,7 @@ def test_task_iib_build_from_scratch(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
         ]
     )
@@ -1228,6 +1232,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -1245,6 +1250,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
         ]
     )
@@ -1386,6 +1392,7 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -1403,6 +1410,7 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
         ]
     )
