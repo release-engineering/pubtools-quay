@@ -403,16 +403,30 @@ class PushDocker:
                                     or [None],
                                 )
                             )[0]
-                            image_data = PushDocker.ImageData(
-                                full_repo,
-                                d_tag,
-                                v2list_mad.digest if v2list_mad else None,
-                                v2s2_mad.digest if v2s2_mad else None,
-                                v2s1_mad.digest if v2s1_mad else None,
-                            )
-                            mad = v2s2_mad or v2s1_mad or v2list_mad
-                            if mad:
-                                backup_tags[image_data] = json.loads(mad.manifest)
+                            for mad, digest_mask in zip(
+                                (v2s1_mad, v2s2_mad, v2list_mad), (1, 2, 3)
+                            ):
+                                if mad:
+                                    image_data = PushDocker.ImageData(
+                                        full_repo,
+                                        d_tag,
+                                        (
+                                            cast(ManifestArchDigest, v2list_mad).digest
+                                            if digest_mask == 3
+                                            else ""
+                                        ),
+                                        (
+                                            cast(ManifestArchDigest, v2s2_mad).digest
+                                            if digest_mask == 2
+                                            else ""
+                                        ),
+                                        (
+                                            cast(ManifestArchDigest, v2s1_mad).digest
+                                            if digest_mask == 1
+                                            else ""
+                                        ),
+                                    )
+                                    backup_tags[image_data] = json.loads(mad.manifest)
                         else:
                             rollback_tags.append(
                                 PushDocker.ImageData(full_repo, d_tag, None, None, None)
@@ -467,8 +481,6 @@ class PushDocker:
             ext_repo = get_external_container_repo_name(image_data.repo.split("/")[1])
             if image_data.v2s2_digest:
                 outdated_signatures.append((image_data.v2s2_digest, image_data.tag, ext_repo))
-            if image_data.v2list_digest:
-                outdated_signatures.append((image_data.v2list_digest, image_data.tag, ext_repo))
             if image_data.v2s1_digest:
                 outdated_signatures.append((image_data.v2s1_digest, image_data.tag, ext_repo))
         return outdated_signatures
@@ -598,10 +610,7 @@ class PushDocker:
         current_signatures = []
         to_sign_map = run_in_parallel(
             item_processor.generate_to_sign,
-            [
-                FData(args=(item,), kwargs={"sign_only_arches": ["amd64", "x86_64"]})
-                for item in docker_push_items
-            ],
+            [FData(args=(item,), kwargs={}) for item in docker_push_items],
         )
 
         for _to_sign_entries in to_sign_map.values():
@@ -726,7 +735,48 @@ class PushDocker:
                 failed = True
 
         # Remove old signatures
-        outdated_manifests = self.get_outdated_manifests(backup_tags)
+        # run generate backup mapping again to fetch new digests of pushed containers
+        backup_tags2, _ = self.generate_backup_mapping(docker_push_items)
+        # if new backup tag has differnet digest, it means it was overwritten during the push
+        # and old signature should be removed. If the digest is the same it means, same item
+        # was just repushed
+        outdated_tags = {}
+        backup_tags2_shared = {}
+
+        # Backup tags can contain new tags which were orignally rollback_tags
+        # limit the comparision for outdated manifests to original backup_tags only
+        for bt2 in backup_tags2.items():
+            if (bt2[0].tag, bt2[0].repo) in [(x.tag, x.repo) for x in backup_tags.keys()]:
+                backup_tags2_shared[bt2[0]] = bt2[1]
+
+        for bt1, bt2 in zip(
+            sorted(
+                backup_tags.items(),
+                key=lambda x: (
+                    x[0].tag,
+                    x[0].v2list_digest or "",
+                    x[0].v2s2_digest or "",
+                    x[0].v2s1_digest or "",
+                ),
+            ),
+            sorted(
+                backup_tags2_shared.items(),
+                key=lambda x: (
+                    x[0].tag,
+                    x[0].v2list_digest or "",
+                    x[0].v2s2_digest or "",
+                    x[0].v2s1_digest or "",
+                ),
+            ),
+        ):
+            if (
+                bt1[0].v2list_digest != bt2[0].v2list_digest
+                or bt1[0].v2s2_digest != bt2[0].v2s2_digest
+                or bt1[0].v2s1_digest != bt2[0].v2s1_digest
+            ):
+                outdated_tags[bt1[0]] = bt1[1]
+
+        outdated_manifests = self.get_outdated_manifests(outdated_tags)
         outdated_manifests.extend(existing_index_images)
 
         for signer in self.target_settings["signing"]:

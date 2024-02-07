@@ -116,7 +116,10 @@ def mock_manifest_list_requests(m, uri, manifest_list, manifests):
     m.get(
         uri,
         json=manifest_list,
-        headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        headers={
+            "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+            "docker-content-digest": "manifest_list_digest",
+        },
     )
     base_uri = uri.rsplit("/", 1)[0]
     if isinstance(manifests, list):
@@ -136,17 +139,27 @@ def mock_manifest_list_requests(m, uri, manifest_list, manifests):
 
 
 class GetManifestSideEffect:
-    def __init__(self, v2s1_manifest, manifest_list):
+    def __init__(self, v2s1_manifest, manifest_list, call_limit=1):
         self.called_times = 0
         self.v2s1_manifest = v2s1_manifest
         self.manifest_list = manifest_list
+        self.call_limit = call_limit
 
-    def __call__(self, image, raw=False, media_type=False):
-        if self.called_times == 1:
+    def __call__(self, image, raw=False, media_type=False, return_headers=False):
+        if self.called_times == self.call_limit:
             return None
         if media_type == "application/vnd.docker.distribution.manifest.list.v2+json":
+            headers = {
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest_list_digest",
+            }
             content = self.manifest_list
         else:
+            headers = {"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"}
             content = self.v2s1_manifest
         self.called_times += 1
-        return json.dumps(content) if raw else content
+        if raw:
+            if return_headers:
+                return json.dumps(content), headers
+            return json.dumps(content)
+        return content

@@ -22,6 +22,12 @@ REMOVE_REPO_ARGS = {
         "required": True,
         "type": str,
     },
+    ("--quay-host",): {
+        "help": "quay host name",
+        "required": False,
+        "type": str,
+        "default": "quay.io",
+    },
     ("--quay-org",): {
         "help": "Quay organization in which repositories reside.",
         "required": True,

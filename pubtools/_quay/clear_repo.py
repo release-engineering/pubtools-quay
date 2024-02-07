@@ -25,6 +25,12 @@ CLEAR_REPO_ARGS = {
         "required": True,
         "type": str,
     },
+    ("--quay-host",): {
+        "help": "Quay host name",
+        "required": False,
+        "type": str,
+        "default": "quay.io",
+    },
     ("--quay-org",): {
         "help": "Quay organization in which repositories reside.",
         "required": True,

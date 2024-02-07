@@ -6,11 +6,12 @@ import re
 from urllib3.util.retry import Retry
 from urllib import request
 import threading
-from typing import Any, cast, Dict, List
+from typing import Any, cast, Dict, List, Tuple
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
 from .types import ManifestList, Manifest
+from requests.structures import CaseInsensitiveDict
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -49,8 +50,12 @@ class QuayClient:
         return self.thread_local.session
 
     def get_manifest(
-        self, image: str, raw: bool = False, media_type: str | None = None
-    ) -> ManifestList | Manifest | str:
+        self,
+        image: str,
+        raw: bool = False,
+        media_type: str | None = None,
+        return_headers: bool = False,
+    ) -> ManifestList | Manifest | str | Tuple[str, CaseInsensitiveDict[str]]:
         """
         Get manifest of given media type.
 
@@ -94,7 +99,10 @@ class QuayClient:
                     "Image {0} doesn't have a {1} manifest".format(image, media_type)
                 )
             if raw:
-                return str(response.text)
+                if not return_headers:
+                    return str(response.text)
+                else:
+                    return (str(response.text), response.headers)
             else:
                 return cast(ManifestList, response.json())
 

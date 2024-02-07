@@ -1917,21 +1917,33 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.5",
             json=manifest_list_data,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest-list-digest",
+            },
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
             json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest-list-digest",
+            },
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.7",
             json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest-list-digest",
+            },
         )
         m.put(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest-list-digest",
+            },
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:1111111111",

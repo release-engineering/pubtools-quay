@@ -100,6 +100,20 @@ class SignerWrapper:
         LOG.debug("Storing signatures %s", signatures)
         self._run_store_signed(signatures)
 
+    def sign_container_opt_args(
+        self, sign_entry: SignEntry, task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return optional arguments for signing a container.
+
+        Args:
+            sign_entry (SignEntry): SignEntry to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+
+        Returns:
+            dict: Optional arguments for signing a container.
+        """
+        return {}
+
     def sign_container(
         self,
         sign_entry: SignEntry,
@@ -117,9 +131,7 @@ class SignerWrapper:
             sign_entry.digest,
             sign_entry.signing_key,
         )
-        opt_args = {
-            k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None
-        }
+        opt_args = self.sign_container_opt_args(sign_entry, task_id)
         signed = self.entry_point(
             config_file=self.config_file,
             signing_key=sign_entry.signing_key,
@@ -138,6 +150,17 @@ class SignerWrapper:
         )
         self._store_signed(signed)
 
+    def _filter_to_sign(self, to_sign_entries: List[SignEntry]) -> List[SignEntry]:
+        """Filter entries to sign.
+
+        Args:
+            to_sign_entries (List[SignEntry]): list of entries to sign.
+
+        Returns:
+            List[SignEntry]: list of entries to sign.
+        """
+        return to_sign_entries
+
     @log_step("Sign container images")
     def sign_containers(
         self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
@@ -149,6 +172,7 @@ class SignerWrapper:
             task_id (str): optional identifier used in signing process.
             parallelism (int): determines how many entries should be signed in parallel.
         """
+        to_sign_entries = self._filter_to_sign(to_sign_entries)
         run_in_parallel(
             self.sign_container,
             [
@@ -181,6 +205,32 @@ class MsgSignerWrapper(SignerWrapper):
 
     MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
     SCHEMA = MsgSignerSettingsSchema
+
+    def _filter_to_sign(self, to_sign_entries: List[SignEntry]) -> List[SignEntry]:
+        to_sign_digests = [x.digest for x in to_sign_entries]
+        existing_signatures = [esig for esig in self._fetch_signatures(to_sign_digests)]
+        existing_signatures_drk = {
+            (x["manifest_digest"], x["reference"], x["sig_key_id"]) for x in existing_signatures
+        }
+        ret = []
+        for tse in to_sign_entries:
+            if (tse.digest, tse.reference, tse.signing_key) not in existing_signatures_drk:
+                ret.append(tse)
+        return ret
+
+    def sign_container_opt_args(
+        self, sign_entry: SignEntry, task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return optional arguments for signing a container.
+
+        Args:
+            sign_entry (SignEntry): SignEntry to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+
+        Returns:
+            dict: Optional arguments for signing a container.
+        """
+        return {k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None}
 
     @contextmanager
     def _save_signatures_file(self, signatures: List[Dict[str, Any]]) -> Generator[Any, None, None]:

@@ -63,7 +63,8 @@ def test_push_docker_multiarch_merge_ml_operator(
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
     signer_wrapper_remove_signatures,
-    fixture_run_in_parallel,
+    fixture_run_in_parallel_signer,
+    fixture_run_in_parallel_push_docker,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -85,33 +86,43 @@ def test_push_docker_multiarch_merge_ml_operator(
         {"fbc_opt_in": False},
     ]
     signer_wrapper_run_entry_point.side_effect = [
+        # fetch existing signatures
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:5555555555",
+                "manifest_digest": "sha256:5555555555x",
                 "reference": "some-registry1.com/target/repo:latest-test-tag",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
         ],
+        # store signed
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        # fetch existing manfiests
         [
             {
                 "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry1.com/target/repo:latest-test-tag",
+                "manifest_digest": "sha256:6666666666a",
+                "reference": "some-registry1.com/namespace/operators/index-image:v4.5",
                 "sig_key_id": "some-key",
                 "repository": "operators/index-image",
             }
         ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:5555555555",
-                "reference": "some-registry2.com/target/repo:latest-test-tag",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
+        # fetch existing manfiests
+        [],
+        [],
+        # store signed
+        [],
+        [],
+        # filter to remove
         [
             {
                 "_id": 1,
@@ -121,6 +132,11 @@ def test_push_docker_multiarch_merge_ml_operator(
                 "repository": "operators/index-image",
             }
         ],
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        # remove existing signatures
         [
             {
                 "_id": 1,
@@ -139,15 +155,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                 "repository": "operators/index-image",
             }
         ],
-        [
-            {
-                "_id": 1,
-                "manifest_digest": "sha256:6666666666",
-                "reference": "some-registry2.com/namespace/operators/index-image:v4.6",
-                "sig_key_id": "some-key",
-                "repository": "operators/index-image",
-            }
-        ],
+        # remove signatures (list signatures)
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
     ]
@@ -248,8 +256,56 @@ def test_push_docker_multiarch_merge_ml_operator(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
-                    digest=["sha256:5555555555"],
+                    digest=["sha256:1111111111"],
                     task_id="1-0",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-1",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-2",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
+                    task_id="1-3",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                    task_id="1-4",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-5",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-6",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -257,7 +313,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1-1",
+                    task_id="1-7",
                     repo="target/repo",
                 ),
                 # cosign
@@ -265,19 +321,50 @@ def test_push_docker_multiarch_merge_ml_operator(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1-0",
-                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1-1",
-                    repo="target/repo",
                 ),
-                # msg signer
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
@@ -294,7 +381,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                     task_id="1-1",
                     repo="operators/index-image",
                 ),
-                # cosign
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
@@ -310,6 +396,30 @@ def test_push_docker_multiarch_merge_ml_operator(
                     digest=["sha256:5555555555"],
                     task_id="1-1",
                     repo="operators/index-image",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:v4.5"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:v4.5"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:v4.6"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:v4.6"],
+                    digest=["sha256:5555555555"],
                 ),
             ]
         )
@@ -404,8 +514,56 @@ def test_push_docker_multiarch_simple_workflow(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
-                    digest=["sha256:5555555555"],
+                    digest=["sha256:1111111111"],
                     task_id="1-0",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-1",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-2",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
+                    task_id="1-3",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                    task_id="1-4",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-5",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-6",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -413,8 +571,56 @@ def test_push_docker_multiarch_simple_workflow(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1-1",
+                    task_id="1-7",
                     repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
                 ),
             ]
         )
@@ -1196,6 +1402,31 @@ def test_task_iib_add_bundles(
                     task_id="1-3",
                     repo="operators/index-image",
                 ),
+                # cosign
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:8"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:8"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                    digest=["sha256:5555555555"],
+                ),
             ]
         )
 
@@ -1305,6 +1536,31 @@ def test_task_iib_remove_operators(
                 digest=["sha256:5555555555"],
                 task_id="1-3",
                 repo="operators/index-image",
+            ),
+            # cosign
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry1.com/operators/index-image:8-timestamp"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8"],
+                digest=["sha256:5555555555"],
+            ),
+            mock.call(
+                config_file="test-config.yml",
+                signing_key="some-key",
+                reference=["some-registry2.com/operators/index-image:8-timestamp"],
+                digest=["sha256:5555555555"],
             ),
         ]
     )
@@ -1555,6 +1811,9 @@ def test_push_docker_operator_verify_bundle_fail(
     fake_cert_key_paths,
     signer_wrapper_entry_point,
     signer_wrapper_run_entry_point,
+    fixture_run_in_parallel_signer,
+    fixture_run_in_parallel_push_docker,
+    fixture_run_in_parallel_item_processor,
 ):
     # hub usage has to be mocked
     hub = mock.MagicMock()
@@ -1657,8 +1916,56 @@ def test_push_docker_operator_verify_bundle_fail(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=["some-registry1.com/target/repo:latest-test-tag"],
-                    digest=["sha256:5555555555"],
+                    digest=["sha256:1111111111"],
                     task_id="1-0",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-1",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-2",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
+                    task_id="1-3",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                    task_id="1-4",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                    task_id="1-5",
+                    repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                    task_id="1-6",
                     repo="target/repo",
                 ),
                 mock.call(
@@ -1666,8 +1973,56 @@ def test_push_docker_operator_verify_bundle_fail(
                     signing_key="some-key",
                     reference=["some-registry2.com/target/repo:latest-test-tag"],
                     digest=["sha256:5555555555"],
-                    task_id="1-1",
+                    task_id="1-7",
                     repo="target/repo",
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry1.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:1111111111"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:2222222222"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:3333333333"],
+                ),
+                mock.call(
+                    config_file="test-config.yml",
+                    signing_key="some-key",
+                    reference=["some-registry2.com/target/repo:latest-test-tag"],
+                    digest=["sha256:5555555555"],
                 ),
             ]
         )
