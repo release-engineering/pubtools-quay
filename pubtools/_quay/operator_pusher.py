@@ -493,25 +493,25 @@ class OperatorPusher:
                 [
                     version
                     for version in self.ocp_versions_resolved[ocp_versions]
-                    if tuple([int(x) for x in version.replace("v", "").split(".")]) < (4, 13)
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) < (4, 11)
                 ]
                 and [
                     version
                     for version in self.ocp_versions_resolved[ocp_versions]
-                    if tuple([int(x) for x in version.replace("v", "").split(".")]) > (4, 12)
+                    if tuple([int(x) for x in version.replace("v", "").split(".")]) > (4, 10)
                 ]
                 and items_opted_in[id(item)]
             ):
                 item.add_error(
                     "INVALIDFILE",
                     "Cannot push item to index image "
-                    "as it supports both <= 4.12 and >= 4.13 and is opted in FBC: {item}".format(
+                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
                         item=item
                     ),
                 )
                 LOG.error(
                     "Cannot push item to index image "
-                    "as it supports both <= 4.12 and >= 4.13 and is opted in FBC: {item}".format(
+                    "as it supports both <= 4.10 and >= 4.11 and is opted in FBC: {item}".format(
                         item=item
                     )
                 )
@@ -541,7 +541,7 @@ class OperatorPusher:
             elif items_opted_in[id(item)] and osev_tuple >= (4, 13):
                 LOG.warning(
                     "Skipping {i}".format(i=item)
-                    + "from iib build as it's opted in for FBC and targeting OCP version >=4.13"
+                    + "from iib build as it's opted in for FBC and targeting OCP version >=4.11"
                 )
         return non_fbc_items
 
