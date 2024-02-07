@@ -136,7 +136,6 @@ def _remove_index_image_signatures(
         current_signatures (list): List of current signatures.
         target_settings (dict): Target settings.
     """
-    set_aws_kms_environment_variables(target_settings, "cosign_signer")
     for signer in target_settings["signing"]:
         if signer["enabled"]:
             signercls = SIGNER_BY_LABEL[signer["label"]]
@@ -301,10 +300,6 @@ def task_iib_add_bundles(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
 
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
-
     # after push sign
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
@@ -439,9 +434,6 @@ def task_iib_remove_operators(
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
     )
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         [tag, f"{tag}-{index_stamp}"],
@@ -566,9 +558,6 @@ def task_iib_build_from_scratch(
     )
     ContainerImagePusher.run_tag_images(
         permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
-    )
-    iib_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
     )
     current_signatures = _sign_index_image(
         build_details.internal_index_image_copy_resolved,
