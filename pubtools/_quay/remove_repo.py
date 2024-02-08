@@ -1,3 +1,4 @@
+import os
 import logging
 import argparse
 from typing import Any
@@ -116,7 +117,7 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
 
     LOG.info("Removing repositories '{0}'".format(repositories))
     quay_api_client = QuayApiClient(settings["quay_api_token"])
-    quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
+    quay_client = QuayClient(settings["quay_user"], settings["quay_password"], "quay.io")
     item_processor = item_processor_for_internal_data(
         quay_client, "quay.io", 5, settings["quay_org"]
     )
@@ -135,9 +136,18 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
             continue
         outdated_manifests.append((mad.digest, tag, repo))
 
+    signer_settings = {}
+    for k, v in settings.items():
+        if k == "quay_org":
+            signer_settings["quay_namespace"] = v
+        else:
+            signer_settings[k] = v
+    signer_settings["dest_quay_api_token"] = os.environ.get("QUAY_API_TOKEN")
+    signer_settings["quay_host"] = "quay.io"
+
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
-        signer = signercls(config_file=signer_configs[0], settings=settings)
+        signer = signercls(config_file=signer_configs[0], settings=signer_settings)
         signer.remove_signatures(outdated_manifests, _exclude=[])
 
     for repository in parsed_repositories:
