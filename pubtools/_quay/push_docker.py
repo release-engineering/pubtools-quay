@@ -654,9 +654,9 @@ class PushDocker:
                                     pass
                         # Fetch v2s1 only for amd64 image
                         elif item.metadata["arch"] in ["amd64", "x86_64"]:
-                            item.metadata["new_digests"].setdefault((repo, tag), {})[
-                                mtype
-                            ] = self._fetch_digest(internal_repo, tag, mtype)
+                            item.metadata["new_digests"].setdefault((repo, tag), {})[mtype] = (
+                                self._fetch_digest(internal_repo, tag, mtype)
+                            )
 
     def run(self):
         """
