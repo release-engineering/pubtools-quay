@@ -1,8 +1,10 @@
 import argparse
 import base64
 import contextlib
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 import functools
+from itertools import zip_longest, chain
 import json
 import logging
 import os
@@ -10,7 +12,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Iterable, Any, Callable, Dict, Generator, cast
+from typing import Any, Callable, Dict, Generator, cast
 
 
 from concurrent import futures
@@ -559,3 +561,14 @@ def set_aws_kms_environment_variables(target_settings: dict[str, Any], profile_n
         os.environ["AWS_DEFAULT_REGION"] = target_settings["aws_kms_credentials"][profile_name][
             "aws_default_region"
         ]
+
+
+def grouper(iterable: Iterable[Any], n: int, *, fillvalue: Any = None) -> Iterable[Any]:
+    """Collect data into non-overlapping fixed-length chunks or blocks."""
+    args = [iter(iterable)] * n
+    return zip_longest(*args, fillvalue=fillvalue)
+
+
+def flatten(list_of_lists: Iterable[Any]) -> Iterable[Any]:
+    """Flatten one level of nesting."""
+    return chain.from_iterable(list_of_lists)

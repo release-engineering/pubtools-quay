@@ -173,7 +173,16 @@ def fake_setup(
             }
         ],
         # filter existing
-        [{}],
+        [
+            {
+                "_id": 1,
+                "manifest_digest": "sha256:5555555555",
+                "reference": "some-registry.com/operators/index-image:8",
+                "sig_key_id": "key",
+                "repository": "operators/index-image",
+            }
+        ],
+        (True, ["quay.io/testing/repo:sha256-5555555555.sig"]),
         # store signatures to pyxis
         [
             {
@@ -285,59 +294,37 @@ def test_task_iib_add_bundles(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
                 repo="operators/index-image",
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
@@ -421,59 +408,37 @@ def test_task_iib_add_bundles_missing_manifest_list(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
                 repo="operators/index-image",
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
@@ -561,67 +526,45 @@ def test_task_iib_add_bundles_operator_ns(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
                 repo="operators/index-image",
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                "pubtools-pyxis-upload-signature",
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
                     "pyxis-url.com",
@@ -629,13 +572,10 @@ def test_task_iib_add_bundles_operator_ns(
                     "/path/to/file.crt",
                     "--pyxis-ssl-keyfile",
                     "/path/to/file.key",
-                    "--request-threads",
-                    "7",
-                    "--signatures",
-                    "@signature_file",
+                    "--manifest-digest",
+                    mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -650,10 +590,31 @@ def test_task_iib_add_bundles_operator_ns(
                     "--request-threads",
                     "7",
                     "--signatures",
-                    "@signature_file",
+                    mock.ANY,
                 ],
                 {},
                 False,
+            ),
+            mock.call(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
+                [
+                    "--pyxis-server",
+                    "pyxis-url.com",
+                    "--pyxis-ssl-crtfile",
+                    "/path/to/file.crt",
+                    "--pyxis-ssl-keyfile",
+                    "/path/to/file.key",
+                    "--manifest-digest",
+                    mock.ANY,
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
+                {},
             ),
         ]
     )
@@ -976,67 +937,44 @@ def test_task_iib_build_from_scratch(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
                 repo="operators/index-image",
             ),
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
-                repo="operators/index-image",
-            ),
-            # cosign
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                "pubtools-pyxis-upload-signature",
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
                     "pyxis-url.com",
@@ -1044,13 +982,10 @@ def test_task_iib_build_from_scratch(
                     "/path/to/file.crt",
                     "--pyxis-ssl-keyfile",
                     "/path/to/file.key",
-                    "--request-threads",
-                    "7",
-                    "--signatures",
-                    "@signature_file",
+                    "--manifest-digest",
+                    mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -1065,10 +1000,31 @@ def test_task_iib_build_from_scratch(
                     "--request-threads",
                     "7",
                     "--signatures",
-                    "@signature_file",
+                    mock.ANY,
                 ],
                 {},
                 False,
+            ),
+            mock.call(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
+                [
+                    "--pyxis-server",
+                    "pyxis-url.com",
+                    "--pyxis-ssl-crtfile",
+                    "/path/to/file.crt",
+                    "--pyxis-ssl-keyfile",
+                    "/path/to/file.key",
+                    "--manifest-digest",
+                    mock.ANY,
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
+                {},
             ),
         ]
     )
@@ -1158,82 +1114,42 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
                 repo="operators/index-image",
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
     signer_wrapper_run_entry_point.assert_has_calls(
         [
-            mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                "pubtools-pyxis-upload-signature",
-                [
-                    "--pyxis-server",
-                    "pyxis-url.com",
-                    "--pyxis-ssl-crtfile",
-                    "/path/to/file.crt",
-                    "--pyxis-ssl-keyfile",
-                    "/path/to/file.key",
-                    "--request-threads",
-                    "7",
-                    "--signatures",
-                    "@signature_file",
-                ],
-                {},
-                False,
-            ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
@@ -1343,42 +1259,44 @@ def test_task_iib_build_from_scratch_operator_ns(
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
                 task_id="1-0",
                 repo="operators/index-image",
             ),
             mock.call(
                 config_file="test-config.yml",
                 signing_key="some-key",
-                reference=["some-registry1.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-1",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-2",
-                repo="operators/index-image",
-            ),
-            mock.call(
-                config_file="test-config.yml",
-                signing_key="some-key",
-                reference=["some-registry2.com/operators/index-image:8-timestamp"],
-                digest=["sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6"],
-                task_id="1-3",
-                repo="operators/index-image",
+                reference=[
+                    "some-registry1.com/operators/index-image:8",
+                    "some-registry1.com/operators/index-image:8-timestamp",
+                    "some-registry2.com/operators/index-image:8",
+                    "some-registry2.com/operators/index-image:8-timestamp",
+                ],
+                digest=[
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                    "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
+                ],
             ),
         ]
     )
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
-                "pubtools-pyxis-upload-signature",
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
                     "pyxis-url.com",
@@ -1386,13 +1304,10 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "/path/to/file.crt",
                     "--pyxis-ssl-keyfile",
                     "/path/to/file.key",
-                    "--request-threads",
-                    "7",
-                    "--signatures",
-                    "@signature_file",
+                    "--manifest-digest",
+                    mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
@@ -1407,10 +1322,31 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "--request-threads",
                     "7",
                     "--signatures",
-                    "@signature_file",
+                    mock.ANY,
                 ],
                 {},
                 False,
+            ),
+            mock.call(
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                "pubtools-pyxis-get-signatures",
+                [
+                    "--pyxis-server",
+                    "pyxis-url.com",
+                    "--pyxis-ssl-crtfile",
+                    "/path/to/file.crt",
+                    "--pyxis-ssl-keyfile",
+                    "/path/to/file.key",
+                    "--manifest-digest",
+                    mock.ANY,
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
+                {},
             ),
         ]
     )
