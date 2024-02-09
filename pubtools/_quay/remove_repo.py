@@ -136,12 +136,8 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
             continue
         outdated_manifests.append((mad.digest, tag, repo))
 
-    signer_settings = {}
-    for k, v in settings.items():
-        if k == "quay_org":
-            signer_settings["quay_namespace"] = v
-        else:
-            signer_settings[k] = v
+    signer_settings = {k: v for k, v in settings.items() if k not in ["quay_org"]}
+    signer_settings["quay_namespace"] = settings["quay_org"]
     signer_settings["dest_quay_api_token"] = os.environ.get("QUAY_API_TOKEN")
     signer_settings["quay_host"] = "quay.io"
 
