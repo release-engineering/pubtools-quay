@@ -176,7 +176,11 @@ def setup_entry_point_cli(
 
 
 def run_entrypoint(
-    entry_tuple: tuple[str, str, str], name: str, args: list[str], environ_vars: dict[str, Any]
+    entry_tuple: tuple[str, str, str],
+    name: str,
+    args: list[str],
+    environ_vars: dict[str, Any],
+    capture_out: bool = True,
 ) -> Any:
     """
     Run an entrypoint function and return its return value.
@@ -190,6 +194,8 @@ def run_entrypoint(
             Entrypoint arguments.
         environ_vars (dict):
             Env variable names and values to set for the entrypoint.
+        capture_out (bool):
+            Whether to capture stdout.
 
     Returns (str):
         Data returned by the entrypoint.
@@ -208,7 +214,10 @@ def run_entrypoint(
         LOG.info("%s%s", line, suffix)
 
     with setup_entry_point_cli(entry_tuple, name, args, environ_vars) as entry_func:
-        with capture_stdout():
+        if capture_out:
+            with capture_stdout():
+                pyret = entry_func()
+        else:
             pyret = entry_func()
 
     return pyret

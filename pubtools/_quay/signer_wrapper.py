@@ -1,9 +1,10 @@
 import abc
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 import logging
 import pkg_resources
 import tempfile
 import json
+import io
 
 from typing import Optional, List, Dict, Any, Tuple, Generator
 
@@ -173,20 +174,21 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
-        run_in_parallel(
-            self.sign_container,
-            [
-                FData(args=x)
-                for x in zip(
-                    to_sign_entries,
-                    [
-                        str(task_id) + "-" + str(z % parallelism)
-                        for z in range(len(to_sign_entries))
-                    ],
-                )
-            ],
-            parallelism,
-        )
+        with redirect_stdout(io.StringIO()):
+            run_in_parallel(
+                self.sign_container,
+                [
+                    FData(args=x)
+                    for x in zip(
+                        to_sign_entries,
+                        [
+                            str(task_id) + "-" + str(z % parallelism)
+                            for z in range(len(to_sign_entries))
+                        ],
+                    )
+                ],
+                parallelism,
+            )
 
     def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
         """Validate provided settings for the SignerWrapper."""
@@ -345,6 +347,7 @@ class MsgSignerWrapper(SignerWrapper):
                 "pubtools-pyxis-upload-signature",
                 args,
                 env_vars,
+                False,
             )
 
     def _run_remove_signatures(self, signatures_to_remove: List[str]) -> None:
