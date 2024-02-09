@@ -461,8 +461,8 @@ class OperatorPusher:
         """Get items that are opted in for fbc.
 
         An item needs to be targeted for repos with fbc_opt_in set to True and
-        ocp versions needs to be higher than 4.11. Inconsistencies in versions
-        (like support for both > 4.11 and <= 4.11) results  in item error.
+        ocp versions needs to be higher than 4.10. Inconsistencies in versions
+        (like support for both > 4.10 and <= 4.10) results  in item error.
         """
         repos_opted_in = {}
         items_opted_in = {}
