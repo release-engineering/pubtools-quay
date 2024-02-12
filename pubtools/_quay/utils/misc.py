@@ -4,7 +4,7 @@ import contextlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 import functools
-from itertools import zip_longest, chain
+from itertools import zip_longest
 import json
 import logging
 import os
@@ -567,8 +567,3 @@ def grouper(iterable: Iterable[Any], n: int, *, fillvalue: Any = None) -> Iterab
     """Collect data into non-overlapping fixed-length chunks or blocks."""
     args = [iter(iterable)] * n
     return zip_longest(*args, fillvalue=fillvalue)
-
-
-def flatten(list_of_lists: Iterable[Any]) -> Iterable[Any]:
-    """Flatten one level of nesting."""
-    return chain.from_iterable(list_of_lists)

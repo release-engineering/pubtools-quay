@@ -20,7 +20,6 @@ from .utils.misc import (
     log_step,
     FData,
     grouper,
-    flatten,
 )
 from .item_processor import SignEntry
 
@@ -130,17 +129,19 @@ class SignerWrapper:
         sign_entries: List[SignEntry],
         task_id: Optional[str] = None,
     ) -> None:
-        """Sign a specific reference and digest with given signing key.
+        """Sign a specific chunk of references and digests with given signing key.
 
         Args:
-            sign_entry (SignEntry): SignEntry to sign.
+            sign_entries (List[SignEntry]): Chunk of SignEntry to sign.
             task_id (str): Task ID to identify the signing task if needed.
         """
         for sign_entry in sign_entries:
+            # in the case of last chunk, None is set to fill value to fit the chunk size
+            # Therefore skip if that presents
             if not sign_entry:
                 break
             LOG.debug(
-                "Signing containers %s %s %s",
+                "Signing container %s %s %s",
                 sign_entry.reference,
                 sign_entry.digest,
                 sign_entry.signing_key,
@@ -195,21 +196,22 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
+        to_sign_chunks = []
+        # group entries by repo to keep consistent repo identifier in radas messages
+        for k, group in groupby(to_sign_entries, key=lambda x: x.repo):
+            # split group to chunk of chunk_size, fill shorter chunks with None
+            to_sign_chunks.extend(list(grouper(group, chunk_size)))
+
         with redirect_stdout(io.StringIO()):
             run_in_parallel(
                 self.sign_container_chunk,
                 [
                     FData(args=x)
                     for x in zip(
-                        flatten(
-                            [
-                                list(grouper(group, chunk_size))
-                                for k, group in groupby(to_sign_entries, key=lambda x: x.repo)
-                            ]
-                        ),
+                        to_sign_chunks,
                         [
                             str(task_id) + "-" + str(z % parallelism)
-                            for z in range(len(to_sign_entries))
+                            for z in range(len(to_sign_chunks))
                         ],
                     )
                 ],
