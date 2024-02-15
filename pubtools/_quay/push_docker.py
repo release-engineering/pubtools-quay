@@ -320,8 +320,8 @@ class PushDocker:
 
     @log_step("Generate backup mapping")
     def generate_backup_mapping(
-        self, push_items: list[Any]
-    ) -> Tuple[Dict[ImageData, str], List[ImageData]]:
+        self, push_items: list[Any], all_arches: bool = False
+    ) -> Tuple[Dict[ImageData, Tuple[str, str]], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
@@ -330,14 +330,17 @@ class PushDocker:
         be overwritten. During rollback, tag is made to re-reference the old manifest.
         - 'rollback_tags' is a list of ImageData which don't yet exist. During rollback, they
         will be removed to preserve pre-push state.
+        If all_arches is set to true, return all arches for v2s2 and v2s1 manifests
 
         ImageData is a namedtuple used to assign and access parts of an image in a formatted way.
 
         Args:
             push_items ([ContainerPushItem]):
                 Container push items.
+            all_arches: bool
+                If set to True include all manifests in results. If False only amd64 are included
 
-        Returns (({ImageData: str}, [ImageData])):
+        Returns (({ImageData: Tuple[str,str]}, [ImageData])):
             Tuple of backup_tags and rollback_tags
         """
         backup_tags = {}
@@ -365,68 +368,51 @@ class PushDocker:
                             and existing_manifests[registry][e_repo][d_tag]
                         ):
                             man_arch_digs = existing_manifests[registry][e_repo][d_tag]
-                            amd64_mads = [
-                                m
-                                for m in cast(List[ManifestArchDigest], man_arch_digs)
-                                if m.arch == "amd64"
-                            ]
-                            v2list_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in cast(List[ManifestArchDigest], man_arch_digs)
-                                        if m.type_ == QuayClient.MANIFEST_LIST_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            v2s1_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in amd64_mads
-                                        if m.type_ == QuayClient.MANIFEST_V2S1_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            v2s2_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in amd64_mads
-                                        if m.type_ == QuayClient.MANIFEST_V2S2_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            for mad, digest_mask in zip(
-                                (v2s1_mad, v2s2_mad, v2list_mad), (1, 2, 3)
+                            if not all_arches:
+                                arch_mads = [
+                                    m
+                                    for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                    if m.arch == "amd64"
+                                ]
+                            else:
+                                arch_mads = cast(List[ManifestArchDigest], man_arch_digs)
+                            v2list_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [
+                                    m
+                                    for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                    if m.type_ == QuayClient.MANIFEST_LIST_TYPE
+                                ]
+                                or [None],
+                            )
+                            v2s1_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
+                                or [None],
+                            )
+                            v2s2_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
+                                or [None],
+                            )
+                            for mads, digest_mask in zip(
+                                (v2s1_mads, v2s2_mads, v2list_mads), (1, 2, 3)
                             ):
-                                if mad:
-                                    image_data = PushDocker.ImageData(
-                                        full_repo,
-                                        d_tag,
-                                        (
-                                            cast(ManifestArchDigest, v2list_mad).digest
-                                            if digest_mask == 3
-                                            else ""
-                                        ),
-                                        (
-                                            cast(ManifestArchDigest, v2s2_mad).digest
-                                            if digest_mask == 2
-                                            else ""
-                                        ),
-                                        (
-                                            cast(ManifestArchDigest, v2s1_mad).digest
-                                            if digest_mask == 1
-                                            else ""
-                                        ),
-                                    )
-                                    backup_tags[image_data] = json.loads(mad.manifest)
+                                if mads:
+                                    for mad in mads:
+                                        if not mad:
+                                            continue
+                                        image_data = PushDocker.ImageData(
+                                            full_repo,
+                                            d_tag,
+                                            (mad.digest if digest_mask == 3 else ""),
+                                            (mad.digest if digest_mask == 2 else ""),
+                                            (mad.digest if digest_mask == 1 else ""),
+                                        )
+                                        backup_tags[image_data] = (
+                                            json.loads(mad.manifest),
+                                            mad.arch,
+                                        )
                         else:
                             rollback_tags.append(
                                 PushDocker.ImageData(full_repo, d_tag, None, None, None)
@@ -595,7 +581,12 @@ class PushDocker:
         # Check if we may push to destination repos
         self.check_repos_validity(docker_push_items, self.hub, self.target_settings)
         # Generate resources for rollback in case there are errors during the push
-        backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
+        backup_tags, rollback_tags = self.generate_backup_mapping(
+            docker_push_items, all_arches=True
+        )
+        amd64_backup_tags = {k: bt[0] for k, bt in backup_tags.items() if bt[1] == "amd64"}
+        all_backup_tags = {k: bt[0] for k, bt in backup_tags.items()}
+
         existing_index_images = []
         iib_results = None
         successful_iib_results = dict()
@@ -728,7 +719,7 @@ class PushDocker:
                     LOG.error("There are failed push items. Cannot continue, running rollback.")
                 else:
                     LOG.error("Push of all index images failed, running rollback.")
-                self.rollback(backup_tags, rollback_tags)
+                self.rollback(amd64_backup_tags, rollback_tags)
                 sys.exit(1)
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
@@ -736,7 +727,7 @@ class PushDocker:
 
         # Remove old signatures
         # run generate backup mapping again to fetch new digests of pushed containers
-        backup_tags2, _ = self.generate_backup_mapping(docker_push_items)
+        backup_tags2, _ = self.generate_backup_mapping(docker_push_items, all_arches=True)
         # if new backup tag has differnet digest, it means it was overwritten during the push
         # and old signature should be removed. If the digest is the same it means, same item
         # was just repushed
@@ -746,7 +737,7 @@ class PushDocker:
         # Backup tags can contain new tags which were orignally rollback_tags
         # limit the comparision for outdated manifests to original backup_tags only
         for bt2 in backup_tags2.items():
-            if (bt2[0].tag, bt2[0].repo) in [(x.tag, x.repo) for x in backup_tags.keys()]:
+            if (bt2[0].tag, bt2[0].repo) in [(x.tag, x.repo) for x in all_backup_tags.keys()]:
                 backup_tags2_shared[bt2[0]] = bt2[1]
 
         for bt1, bt2 in zip(
