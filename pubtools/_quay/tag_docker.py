@@ -743,7 +743,6 @@ class TagDocker:
 
         cert, key = get_pyxis_ssl_paths(self.target_settings)
 
-        set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
         for signer in self.target_settings["signing"]:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
