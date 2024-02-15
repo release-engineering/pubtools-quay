@@ -190,6 +190,8 @@ class SignerWrapper:
     ) -> None:
         """Sign signing entries.
 
+        Entries are sent to signer in chunks of chunk_size size.
+
         Args:
             to_sign_entries (List[SignEntry]): list of entries to sign.
             task_id (str): optional identifier used in signing process.
