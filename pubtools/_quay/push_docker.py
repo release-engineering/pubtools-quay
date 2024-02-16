@@ -395,24 +395,33 @@ class PushDocker:
                                 [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
                                 or [None],
                             )
-                            for mads, digest_mask in zip(
-                                (v2s1_mads, v2s2_mads, v2list_mads), (1, 2, 3)
-                            ):
-                                if mads:
-                                    for mad in mads:
-                                        if not mad:
-                                            continue
-                                        image_data = PushDocker.ImageData(
-                                            full_repo,
-                                            d_tag,
-                                            (mad.digest if digest_mask == 3 else ""),
-                                            (mad.digest if digest_mask == 2 else ""),
-                                            (mad.digest if digest_mask == 1 else ""),
-                                        )
-                                        backup_tags[image_data] = (
-                                            json.loads(mad.manifest),
-                                            mad.arch,
-                                        )
+                            for mads in (v2s1_mads, v2s2_mads, v2list_mads):
+                                for mad in mads:
+                                    if not mad:
+                                        continue
+                                    image_data = PushDocker.ImageData(
+                                        full_repo,
+                                        d_tag,
+                                        (
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_LIST_TYPE
+                                            else ""
+                                        ),
+                                        (
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_V2S2_TYPE
+                                            else ""
+                                        ),
+                                        (
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_V2S1_TYPE
+                                            else ""
+                                        ),
+                                    )
+                                    backup_tags[image_data] = (
+                                        json.loads(mad.manifest),
+                                        mad.arch,
+                                    )
                         else:
                             rollback_tags.append(
                                 PushDocker.ImageData(full_repo, d_tag, None, None, None)
