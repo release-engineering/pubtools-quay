@@ -594,6 +594,8 @@ class PushDocker:
             docker_push_items, all_arches=True
         )
         amd64_backup_tags = {k: bt[0] for k, bt in backup_tags.items() if bt[1] == "amd64"}
+        # update backup_tags with also manifest_lists
+        amd64_backup_tags.update({k: bt[0] for k, bt in backup_tags.items() if k.v2list_digest})
         all_backup_tags = {k: bt[0] for k, bt in backup_tags.items()}
 
         existing_index_images = []
