@@ -199,10 +199,8 @@ class SignerWrapper:
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
         to_sign_chunks = []
-        # group entries by repo to keep consistent repo identifier in radas messages
-        for k, group in groupby(to_sign_entries, key=lambda x: x.repo):
-            # split group to chunk of chunk_size, fill shorter chunks with None
-            to_sign_chunks.extend(list(grouper(group, chunk_size)))
+        # split entries to chunk of chunk_size, fill shorter chunks with None
+        to_sign_chunks.extend(list(grouper(to_sign_entries, chunk_size)))
 
         with redirect_stdout(io.StringIO()):
             run_in_parallel(
