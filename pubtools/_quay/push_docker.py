@@ -353,9 +353,14 @@ class PushDocker:
             self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
         )
-        for item in push_items:
+        existing_manifests_for_items = run_in_parallel(
+            internal_item_processor.generate_existing_manifests_map,
+            [FData(args=[item]) for item in push_items],
+        )
+
+        for item, existing_manifests in zip(push_items, existing_manifests_for_items.values()):
             destination_tags = external_item_processor.generate_repo_dest_tag_map(item)
-            existing_manifests = internal_item_processor.generate_existing_manifests_map(item)
+
             for registry, repos in existing_manifests.items():
                 for e_repo, _ in repos.items():
                     full_repo = internal_item_processor.reference_processor.replace_repo(e_repo)
