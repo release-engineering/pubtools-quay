@@ -660,6 +660,6 @@ def item_processor_for_internal_data(
     return ItemProcesor(
         extractor=extractor,
         reference_processor=reference_processor,
-        reference_registries=[],
+        reference_registries=["quay.io"],
         source_registry=internal_registry,
     )
