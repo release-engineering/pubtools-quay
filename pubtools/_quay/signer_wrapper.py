@@ -2,7 +2,6 @@ import abc
 from contextlib import contextmanager, redirect_stdout
 import logging
 import pkg_resources
-from itertools import groupby
 import tempfile
 import json
 import io
