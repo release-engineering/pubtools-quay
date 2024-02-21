@@ -600,7 +600,6 @@ class PushDocker:
         iib_results = None
         successful_iib_results = dict()
         index_stamp = timestamp()
-
         item_processor = item_processor_for_external_data(
             self.src_quay_client,
             self.dest_registries,
@@ -612,7 +611,6 @@ class PushDocker:
             item_processor.generate_to_sign,
             [FData(args=(item,), kwargs={}) for item in docker_push_items],
         )
-
         for _to_sign_entries in to_sign_map.values():
             to_sign_entries.extend(_to_sign_entries)
 
@@ -634,6 +632,20 @@ class PushDocker:
         container_pusher.push_container_images()
 
         # Sign containers with signers which requires pushed containers in destination registry
+        to_sign_entries = []
+        item_processor = item_processor_for_internal_data(
+            self.src_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
+        )
+        to_sign_map = run_in_parallel(
+            item_processor.generate_to_sign,
+            [FData(args=(item,), kwargs={}) for item in docker_push_items],
+        )
+        for _to_sign_entries in to_sign_map.values():
+            to_sign_entries.extend(_to_sign_entries)
+
         for signer in self.target_settings["signing"]:
             if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
                 signercls = SIGNER_BY_LABEL[signer["label"]]

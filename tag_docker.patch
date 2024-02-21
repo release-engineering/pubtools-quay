@@ -1,0 +1,53 @@
+diff --git a/pubtools/_quay/tag_docker.py b/pubtools/_quay/tag_docker.py
+index 8e704a5..ee5b903 100644
+--- a/pubtools/_quay/tag_docker.py
++++ b/pubtools/_quay/tag_docker.py
+@@ -514,7 +514,10 @@ class TagDocker:
+         details = self.get_image_details(source_image, executor)
+         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
+ 
+-        if details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE and push_item.claims_signing_key:  # type: ignore # noqa: E501
++        if details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:  # type: ignore
++            raise ValueError("Tagging workflow is not supported for multiarch images")
++
++        if push_item.claims_signing_key:
+             for registry in registries:
+                 reference = external_image_schema.format(
+                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
+@@ -544,21 +547,27 @@ class TagDocker:
+                     continue
+                 outdated_manifests.append((mad.digest, tag, repo))
+ 
+-            for signer in self.target_settings["signing"]:
+-                if signer["enabled"]:
+-                    signercls = SIGNER_BY_LABEL[signer["label"]]
++            for _signer in self.target_settings["signing"]:
++                if _signer["enabled"]:
++                    signercls = SIGNER_BY_LABEL[_signer["label"]]
+                     signer = signercls(
+-                        config_file=signer["config_file"], settings=self.target_settings
++                        config_file=_signer["config_file"], settings=self.target_settings
+                     )
+-                    # exclude should be bool, and outdated manifests should be list?
+                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
+-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+-
+-        elif details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:  # type: ignore
+-            raise ValueError("Tagging workflow is not supported for multiarch images")
++                    if SIGNER_BY_LABEL[_signer["label"]].pre_push:
++                        signer.sign_containers(to_sign_entries, task_id=self.task_id)
+ 
+         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
+ 
++        if push_item.claims_signing_key:
++            for _signer in self.target_settings["signing"]:
++                if _signer["enabled"] and not SIGNER_BY_LABEL[_signer["label"]].pre_push:
++                    signercls = SIGNER_BY_LABEL[_signer["label"]]
++                    signer = signercls(
++                        config_file=_signer["config_file"], settings=self.target_settings
++                    )
++                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
++
+     def merge_manifest_lists_sign_images(
+         self, push_item: Any, tag: str, add_archs: list[str]
+     ) -> None:
