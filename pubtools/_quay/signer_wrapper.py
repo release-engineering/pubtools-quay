@@ -6,7 +6,7 @@ import tempfile
 import json
 import io
 
-from typing import Optional, List, Dict, Any, Tuple, Generator
+from typing import Optional, List, Dict, Any, Tuple, Generator, cast
 
 from marshmallow import Schema, fields, EXCLUDE
 
@@ -468,9 +468,9 @@ class CosignSignerWrapper(SignerWrapper):
             + f":{tag}"
         )
         existing_signatures = run_entrypoint(
-            ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
-            "pubtools-sign-cosign-container-list",
-            [full_reference],
+            ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            "pubtools-sign-cosign-signature-list",
+            [cast(str, self.config_file), full_reference],
             {},
         )
         if existing_signatures[0]:
