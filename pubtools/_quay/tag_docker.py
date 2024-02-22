@@ -564,7 +564,10 @@ class TagDocker:
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     if SIGNER_BY_LABEL[_signer["label"]].pre_push:
-                        signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                        signer.sign_containers(
+                            to_sign_entries,
+                            task_id=self.task_id,
+                        )
 
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
@@ -576,7 +579,10 @@ class TagDocker:
                     signer = signercls(
                         config_file=_signer["config_file"], settings=self.target_settings
                     )
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries,
+                        task_id=self.task_id,
+                    )
 
     def merge_manifest_lists_sign_images(
         self, push_item: Any, tag: str, add_archs: list[str]
@@ -659,7 +665,10 @@ class TagDocker:
                     )
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries,
+                        task_id=self.task_id,
+                    )
 
         raw_src_manifest = cast(
             str,
@@ -689,7 +698,10 @@ class TagDocker:
                         config_file=signer["config_file"], settings=self.target_settings
                     )
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries,
+                        task_id=self.task_id,
+                    )
 
     @classmethod
     def run_untag_images(

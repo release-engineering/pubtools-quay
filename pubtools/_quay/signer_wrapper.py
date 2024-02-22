@@ -6,12 +6,20 @@ import tempfile
 import json
 import io
 
+
 from typing import Optional, List, Dict, Any, Tuple, Generator
 
 from marshmallow import Schema, fields, EXCLUDE
 
 from .quay_api_client import QuayApiClient
-from .utils.misc import run_entrypoint, get_pyxis_ssl_paths, run_in_parallel, log_step, FData
+from .utils.misc import (
+    run_entrypoint,
+    get_pyxis_ssl_paths,
+    run_in_parallel,
+    log_step,
+    FData,
+    grouper,
+)
 from .item_processor import SignEntry
 
 
@@ -33,6 +41,8 @@ class MsgSignerSettingsSchema(Schema):
     pyxis_ssl_crtfile = fields.String(required=False)
     pyxis_ssl_keyfile = fields.String(required=False)
     num_thread_pyxis = fields.Integer(required=False, default=7)
+    signing_chunk_size = fields.Integer(required=False, default=100)
+    signing_parallelism = fields.Integer(required=False, default=10)
 
 
 class SignerWrapper:
@@ -115,40 +125,49 @@ class SignerWrapper:
         """
         return {}
 
-    def sign_container(
+    def sign_container_chunk(
         self,
-        sign_entry: SignEntry,
+        sign_entries: List[SignEntry],
         task_id: Optional[str] = None,
     ) -> None:
-        """Sign a specific reference and digest with given signing key.
+        """Sign a specific chunk of references and digests with given signing key.
 
         Args:
-            sign_entry (SignEntry): SignEntry to sign.
+            sign_entries (List[SignEntry]): Chunk of SignEntry to sign.
             task_id (str): Task ID to identify the signing task if needed.
         """
-        LOG.debug(
-            "Signing container %s %s %s",
-            sign_entry.reference,
-            sign_entry.digest,
-            sign_entry.signing_key,
-        )
+        for sign_entry in sign_entries:
+            # in the case of last chunk, None is set to fill value to fit the chunk size
+            # Therefore skip if that presents
+            if not sign_entry:
+                break
+            LOG.debug(
+                "Signing container %s %s %s",
+                sign_entry.reference,
+                sign_entry.digest,
+                sign_entry.signing_key,
+            )
+        sign_entry = sign_entries[0]
         opt_args = self.sign_container_opt_args(sign_entry, task_id)
         signed = self.entry_point(
             config_file=self.config_file,
             signing_key=sign_entry.signing_key,
-            reference=[sign_entry.reference],
-            digest=[sign_entry.digest],
+            reference=[x.reference for x in sign_entries if x],
+            digest=[x.digest for x in sign_entries if x],
             **opt_args,
         )
         if signed["signer_result"]["status"] != "ok":
             raise SigningError(signed["signer_result"]["error_message"])
-        LOG.info(
-            "Signed %s(%s) with %s in %s",
-            sign_entry.reference,
-            sign_entry.digest,
-            sign_entry.signing_key,
-            self.label,
-        )
+        for sign_entry in sign_entries:
+            if not sign_entry:
+                break
+            LOG.info(
+                "Signed %s(%s) with %s in %s",
+                sign_entry.reference,
+                sign_entry.digest,
+                sign_entry.signing_key,
+                self.label,
+            )
         self._store_signed(signed)
 
     def _filter_to_sign(self, to_sign_entries: List[SignEntry]) -> List[SignEntry]:
@@ -164,9 +183,13 @@ class SignerWrapper:
 
     @log_step("Sign container images")
     def sign_containers(
-        self, to_sign_entries: List[SignEntry], task_id: Optional[str] = None, parallelism: int = 10
+        self,
+        to_sign_entries: List[SignEntry],
+        task_id: Optional[str] = None,
     ) -> None:
         """Sign signing entries.
+
+        Entries are sent to signer in chunks of chunk_size size.
 
         Args:
             to_sign_entries (List[SignEntry]): list of entries to sign.
@@ -174,20 +197,28 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
+        to_sign_chunks = []
+        # split entries to chunk of chunk_size, fill shorter chunks with None
+        to_sign_chunks.extend(
+            list(grouper(to_sign_entries, self.settings.get("signing_chunk_size", 100)))
+        )
+
         with redirect_stdout(io.StringIO()):
             run_in_parallel(
-                self.sign_container,
+                self.sign_container_chunk,
                 [
                     FData(args=x)
                     for x in zip(
-                        to_sign_entries,
+                        to_sign_chunks,
                         [
-                            str(task_id) + "-" + str(z % parallelism)
-                            for z in range(len(to_sign_entries))
+                            str(task_id)
+                            + "-"
+                            + str(z % self.settings.get("signing_parallelism", 7))
+                            for z in range(len(to_sign_chunks))
                         ],
                     )
                 ],
-                parallelism,
+                self.settings.get("signing_parallelism", 7),
             )
 
     def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
@@ -437,6 +468,8 @@ class CosignSignerSettingsSchema(Schema):
     quay_namespace = fields.String(required=True)
     quay_host = fields.String(required=True)
     dest_quay_api_token = fields.String(required=True)
+    signing_chunk_size = fields.Integer(required=False, default=100)
+    signing_parallelism = fields.Integer(required=False, default=10)
 
 
 class CosignSignerWrapper(SignerWrapper):
@@ -506,6 +539,7 @@ class CosignSignerWrapper(SignerWrapper):
                 [],
             )
         )
+
         to_remove = []
         for existing_signature in existing_signatures:
             if (
