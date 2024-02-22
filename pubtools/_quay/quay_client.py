@@ -177,7 +177,7 @@ class QuayClient:
                 "data": cast(str, manifest),
             }
         else:
-            manifest_type = cast(ManifestList, manifest)["mediaType"]
+            manifest_type = QuayClient.MANIFEST_LIST_TYPE
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
                 "data": json.dumps(cast(ManifestList, manifest), sort_keys=True, indent=4),
