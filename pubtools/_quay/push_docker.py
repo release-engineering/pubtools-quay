@@ -356,6 +356,7 @@ class PushDocker:
         existing_manifests_for_items = run_in_parallel(
             internal_item_processor.generate_existing_manifests_map,
             [FData(args=[item]) for item in push_items],
+            threads=5,
         )
 
         for item, existing_manifests in zip(push_items, existing_manifests_for_items.values()):
