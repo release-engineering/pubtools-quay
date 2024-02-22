@@ -41,6 +41,8 @@ class MsgSignerSettingsSchema(Schema):
     pyxis_ssl_crtfile = fields.String(required=False)
     pyxis_ssl_keyfile = fields.String(required=False)
     num_thread_pyxis = fields.Integer(required=False, default=7)
+    signing_chunk_size = fields.Integer(required=False, default=100)
+    signing_parallelism = fields.Integer(required=False, default=10)
 
 
 class SignerWrapper:
@@ -184,8 +186,6 @@ class SignerWrapper:
         self,
         to_sign_entries: List[SignEntry],
         task_id: Optional[str] = None,
-        parallelism: int = 10,
-        chunk_size: int = 10,
     ) -> None:
         """Sign signing entries.
 
@@ -199,7 +199,9 @@ class SignerWrapper:
         to_sign_entries = self._filter_to_sign(to_sign_entries)
         to_sign_chunks = []
         # split entries to chunk of chunk_size, fill shorter chunks with None
-        to_sign_chunks.extend(list(grouper(to_sign_entries, chunk_size)))
+        to_sign_chunks.extend(
+            list(grouper(to_sign_entries, self.settings.get("signing_chunk_size", 100)))
+        )
 
         with redirect_stdout(io.StringIO()):
             run_in_parallel(
@@ -209,12 +211,14 @@ class SignerWrapper:
                     for x in zip(
                         to_sign_chunks,
                         [
-                            str(task_id) + "-" + str(z % parallelism)
+                            str(task_id)
+                            + "-"
+                            + str(z % self.settings.get("signing_parallelism", 7))
                             for z in range(len(to_sign_chunks))
                         ],
                     )
                 ],
-                parallelism,
+                self.settings.get("signing_parallelism", 7),
             )
 
     def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
@@ -464,6 +468,8 @@ class CosignSignerSettingsSchema(Schema):
     quay_namespace = fields.String(required=True)
     quay_host = fields.String(required=True)
     dest_quay_api_token = fields.String(required=True)
+    signing_chunk_size = fields.Integer(required=False, default=100)
+    signing_parallelism = fields.Integer(required=False, default=10)
 
 
 class CosignSignerWrapper(SignerWrapper):

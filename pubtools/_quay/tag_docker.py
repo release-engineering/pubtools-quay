@@ -567,7 +567,6 @@ class TagDocker:
                         signer.sign_containers(
                             to_sign_entries,
                             task_id=self.task_id,
-                            chunk_size=self.target_settings.get("signing_chunk_size", 10),
                         )
 
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
@@ -583,7 +582,6 @@ class TagDocker:
                     signer.sign_containers(
                         to_sign_entries,
                         task_id=self.task_id,
-                        chunk_size=self.target_settings.get("signing_chunk_size", 10),
                     )
 
     def merge_manifest_lists_sign_images(
@@ -670,7 +668,6 @@ class TagDocker:
                     signer.sign_containers(
                         to_sign_entries,
                         task_id=self.task_id,
-                        chunk_size=self.target_settings.get("signing_chunk_size", 10),
                     )
 
         raw_src_manifest = cast(
@@ -704,7 +701,6 @@ class TagDocker:
                     signer.sign_containers(
                         to_sign_entries,
                         task_id=self.task_id,
-                        chunk_size=self.target_settings.get("signing_chunk_size", 10),
                     )
 
     @classmethod
