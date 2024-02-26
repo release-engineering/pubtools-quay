@@ -155,3 +155,21 @@ def test_reference_processor_external_repo():
         ReferenceProcessorExternal().full_reference("registry", "namespace/repo", None)
         == "registry/namespace/repo"
     )
+
+
+def test_generate_existing_manifest_map_tolerate_429(operator_signing_push_item):
+    rp = ReferenceProcessorExternal()
+    mock_client = mock.MagicMock()
+    mock_client.get_manifest.side_effect = HTTPError(response=mock.MagicMock(status_code=429))
+    ip = ItemProcesor(
+        source_registry="test-registry.io",
+        reference_registries=["dest-registry.io"],
+        reference_processor=rp,
+        extractor=ContentExtractor(quay_client=mock_client),
+    )
+    assert ip.generate_existing_manifests_map(operator_signing_push_item) == {
+        "test-registry.io": {
+            "repo1": {"latest-test-tag": None, "1.0": None},
+            "repo2": {"tag2": None},
+        }
+    }
