@@ -611,9 +611,9 @@ def test_task_iib_add_bundles_operator_ns(
                 {},
             ),
             mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                "pubtools-sign-cosign-signature-list",
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
                 {},
             ),
         ]
@@ -1021,9 +1021,9 @@ def test_task_iib_build_from_scratch(
                 {},
             ),
             mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                "pubtools-sign-cosign-signature-list",
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
                 {},
             ),
         ]
@@ -1343,9 +1343,9 @@ def test_task_iib_build_from_scratch_operator_ns(
                 {},
             ),
             mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                "pubtools-sign-cosign-signature-list",
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-container-list"),
+                "pubtools-sign-cosign-container-list",
+                ["quay.io//some-namespace/operators----index-image:8"],
                 {},
             ),
         ]
