@@ -296,7 +296,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                     ],
                     task_id="1-0",
-                    repo="target/repo",
                 ),
                 # cosign
                 mock.call(
@@ -332,7 +331,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                     ],
                     digest=["sha256:5555555555", "sha256:5555555555"],
                     task_id="1-0",
-                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -343,7 +341,6 @@ def test_push_docker_multiarch_merge_ml_operator(
                     ],
                     digest=["sha256:5555555555", "sha256:5555555555"],
                     task_id="1-0",
-                    repo="operators/index-image",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -476,7 +473,6 @@ def test_push_docker_multiarch_simple_workflow(
                         "sha256:5555555555",
                     ],
                     task_id="1-0",
-                    repo="target/repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -628,7 +624,6 @@ def test_push_docker_source(
                     ],
                     digest=["fake-digest-0", "fake-digest-0"],
                     task_id="1-0",
-                    repo="target/repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -800,7 +795,6 @@ def test_tag_docker_multiarch_merge_ml(
                         "sha256:5555555555",
                     ],
                     task_id="1-0",
-                    repo="namespace/test_repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -1001,7 +995,6 @@ def test_tag_docker_source_copy_untag(
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
                     ],
                     task_id="1-0",
-                    repo="namespace/test_repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -1278,7 +1271,6 @@ def test_task_iib_add_bundles(
                         "sha256:5555555555",
                     ],
                     task_id="1-0",
-                    repo="operators/index-image",
                 ),
                 # cosign
                 mock.call(
@@ -1391,7 +1383,6 @@ def test_task_iib_remove_operators(
                     "sha256:5555555555",
                 ],
                 task_id="1-0",
-                repo="operators/index-image",
             ),
             # cosign
             mock.call(
@@ -1784,7 +1775,6 @@ def test_push_docker_operator_verify_bundle_fail(
                         "sha256:5555555555",
                     ],
                     task_id="1-0",
-                    repo="target/repo",
                 ),
                 mock.call(
                     config_file="test-config.yml",
