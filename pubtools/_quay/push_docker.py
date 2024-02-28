@@ -727,8 +727,10 @@ class PushDocker:
             # Rollback only when all index image builds fails or there are failed items
             # Empty iib_results is not an error and shouldn't fail the push. The only exception is
             # when bundles presence check failed.
-            if (iib_results or bundles_presence_check_failed) and (
-                not any([x["iib_result"] for x in iib_results.values()]) or failed_items
+            if (
+                (iib_results or bundles_presence_check_failed)
+                and (not any([x["iib_result"] for x in iib_results.values()]))
+                or failed_items
             ):
                 if failed_items:
                     LOG.error("There are failed push items. Cannot continue, running rollback.")
