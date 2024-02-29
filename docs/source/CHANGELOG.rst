@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.17.0 (2024-02-27)
+------------------
+
+* Should not call IIB if bundle is opted in fbc and targets OCP >=4.11
+
+
 0.16.0 (2024-02-08)
 -------------------
 
