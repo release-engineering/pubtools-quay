@@ -515,6 +515,7 @@ class TagDocker:
         )
 
         to_sign_entries = []
+        to_sign_entries_internal = []
         current_signatures: list[Any] = []
         details = self.get_image_details(source_image, executor)
         if not details:
@@ -524,6 +525,19 @@ class TagDocker:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         if push_item.claims_signing_key:
+            # add entries in internal format for cosign
+            to_sign_entries_internal.append(
+                SignEntry(
+                    repo=repo,
+                    reference="quay.io/"
+                    + get_internal_container_repo_name(list(push_item.repos.keys())[0])
+                    + ":"
+                    + tag,
+                    digest=details.digest,
+                    signing_key=push_item.claims_signing_key,
+                    arch="amd64",
+                )
+            )
             for registry in registries:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -580,7 +594,7 @@ class TagDocker:
                         config_file=_signer["config_file"], settings=self.target_settings
                     )
                     signer.sign_containers(
-                        to_sign_entries,
+                        to_sign_entries_internal,
                         task_id=self.task_id,
                     )
 
