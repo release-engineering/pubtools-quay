@@ -165,7 +165,7 @@ def test_generate_existing_manifest_map_tolerate_429(operator_signing_push_item)
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
         reference_processor=rp,
-        extractor=ContentExtractor(quay_client=mock_client),
+        extractor=ContentExtractor(quay_client=mock_client, sleep_time=0),
     )
     assert ip.generate_existing_manifests_map(operator_signing_push_item) == {
         "test-registry.io": {
