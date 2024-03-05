@@ -263,7 +263,7 @@ class MsgSignerWrapper(SignerWrapper):
         Returns:
             dict: Optional arguments for signing a container.
         """
-        return {k: v for k, v in [("task_id", task_id), ("repo", sign_entry.repo)] if v is not None}
+        return {k: v for k, v in [("task_id", task_id)] if v is not None}
 
     @contextmanager
     def _save_signatures_file(self, signatures: List[Dict[str, Any]]) -> Generator[Any, None, None]:
