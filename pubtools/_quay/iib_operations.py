@@ -79,6 +79,7 @@ def _index_image_to_sign_entries(
     dest_tags: list[str],
     signing_keys: list[str],
     target_settings: dict[str, Any],
+    internal: bool = False,
 ) -> list[SignEntry]:
     """Generate entries to sign.
 
@@ -90,10 +91,18 @@ def _index_image_to_sign_entries(
         dest_tags (List[str]): Destination tags.
         index_stamp (str): Index stamp.
         signing_keys (list): List of signing keys.
+        internal (bool): indicates if to sign registries should be generated with iternal/external
+            reference
     """
     iib_repo = target_settings["quay_operator_repository"]
     dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
     dest_registries = dest_registries if isinstance(dest_registries, list) else [dest_registries]
+    if internal:
+        dest_registries = ["quay.io"]
+        iib_repo = (
+            target_settings["quay_namespace"] + "/" + get_internal_container_repo_name(iib_repo)
+        )
+
     dest_operator_quay_client = _get_operator_quay_client(target_settings)
     manifest_list = cast(
         ManifestList,
@@ -164,7 +173,7 @@ def _sign_index_image(
         list: List of current signatures.
     """
     to_sign_entries = _index_image_to_sign_entries(
-        built_index_image, dest_tags, signing_keys, target_settings
+        built_index_image, dest_tags, signing_keys, target_settings, internal=not pre_push
     )
     current_signatures: list[tuple[str, str, str]] = [
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
