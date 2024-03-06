@@ -8,6 +8,7 @@ import base64
 from dataclasses import dataclass
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
+from typing import Any
 
 from .quay_client import QuayClient
 from .utils.misc import get_internal_container_repo_name, log_step
@@ -48,11 +49,12 @@ class SecurityManifestPusher:
         self.cosign_public_key_path = self.target_settings["cosign_public_key_path"]
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._src_quay_client = None
-        self._dest_quay_api_client = None
+        self._src_quay_client: QuayClient | None = None
+        self._dest_quay_client: QuayClient | None = None
+        self._dest_quay_api_client: QuayApiClient | None = None
 
     @property
-    def src_quay_client(self):
+    def src_quay_client(self) -> QuayClient:
         """Create and access QuayClient for source image."""
         if self._src_quay_client is None:
             self._src_quay_client = QuayClient(
@@ -63,7 +65,18 @@ class SecurityManifestPusher:
         return self._src_quay_client
 
     @property
-    def dest_quay_api_client(self):
+    def dest_quay_client(self) -> QuayClient:
+        """Create and access QuayClient for dest image."""
+        if self._dest_quay_client is None:
+            self._dest_quay_client = QuayClient(
+                self.target_settings["dest_quay_user"],
+                self.target_settings["dest_quay_password"],
+                self.quay_host,
+            )
+        return self._dest_quay_client
+
+    @property
+    def dest_quay_api_client(self) -> QuayApiClient:
         """Create and access QuayApiClient for dest image."""
         if self._dest_quay_api_client is None:
             self._dest_quay_api_client = QuayApiClient(
@@ -373,8 +386,6 @@ class SecurityManifestPusher:
             destination_repos ([str]):
                 Destination paths (without a tag) where the attestation will be pushed.
             dir_path (str):
-                Directory path where artifacts will be created.
-
         """
         if item.metadata.get("product_name"):
             products = set([item.metadata["product_name"]])
@@ -431,6 +442,91 @@ class SecurityManifestPusher:
                 self.target_settings.get("cosign_rekor_url", None),
                 self.target_settings.get("cosign_sbom_skip_upload_rekor", False),
             )
+
+    def push_manifest_list_security_manifests(self, item: Any, dir_path: str) -> None:
+        """
+        Push all arch attestations to the manifest list digests of all destinations.
+
+        This ensures that getting an attestation of an images specified via tag returns a result.
+        The result will be all arch attestations in a JSONL format.
+
+        Since manifest list merging workflow is enabled, the multiarch destination tags may have
+        various digests and archs. Inspect each destination tag to determine which arch attestations
+        are needed and what is the ML digest.
+
+        Args:
+            item (PushItem):
+                Push Item to proccess
+            dir_path (str):
+                Directory path where artifacts will be created.
+        """
+        repo_schema = "{host}/{namespace}/{repo}"
+        for repo, tags in sorted(item.metadata["tags"].items()):
+            internal_repo = get_internal_container_repo_name(repo)
+            dest_repo = repo_schema.format(
+                host=self.quay_host,
+                namespace=self.target_settings["quay_namespace"],
+                repo=internal_repo,
+            )
+
+            for tag in tags:
+                dest_ref = f"{dest_repo}:{tag}"
+                LOG.info(f"Creating multiarch attestation for {dest_ref}")
+                dest_digest = self.dest_quay_client.get_manifest_digest(
+                    dest_ref, self.dest_quay_client.MANIFEST_LIST_TYPE
+                )
+                dest_digest_ref = f"{dest_repo}@{dest_digest}"
+                # If the image somehow doesn't contain a ML, an error is raised
+                dest_ml = self.dest_quay_client.get_manifest(
+                    dest_ref, media_type=self.dest_quay_client.MANIFEST_LIST_TYPE
+                )
+
+                tag_attestations = []
+                # All arch attestations are already created, gather them
+                for manifest in dest_ml["manifests"]:
+                    arch_ref = f"{dest_repo}@{manifest['digest']}"
+                    attestation_file = os.path.join(
+                        dir_path, f"attestation_{uuid.uuid4().hex}.json"
+                    )
+                    arch_attestation_exist = self.cosign_get_existing_attestation(
+                        arch_ref,
+                        attestation_file,
+                        self.target_settings.get("cosign_rekor_url", None),
+                        self.target_settings.get("cosign_sbom_skip_verify_rekor", False),
+                    )
+                    if not arch_attestation_exist:
+                        raise ValueError(
+                            f"Arch image {arch_ref} that is a part of {dest_ref} "
+                            "doesn't have an attestation"
+                        )
+                    tag_attestations.append(attestation_file)
+
+                attestation_file = os.path.join(dir_path, f"attestation_{uuid.uuid4().hex}.json")
+                ml_attestation_exist = self.cosign_get_existing_attestation(
+                    dest_digest_ref,
+                    attestation_file,
+                    self.target_settings.get("cosign_rekor_url", None),
+                    self.target_settings.get("cosign_sbom_skip_verify_rekor", False),
+                )
+                # Trying to determine if a multiarch attestation has changed by the new push is
+                # too complicated. Let's always remove it and replace it by a new one, even if
+                # there are no meaningful changes.
+                if ml_attestation_exist:
+                    LOG.info(
+                        f"Multiarch image {dest_ref} already has an attestation. "
+                        "It will be replaced by a new attestation containing updated information."
+                    )
+                    self.delete_existing_attestation(dest_digest_ref, dir_path)
+
+                for attestation_path in tag_attestations:
+                    # calling attest multiple times on the same image will append new attestations
+                    # which creates JSONL
+                    self.cosign_attest_security_manifest(
+                        attestation_path,
+                        dest_digest_ref,
+                        self.target_settings.get("cosign_rekor_url", None),
+                        self.target_settings.get("cosign_sbom_skip_upload_rekor", False),
+                    )
 
     def get_source_item_security_manifests(
         self, item: object, dir_path: str
@@ -556,6 +652,9 @@ class SecurityManifestPusher:
                 self.merge_and_push_security_manifest(
                     item, digest_manifest, destination_repos, tmp_dir
                 )
+
+            if is_multiach_image:
+                self.push_manifest_list_security_manifests(item, tmp_dir)
 
     @log_step("Push container security manifests")
     def push_security_manifests(self):
