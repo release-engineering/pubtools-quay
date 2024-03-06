@@ -741,6 +741,153 @@ def test_merge_and_push_security_manifest_no_product_no_existing_attestation(
 
 
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.delete_existing_attestation"
+)
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_attest_security_manifest"
+)
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_existing_attestation"
+)
+@mock.patch("uuid.uuid4")
+@mock.patch("pubtools._quay.security_manifest_pusher.QuayClient")
+def test_push_manifest_list_security_manifests(
+    mock_quay_client,
+    mock_uuid,
+    mock_get_attestation,
+    mock_attest,
+    mock_delete_attestation,
+    target_settings,
+    manifest_list_data,
+    container_multiarch_push_item,
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_get_attestation.return_value = True
+    mock_quay_client.return_value.get_manifest_digest.return_value = "sha256:abcdef"
+    mock_quay_client.return_value.get_manifest.return_value = manifest_list_data
+    mock_uuid.return_value.hex = "abcd"
+
+    pusher.push_manifest_list_security_manifests(
+        container_multiarch_push_item,
+        "/some",
+    )
+
+    mock_quay_client.return_value.get_manifest_digest.assert_called_once_with(
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        mock_quay_client.return_value.MANIFEST_LIST_TYPE,
+    )
+    mock_quay_client.return_value.get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        media_type=mock_quay_client.return_value.MANIFEST_LIST_TYPE,
+    )
+
+    assert mock_get_attestation.call_count == 6
+    assert mock_get_attestation.call_args_list[0] == mock.call(
+        "quay.io/some-namespace/target----repo@"
+        "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    assert mock_get_attestation.call_args_list[1] == mock.call(
+        "quay.io/some-namespace/target----repo@"
+        "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    assert mock_get_attestation.call_args_list[2] == mock.call(
+        "quay.io/some-namespace/target----repo@"
+        "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    assert mock_get_attestation.call_args_list[3] == mock.call(
+        "quay.io/some-namespace/target----repo@"
+        "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    assert mock_get_attestation.call_args_list[4] == mock.call(
+        "quay.io/some-namespace/target----repo@"
+        "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    assert mock_get_attestation.call_args_list[5] == mock.call(
+        "quay.io/some-namespace/target----repo@sha256:abcdef",
+        "/some/attestation_abcd.json",
+        "https://some-rekor.com",
+        False,
+    )
+    mock_delete_attestation.assert_called_once_with(
+        "quay.io/some-namespace/target----repo@sha256:abcdef", "/some"
+    )
+
+    assert mock_attest.call_count == 5
+    assert mock_attest.call_args_list[0] == mock.call(
+        "/some/attestation_abcd.json",
+        "quay.io/some-namespace/target----repo@sha256:abcdef",
+        "https://some-rekor.com",
+        False,
+    )
+
+
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.delete_existing_attestation"
+)
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_attest_security_manifest"
+)
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_existing_attestation"
+)
+@mock.patch("uuid.uuid4")
+@mock.patch("pubtools._quay.security_manifest_pusher.QuayClient")
+def test_push_manifest_list_security_manifests_arch_att_not_exist(
+    mock_quay_client,
+    mock_uuid,
+    mock_get_attestation,
+    mock_attest,
+    mock_delete_attestation,
+    target_settings,
+    manifest_list_data,
+    container_multiarch_push_item,
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_get_attestation.side_effect = [True, True, False]
+    mock_quay_client.return_value.get_manifest_digest.return_value = "sha256:abcdef"
+    mock_quay_client.return_value.get_manifest.return_value = manifest_list_data
+    mock_uuid.return_value.hex = "abcd"
+
+    with pytest.raises(ValueError, match=".*doesn't have an attestation.*"):
+        pusher.push_manifest_list_security_manifests(
+            container_multiarch_push_item,
+            "/some",
+        )
+
+    mock_quay_client.return_value.get_manifest_digest.assert_called_once_with(
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        mock_quay_client.return_value.MANIFEST_LIST_TYPE,
+    )
+    mock_quay_client.return_value.get_manifest.assert_called_once_with(
+        "quay.io/some-namespace/target----repo:latest-test-tag",
+        media_type=mock_quay_client.return_value.MANIFEST_LIST_TYPE,
+    )
+
+    assert mock_get_attestation.call_count == 3
+    mock_delete_attestation.assert_not_called()
+    mock_attest.assert_not_called()
+
+
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_security_manifest"
 )
 @mock.patch("uuid.uuid4")
@@ -928,6 +1075,10 @@ def test_get_multiarch_item_security_manifests_some_present(
 @mock.patch("tempfile.TemporaryDirectory")
 @mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
+    "push_manifest_list_security_manifests"
+)
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "merge_and_push_security_manifest"
 )
 @mock.patch(
@@ -944,6 +1095,7 @@ def test_push_item_security_manifest_source_image(
     mock_get_multiarch,
     mock_get_source,
     mock_merge_and_push,
+    mock_push_ml_security_manifests,
     mock_tmpdir,
     target_settings,
     container_source_push_item,
@@ -968,9 +1120,14 @@ def test_push_item_security_manifest_source_image(
         ["quay.io/some-namespace/target----repo"],
         mock_tmpdir.return_value.__enter__.return_value,
     )
+    mock_push_ml_security_manifests.assert_not_called()
 
 
 @mock.patch("tempfile.TemporaryDirectory")
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
+    "push_manifest_list_security_manifests"
+)
 @mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "merge_and_push_security_manifest"
@@ -989,6 +1146,7 @@ def test_push_item_security_manifest_multiarch_image(
     mock_get_multiarch,
     mock_get_source,
     mock_merge_and_push,
+    mock_push_ml_security_manifests,
     mock_tmpdir,
     target_settings,
     container_multiarch_push_item,
@@ -1027,8 +1185,17 @@ def test_push_item_security_manifest_multiarch_image(
         mock_tmpdir.return_value.__enter__.return_value,
     )
 
+    mock_push_ml_security_manifests.assert_called_once_with(
+        container_multiarch_push_item,
+        "tmp/path",
+    )
+
 
 @mock.patch("tempfile.TemporaryDirectory")
+@mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
+    "push_manifest_list_security_manifests"
+)
 @mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "merge_and_push_security_manifest"
@@ -1047,6 +1214,7 @@ def test_push_item_security_manifest_v2s1_image(
     mock_get_multiarch,
     mock_get_source,
     mock_merge_and_push,
+    mock_push_ml_security_manifests,
     mock_tmpdir,
     target_settings,
     container_multiarch_push_item,
@@ -1066,6 +1234,7 @@ def test_push_item_security_manifest_v2s1_image(
     mock_get_source.assert_not_called()
     mock_get_multiarch.assert_not_called()
     mock_merge_and_push.assert_not_called()
+    mock_push_ml_security_manifests.assert_not_called()
 
 
 @mock.patch("pubtools._quay.security_manifest_pusher.LocalExecutor")
