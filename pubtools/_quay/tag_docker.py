@@ -530,6 +530,8 @@ class TagDocker:
                 SignEntry(
                     repo=repo,
                     reference="quay.io/"
+                    + self.target_settings["quay_namespace"]
+                    + "/"
                     + get_internal_container_repo_name(list(push_item.repos.keys())[0])
                     + ":"
                     + tag,
@@ -641,7 +643,22 @@ class TagDocker:
         outdated_manifests = []
         if push_item.claims_signing_key:
             to_sign_entries = []
+            to_sign_entries_internal = []
             for manifest in new_manifest_list["manifests"]:
+                to_sign_entries_internal.append(
+                    SignEntry(
+                        repo=list(push_item.repos.keys())[0],
+                        reference="quay.io/"
+                        + self.target_settings["quay_namespace"]
+                        + "/"
+                        + internal_repo
+                        + ":"
+                        + tag,
+                        digest=manifest["digest"],
+                        arch=manifest["platform"]["architecture"],
+                        signing_key=push_item.claims_signing_key,
+                    )
+                )
                 for registry in dest_registries:
                     reference = external_image_schema.format(
                         host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -680,7 +697,7 @@ class TagDocker:
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(
-                        to_sign_entries,
+                        to_sign_entries if signercls.pre_push else to_sign_entries_internal,
                         task_id=self.task_id,
                     )
 
