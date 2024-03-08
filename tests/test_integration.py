@@ -775,15 +775,11 @@ def test_tag_docker_multiarch_merge_ml(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=[
-                        "some-registry1.com/namespace/test_repo:v1.6",
-                        "some-registry2.com/namespace/test_repo:v1.6",
-                        "some-registry1.com/namespace/test_repo:v1.6",
-                        "some-registry2.com/namespace/test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
                     ],
                     digest=[
                         "sha256:1111111111",
-                        "sha256:1111111111",
-                        "sha256:5555555555",
                         "sha256:5555555555",
                     ],
                 ),

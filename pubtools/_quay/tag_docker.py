@@ -697,7 +697,7 @@ class TagDocker:
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(
-                        to_sign_entries if signercls.pre_push else to_sign_entries_internal,
+                        to_sign_entries,
                         task_id=self.task_id,
                     )
 
@@ -730,7 +730,7 @@ class TagDocker:
                     )
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     signer.sign_containers(
-                        to_sign_entries,
+                        to_sign_entries_internal,
                         task_id=self.task_id,
                     )
 
