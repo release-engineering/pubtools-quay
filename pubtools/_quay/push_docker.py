@@ -543,11 +543,30 @@ class PushDocker:
         current_signatures = []
         to_sign_new_entries = self.fetch_missing_push_items_digests(docker_push_items)
         to_sign_entries = []
-        for _, repo_tags in to_sign_new_entries.items():
+        to_sign_entries_internal = []
+        for internal_reg, repo_tags in to_sign_new_entries.items():
             for repo, tag_digests in repo_tags.items():
                 for tag, digests in tag_digests.items():
                     for type_, digest_key in digests.items():
                         digest, key = digest_key
+                        reference = (
+                            f"{internal_reg}/"
+                            + self.target_settings["quay_namespace"]
+                            + "/"
+                            + get_internal_container_repo_name(repo)
+                            + ":"
+                            + tag
+                        )
+                        # add entries in internal format for cosign
+                        to_sign_entries_internal.append(
+                            SignEntry(
+                                reference=reference,
+                                repo=repo,
+                                digest=digest,
+                                signing_key=key,
+                                arch="amd64",
+                            )
+                        )
                         for registry in self.dest_registries:
                             reference = f"{registry}/{repo}:{tag}"
                             to_sign_entries.append(
@@ -565,7 +584,11 @@ class PushDocker:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                signer.sign_containers(to_sign_entries, self.task_id)
+                if signercls.pre_push is True:
+                    signer.sign_containers(to_sign_entries, self.task_id)
+                else:
+                    signer.sign_containers(to_sign_entries_internal, self.task_id)
+
         return current_signatures
 
     def run(self) -> None:

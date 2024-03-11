@@ -606,11 +606,8 @@ def test_push_docker_source(
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="fake-sign-key",
-                    reference=[
-                        "some-registry1.com/target/repo:latest-test-tag",
-                        "some-registry2.com/target/repo:latest-test-tag",
-                    ],
-                    digest=["fake-digest-0", "fake-digest-0"],
+                    reference=["quay.io/some-namespace/target----repo:latest-test-tag"],
+                    digest=["fake-digest-0"],
                 ),
             ]
         )
@@ -778,15 +775,11 @@ def test_tag_docker_multiarch_merge_ml(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=[
-                        "some-registry1.com/namespace/test_repo:v1.6",
-                        "some-registry2.com/namespace/test_repo:v1.6",
-                        "some-registry1.com/namespace/test_repo:v1.6",
-                        "some-registry2.com/namespace/test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
                     ],
                     digest=[
                         "sha256:1111111111",
-                        "sha256:1111111111",
-                        "sha256:5555555555",
                         "sha256:5555555555",
                     ],
                 ),
@@ -978,11 +971,9 @@ def test_tag_docker_source_copy_untag(
                     config_file="test-config.yml",
                     signing_key="some-key",
                     reference=[
-                        "some-registry1.com/namespace/test_repo:v1.6",
-                        "some-registry2.com/namespace/test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
                     ],
                     digest=[
-                        "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
                     ],
                 ),
