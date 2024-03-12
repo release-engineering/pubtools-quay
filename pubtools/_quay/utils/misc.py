@@ -10,7 +10,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Iterable, Any, Callable, Dict, Generator, cast
+from typing import Iterable, Any, Callable, Dict, Generator, cast, Optional
 
 
 from concurrent import futures
@@ -136,7 +136,10 @@ def capture_stdout() -> Generator[StringIO, None, None]:
 
 @contextlib.contextmanager
 def setup_entry_point_cli(
-    entry_tuple: tuple[str, str, str], name: str, args: list[str], environ_vars: dict[str, Any]
+    entry_tuple: tuple[str, str, str],
+    name: Optional[str],
+    args: list[str],
+    environ_vars: dict[str, Any],
 ) -> Generator[Callable[[], Any], None, None]:
     """
     Set up an entrypoint as a context manager.
@@ -162,7 +165,8 @@ def setup_entry_point_cli(
             os.environ[key] = environ_vars[key]
         entry_point_func = pkg_resources.load_entry_point(*entry_tuple)
         if args:
-            func_args = [name]
+            if name:
+                func_args = [name]
             func_args.extend(args)
             yield functools.partial(entry_point_func, func_args)
         else:
@@ -177,7 +181,7 @@ def setup_entry_point_cli(
 
 def run_entrypoint(
     entry_tuple: tuple[str, str, str],
-    name: str,
+    name: Optional[str],
     args: list[str],
     environ_vars: dict[str, Any],
     capture_out: bool = True,

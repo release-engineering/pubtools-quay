@@ -469,7 +469,7 @@ class CosignSignerWrapper(SignerWrapper):
         )
         existing_signatures = run_entrypoint(
             ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-            "pubtools-sign-cosign-signature-list",
+            None,
             [cast(str, self.config_file), full_reference],
             {},
         )
