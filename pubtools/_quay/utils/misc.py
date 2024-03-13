@@ -167,6 +167,8 @@ def setup_entry_point_cli(
         if args:
             if name:
                 func_args = [name]
+            else:
+                func_args = []
             func_args.extend(args)
             yield functools.partial(entry_point_func, func_args)
         else:
