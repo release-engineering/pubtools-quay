@@ -170,7 +170,10 @@ def setup_entry_point_cli(
             else:
                 func_args = []
             func_args.extend(args)
-            yield functools.partial(entry_point_func, func_args)
+            if entry_tuple[1] == "console_scripts":
+                yield functools.partial(entry_point_func, func_args)
+            else:
+                yield functools.partial(entry_point_func, *func_args)
         else:
             yield entry_point_func
     finally:
