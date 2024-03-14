@@ -686,7 +686,10 @@ class TagDocker:
             for repo, tag, mad in item_processor.generate_existing_manifests_metadata(push_item):
                 if not mad:
                     continue
-                outdated_manifests.append((mad.digest, tag, repo))
+                if mad.digest not in [
+                    manifest["digest"] for manifest in new_manifest_list["manifests"]
+                ]:
+                    outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
                 if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push:
