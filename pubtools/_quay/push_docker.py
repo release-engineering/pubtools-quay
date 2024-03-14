@@ -320,8 +320,8 @@ class PushDocker:
 
     @log_step("Generate backup mapping")
     def generate_backup_mapping(
-        self, push_items: list[Any]
-    ) -> Tuple[Dict[ImageData, str], List[ImageData]]:
+        self, push_items: list[Any], all_arches: bool = False
+    ) -> Tuple[Dict[ImageData, Tuple[str, str]], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
 
@@ -330,14 +330,17 @@ class PushDocker:
         be overwritten. During rollback, tag is made to re-reference the old manifest.
         - 'rollback_tags' is a list of ImageData which don't yet exist. During rollback, they
         will be removed to preserve pre-push state.
+        If all_arches is set to true, return all arches for v2s2 and v2s1 manifests
 
         ImageData is a namedtuple used to assign and access parts of an image in a formatted way.
 
         Args:
             push_items ([ContainerPushItem]):
                 Container push items.
+            all_arches: bool
+                If set to True include all manifests in results. If False only amd64 are included
 
-        Returns (({ImageData: str}, [ImageData])):
+        Returns (({ImageData: Tuple[str,str]}, [ImageData])):
             Tuple of backup_tags and rollback_tags
         """
         backup_tags = {}
@@ -353,9 +356,15 @@ class PushDocker:
             self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
         )
-        for item in push_items:
+        existing_manifests_for_items = run_in_parallel(
+            internal_item_processor.generate_existing_manifests_map,
+            [FData(args=[item]) for item in push_items],
+            threads=self.target_settings.get("quay_parallelism", 10),
+        )
+
+        for item, existing_manifests in zip(push_items, existing_manifests_for_items.values()):
             destination_tags = external_item_processor.generate_repo_dest_tag_map(item)
-            existing_manifests = internal_item_processor.generate_existing_manifests_map(item)
+
             for registry, repos in existing_manifests.items():
                 for e_repo, _ in repos.items():
                     full_repo = internal_item_processor.reference_processor.replace_repo(e_repo)
@@ -365,68 +374,60 @@ class PushDocker:
                             and existing_manifests[registry][e_repo][d_tag]
                         ):
                             man_arch_digs = existing_manifests[registry][e_repo][d_tag]
-                            amd64_mads = [
-                                m
-                                for m in cast(List[ManifestArchDigest], man_arch_digs)
-                                if m.arch == "amd64"
-                            ]
-                            v2list_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in cast(List[ManifestArchDigest], man_arch_digs)
-                                        if m.type_ == QuayClient.MANIFEST_LIST_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            v2s1_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in amd64_mads
-                                        if m.type_ == QuayClient.MANIFEST_V2S1_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            v2s2_mad: ManifestArchDigest | None = (
-                                cast(
-                                    List[ManifestArchDigest | None],
-                                    [
-                                        m
-                                        for m in amd64_mads
-                                        if m.type_ == QuayClient.MANIFEST_V2S2_TYPE
-                                    ]
-                                    or [None],
-                                )
-                            )[0]
-                            for mad, digest_mask in zip(
-                                (v2s1_mad, v2s2_mad, v2list_mad), (1, 2, 3)
-                            ):
-                                if mad:
+                            if not all_arches:
+                                arch_mads = [
+                                    m
+                                    for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                    if m.arch == "amd64"
+                                ]
+                            else:
+                                arch_mads = cast(List[ManifestArchDigest], man_arch_digs)
+                            v2list_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [
+                                    m
+                                    for m in cast(List[ManifestArchDigest], man_arch_digs)
+                                    if m.type_ == QuayClient.MANIFEST_LIST_TYPE
+                                ]
+                                or [None],
+                            )
+                            v2s1_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
+                                or [None],
+                            )
+                            v2s2_mads: List[ManifestArchDigest | None] = cast(
+                                List[ManifestArchDigest | None],
+                                [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
+                                or [None],
+                            )
+                            for mads in (v2s1_mads, v2s2_mads, v2list_mads):
+                                for mad in mads:
+                                    if not mad:
+                                        continue
                                     image_data = PushDocker.ImageData(
                                         full_repo,
                                         d_tag,
                                         (
-                                            cast(ManifestArchDigest, v2list_mad).digest
-                                            if digest_mask == 3
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_LIST_TYPE
                                             else ""
                                         ),
                                         (
-                                            cast(ManifestArchDigest, v2s2_mad).digest
-                                            if digest_mask == 2
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_V2S2_TYPE
                                             else ""
                                         ),
                                         (
-                                            cast(ManifestArchDigest, v2s1_mad).digest
-                                            if digest_mask == 1
+                                            mad.digest
+                                            if mad.type_ == QuayClient.MANIFEST_V2S1_TYPE
                                             else ""
                                         ),
                                     )
-                                    backup_tags[image_data] = json.loads(mad.manifest)
+                                    backup_tags[image_data] = (
+                                        json.loads(mad.manifest),
+                                        mad.arch,
+                                    )
                         else:
                             rollback_tags.append(
                                 PushDocker.ImageData(full_repo, d_tag, None, None, None)
@@ -542,11 +543,30 @@ class PushDocker:
         current_signatures = []
         to_sign_new_entries = self.fetch_missing_push_items_digests(docker_push_items)
         to_sign_entries = []
-        for _, repo_tags in to_sign_new_entries.items():
+        to_sign_entries_internal = []
+        for internal_reg, repo_tags in to_sign_new_entries.items():
             for repo, tag_digests in repo_tags.items():
                 for tag, digests in tag_digests.items():
                     for type_, digest_key in digests.items():
                         digest, key = digest_key
+                        reference = (
+                            f"{internal_reg}/"
+                            + self.target_settings["quay_namespace"]
+                            + "/"
+                            + get_internal_container_repo_name(repo)
+                            + ":"
+                            + tag
+                        )
+                        # add entries in internal format for cosign
+                        to_sign_entries_internal.append(
+                            SignEntry(
+                                reference=reference,
+                                repo=repo,
+                                digest=digest,
+                                signing_key=key,
+                                arch="amd64",
+                            )
+                        )
                         for registry in self.dest_registries:
                             reference = f"{registry}/{repo}:{tag}"
                             to_sign_entries.append(
@@ -564,7 +584,11 @@ class PushDocker:
             if signer["enabled"]:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
                 signer = signercls(config_file=signer["config_file"], settings=self.target_settings)
-                signer.sign_containers(to_sign_entries, self.task_id)
+                if signercls.pre_push is True:
+                    signer.sign_containers(to_sign_entries, self.task_id)
+                else:
+                    signer.sign_containers(to_sign_entries_internal, self.task_id)
+
         return current_signatures
 
     def run(self) -> None:
@@ -595,12 +619,18 @@ class PushDocker:
         # Check if we may push to destination repos
         self.check_repos_validity(docker_push_items, self.hub, self.target_settings)
         # Generate resources for rollback in case there are errors during the push
-        backup_tags, rollback_tags = self.generate_backup_mapping(docker_push_items)
+        backup_tags, rollback_tags = self.generate_backup_mapping(
+            docker_push_items, all_arches=True
+        )
+        amd64_backup_tags = {k: bt[0] for k, bt in backup_tags.items() if bt[1] == "amd64"}
+        # update backup_tags with also manifest_lists
+        amd64_backup_tags.update({k: bt[0] for k, bt in backup_tags.items() if k.v2list_digest})
+        all_backup_tags = {k: bt[0] for k, bt in backup_tags.items()}
+
         existing_index_images = []
         iib_results = None
         successful_iib_results = dict()
         index_stamp = timestamp()
-
         item_processor = item_processor_for_external_data(
             self.src_quay_client,
             self.dest_registries,
@@ -612,7 +642,6 @@ class PushDocker:
             item_processor.generate_to_sign,
             [FData(args=(item,), kwargs={}) for item in docker_push_items],
         )
-
         for _to_sign_entries in to_sign_map.values():
             to_sign_entries.extend(_to_sign_entries)
 
@@ -634,6 +663,20 @@ class PushDocker:
         container_pusher.push_container_images()
 
         # Sign containers with signers which requires pushed containers in destination registry
+        to_sign_entries = []
+        item_processor = item_processor_for_internal_data(
+            self.src_quay_client,
+            self.dest_registries,
+            self.target_settings.get("retry_sleep_time", 5),
+            self.target_settings["quay_namespace"],
+        )
+        to_sign_map = run_in_parallel(
+            item_processor.generate_to_sign,
+            [FData(args=(item,), kwargs={}) for item in docker_push_items],
+        )
+        for _to_sign_entries in to_sign_map.values():
+            to_sign_entries.extend(_to_sign_entries)
+
         for signer in self.target_settings["signing"]:
             if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
                 signercls = SIGNER_BY_LABEL[signer["label"]]
@@ -721,14 +764,16 @@ class PushDocker:
             # Rollback only when all index image builds fails or there are failed items
             # Empty iib_results is not an error and shouldn't fail the push. The only exception is
             # when bundles presence check failed.
-            if (iib_results or bundles_presence_check_failed) and (
-                not any([x["iib_result"] for x in iib_results.values()]) or failed_items
+            if (
+                (iib_results or bundles_presence_check_failed)
+                and (not any([x["iib_result"] for x in iib_results.values()]))
+                or failed_items
             ):
                 if failed_items:
                     LOG.error("There are failed push items. Cannot continue, running rollback.")
                 else:
                     LOG.error("Push of all index images failed, running rollback.")
-                self.rollback(backup_tags, rollback_tags)
+                self.rollback(amd64_backup_tags, rollback_tags)
                 sys.exit(1)
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
@@ -736,7 +781,7 @@ class PushDocker:
 
         # Remove old signatures
         # run generate backup mapping again to fetch new digests of pushed containers
-        backup_tags2, _ = self.generate_backup_mapping(docker_push_items)
+        backup_tags2, _ = self.generate_backup_mapping(docker_push_items, all_arches=True)
         # if new backup tag has differnet digest, it means it was overwritten during the push
         # and old signature should be removed. If the digest is the same it means, same item
         # was just repushed
@@ -746,7 +791,7 @@ class PushDocker:
         # Backup tags can contain new tags which were orignally rollback_tags
         # limit the comparision for outdated manifests to original backup_tags only
         for bt2 in backup_tags2.items():
-            if (bt2[0].tag, bt2[0].repo) in [(x.tag, x.repo) for x in backup_tags.keys()]:
+            if (bt2[0].tag, bt2[0].repo) in [(x.tag, x.repo) for x in all_backup_tags.keys()]:
                 backup_tags2_shared[bt2[0]] = bt2[1]
 
         for bt1, bt2 in zip(

@@ -753,42 +753,42 @@ def test_generate_backup_mapping(
             v2s2_digest="",
             v2s1_digest="",
             v2list_digest="manifest_list_digest",
-        ): src_manifest_list,
+        ): (src_manifest_list, ""),
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo1",
             tag="tag1",
             v2s2_digest="sha256:5555555555",
             v2s1_digest="",
             v2list_digest="",
-        ): v2s1_manifest,
+        ): (v2s1_manifest, "amd64"),
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo2",
             tag="tag3",
             v2s2_digest="",
             v2s1_digest="",
             v2list_digest="manifest_list_digest",
-        ): src_manifest_list,
+        ): (src_manifest_list, ""),
         push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo2",
             tag="tag3",
             v2s2_digest="sha256:5555555555",
             v2s1_digest="",
             v2list_digest="",
-        ): v2s1_manifest,
+        ): (v2s1_manifest, "amd64"),
         push_docker.PushDocker.ImageData(
             repo="some-namespace/test-repo",
             tag="latest-test-tag",
             v2s2_digest="",
             v2s1_digest="",
             v2list_digest="manifest_list_digest",
-        ): src_manifest_list,
+        ): (src_manifest_list, ""),
         push_docker.PushDocker.ImageData(
             repo="some-namespace/test-repo",
             tag="latest-test-tag",
             v2s2_digest="sha256:5555555555",
             v2s1_digest="",
             v2list_digest="",
-        ): v2s1_manifest,
+        ): (v2s1_manifest, "amd64"),
     }
     assert rollback_tags == [
         push_docker.PushDocker.ImageData(
@@ -1117,14 +1117,14 @@ def test_push_docker_full_success(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag", "some-digest", None, "some-digest"
-                ): {"digest": "some-digest"},
+                ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo",
                     "sometag2",
                     "some-digest-2",
                     None,
                     "some-digest-2",
-                ): {"manifests": [{"digest": "some-digest"}]},
+                ): ({"manifests": [{"digest": "some-digest"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1136,14 +1136,14 @@ def test_push_docker_full_success(
                     "some-new-digest",
                     None,
                     "some-digest",
-                ): {"digest": "some-digest-new"},
+                ): ({"digest": "some-digest-new"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo",
                     "sometag2",
                     "some-digest-2",
                     None,
                     "some-digest-2",
-                ): {"manifests": [{"digest": "some-digest-new"}]},
+                ): ({"manifests": [{"digest": "some-digest-new"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1199,7 +1199,10 @@ def test_push_docker_full_success(
         [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_has_calls(
-        [mock.call([container_multiarch_push_item]), mock.call([container_multiarch_push_item])]
+        [
+            mock.call([container_multiarch_push_item], all_arches=True),
+            mock.call([container_multiarch_push_item], all_arches=True),
+        ]
     )
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
@@ -1302,10 +1305,10 @@ def test_push_docker_full_prerelease(
                     "some-digest-list",
                     "some-digest-sch2",
                     "some-digest-sch1",
-                ): {"digest": "some-digest"},
+                ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag2", None, "some-digest", None
-                ): {"manifests": [{"digest": "some-digest"}]},
+                ): ({"manifests": [{"digest": "some-digest"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1317,10 +1320,10 @@ def test_push_docker_full_prerelease(
                     "some-digest-list",
                     "some-digest-sch2",
                     "some-digest-sch1-new",
-                ): {"digest": "some-digest"},
+                ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag2", None, "some-digest", None
-                ): {"manifests": [{"digest": "some-digest"}]},
+                ): ({"manifests": [{"digest": "some-digest"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1375,8 +1378,8 @@ def test_push_docker_full_prerelease(
     )
     mock_generate_backup_mapping.assert_has_calls(
         [
-            mock.call([container_multiarch_pre_release_push_item]),
-            mock.call([container_multiarch_pre_release_push_item]),
+            mock.call([container_multiarch_pre_release_push_item], all_arches=True),
+            mock.call([container_multiarch_pre_release_push_item], all_arches=True),
         ]
     )
     mock_container_image_pusher.assert_called_once_with(
@@ -1461,10 +1464,10 @@ def test_push_docker_full_no_v2sch2(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag", None, None, None
-                ): {"digest": "some-digest"},
+                ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag2", None, None, None
-                ): {"manifests": [{"digest": "some-digest"}]},
+                ): ({"manifests": [{"digest": "some-digest"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1472,10 +1475,10 @@ def test_push_docker_full_no_v2sch2(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag", None, None, None
-                ): {"digest": "some-digest-new"},
+                ): ({"digest": "some-digest-new"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo", "sometag2", None, None, None
-                ): {"manifests": [{"digest": "some-digest-new"}]},
+                ): ({"manifests": [{"digest": "some-digest-new"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1537,7 +1540,10 @@ def test_push_docker_full_no_v2sch2(
         [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_has_calls(
-        [mock.call([container_multiarch_push_item]), mock.call([container_multiarch_push_item])]
+        [
+            mock.call([container_multiarch_push_item], all_arches=True),
+            mock.call([container_multiarch_push_item], all_arches=True),
+        ]
     )
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
@@ -1613,10 +1619,10 @@ def test_push_docker_full_success_repush(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest"},
+                ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag2", None, None, None
-                ): {"manifests": [{"digest": "some-digest"}]},
+                ): ({"manifests": [{"digest": "some-digest"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1624,10 +1630,10 @@ def test_push_docker_full_success_repush(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest-new"},
+                ): ({"digest": "some-digest-new"}, "amd64"),
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag2", None, None, None
-                ): {"manifests": [{"digest": "some-digest-new"}]},
+                ): ({"manifests": [{"digest": "some-digest-new"}]}, ""),
             },
             ["item1", "item2"],
         ),
@@ -1720,8 +1726,12 @@ def test_push_docker_full_success_repush(
     )
     mock_generate_backup_mapping.assert_has_calls(
         [
-            mock.call([container_multiarch_push_item, container_push_item_external_repos]),
-            mock.call([container_multiarch_push_item, container_push_item_external_repos]),
+            mock.call(
+                [container_multiarch_push_item, container_push_item_external_repos], all_arches=True
+            ),
+            mock.call(
+                [container_multiarch_push_item, container_push_item_external_repos], all_arches=True
+            ),
         ]
     )
     mock_container_image_pusher.assert_called_once_with(
@@ -1788,7 +1798,7 @@ def test_push_docker_no_operator_push_items(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest"}
+                ): ({"digest": "some-digest"}, "amd64")
             },
             ["item1", "item2"],
         ),
@@ -1796,7 +1806,7 @@ def test_push_docker_no_operator_push_items(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest-new"}
+                ): ({"digest": "some-digest-new"}, "amd64")
             },
             ["item1", "item2"],
         ),
@@ -1848,7 +1858,10 @@ def test_push_docker_no_operator_push_items(
         [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_has_calls(
-        [mock.call([container_multiarch_push_item]), mock.call([container_multiarch_push_item])]
+        [
+            mock.call([container_multiarch_push_item], all_arches=True),
+            mock.call([container_multiarch_push_item], all_arches=True),
+        ]
     )
 
     mock_container_image_pusher.assert_called_once_with(
@@ -1924,7 +1937,7 @@ def test_push_docker_failure_no_rollback(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest"}
+                ): ({"digest": "some-digest"}, "amd64")
             },
             ["item1", "item2"],
         ),
@@ -1932,7 +1945,7 @@ def test_push_docker_failure_no_rollback(
             {
                 push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----somerepo", "sometag", None, None, None
-                ): {"digest": "some-digest-new"}
+                ): ({"digest": "some-digest-new"}, "amd64")
             },
             ["item1", "item2"],
         ),
@@ -1992,7 +2005,10 @@ def test_push_docker_failure_no_rollback(
         [container_multiarch_push_item], hub, target_settings
     )
     mock_generate_backup_mapping.assert_has_calls(
-        [mock.call([container_multiarch_push_item]), mock.call([container_multiarch_push_item])]
+        [
+            mock.call([container_multiarch_push_item], all_arches=True),
+            mock.call([container_multiarch_push_item], all_arches=True),
+        ]
     )
 
     mock_container_image_pusher.assert_called_once_with(
@@ -2057,7 +2073,7 @@ def test_push_docker_failure_rollback(
         {
             push_docker.PushDocker.ImageData(
                 "some-ns/orig-ns----somerepo", "sometag", None, None, None
-            ): {"digest": "some-digest"}
+            ): ({"digest": "some-digest"}, "amd64")
         },
         ["item1", "item2"],
     )
@@ -2115,7 +2131,9 @@ def test_push_docker_failure_rollback(
     mock_check_repos_validity.assert_called_once_with(
         [container_multiarch_push_item], hub, target_settings
     )
-    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_generate_backup_mapping.assert_called_once_with(
+        [container_multiarch_push_item], all_arches=True
+    )
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
     )
@@ -2186,7 +2204,7 @@ def test_push_docker_failure_fbc_rollback(
         {
             push_docker.PushDocker.ImageData(
                 "some-ns/orig-ns----somerepo", "sometag", None, None, None
-            ): {"digest": "some-digest"}
+            ): ({"digest": "some-digest"}, "amd64")
         },
         ["item1", "item2"],
     )
@@ -2244,7 +2262,9 @@ def test_push_docker_failure_fbc_rollback(
     mock_check_repos_validity.assert_called_once_with(
         [container_multiarch_push_item], hub, target_settings
     )
-    mock_generate_backup_mapping.assert_called_once_with([container_multiarch_push_item])
+    mock_generate_backup_mapping.assert_called_once_with(
+        [container_multiarch_push_item], all_arches=True
+    )
     mock_container_image_pusher.assert_called_once_with(
         [container_multiarch_push_item], target_settings
     )

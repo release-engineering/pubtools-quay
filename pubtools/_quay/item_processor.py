@@ -192,6 +192,9 @@ class ContentExtractor:
                         e.response.status_code == 404 or e.response.status_code == 401
                     ) and tolerate_missing:
                         manifest = None
+                    # tolerate too many requests from client
+                    elif e.response.status_code == 429:
+                        manifest = None
                     else:
                         raise
                 except ManifestTypeError:
@@ -657,6 +660,6 @@ def item_processor_for_internal_data(
     return ItemProcesor(
         extractor=extractor,
         reference_processor=reference_processor,
-        reference_registries=[],
+        reference_registries=["quay.io"],
         source_registry=internal_registry,
     )

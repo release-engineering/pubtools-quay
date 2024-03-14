@@ -22,7 +22,7 @@ def test_signer_remove_signatures():
         )
 
 
-def test_sign_container_failed():
+def test_sign_container_chunk_failed():
     with mock.patch("pkg_resources.load_entry_point") as mock_load_entry_point:
         sw = SignerWrapper(config_file="fake-config-file", settings={})
         sw.entry_point()
@@ -30,12 +30,14 @@ def test_sign_container_failed():
             "signer_result": {"status": "error", "error_message": "fake-error-message"}
         }
         with pytest.raises(SigningError):
-            sw.sign_container(
-                SignEntry(
-                    reference="fake-reference",
-                    digest="fake-digest",
-                    signing_key="fake-signing-key",
-                    arch="amd64",
-                    repo="fake-repo",
-                )
+            sw.sign_container_chunk(
+                [
+                    SignEntry(
+                        reference="fake-reference",
+                        digest="fake-digest",
+                        signing_key="fake-signing-key",
+                        arch="amd64",
+                        repo="fake-repo",
+                    )
+                ]
             )

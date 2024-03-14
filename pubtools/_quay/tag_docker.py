@@ -515,6 +515,7 @@ class TagDocker:
         )
 
         to_sign_entries = []
+        to_sign_entries_internal = []
         current_signatures: list[Any] = []
         details = self.get_image_details(source_image, executor)
         if not details:
@@ -524,6 +525,21 @@ class TagDocker:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         if push_item.claims_signing_key:
+            # add entries in internal format for cosign
+            to_sign_entries_internal.append(
+                SignEntry(
+                    repo=repo,
+                    reference="quay.io/"
+                    + self.target_settings["quay_namespace"]
+                    + "/"
+                    + get_internal_container_repo_name(list(push_item.repos.keys())[0])
+                    + ":"
+                    + tag,
+                    digest=details.digest,
+                    signing_key=push_item.claims_signing_key,
+                    arch="amd64",
+                )
+            )
             for registry in registries:
                 reference = external_image_schema.format(
                     host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -564,7 +580,10 @@ class TagDocker:
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
                     if SIGNER_BY_LABEL[_signer["label"]].pre_push:
-                        signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                        signer.sign_containers(
+                            to_sign_entries,
+                            task_id=self.task_id,
+                        )
 
         ContainerImagePusher.run_tag_images(source_image, [dest_image], True, self.target_settings)
 
@@ -576,7 +595,10 @@ class TagDocker:
                     signer = signercls(
                         config_file=_signer["config_file"], settings=self.target_settings
                     )
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries_internal,
+                        task_id=self.task_id,
+                    )
 
     def merge_manifest_lists_sign_images(
         self, push_item: Any, tag: str, add_archs: list[str]
@@ -621,7 +643,22 @@ class TagDocker:
         outdated_manifests = []
         if push_item.claims_signing_key:
             to_sign_entries = []
+            to_sign_entries_internal = []
             for manifest in new_manifest_list["manifests"]:
+                to_sign_entries_internal.append(
+                    SignEntry(
+                        repo=list(push_item.repos.keys())[0],
+                        reference="quay.io/"
+                        + self.target_settings["quay_namespace"]
+                        + "/"
+                        + internal_repo
+                        + ":"
+                        + tag,
+                        digest=manifest["digest"],
+                        arch=manifest["platform"]["architecture"],
+                        signing_key=push_item.claims_signing_key,
+                    )
+                )
                 for registry in dest_registries:
                     reference = external_image_schema.format(
                         host=registry, repo=list(push_item.repos.keys())[0], tag=tag
@@ -659,7 +696,10 @@ class TagDocker:
                     )
                     if outdated_manifests:
                         signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries,
+                        task_id=self.task_id,
+                    )
 
         raw_src_manifest = cast(
             str,
@@ -689,7 +729,10 @@ class TagDocker:
                         config_file=signer["config_file"], settings=self.target_settings
                     )
                     signer.remove_signatures(outdated_manifests, _exclude=current_signatures)
-                    signer.sign_containers(to_sign_entries, task_id=self.task_id)
+                    signer.sign_containers(
+                        to_sign_entries_internal,
+                        task_id=self.task_id,
+                    )
 
     @classmethod
     def run_untag_images(

@@ -171,13 +171,15 @@ class QuayClient:
         endpoint = "{0}/manifests/{1}".format(repo, ref)
 
         if raw:
-            manifest_type = json.loads(cast(str, manifest))["mediaType"]
+            manifest_type = json.loads(cast(str, manifest)).get(
+                "mediaType", QuayClient.MANIFEST_V2S1_TYPE
+            )
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
                 "data": cast(str, manifest),
             }
         else:
-            manifest_type = cast(ManifestList, manifest)["mediaType"]
+            manifest_type = cast(Manifest, manifest).get("mediaType", QuayClient.MANIFEST_V2S1_TYPE)
             kwargs = {
                 "headers": {"Content-Type": manifest_type},
                 "data": json.dumps(cast(ManifestList, manifest), sort_keys=True, indent=4),
