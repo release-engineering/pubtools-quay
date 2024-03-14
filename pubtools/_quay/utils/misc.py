@@ -12,7 +12,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Iterable, Any, Callable, Dict, Generator, cast, Optional
+from typing import Any, Callable, Dict, Generator, cast, Optional
 
 
 from concurrent import futures
