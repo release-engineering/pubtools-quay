@@ -5,6 +5,7 @@ pylint<3.0.0
 pytest-pylint
 pytest-cov
 pubtools-pyxis
+pubtools-sign
 pyrsistent==0.15.7;python_version<'3.0'
 pushcollector
 PyHamcrest
