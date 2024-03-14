@@ -1,5 +1,6 @@
-import logging
 import argparse
+import logging
+import os
 from typing import Any, Dict, List, cast
 
 from pubtools.pluggy import task_context, pm
@@ -121,6 +122,12 @@ def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
     item_processor = item_processor_for_internal_data(
         quay_client, "quay.io", 5, settings["quay_org"]
     )
+
+    signer_settings = {k: v for k, v in settings.items() if k not in ["quay_org"]}
+    signer_settings["quay_namespace"] = settings["quay_org"]
+    signer_settings["dest_quay_api_token"] = os.environ.get("QUAY_API_TOKEN")
+    signer_settings["quay_host"] = "quay.io"
+
     # Clear repository doesn't work with pushitem so we need to create a virtual push item
     # to use existing code to generate needed data for clearing the repository
     item = VirtualPushItem(
@@ -138,7 +145,7 @@ def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
-        _signer = signercls(config_file=signer_configs[n], settings=settings)
+        _signer = signercls(config_file=signer_configs[n], settings=signer_settings)
         _signer.remove_signatures(outdated_manifests, _exclude=[])
 
     refrences_to_remove = []
