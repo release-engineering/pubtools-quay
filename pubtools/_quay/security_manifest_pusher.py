@@ -660,7 +660,7 @@ class SecurityManifestPusher:
                     item, digest_manifest, destination_repos, tmp_dir
                 )
 
-            if is_multiach_image:
+            if is_multiach_image and digest_manifests:
                 self.push_manifest_list_security_manifests(item, tmp_dir)
 
     @log_step("Push container security manifests")
