@@ -564,10 +564,11 @@ class TagDocker:
             outdated_manifests = []
 
             existing_manifests = item_processor.generate_existing_manifests_metadata(push_item)
-            for repo, tag, mad in existing_manifests:
+            for repo, _tag, mad in existing_manifests:
                 if not mad:
                     continue
-                outdated_manifests.append((mad.digest, tag, repo))
+                if _tag == tag:
+                    outdated_manifests.append((mad.digest, tag, repo))
 
             set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
             for _signer in self.target_settings["signing"]:
@@ -683,10 +684,11 @@ class TagDocker:
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
-            for repo, tag, mad in item_processor.generate_existing_manifests_metadata(push_item):
+            for repo, _tag, mad in item_processor.generate_existing_manifests_metadata(push_item):
                 if not mad:
                     continue
-                outdated_manifests.append((mad.digest, tag, repo))
+                if tag == _tag:
+                    outdated_manifests.append((mad.digest, tag, repo))
 
             for signer in self.target_settings["signing"]:
                 if signer["enabled"] and SIGNER_BY_LABEL[signer["label"]].pre_push:
