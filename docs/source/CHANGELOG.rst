@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.18.0 (2024-03-18)
+-------------------
+
+* Generate SBOM attestations for manifest lists
+
 0.17.0 (2024-02-27)
 -------------------
 
