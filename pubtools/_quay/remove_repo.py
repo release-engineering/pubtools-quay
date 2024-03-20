@@ -143,6 +143,8 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
 
     for n, signer in enumerate(signers):
         signercls = SIGNER_BY_LABEL[signer]
+        if not signercls.pre_push:
+            continue
         signer = signercls(config_file=signer_configs[0], settings=signer_settings)
         signer.remove_signatures(outdated_manifests, _exclude=[])
 
