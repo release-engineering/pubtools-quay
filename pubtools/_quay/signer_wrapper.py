@@ -197,9 +197,14 @@ class SignerWrapper:
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
         to_sign_chunks = []
+        to_sign_entries_filtered = []
+        for sign_entry in to_sign_entries:
+            if sign_entry not in to_sign_entries_filtered:
+                to_sign_entries_filtered.append(sign_entry)
+
         # split entries to chunk of chunk_size, fill shorter chunks with None
         to_sign_chunks.extend(
-            list(grouper(to_sign_entries, self.settings.get("signing_chunk_size", 100)))
+            list(grouper(to_sign_entries_filtered, self.settings.get("signing_chunk_size", 100)))
         )
 
         with redirect_stdout(io.StringIO()):
