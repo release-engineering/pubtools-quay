@@ -1501,8 +1501,8 @@ def test_clear_repo(
                 pyxis_ssl_crtfile="/path/to/file.crt",
                 pyxis_ssl_keyfile="/path/to/file.key",
                 pyxis_request_threads=7,
-                signers="msg_signer",
-                signer_configs="/test-config.yml",
+                signers="msg_signer,cosign_signer",
+                signer_configs="/test-config.yml,/test-config.yml",
             ),
         )
         signer_wrapper_remove_signatures.assert_called_with([1])
@@ -1580,8 +1580,8 @@ def test_remove_repo(
                 pyxis_ssl_crtfile="/path/to/file.crt",
                 pyxis_ssl_keyfile="/path/to/file.key",
                 pyxis_request_threads=7,
-                signers="msg_signer",
-                signer_configs="/test_config.yml",
+                signers="msg_signer,cosign_signer",
+                signer_configs="/test_config.yml,/test_config.yml",
             ),
         )
         signer_wrapper_remove_signatures.assert_called_with([1])
