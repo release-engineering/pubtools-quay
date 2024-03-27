@@ -249,6 +249,8 @@ def task_iib_add_bundles(
         target_settings.get("retry_sleep_time", 5),
         quay_operator_namespace,
     )
+    item_processor.extractor.full_extract = True
+
     # Add bundles task doesn't work with pushitem so we create VirtualPushItem to enable
     # existing code for fetching needed data.
     vitem = VirtualPushItem(

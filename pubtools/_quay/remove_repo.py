@@ -121,6 +121,7 @@ def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
     item_processor = item_processor_for_internal_data(
         quay_client, "quay.io", 5, settings["quay_org"]
     )
+    item_processor.extractor.full_extract = True
     # Remove repository doesn't work with push item by default, therefore we create VirtualPushItem
     # to support existing code to generate needed repository data.
     item = VirtualPushItem(

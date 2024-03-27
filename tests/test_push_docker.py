@@ -755,13 +755,6 @@ def test_generate_backup_mapping(
             v2list_digest="manifest_list_digest",
         ): (src_manifest_list, ""),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo1",
-            tag="tag1",
-            v2s2_digest="sha256:5555555555",
-            v2s1_digest="",
-            v2list_digest="",
-        ): (v2s1_manifest, "amd64"),
-        push_docker.PushDocker.ImageData(
             repo="some-namespace/target----repo2",
             tag="tag3",
             v2s2_digest="",
@@ -769,26 +762,12 @@ def test_generate_backup_mapping(
             v2list_digest="manifest_list_digest",
         ): (src_manifest_list, ""),
         push_docker.PushDocker.ImageData(
-            repo="some-namespace/target----repo2",
-            tag="tag3",
-            v2s2_digest="sha256:5555555555",
-            v2s1_digest="",
-            v2list_digest="",
-        ): (v2s1_manifest, "amd64"),
-        push_docker.PushDocker.ImageData(
             repo="some-namespace/test-repo",
             tag="latest-test-tag",
             v2s2_digest="",
             v2s1_digest="",
             v2list_digest="manifest_list_digest",
         ): (src_manifest_list, ""),
-        push_docker.PushDocker.ImageData(
-            repo="some-namespace/test-repo",
-            tag="latest-test-tag",
-            v2s2_digest="sha256:5555555555",
-            v2s1_digest="",
-            v2list_digest="",
-        ): (v2s1_manifest, "amd64"),
     }
     assert rollback_tags == [
         push_docker.PushDocker.ImageData(
