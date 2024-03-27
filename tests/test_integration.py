@@ -47,7 +47,9 @@ MSG_SIGNER_OPERATION_RESULT = [
 @mock.patch("pubtools._quay.utils.misc.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
+@mock.patch("pubtools._quay.push_docker.timestamp")
 def test_push_docker_multiarch_merge_ml_operator(
+    mock_timestamp,
     mock_run_cmd,
     mock_run_entrypoint_operator_pusher,
     mock_run_entrypoint_misc,
@@ -66,6 +68,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     fixture_run_in_parallel_signer,
     fixture_run_in_parallel_push_docker,
 ):
+    mock_timestamp.return_value = "timestamp"
     # hub usage has to be mocked
     hub = mock.MagicMock()
     mock_get_target_info = mock.MagicMock()
@@ -319,9 +322,16 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=[
                         "some-registry1.com/operators/index-image:v4.5",
+                        "some-registry1.com/operators/index-image:v4.5-timestamp",
                         "some-registry2.com/operators/index-image:v4.5",
+                        "some-registry2.com/operators/index-image:v4.5-timestamp",
                     ],
-                    digest=["sha256:5555555555", "sha256:5555555555"],
+                    digest=[
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                    ],
                     task_id="1-0",
                 ),
                 mock.call(
@@ -329,22 +339,35 @@ def test_push_docker_multiarch_merge_ml_operator(
                     signing_key="some-key",
                     reference=[
                         "some-registry1.com/operators/index-image:v4.6",
+                        "some-registry1.com/operators/index-image:v4.6-timestamp",
                         "some-registry2.com/operators/index-image:v4.6",
+                        "some-registry2.com/operators/index-image:v4.6-timestamp",
                     ],
-                    digest=["sha256:5555555555", "sha256:5555555555"],
+                    digest=[
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                    ],
                     task_id="1-0",
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference=["quay.io/some-namespace/operators----index-image:v4.5"],
-                    digest=["sha256:5555555555"],
+                    reference=[
+                        "quay.io/some-namespace/operators----index-image:v4.5",
+                        "quay.io/some-namespace/operators----index-image:v4.5-timestamp",
+                    ],
+                    digest=["sha256:5555555555", "sha256:5555555555"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
                     signing_key="some-key",
-                    reference=["quay.io/some-namespace/operators----index-image:v4.6"],
-                    digest=["sha256:5555555555"],
+                    reference=[
+                        "quay.io/some-namespace/operators----index-image:v4.6",
+                        "quay.io/some-namespace/operators----index-image:v4.6-timestamp",
+                    ],
+                    digest=["sha256:5555555555", "sha256:5555555555"],
                 ),
             ]
         )

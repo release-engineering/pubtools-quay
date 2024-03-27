@@ -725,10 +725,11 @@ class PushDocker:
                     repo=iib_intermediate_repo,
                     tag=iib_result.build_tags[0],
                 )
+                timestamp_tags = [f"{tag}-{index_stamp}" for tag in iib_details["destination_tags"]]
                 current_signatures.extend(
                     _sign_index_image(
                         permanent_index_image,
-                        iib_details["destination_tags"],
+                        iib_details["destination_tags"] + timestamp_tags,
                         iib_details["signing_keys"],
                         self.task_id,
                         self.target_settings,
@@ -750,10 +751,11 @@ class PushDocker:
                     repo=iib_intermediate_repo,
                     tag=iib_result.build_tags[0],
                 )
+                timestamp_tags = [f"{tag}-{index_stamp}" for tag in iib_details["destination_tags"]]
                 current_signatures.extend(
                     _sign_index_image(
                         permanent_index_image,
-                        iib_details["destination_tags"],
+                        iib_details["destination_tags"] + timestamp_tags,
                         iib_details["signing_keys"],
                         self.task_id,
                         self.target_settings,
