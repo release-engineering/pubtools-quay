@@ -122,6 +122,7 @@ def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
     item_processor = item_processor_for_internal_data(
         quay_client, "quay.io", 5, settings["quay_org"]
     )
+    item_processor.extractor.full_extract = True
 
     signer_settings = {k: v for k, v in settings.items() if k not in ["quay_org"]}
     signer_settings["quay_namespace"] = settings["quay_org"]

@@ -65,7 +65,12 @@ class ContentExtractor:
     }
 
     def __init__(
-        self, quay_client: QuayClient, sleep_time: int = 5, timeout: int = 30, poll_rate: int = 5
+        self,
+        quay_client: QuayClient,
+        sleep_time: int = 5,
+        timeout: int = 30,
+        poll_rate: int = 5,
+        full_extract: bool = False,
     ):
         """Initialize the class.
 
@@ -79,8 +84,9 @@ class ContentExtractor:
         self.sleep_time: int = sleep_time
         self.timeout: int = timeout
         self.poll_rate: int = poll_rate
+        self.full_extract = full_extract
 
-    def _extract_ml_manifest(
+    def _extract_ml_manifest_full(
         self, image_ref: str, _manifest_list: str, mtype: str, ret_headers: Dict[str, Any]
     ) -> List[ManifestArchDigest]:
         """Extract manifests from manifest list.
@@ -118,6 +124,29 @@ class ContentExtractor:
             )
         return mads
 
+    def _extract_ml_manifest(
+        self, image_ref: str, _manifest_list: str, mtype: str, ret_headers: Dict[str, Any]
+    ) -> List[ManifestArchDigest]:
+        """Extract manifests from manifest list.
+
+        Args:
+            image_ref (str): Image reference in format <registry>/<repo>:<tag>
+            _manifest_list (str): Manifest list in JSON format.
+            mtype (str): NOT USED
+        Returns:
+            list: List of ManifestArchDigest objects.
+        """
+        mads = []
+        mads.append(
+            ManifestArchDigest(
+                manifest=_manifest_list,
+                digest=ret_headers.get("docker-content-digest", ""),
+                arch="",
+                type_=QuayClient.MANIFEST_LIST_TYPE,
+            )
+        )
+        return mads
+
     def _extract_manifest(
         self, unused: str, manifest: str, mtype: str, ret_headers: Dict[str, Any]
     ) -> ManifestArchDigest:
@@ -148,6 +177,17 @@ class ContentExtractor:
         QuayClient.MANIFEST_V2S1_TYPE: _extract_manifest,
     }
 
+    _MEDIA_TYPES_PROCESS_FULL: dict[
+        str,
+        Callable[
+            [Any, str, str, str, Dict[str, Any]], ManifestArchDigest | List[ManifestArchDigest]
+        ],
+    ] = {
+        QuayClient.MANIFEST_LIST_TYPE: _extract_ml_manifest_full,
+        QuayClient.MANIFEST_V2S2_TYPE: _extract_manifest,
+        QuayClient.MANIFEST_V2S1_TYPE: _extract_manifest,
+    }
+
     def extract_manifests(
         self, image_ref: str, media_types: Optional[List[str]], tolerate_missing: bool = True
     ) -> list[ManifestArchDigest]:
@@ -172,6 +212,10 @@ class ContentExtractor:
             sorted(media_types or [], key=lambda x: self._MEDIA_TYPES_PRIORITY[x], reverse=True)
             or self._MEDIA_TYPES_PRIORITY.keys()
         )
+        if self.full_extract:
+            MEDIA_TYPES_PROCESS = self._MEDIA_TYPES_PROCESS_FULL
+        else:
+            MEDIA_TYPES_PROCESS = self._MEDIA_TYPES_PROCESS
         results = []
         for mtype in mtypes:
             for i in range(self.timeout // self.poll_rate):
@@ -206,9 +250,9 @@ class ContentExtractor:
             if not manifest:
                 continue
             else:
-                mret: ManifestArchDigest | List[ManifestArchDigest] = self._MEDIA_TYPES_PROCESS[
-                    mtype
-                ](self, image_ref, manifest, mtype, ret_headers)
+                mret: ManifestArchDigest | List[ManifestArchDigest] = MEDIA_TYPES_PROCESS[mtype](
+                    self, image_ref, manifest, mtype, ret_headers
+                )
                 if isinstance(mret, list):
                     results.extend(mret)
                 else:
@@ -440,7 +484,11 @@ class ItemProcesor:
             item.metadata.get("build", {}).get("extra", {}).get("image", {}).get("media_types", [])
         )
 
+        full_extract_orig = self.extractor.full_extract
+        self.extractor.full_extract = True
         man_arch_digs = self.extractor.extract_manifests(item.metadata["pull_url"], media_types)
+        self.extractor.full_extract = full_extract_orig
+
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
             for mad in man_arch_digs:
@@ -475,9 +523,13 @@ class ItemProcesor:
                 self.reference_processor.full_reference(cast(str, self.source_registry), repo, tag)
             )
 
+        full_extract_orig = self.extractor.full_extract
+        self.extractor.full_extract = True
         man_arch_digs_map = run_in_parallel(
             self.extractor.extract_manifests, [FData(args=(ref, media_types)) for ref in references]
         )
+        self.extractor.full_extract = full_extract_orig
+
         for ref_index, man_arch_digs in man_arch_digs_map.items():
             for mad in man_arch_digs:
                 to_unsign.append(
