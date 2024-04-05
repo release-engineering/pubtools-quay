@@ -17,7 +17,6 @@ from .utils.misc import (
     run_in_parallel,
     log_step,
     FData,
-    grouper,
 )
 from .item_processor import SignEntry
 
@@ -40,8 +39,6 @@ class MsgSignerSettingsSchema(Schema):
     pyxis_ssl_crtfile = fields.String(required=False)
     pyxis_ssl_keyfile = fields.String(required=False)
     num_thread_pyxis = fields.Integer(required=False, default=7)
-    signing_chunk_size = fields.Integer(required=False, default=100)
-    signing_parallelism = fields.Integer(required=False, default=10)
 
 
 class SignerWrapper:
@@ -124,7 +121,7 @@ class SignerWrapper:
         """
         return {}
 
-    def sign_container_chunk(
+    def _sign_containers(
         self,
         sign_entries: List[SignEntry],
         task_id: Optional[str] = None,
@@ -136,16 +133,14 @@ class SignerWrapper:
             task_id (str): Task ID to identify the signing task if needed.
         """
         for sign_entry in sign_entries:
-            # in the case of last chunk, None is set to fill value to fit the chunk size
-            # Therefore skip if that presents
-            if not sign_entry:
-                break
             LOG.debug(
                 "Signing container %s %s %s",
                 sign_entry.reference,
                 sign_entry.digest,
                 sign_entry.signing_key,
             )
+        if not sign_entries:
+            return
         sign_entry = sign_entries[0]
         opt_args = self.sign_container_opt_args(sign_entry, task_id)
         signed = self.entry_point(
@@ -158,8 +153,6 @@ class SignerWrapper:
         if signed["signer_result"]["status"] != "ok":
             raise SigningError(signed["signer_result"]["error_message"])
         for sign_entry in sign_entries:
-            if not sign_entry:
-                break
             LOG.info(
                 "Signed %s(%s) with %s in %s",
                 sign_entry.reference,
@@ -196,34 +189,12 @@ class SignerWrapper:
             parallelism (int): determines how many entries should be signed in parallel.
         """
         to_sign_entries = self._filter_to_sign(to_sign_entries)
-        to_sign_chunks = []
         to_sign_entries_filtered = []
         for sign_entry in to_sign_entries:
             if sign_entry not in to_sign_entries_filtered:
                 to_sign_entries_filtered.append(sign_entry)
-
-        # split entries to chunk of chunk_size, fill shorter chunks with None
-        to_sign_chunks.extend(
-            list(grouper(to_sign_entries_filtered, self.settings.get("signing_chunk_size", 100)))
-        )
-
         with redirect_stdout(io.StringIO()):
-            run_in_parallel(
-                self.sign_container_chunk,
-                [
-                    FData(args=x)
-                    for x in zip(
-                        to_sign_chunks,
-                        [
-                            str(task_id)
-                            + "-"
-                            + str(z % self.settings.get("signing_parallelism", 7))
-                            for z in range(len(to_sign_chunks))
-                        ],
-                    )
-                ],
-                self.settings.get("signing_parallelism", 7),
-            )
+            self._sign_containers(to_sign_entries_filtered, task_id)
 
     def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
         """Validate provided settings for the SignerWrapper."""

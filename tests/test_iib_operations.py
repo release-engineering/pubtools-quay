@@ -306,7 +306,7 @@ def test_task_iib_add_bundles(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             # cosign
             mock.call(
@@ -415,7 +415,7 @@ def test_task_iib_add_bundles_missing_manifest_list(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             # cosign
             mock.call(
@@ -528,7 +528,7 @@ def test_task_iib_add_bundles_operator_ns(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             # cosign
             mock.call(
@@ -934,7 +934,7 @@ def test_task_iib_build_from_scratch(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             # cosign
             mock.call(
@@ -1107,7 +1107,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             # cosign
             mock.call(
@@ -1247,7 +1247,7 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
-                task_id="1-0",
+                task_id="1",
             ),
             mock.call(
                 config_file="test-config.yml",

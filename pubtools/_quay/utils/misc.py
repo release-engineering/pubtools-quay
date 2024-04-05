@@ -4,7 +4,6 @@ import contextlib
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 import functools
-from itertools import zip_longest
 import json
 import logging
 import os
@@ -570,9 +569,3 @@ def set_aws_kms_environment_variables(target_settings: dict[str, Any], profile_n
         os.environ["AWS_DEFAULT_REGION"] = target_settings["aws_kms_credentials"][profile_name][
             "aws_default_region"
         ]
-
-
-def grouper(iterable: Iterable[Any], n: int, *, fillvalue: Any = None) -> Iterable[Any]:
-    """Collect data into non-overlapping fixed-length chunks or blocks."""
-    args = [iter(iterable)] * n
-    return zip_longest(*args, fillvalue=fillvalue)
