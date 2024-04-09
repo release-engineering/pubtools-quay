@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import hashlib
+import logging
 from typing import List, Dict, Any, Optional, TypeAlias, Tuple, cast, Callable
 import requests
 import time
@@ -9,6 +10,7 @@ from .quay_client import QuayClient
 from .exceptions import ManifestTypeError
 from .utils.misc import run_in_parallel, FData
 
+LOG = logging.getLogger("pubtools.quay")
 
 @dataclass
 class VirtualPushItem:
@@ -68,7 +70,7 @@ class ContentExtractor:
         self,
         quay_client: QuayClient,
         sleep_time: int = 5,
-        timeout: int = 30,
+        timeout: int = 10,
         poll_rate: int = 5,
         full_extract: bool = False,
     ):
@@ -85,6 +87,7 @@ class ContentExtractor:
         self.timeout: int = timeout
         self.poll_rate: int = poll_rate
         self.full_extract = full_extract
+        self.manifest_cache = {}
 
     def _extract_ml_manifest_full(
         self, image_ref: str, _manifest_list: str, mtype: str, ret_headers: Dict[str, Any]
@@ -218,6 +221,17 @@ class ContentExtractor:
             MEDIA_TYPES_PROCESS = self._MEDIA_TYPES_PROCESS
         results = []
         for mtype in mtypes:
+            ret_headers = {}
+            if self.manifest_cache.get(image_ref, {}).get(mtype):
+                manifest, ret_headers = self.manifest_cache.get[image_ref][mtype]
+                mret: ManifestArchDigest | List[ManifestArchDigest] = MEDIA_TYPES_PROCESS[mtype](
+                    self, image_ref, manifest, mtype, ret_headers
+                )
+                if isinstance(mret, list):
+                    results.extend(mret)
+                else:
+                    results.append(mret)
+                continue
             for i in range(self.timeout // self.poll_rate):
                 try:
                     ret = cast(
@@ -247,6 +261,7 @@ class ContentExtractor:
                 else:
                     break
                 time.sleep(self.sleep_time)
+            self.manifest_cache.setdefault(image_ref, {})[mtype] = (manifest, ret_headers)
             if not manifest:
                 continue
             else:
