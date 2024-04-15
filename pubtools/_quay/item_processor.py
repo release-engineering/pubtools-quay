@@ -223,15 +223,16 @@ class ContentExtractor:
         for mtype in mtypes:
             ret_headers = {}
             if self.manifest_cache.get(image_ref, {}).get(mtype):
-                manifest, ret_headers = self.manifest_cache.get[image_ref][mtype]
-                mret: ManifestArchDigest | List[ManifestArchDigest] = MEDIA_TYPES_PROCESS[mtype](
-                    self, image_ref, manifest, mtype, ret_headers
-                )
-                if isinstance(mret, list):
-                    results.extend(mret)
-                else:
-                    results.append(mret)
-                continue
+                manifest, ret_headers = self.manifest_cache[image_ref][mtype]
+                if manifest:
+                    mret: ManifestArchDigest | List[ManifestArchDigest] = MEDIA_TYPES_PROCESS[mtype](
+                        self, image_ref, manifest, mtype, ret_headers
+                    )
+                    if isinstance(mret, list):
+                        results.extend(mret)
+                    else:
+                        results.append(mret)
+                    continue
             for i in range(self.timeout // self.poll_rate):
                 try:
                     ret = cast(
