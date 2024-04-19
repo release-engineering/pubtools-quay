@@ -309,8 +309,10 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",
@@ -491,8 +493,10 @@ def test_push_docker_multiarch_simple_workflow(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",
@@ -1762,8 +1766,10 @@ def test_push_docker_operator_verify_bundle_fail(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",

@@ -473,7 +473,7 @@ class ItemProcesor:
                     ret.setdefault(registry, {}).setdefault(repo, []).append(tag)
         return ret
 
-    def generate_to_sign(self, item: Any) -> List[SignEntry]:
+    def generate_to_sign(self, item: Any, include_manifest_lists: bool = False) -> List[SignEntry]:
         """Generate list of images to sign.
 
         Args:
@@ -496,7 +496,7 @@ class ItemProcesor:
         for registry, repo, tag in self.generate_repo_dest_tags(item):
             reference = self.reference_processor.full_reference(registry, repo, tag)
             for mad in man_arch_digs:
-                if mad.type_ == QuayClient.MANIFEST_LIST_TYPE:
+                if mad.type_ == QuayClient.MANIFEST_LIST_TYPE and not include_manifest_lists:
                     continue
                 to_sign.append(
                     SignEntry(
