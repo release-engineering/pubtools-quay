@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any, Tuple, Generator, cast
 from marshmallow import Schema, fields, EXCLUDE
 
 from .quay_api_client import QuayApiClient
+from .quay_client import QuayClient
 from .utils.misc import (
     run_entrypoint,
     get_pyxis_ssl_paths,
@@ -19,7 +20,8 @@ from .utils.misc import (
     FData,
 )
 from .item_processor import SignEntry
-
+from .exceptions import ManifestTypeError
+from .types import ManifestList
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -442,6 +444,8 @@ class CosignSignerSettingsSchema(Schema):
 
     quay_namespace = fields.String(required=True)
     quay_host = fields.String(required=True)
+    dest_quay_user = fields.String(required=True)
+    dest_quay_password = fields.String(required=True)
     dest_quay_api_token = fields.String(required=True)
     signing_chunk_size = fields.Integer(required=False, default=100)
     signing_parallelism = fields.Integer(required=False, default=10)
@@ -470,25 +474,62 @@ class CosignSignerWrapper(SignerWrapper):
             List[Tuple[str, str]]: List of (repository, signature tag) tuples
             for existing signatures.
         """
-        full_reference = (
-            f"{self.settings['quay_host']}/"
-            + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
-            + f":{tag}"
+        quay_client = QuayClient(
+            self.settings["dest_quay_user"],
+            self.settings["dest_quay_password"],
+            self.settings["quay_host"],
         )
-        existing_signatures = run_entrypoint(
-            ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-            None,
-            [cast(str, self.config_file), full_reference],
-            {},
-        )
-        if existing_signatures[0]:
-            return [
-                (repository, e.split(":")[-1].replace(".sig", "").replace("-", ":"))
-                for e in existing_signatures[1]
+        try:
+            ml = quay_client.get_manifest(
+                f"{self.settings['quay_host'].rstrip('/')}/"
+                f"{self.settings['quay_namespace']}/{repository.replace('/','----')}:{tag}",
+                media_type=QuayClient.MANIFEST_LIST_TYPE,
+            )
+        except ManifestTypeError:
+            ml = None
+        if ml:
+            full_references = [
+                f"{self.settings['quay_host'].rstrip('/')}"
+                f"/{self.settings['quay_namespace']}/{repository.replace('/','----')}:{tag}"
             ]
+            for manifest in cast(ManifestList, ml)["manifests"]:
+                full_references.append(
+                    (
+                        f"{self.settings['quay_host'].rstrip('/')}/"
+                        + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+                        + f"@{manifest['digest']}"
+                    )
+                )
         else:
-            LOG.warning("Fetch existing signatures error:" + existing_signatures[1])
-            return []
+            full_references = [
+                (
+                    f"{self.settings['quay_host'].rstrip('/')}/"
+                    + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+                    + f":{tag}"
+                )
+            ]
+        existing_signatures = []
+        for full_reference in full_references:
+            existing_signatures.append(
+                run_entrypoint(
+                    ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                    None,
+                    [cast(str, self.config_file), full_reference],
+                    {},
+                )
+            )
+        rets = []
+        for esig in existing_signatures:
+            if esig[0] is True:
+                for sig in esig[1]:
+                    # if not sig:
+                    #     continue
+                    rets.extend(
+                        [(repository, sig.split(":")[-1].replace(".sig", "").replace("-", ":"))]
+                    )
+            else:
+                LOG.warning("Fetch existing signatures error:" + esig[1])
+        return rets
 
     def _filter_to_remove(
         self,

@@ -2100,6 +2100,12 @@ def test_manifest_list_remove_archs(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # Call for old signatures removal
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.8",
+            json=expected_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
         tag_docker_instance.manifest_list_remove_archs(
             tag_docker_push_item_remove_src, "v1.8", ["amd64", "arm64", "arm"]
         )

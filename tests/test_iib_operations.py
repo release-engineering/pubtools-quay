@@ -182,6 +182,10 @@ def fake_setup(
                 "repository": "operators/index-image",
             }
         ],
+        (True, ["some-registry.com/operators/index-image:8.sig"]),
+        (True, ["quay.io/testing/repo:sha256-5555555555.sig"]),
+        (True, ["quay.io/testing/repo:sha256-5555555555.sig"]),
+        (True, ["quay.io/testing/repo:sha256-5555555555.sig"]),
         (True, ["quay.io/testing/repo:sha256-5555555555.sig"]),
         # store signatures to pyxis
         [
@@ -490,6 +494,13 @@ def test_task_iib_add_bundles_operator_ns(
             src_manifest_list,
             v2s1_manifest,
         )
+        # call to remove old signatures
+        mock_manifest_list_requests(
+            m,
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            src_manifest_list,
+            v2s1_manifest,
+        )
         iib_operations.task_iib_add_bundles(
             ["bundle1", "bundle2"],
             ["arch1", "arch2"],
@@ -598,7 +609,43 @@ def test_task_iib_add_bundles_operator_ns(
             mock.call(
                 ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
                 None,
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ["test-config.yml", "quay.io/some-namespace/operators----index-image:8"],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+                ],
                 {},
             ),
         ]
@@ -824,6 +871,13 @@ def test_task_iib_remove_operators_operator_ns(
             src_manifest_list,
             v2s1_manifest,
         )
+        # call to remove old signatures
+        mock_manifest_list_requests(
+            m,
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            src_manifest_list,
+            v2s1_manifest,
+        )
         iib_operations.task_iib_remove_operators(
             ["operator1", "operator2"],
             ["arch1", "arch2"],
@@ -893,6 +947,13 @@ def test_task_iib_build_from_scratch(
     )
     mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
+        mock_manifest_list_requests(
+            m,
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            src_manifest_list,
+            v2s1_manifest,
+        )
+        # call to remove old signatures
         mock_manifest_list_requests(
             m,
             "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
@@ -1004,7 +1065,43 @@ def test_task_iib_build_from_scratch(
             mock.call(
                 ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
                 None,
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ["test-config.yml", "quay.io/some-namespace/operators----index-image:8"],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+                ],
                 {},
             ),
         ]
@@ -1212,6 +1309,13 @@ def test_task_iib_build_from_scratch_operator_ns(
             src_manifest_list,
             v2s1_manifest,
         )
+        # call to remove old signatures
+        mock_manifest_list_requests(
+            m,
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            src_manifest_list,
+            v2s1_manifest,
+        )
         iib_operations.task_iib_build_from_scratch(
             ["bundle1", "bundle2"],
             ["arch1", "arch2"],
@@ -1316,7 +1420,43 @@ def test_task_iib_build_from_scratch_operator_ns(
             mock.call(
                 ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
                 None,
-                ["test-config.yml", "quay.io//some-namespace/operators----index-image:8"],
+                ["test-config.yml", "quay.io/some-namespace/operators----index-image:8"],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+                ],
+                {},
+            ),
+            mock.call(
+                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+                None,
+                [
+                    "test-config.yml",
+                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+                ],
                 {},
             ),
         ]

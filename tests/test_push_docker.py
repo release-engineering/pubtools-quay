@@ -1163,6 +1163,12 @@ def test_push_docker_full_success(
             json=dest_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # call to untag old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/sometag",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
 
         push_docker_instance = push_docker.PushDocker(
             [container_multiarch_push_item, operator_push_item_ok],
@@ -1339,6 +1345,12 @@ def test_push_docker_full_prerelease(
         )
         m.get(
             "https://quay.io/v2/namespace/iib/manifests/v4.5-1",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        # call for untagging old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/sometag",
             json=dest_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1583,7 +1595,7 @@ def test_push_docker_full_success_repush(
     mock_push_index_images = mock.MagicMock()
     mock_operator_pusher.return_value.push_index_images = mock_push_index_images
     mock_get_existing_index_images = mock.MagicMock(
-        return_value=[("somerepo", "somedigest", "sometag")]
+        return_value=[("somedigest", "sometag", "somerepo")]
     )
     mock_timestamp.return_value = "timestamp"
     mock_operator_pusher.return_value.get_existing_index_images = mock_get_existing_index_images
@@ -1685,6 +1697,17 @@ def test_push_docker_full_success_repush(
             "https://quay.io/v2/namespace/iib/manifests/v4.5-1",
             json=dest_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/external----repo/manifests/latest-test-tag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
+        )
+        # Call for untag old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/somerepo/manifests/sometag",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
         )
 
         push_docker_instance = push_docker.PushDocker(

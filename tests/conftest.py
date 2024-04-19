@@ -2006,6 +2006,8 @@ def cosign_signer_settings():
         "quay_host": "test-quay.io",
         "quay_namespace": "testing",
         "dest_quay_api_token": "testing-quay-api-token",
+        "dest_quay_user": "user",
+        "dest_quay_password": "password",
     }
 
 
