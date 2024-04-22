@@ -12,6 +12,7 @@ from .utils.misc import run_in_parallel, FData
 
 LOG = logging.getLogger("pubtools.quay")
 
+
 @dataclass
 class VirtualPushItem:
     """Virtual push item used for operations which doens't take push item on the input."""
@@ -87,7 +88,6 @@ class ContentExtractor:
         self.timeout: int = timeout
         self.poll_rate: int = poll_rate
         self.full_extract = full_extract
-        self.manifest_cache = {}
 
     def _extract_ml_manifest_full(
         self, image_ref: str, _manifest_list: str, mtype: str, ret_headers: Dict[str, Any]
@@ -221,18 +221,7 @@ class ContentExtractor:
             MEDIA_TYPES_PROCESS = self._MEDIA_TYPES_PROCESS
         results = []
         for mtype in mtypes:
-            ret_headers = {}
-            if self.manifest_cache.get(image_ref, {}).get(mtype):
-                manifest, ret_headers = self.manifest_cache[image_ref][mtype]
-                if manifest:
-                    mret: ManifestArchDigest | List[ManifestArchDigest] = MEDIA_TYPES_PROCESS[mtype](
-                        self, image_ref, manifest, mtype, ret_headers
-                    )
-                    if isinstance(mret, list):
-                        results.extend(mret)
-                    else:
-                        results.append(mret)
-                    continue
+            ret_headers: Dict[str, Any] = {}
             for i in range(self.timeout // self.poll_rate):
                 try:
                     ret = cast(
@@ -262,7 +251,6 @@ class ContentExtractor:
                 else:
                     break
                 time.sleep(self.sleep_time)
-            self.manifest_cache.setdefault(image_ref, {})[mtype] = (manifest, ret_headers)
             if not manifest:
                 continue
             else:
