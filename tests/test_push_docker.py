@@ -1165,7 +1165,7 @@ def test_push_docker_full_success(
         )
         # call to untag old signatures
         m.get(
-            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/sometag",
+            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/some-digest",
             json=dest_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1350,7 +1350,12 @@ def test_push_docker_full_prerelease(
         )
         # call for untagging old signatures
         m.get(
-            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/sometag",
+            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/some-digest-sch1",
+            json=dest_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/orig-ns----some-repo/manifests/some-digest-sch2",
             json=dest_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
@@ -1705,7 +1710,7 @@ def test_push_docker_full_success_repush(
         )
         # Call for untag old signatures
         m.get(
-            "https://quay.io/v2/some-namespace/somerepo/manifests/sometag",
+            "https://quay.io/v2/some-namespace/somerepo/manifests/somedigest",
             text=json.dumps(v2s1_manifest, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v1+json"},
         )

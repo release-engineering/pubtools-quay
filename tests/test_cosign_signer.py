@@ -9,7 +9,7 @@ def test_remove_signatures(cosign_signer_settings, fake_cert_key_paths, dest_man
     with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mock_run_entry_point:
         with requests_mock.Mocker() as m:
             m.get(
-                "https://test-quay.io/v2/testing/testing----repository/manifests/tag",
+                "https://test-quay.io/v2/testing/testing----repository/manifests/sha256:123456789",
                 json=dest_manifest_list,
                 headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
             )
@@ -33,7 +33,7 @@ def test_remove_signatures_failure(cosign_signer_settings, fake_cert_key_paths, 
     with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mock_run_entry_point:
         with requests_mock.Mocker() as m:
             m.get(
-                "https://test-quay.io/v2/testing/testing----repository/manifests/tag",
+                "https://test-quay.io/v2/testing/testing----repository/manifests/sha256:123456789",
                 json=dest_manifest_list,
                 headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
             )

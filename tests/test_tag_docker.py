@@ -1632,6 +1632,13 @@ def test_copy_all_archs_sign_images_source(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # manifests for removal of old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/manifest_list_digest",
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            json=src_manifest_list,
+        )
+
         tag_docker_instance.copy_tag_sign_images(
             tag_docker_push_item_add, "v1.6", mock_local_executor.return_value
         )
@@ -1835,6 +1842,13 @@ def test_merge_manifest_lists_sign_images(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/v1.6",
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # manifests for removal od old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/manifest_list_digest",
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            json=src_manifest_list,
+        )
+
         tag_docker_instance.merge_manifest_lists_sign_images(
             tag_docker_push_item_add, "v1.6", ["arm64", "amd64"]
         )
@@ -1863,6 +1877,7 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
     signer_wrapper_run_entry_point,
     src_manifest_list,
     v2s1_manifest,
+    fixture_run_in_parallel_signer,
 ):
     hub = mock.MagicMock()
 
@@ -1946,25 +1961,39 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
             },
         )
         m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/manifest-list-digest",
+            text=json.dumps(src_manifest_list, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            # request_headers={"Accept": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:1111111111",
             text=json.dumps(v2s1_manifest, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
-            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
+            # request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:2222222222",
             text=json.dumps(v2s1_manifest, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
-            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
+            # request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:3333333333",
             text=json.dumps(v2s1_manifest, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
-            request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
+            # request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
         )
         m.get(
             "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:5555555555",
+            text=json.dumps(v2s1_manifest, sort_keys=True),
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+            # request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+
+        # manifest for removal of old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/manifest-list-digest",
             text=json.dumps(v2s1_manifest, sort_keys=True),
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
             request_headers={"Accept": "application/vnd.docker.distribution.manifest.v2+json"},
@@ -2044,6 +2073,16 @@ def test_untag_image(
             src_manifest_list,
             v2s1_manifest,
         )
+        # manifest for removal of old digests
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest_list_digest",
+            },
+        )
+
         tag_docker_instance.untag_image(tag_docker_push_item_remove_src, "v1.8")
 
     mock_run_untag_images.assert_called_once_with(
@@ -2102,7 +2141,17 @@ def test_manifest_list_remove_archs(
         )
         # Call for old signatures removal
         m.get(
-            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.8",
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            json=expected_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            json=expected_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
             json=expected_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )

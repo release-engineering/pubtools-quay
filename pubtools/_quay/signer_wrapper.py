@@ -461,7 +461,7 @@ class CosignSignerWrapper(SignerWrapper):
 
     SCHEMA = CosignSignerSettingsSchema
 
-    def _list_signatures(self, repository: str, tag: str) -> List[Tuple[str, str]]:
+    def _list_signatures(self, repository: str, digest: str) -> List[Tuple[str, str]]:
         """List cosign signatures for given repository.
 
         This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
@@ -482,7 +482,7 @@ class CosignSignerWrapper(SignerWrapper):
         try:
             ml = quay_client.get_manifest(
                 f"{self.settings['quay_host'].rstrip('/')}/"
-                f"{self.settings['quay_namespace']}/{repository.replace('/','----')}:{tag}",
+                f"{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}",
                 media_type=QuayClient.MANIFEST_LIST_TYPE,
             )
         except ManifestTypeError:
@@ -490,7 +490,7 @@ class CosignSignerWrapper(SignerWrapper):
         if ml:
             full_references = [
                 f"{self.settings['quay_host'].rstrip('/')}"
-                f"/{self.settings['quay_namespace']}/{repository.replace('/','----')}:{tag}"
+                f"/{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}"
             ]
             for manifest in cast(ManifestList, ml)["manifests"]:
                 full_references.append(
@@ -505,7 +505,7 @@ class CosignSignerWrapper(SignerWrapper):
                 (
                     f"{self.settings['quay_host'].rstrip('/')}/"
                     + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
-                    + f":{tag}"
+                    + f"@{digest}"
                 )
             ]
         existing_signatures = []
@@ -544,13 +544,13 @@ class CosignSignerWrapper(SignerWrapper):
             _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
             tuples of signautres to keep.
         """
-        repo_tag_list = list(set([(x[2], x[1]) for x in signatures]))
         signatures_to_remove = [(x[2], x[0]) for x in signatures]
         signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
         existing_signatures = set(
             sum(
                 run_in_parallel(
-                    self._list_signatures, [FData(args=repo_tag) for repo_tag in repo_tag_list]
+                    self._list_signatures,
+                    [FData(args=digest_tag) for digest_tag in signatures_to_remove],
                 ).values(),
                 [],
             )
