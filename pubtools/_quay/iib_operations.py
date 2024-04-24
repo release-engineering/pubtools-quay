@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from typing import Any, List, Tuple, cast
@@ -104,18 +105,36 @@ def _index_image_to_sign_entries(
         )
 
     dest_operator_quay_client = _get_operator_quay_client(target_settings)
-    manifest_list = cast(
-        ManifestList,
+    ret = cast(
+        Tuple[str, dict[str, str]],
         dest_operator_quay_client.get_manifest(
-            src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE
+            src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE, return_headers=True, raw=True
         ),
     )
+    manifest_list_str, headers = ret
+    manifest_list = cast(ManifestList, json.loads(manifest_list_str))
+
     index_image_digests = [
         m["digest"]
         for m in manifest_list["manifests"]
         if m["platform"]["architecture"] in ["amd64", "x86_64"]
     ]
     to_sign_entries = []
+    # if signing external images, sign also manifest list
+    if internal:
+        for _dest_tag in dest_tags:
+            for registry in dest_registries:
+                for key in signing_keys:
+                    to_sign_entries.append(
+                        SignEntry(
+                            reference=f"{registry}/{iib_repo}:{_dest_tag}",
+                            repo=iib_repo,
+                            digest=headers["docker-content-digest"],
+                            arch="amd64",
+                            signing_key=key,
+                        )
+                    )
+
     for registry in dest_registries:
         for _dest_tag in dest_tags:
             for digest in index_image_digests:

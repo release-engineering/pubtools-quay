@@ -1,5 +1,6 @@
 from collections import namedtuple
 from copy import deepcopy
+import hashlib
 import json
 import logging
 import urllib3
@@ -645,6 +646,24 @@ class TagDocker:
         if push_item.claims_signing_key:
             to_sign_entries = []
             to_sign_entries_internal = []
+
+            # for cosign sign also manifest list
+            to_sign_entries_internal.append(
+                SignEntry(
+                    repo=list(push_item.repos.keys())[0],
+                    reference="quay.io/"
+                    + self.target_settings["quay_namespace"]
+                    + "/"
+                    + internal_repo
+                    + ":"
+                    + tag,
+                    digest="sha256:"
+                    + hashlib.sha256(json.dumps(new_manifest_list).encode("utf-8")).hexdigest(),
+                    arch="",
+                    signing_key=push_item.claims_signing_key,
+                )
+            )
+
             for manifest in new_manifest_list["manifests"]:
                 to_sign_entries_internal.append(
                     SignEntry(

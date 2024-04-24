@@ -18,8 +18,9 @@ class FakeQuayClient(QuayClient):
     def __init__(self):
         """Initialize the FakeQuayClient."""
         self._manifests_image_media_type = {}
+        self._digests = {}
 
-    def f_add_manifest(self, image, manifest, media_type):
+    def f_add_manifest(self, image, manifest, media_type, digest):
         """Register manifest to fake client.
 
         Args:
@@ -29,8 +30,10 @@ class FakeQuayClient(QuayClient):
         """
         self._manifests_image_media_type.setdefault(image, {})
         self._manifests_image_media_type[image][media_type] = manifest
+        self._digests.setdefault(image, {})
+        self._digests[image][media_type] = digest
 
-    def get_manifest(self, image, raw=False, media_type=None):
+    def get_manifest(self, image, raw=False, media_type=None, return_headers=False):
         """Get manifest form the registry.
 
         Args:
@@ -40,7 +43,22 @@ class FakeQuayClient(QuayClient):
         Returns:
             dict or str: Manifest as a Python dictionary.
         """
-        return self._manifests_image_media_type[image][media_type]
+        if not return_headers:
+            if raw:
+                return json.dumps(self._manifests_image_media_type[image][media_type])
+            else:
+                return self._manifests_image_media_type[image][media_type]
+        else:
+            if raw:
+                return (
+                    json.dumps(self._manifests_image_media_type[image][media_type]),
+                    {"docker-content-digest": self._digests[image][media_type]},
+                )
+            else:
+                return (
+                    self._manifests_image_media_type[image][media_type],
+                    {"docker-content-digest": self._digests[image][media_type]},
+                )
 
     def upload_manifest(self, manifest, image, raw=False):
         """
