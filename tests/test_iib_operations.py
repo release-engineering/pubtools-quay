@@ -376,7 +376,8 @@ def test_task_iib_add_bundles(
     )
     assert signer_wrapper_remove_signatures.mock_calls == [
         mock.call([1]),
-        mock.call([("operators/index-image", "sha256:5555555555")]),
+        # TODO: Uncomment when cosign removing signatures is enabled
+        # mock.call([("operators/index-image", "sha256:5555555555")]),
     ]
 
 
@@ -484,7 +485,8 @@ def test_task_iib_add_bundles_missing_manifest_list(
         target_settings,
     )
     assert signer_wrapper_remove_signatures.mock_calls == [
-        mock.call([]),
+        # TODO: Uncomment when cosign removing signatures is enabled
+        # mock.call([]),
         mock.call([]),
     ]
 
@@ -675,87 +677,88 @@ def test_task_iib_add_bundles_operator_ns(
                 ],
                 {},
             ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@manifest_list_digest",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
+            # Uncomment when cosign signature removal is enabled
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@manifest_list_digest",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
         ]
     )
     msg_signer_wrapper_save_signatures_file.assert_any_call(
@@ -790,7 +793,8 @@ def test_task_iib_add_bundles_operator_ns(
     )
     assert signer_wrapper_remove_signatures.mock_calls == [
         mock.call([1]),
-        mock.call([("operators/index-image", "sha256:5555555555")]),
+        # TODO: Uncomment when cosign removing signatures is enabled
+        # mock.call([("operators/index-image", "sha256:5555555555")]),
     ]
 
 
@@ -1186,87 +1190,88 @@ def test_task_iib_build_from_scratch(
                 ],
                 {},
             ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@manifest_list_digest",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
+            # TODO: Uncomment when cosign signature removal is enabled
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@manifest_list_digest",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
         ]
     )
     msg_signer_wrapper_save_signatures_file.assert_any_call(
@@ -1582,87 +1587,88 @@ def test_task_iib_build_from_scratch_operator_ns(
                 ],
                 {},
             ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@manifest_list_digest",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:1111111111",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:2222222222",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:3333333333",
-                ],
-                {},
-            ),
-            mock.call(
-                ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                None,
-                [
-                    "test-config.yml",
-                    "quay.io/some-namespace/operators----index-image@sha256:5555555555",
-                ],
-                {},
-            ),
+            # TODO: Uncomment when cosign signature removal is enabled
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@manifest_list_digest",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:1111111111",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:2222222222",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:3333333333",
+            #     ],
+            #     {},
+            # ),
+            # mock.call(
+            #     ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+            #     None,
+            #     [
+            #         "test-config.yml",
+            #         "quay.io/some-namespace/operators----index-image@sha256:5555555555",
+            #     ],
+            #     {},
+            # ),
         ]
     )
     msg_signer_wrapper_save_signatures_file.assert_any_call(

@@ -382,7 +382,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         )
         assert signer_wrapper_remove_signatures.mock_calls == [
             mock.call([1]),
-            mock.call([("operators/index-image", "sha256:6666666666")]),
+            # TODO: uncomment when removing of signatures in cosign is enabled
+            # mock.call([("operators/index-image", "sha256:6666666666")]),
         ]
 
 

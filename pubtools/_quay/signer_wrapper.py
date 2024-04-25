@@ -6,12 +6,10 @@ import tempfile
 import json
 import io
 
-from typing import Optional, List, Dict, Any, Tuple, Generator, cast
+from typing import Optional, List, Dict, Any, Tuple, Generator
 
 from marshmallow import Schema, fields, EXCLUDE
 
-from .quay_api_client import QuayApiClient
-from .quay_client import QuayClient
 from .utils.misc import (
     run_entrypoint,
     get_pyxis_ssl_paths,
@@ -20,8 +18,6 @@ from .utils.misc import (
     FData,
 )
 from .item_processor import SignEntry
-from .exceptions import ManifestTypeError
-from .types import ManifestList
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -461,75 +457,76 @@ class CosignSignerWrapper(SignerWrapper):
 
     SCHEMA = CosignSignerSettingsSchema
 
-    def _list_signatures(self, repository: str, digest: str) -> List[Tuple[str, str]]:
-        """List cosign signatures for given repository.
-
-        This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
-        return list of full references to signature tags in format sha256-<digest>.sig
-
-        Args:
-            repository (str): Repository to list signatures for.
-            tag (str): Tag to list signatures for.
-        Returns:
-            List[Tuple[str, str]]: List of (repository, signature tag) tuples
-            for existing signatures.
-        """
-        quay_client = QuayClient(
-            self.settings["dest_quay_user"],
-            self.settings["dest_quay_password"],
-            self.settings["quay_host"],
-        )
-        try:
-            ml = quay_client.get_manifest(
-                f"{self.settings['quay_host'].rstrip('/')}/"
-                f"{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}",
-                media_type=QuayClient.MANIFEST_LIST_TYPE,
-            )
-        except ManifestTypeError:
-            ml = None
-        if ml:
-            full_references = [
-                f"{self.settings['quay_host'].rstrip('/')}"
-                f"/{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}"
-            ]
-            for manifest in cast(ManifestList, ml)["manifests"]:
-                full_references.append(
-                    (
-                        f"{self.settings['quay_host'].rstrip('/')}/"
-                        + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
-                        + f"@{manifest['digest']}"
-                    )
-                )
-        else:
-            full_references = [
-                (
-                    f"{self.settings['quay_host'].rstrip('/')}/"
-                    + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
-                    + f"@{digest}"
-                )
-            ]
-        existing_signatures = []
-        for full_reference in full_references:
-            existing_signatures.append(
-                run_entrypoint(
-                    ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
-                    None,
-                    [cast(str, self.config_file), full_reference],
-                    {},
-                )
-            )
-        rets = []
-        for esig in existing_signatures:
-            if esig[0] is True:
-                for sig in esig[1]:
-                    # if not sig:
-                    #     continue
-                    rets.extend(
-                        [(repository, sig.split(":")[-1].replace(".sig", "").replace("-", ":"))]
-                    )
-            else:
-                LOG.warning("Fetch existing signatures error:" + esig[1])
-        return rets
+    # TODO: Uncomment when cosign signature removal is enabled
+    # def _list_signatures(self, repository: str, digest: str) -> List[Tuple[str, str]]:
+    #     """List cosign signatures for given repository.
+    #
+    #     This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to
+    #     return list of full references to signature tags in format sha256-<digest>.sig
+    #
+    #     Args:
+    #         repository (str): Repository to list signatures for.
+    #         tag (str): Tag to list signatures for.
+    #     Returns:
+    #         List[Tuple[str, str]]: List of (repository, signature tag) tuples
+    #         for existing signatures.
+    #     """
+    #     quay_client = QuayClient(
+    #         self.settings["dest_quay_user"],
+    #         self.settings["dest_quay_password"],
+    #         self.settings["quay_host"],
+    #     )
+    #     try:
+    #         ml = quay_client.get_manifest(
+    #             f"{self.settings['quay_host'].rstrip('/')}/"
+    #             f"{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}",
+    #             media_type=QuayClient.MANIFEST_LIST_TYPE,
+    #         )
+    #     except ManifestTypeError:
+    #         ml = None
+    #     if ml:
+    #         full_references = [
+    #             f"{self.settings['quay_host'].rstrip('/')}"
+    #             f"/{self.settings['quay_namespace']}/{repository.replace('/','----')}@{digest}"
+    #         ]
+    #         for manifest in cast(ManifestList, ml)["manifests"]:
+    #             full_references.append(
+    #                 (
+    #                     f"{self.settings['quay_host'].rstrip('/')}/"
+    #                     + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+    #                     + f"@{manifest['digest']}"
+    #                 )
+    #             )
+    #     else:
+    #         full_references = [
+    #             (
+    #                 f"{self.settings['quay_host'].rstrip('/')}/"
+    #                 + f"{self.settings['quay_namespace']}/{repository.replace('/','----')}"
+    #                 + f"@{digest}"
+    #             )
+    #         ]
+    #     existing_signatures = []
+    #     for full_reference in full_references:
+    #         existing_signatures.append(
+    #             run_entrypoint(
+    #                 ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
+    #                 None,
+    #                 [cast(str, self.config_file), full_reference],
+    #                 {},
+    #             )
+    #         )
+    #     rets = []
+    #     for esig in existing_signatures:
+    #         if esig[0] is True:
+    #             for sig in esig[1]:
+    #                 # if not sig:
+    #                 #     continue
+    #                 rets.extend(
+    #                     [(repository, sig.split(":")[-1].replace(".sig", "").replace("-", ":"))]
+    #                 )
+    #         else:
+    #             LOG.warning("Fetch existing signatures error:" + esig[1])
+    #     return rets
 
     def _filter_to_remove(
         self,
@@ -544,31 +541,33 @@ class CosignSignerWrapper(SignerWrapper):
             _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
             tuples of signautres to keep.
         """
-        signatures_to_remove = [(x[2], x[0]) for x in signatures]
-        signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
-        existing_signatures = set(
-            sum(
-                run_in_parallel(
-                    self._list_signatures,
-                    [FData(args=digest_tag) for digest_tag in signatures_to_remove],
-                ).values(),
-                [],
-            )
-        )
-
-        to_remove = []
-        for existing_signature in existing_signatures:
-            if (
-                existing_signature in signatures_to_remove
-                and existing_signature not in signatures_to_exclude
-            ):
-                to_remove.append(existing_signature)
-                LOG.debug(
-                    f"Removing signature "
-                    f"Repository: {existing_signature[0]}, "
-                    f"Digest: {existing_signature[1]}, "
-                )
-        return to_remove
+        # TODO: Uncomment when cosign signature removal is enabled
+        # signatures_to_remove = [(x[2], x[0]) for x in signatures]
+        # signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]
+        # existing_signatures = set(
+        #     sum(
+        #         run_in_parallel(
+        #             self._list_signatures,
+        #             [FData(args=digest_tag) for digest_tag in signatures_to_remove],
+        #         ).values(),
+        #         [],
+        #     )
+        # )
+        #
+        # to_remove = []
+        # for existing_signature in existing_signatures:
+        #     if (
+        #         existing_signature in signatures_to_remove
+        #         and existing_signature not in signatures_to_exclude
+        #     ):
+        #         to_remove.append(existing_signature)
+        #         LOG.debug(
+        #             f"Removing signature "
+        #             f"Repository: {existing_signature[0]}, "
+        #             f"Digest: {existing_signature[1]}, "
+        #         )
+        # return to_remove
+        return []  # pragma: no cover
 
     def _run_remove_signatures(self, signatures_to_remove: List[Tuple[str, str]]) -> None:
         """Remove signatures from the sigstore.
@@ -576,11 +575,12 @@ class CosignSignerWrapper(SignerWrapper):
         Args:
             signatures_to_remove (List[Tuple(str, str)]): List of signatures to remove.
         """
-        qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
-        for sig_to_remove in signatures_to_remove:
-            ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
-            sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
-            qc.delete_tag(ref, sig_tag)
+        # TODO: Uncomment when cosign signature removal is enabled
+        # qc = QuayApiClient(self.settings["dest_quay_api_token"], host=self.settings["quay_host"])
+        # for sig_to_remove in signatures_to_remove:
+        #     ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
+        #     sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
+        #     qc.delete_tag(ref, sig_tag)
 
     def remove_signatures(
         self,
@@ -595,8 +595,11 @@ class CosignSignerWrapper(SignerWrapper):
             exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
             tuples of signautres to keep.
         """
-        to_remove = self._filter_to_remove(signatures, _exclude=_exclude)
-        self._remove_signatures(to_remove)
+        # XXX: Removal of signatures in cosign is currently disabled. Once cosign will be able to
+        # remove specific annotation from a signatures, this method will be updated and enabled.
+        return
+        # to_remove = self._filter_to_remove(signatures, _exclude=_exclude)
+        # self._remove_signatures(to_remove)
 
 
 SIGNER_BY_LABEL = {
