@@ -821,9 +821,9 @@ def test_tag_docker_multiarch_merge_ml(
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
                     ],
                     digest=[
-                        "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
                         "sha256:1111111111",
                         "sha256:5555555555",
+                        "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
                     ],
                 ),
             ]

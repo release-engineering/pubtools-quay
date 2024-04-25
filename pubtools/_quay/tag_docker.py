@@ -647,23 +647,6 @@ class TagDocker:
             to_sign_entries = []
             to_sign_entries_internal = []
 
-            # for cosign sign also manifest list
-            to_sign_entries_internal.append(
-                SignEntry(
-                    repo=list(push_item.repos.keys())[0],
-                    reference="quay.io/"
-                    + self.target_settings["quay_namespace"]
-                    + "/"
-                    + internal_repo
-                    + ":"
-                    + tag,
-                    digest="sha256:"
-                    + hashlib.sha256(json.dumps(new_manifest_list).encode("utf-8")).hexdigest(),
-                    arch="",
-                    signing_key=push_item.claims_signing_key,
-                )
-            )
-
             for manifest in new_manifest_list["manifests"]:
                 to_sign_entries_internal.append(
                     SignEntry(
@@ -741,11 +724,30 @@ class TagDocker:
         ) == sorted(
             json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]
         ):
+            ml_to_sign = cast(ManifestList, raw_src_manifest)
             self.quay_client.upload_manifest(raw_src_manifest, dest_image, raw=True)
         else:
+            ml_to_sign = cast(ManifestList, new_manifest_list)
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
 
         if push_item.claims_signing_key:
+            # for cosign sign also manifest list
+            to_sign_entries_internal.append(
+                SignEntry(
+                    repo=list(push_item.repos.keys())[0],
+                    reference="quay.io/"
+                    + self.target_settings["quay_namespace"]
+                    + "/"
+                    + internal_repo
+                    + ":"
+                    + tag,
+                    digest="sha256:"
+                    + hashlib.sha256(json.dumps(ml_to_sign).encode("utf-8")).hexdigest(),
+                    arch="",
+                    signing_key=push_item.claims_signing_key,
+                )
+            )
+
             set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
             for signer in self.target_settings["signing"]:
                 if signer["enabled"] and not SIGNER_BY_LABEL[signer["label"]].pre_push:
