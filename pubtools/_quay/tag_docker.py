@@ -742,7 +742,7 @@ class TagDocker:
                     + ":"
                     + tag,
                     digest="sha256:"
-                    + hashlib.sha256(json.dumps(ml_to_sign).encode("utf-8")).hexdigest(),
+                    + hashlib.sha256(ml_to_sign.encode("utf-8")).hexdigest(),
                     arch="",
                     signing_key=push_item.claims_signing_key,
                 )
