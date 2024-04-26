@@ -13,9 +13,9 @@ from marshmallow import Schema, fields, EXCLUDE
 from .utils.misc import (
     run_entrypoint,
     get_pyxis_ssl_paths,
-    run_in_parallel,
+    # run_in_parallel,
     log_step,
-    FData,
+    # FData,
 )
 from .item_processor import SignEntry
 

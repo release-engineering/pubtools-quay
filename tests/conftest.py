@@ -2027,9 +2027,10 @@ def fixture_run_in_parallel():
 
 @pytest.fixture
 def fixture_run_in_parallel_signer():
-    with mock.patch("pubtools._quay.signer_wrapper.run_in_parallel") as patched:
-        patched.side_effect = run_in_serial
-        yield patched
+    # with mock.patch("pubtools._quay.signer_wrapper.run_in_parallel") as patched:
+    #     patched.side_effect = run_in_serial
+    #     yield patched
+    yield None
 
 
 @pytest.fixture
