@@ -133,8 +133,15 @@ def test_push_docker_multiarch_merge_ml_operator(
                 "repository": "operators/index-image",
             }
         ],
+        # list existing signatures
+        (True, ["quay.io/testing/repo:v4.5"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig1"]),
+        (True, ["quay.io/testing/repo:v4.6"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig1"]),
         [],
         [],
         [],
@@ -155,6 +162,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         [],
         [],
         [],
+        (True, ["quay.io/testing/repo:v4.5"]),
+        (True, ["quay.io/testing/repo:sha256-6666666666.sig1"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig1"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig2"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig3"]),
@@ -373,7 +382,8 @@ def test_push_docker_multiarch_merge_ml_operator(
         )
         assert signer_wrapper_remove_signatures.mock_calls == [
             mock.call([1]),
-            mock.call([("operators/index-image", "sha256:6666666666")]),
+            # TODO: uncomment when removing of signatures in cosign is enabled
+            # mock.call([("operators/index-image", "sha256:6666666666")]),
         ]
 
 
@@ -766,6 +776,22 @@ def test_tag_docker_multiarch_merge_ml(
         m.put(
             "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/v1.8",
         )
+        # manifests for removal of old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:1111111111",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:5555555555",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
 
         tag_docker_instance = TagDocker(
             [tag_docker_push_item_add_integration, tag_docker_push_item_remove_no_src_integration],
@@ -964,6 +990,18 @@ def test_tag_docker_source_copy_untag(
         )
         m.delete(
             "https://quay.io/api/v1/repository/some-namespace/namespace----test_repo2/tag/v1.8",
+        )
+
+        # manifest for removal of old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo/manifests/sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
+            json=v2s2_manifest_data,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/namespace----test_repo2/manifests/sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
+            json=v2s2_manifest_data,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.v2+json"},
         )
 
         tag_docker_instance = TagDocker(
@@ -1233,6 +1271,12 @@ def test_task_iib_add_bundles(
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # manifest to remove old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
 
         iib_operations.task_iib_add_bundles(
             ["bundle1", "bundle2"],
@@ -1339,6 +1383,12 @@ def test_task_iib_remove_operators(
             json=src_manifest_list,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
+        # manifests for removal of old signatures
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+        )
         iib_operations.task_iib_remove_operators(
             ["operator1", "operator2"],
             ["arch1", "arch2"],
@@ -1428,6 +1478,14 @@ def test_task_iib_build_from_scratch(
             "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
             src_manifest_list,
             v2s1_manifest,
+        )
+        m.get(
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest_list_digest",
+            },
         )
         m.get(
             "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",

@@ -2006,6 +2006,8 @@ def cosign_signer_settings():
         "quay_host": "test-quay.io",
         "quay_namespace": "testing",
         "dest_quay_api_token": "testing-quay-api-token",
+        "dest_quay_user": "user",
+        "dest_quay_password": "password",
     }
 
 
@@ -2025,9 +2027,10 @@ def fixture_run_in_parallel():
 
 @pytest.fixture
 def fixture_run_in_parallel_signer():
-    with mock.patch("pubtools._quay.signer_wrapper.run_in_parallel") as patched:
-        patched.side_effect = run_in_serial
-        yield patched
+    # with mock.patch("pubtools._quay.signer_wrapper.run_in_parallel") as patched:
+    #     patched.side_effect = run_in_serial
+    #     yield patched
+    yield None
 
 
 @pytest.fixture
