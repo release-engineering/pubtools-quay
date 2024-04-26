@@ -581,6 +581,7 @@ class CosignSignerWrapper(SignerWrapper):
         #     ref = self.settings["quay_namespace"] + "/" + sig_to_remove[0].replace("/", "----")
         #     sig_tag = sig_to_remove[1].replace(":", "-") + ".sig"
         #     qc.delete_tag(ref, sig_tag)
+        pass  # pragma: no cover
 
     def remove_signatures(
         self,
