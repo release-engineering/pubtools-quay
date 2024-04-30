@@ -318,8 +318,10 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",
@@ -366,8 +368,15 @@ def test_push_docker_multiarch_merge_ml_operator(
                     reference=[
                         "quay.io/some-namespace/operators----index-image:v4.5",
                         "quay.io/some-namespace/operators----index-image:v4.5-timestamp",
+                        "quay.io/some-namespace/operators----index-image:v4.5",
+                        "quay.io/some-namespace/operators----index-image:v4.5-timestamp",
                     ],
-                    digest=["sha256:5555555555", "sha256:5555555555"],
+                    digest=[
+                        "manifest_list_digest",
+                        "manifest_list_digest",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                    ],
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -375,8 +384,15 @@ def test_push_docker_multiarch_merge_ml_operator(
                     reference=[
                         "quay.io/some-namespace/operators----index-image:v4.6",
                         "quay.io/some-namespace/operators----index-image:v4.6-timestamp",
+                        "quay.io/some-namespace/operators----index-image:v4.6",
+                        "quay.io/some-namespace/operators----index-image:v4.6-timestamp",
                     ],
-                    digest=["sha256:5555555555", "sha256:5555555555"],
+                    digest=[
+                        "manifest_list_digest",
+                        "manifest_list_digest",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                    ],
                 ),
             ]
         )
@@ -501,8 +517,10 @@ def test_push_docker_multiarch_simple_workflow(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",
@@ -826,10 +844,12 @@ def test_tag_docker_multiarch_merge_ml(
                     reference=[
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
+                        "quay.io/some-namespace/namespace----test_repo:v1.6",
                     ],
                     digest=[
                         "sha256:1111111111",
                         "sha256:5555555555",
+                        "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
                     ],
                 ),
             ]
@@ -1269,7 +1289,10 @@ def test_task_iib_add_bundles(
         m.get(
             "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
             json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "sha256:a1a1a1",
+            },
         )
         # manifest to remove old signatures
         m.get(
@@ -1315,8 +1338,15 @@ def test_task_iib_add_bundles(
                     reference=[
                         "quay.io/some-namespace/operators----index-image:8",
                         "quay.io/some-namespace/operators----index-image:8-timestamp",
+                        "quay.io/some-namespace/operators----index-image:8",
+                        "quay.io/some-namespace/operators----index-image:8-timestamp",
                     ],
-                    digest=["sha256:5555555555", "sha256:5555555555"],
+                    digest=[
+                        "sha256:a1a1a1",
+                        "sha256:a1a1a1",
+                        "sha256:5555555555",
+                        "sha256:5555555555",
+                    ],
                 ),
             ]
         )
@@ -1381,7 +1411,10 @@ def test_task_iib_remove_operators(
         m.get(
             "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
             json=src_manifest_list,
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "sha256:a1a1a1",
+            },
         )
         # manifests for removal of old signatures
         m.get(
@@ -1426,8 +1459,10 @@ def test_task_iib_remove_operators(
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8-timestamp",
+                    "quay.io/some-namespace/operators----index-image:8",
+                    "quay.io/some-namespace/operators----index-image:8-timestamp",
                 ],
-                digest=["sha256:5555555555", "sha256:5555555555"],
+                digest=["sha256:a1a1a1", "sha256:a1a1a1", "sha256:5555555555", "sha256:5555555555"],
             ),
         ]
     )
@@ -1490,7 +1525,10 @@ def test_task_iib_build_from_scratch(
         m.get(
             "https://quay.io/v2/iib-namespace/iib/manifests/sha256:a1a1a1",
             text=json.dumps(src_manifest_list, sort_keys=True),
-            headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "sha256:a1a1a1",
+            },
         )
         iib_operations.task_iib_build_from_scratch(
             ["bundle1", "bundle2"],
@@ -1820,8 +1858,10 @@ def test_push_docker_operator_verify_bundle_fail(
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
+                        "quay.io/some-namespace/target----repo:latest-test-tag",
                     ],
                     digest=[
+                        "manifest_list_digest",
                         "sha256:1111111111",
                         "sha256:2222222222",
                         "sha256:3333333333",
