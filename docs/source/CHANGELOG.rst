@@ -1,13 +1,18 @@
 ChangeLog
 =========
 
+0.19.0 (2024-03-18)
+-------------------
+
+* Support cosign signing for container images
+
 0.18.0 (2024-03-18)
 -------------------
 
 * Generate SBOM attestations for manifest lists
 
 0.17.0 (2024-02-27)
-------------------
+-------------------
 
 * Should not call IIB if bundle is opted in fbc and targets OCP >=4.11
 
