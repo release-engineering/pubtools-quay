@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pubtools._quay.signer_wrapper &mdash; pubtools-quay 0.12.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pubtools-quay
+          </a>
+              <div class="version">
+                0.12.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pubtools-quay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.signer_wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pubtools._quay.signer_wrapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span><span class="p">,</span> <span class="n">redirect_stdout</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pkg_resources</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">io</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Type</span>
+
+<span class="kn">from</span> <span class="nn">marshmallow</span> <span class="kn">import</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">EXCLUDE</span>
+
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">run_entrypoint</span><span class="p">,</span>
+    <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
+    <span class="c1"># run_in_parallel,</span>
+    <span class="n">log_step</span><span class="p">,</span>
+    <span class="c1"># FData,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="n">SignEntry</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">SigningError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Error raised when signing fails.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">NoSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Schema that does not validate anything.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="MsgSignerSettingsSchema"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.MsgSignerSettingsSchema">[docs]</a><span class="k">class</span> <span class="nc">MsgSignerSettingsSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation schema for messaging signer settings.&quot;&quot;&quot;</span>
+
+    <span class="n">pyxis_server</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pyxis_ssl_crtfile</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pyxis_ssl_keyfile</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">num_thread_pyxis</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SignerWrapper"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper">[docs]</a><span class="k">class</span> <span class="nc">SignerWrapper</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper providing functionality to sign containers with a generic signer.&quot;&quot;&quot;</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;unused&quot;</span>
+    <span class="n">pre_push</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">SCHEMA</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Schema</span><span class="p">]</span> <span class="o">=</span> <span class="n">NoSchema</span>
+    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;signer&quot;</span><span class="p">,</span> <span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;signer&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">config_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize SignerWrapper.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_file (str): Path to config file for the signer.</span>
+<span class="sd">            settings (dict): Settings for the signer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_file</span> <span class="o">=</span> <span class="n">config_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_settings</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">entry_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and return entry point for pubtools-sign project.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span>
+
+<div class="viewcode-block" id="SignerWrapper.remove_signatures"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.remove_signatures">[docs]</a>    <span class="k">def</span> <span class="nf">remove_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from a sigstore.&quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Removing signatures </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">signatures</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_signatures</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span></div>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_run_remove_signatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="k">def</span> <span class="nf">_remove_signatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from sigstore.</span>
+
+<span class="sd">        This is helper to make testing easier.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            signatures_to_remove (list): Signatures to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_remove_signatures</span><span class="p">(</span><span class="n">signatures_to_remove</span><span class="p">)</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_run_store_signed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="k">def</span> <span class="nf">_store_signed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Store signatures in sigstore.</span>
+
+<span class="sd">        This is helper to make testing easier.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (dict): Signatures to store.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Storing signatures </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">signatures</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_store_signed</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SignerWrapper.sign_container_opt_args"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.sign_container_opt_args">[docs]</a>    <span class="k">def</span> <span class="nf">sign_container_opt_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entry</span><span class="p">:</span> <span class="n">SignEntry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return optional arguments for signing a container.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_entry (SignEntry): SignEntry to sign.</span>
+<span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Optional arguments for signing a container.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+    <span class="k">def</span> <span class="nf">_sign_containers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sign a specific chunk of references and digests with given signing key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_entries (List[SignEntry]): Chunk of SignEntry to sign.</span>
+<span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;Signing container </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sign_entries</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">sign_entry</span> <span class="o">=</span> <span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">opt_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_container_opt_args</span><span class="p">(</span><span class="n">sign_entry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">(</span>
+            <span class="n">config_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span>
+            <span class="n">signing_key</span><span class="o">=</span><span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+            <span class="n">reference</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">reference</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
+            <span class="n">digest</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">digest</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">opt_args</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">signed</span><span class="p">[</span><span class="s2">&quot;signer_result&quot;</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;ok&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="n">signed</span><span class="p">[</span><span class="s2">&quot;signer_result&quot;</span><span class="p">][</span><span class="s2">&quot;error_message&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Signed </span><span class="si">%s</span><span class="s2">(</span><span class="si">%s</span><span class="s2">) with </span><span class="si">%s</span><span class="s2"> in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_signed</span><span class="p">(</span><span class="n">signed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_filter_to_sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter entries to sign.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            to_sign_entries (List[SignEntry]): list of entries to sign.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[SignEntry]: list of entries to sign.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">to_sign_entries</span>
+
+<div class="viewcode-block" id="SignerWrapper.sign_containers"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.sign_containers">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Sign container images&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">sign_containers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">to_sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sign signing entries.</span>
+
+<span class="sd">        Entries are sent to signer in chunks of chunk_size size.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            to_sign_entries (List[SignEntry]): list of entries to sign.</span>
+<span class="sd">            task_id (str): optional identifier used in signing process.</span>
+<span class="sd">            parallelism (int): determines how many entries should be signed in parallel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_to_sign</span><span class="p">(</span><span class="n">to_sign_entries</span><span class="p">)</span>
+        <span class="n">to_sign_entries_filtered</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">to_sign_entries</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sign_entry</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">to_sign_entries_filtered</span><span class="p">:</span>
+                <span class="n">to_sign_entries_filtered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sign_entry</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">redirect_stdout</span><span class="p">(</span><span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sign_containers</span><span class="p">(</span><span class="n">to_sign_entries_filtered</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SignerWrapper.validate_settings"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.validate_settings">[docs]</a>    <span class="k">def</span> <span class="nf">validate_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate provided settings for the SignerWrapper.&quot;&quot;&quot;</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SCHEMA</span><span class="p">(</span><span class="n">unknown</span><span class="o">=</span><span class="n">EXCLUDE</span><span class="p">)</span>
+        <span class="n">schema</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MsgSignerWrapper"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.MsgSignerWrapper">[docs]</a><span class="k">class</span> <span class="nc">MsgSignerWrapper</span><span class="p">(</span><span class="n">SignerWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for messaging signer functionality.&quot;&quot;&quot;</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;msg_signer&quot;</span>
+    <span class="n">pre_push</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pubtools-sign&quot;</span><span class="p">,</span> <span class="s2">&quot;modules&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-sign-msg-container-sign&quot;</span><span class="p">]</span>
+
+    <span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">MsgSignerSettingsSchema</span>
+
+    <span class="k">def</span> <span class="nf">_filter_to_sign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">]:</span>
+        <span class="n">to_sign_digests</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">digest</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">to_sign_entries</span><span class="p">]</span>
+        <span class="n">existing_signatures</span> <span class="o">=</span> <span class="p">[</span><span class="n">esig</span> <span class="k">for</span> <span class="n">esig</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_signatures</span><span class="p">(</span><span class="n">to_sign_digests</span><span class="p">)]</span>
+        <span class="n">existing_signatures_drk</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;sig_key_id&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">existing_signatures</span>
+        <span class="p">}</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tse</span> <span class="ow">in</span> <span class="n">to_sign_entries</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">tse</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tse</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">tse</span><span class="o">.</span><span class="n">signing_key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_signatures_drk</span><span class="p">:</span>
+                <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tse</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+<div class="viewcode-block" id="MsgSignerWrapper.sign_container_opt_args"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.MsgSignerWrapper.sign_container_opt_args">[docs]</a>    <span class="k">def</span> <span class="nf">sign_container_opt_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entry</span><span class="p">:</span> <span class="n">SignEntry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return optional arguments for signing a container.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_entry (SignEntry): SignEntry to sign.</span>
+<span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Optional arguments for signing a container.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;task_id&quot;</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)]</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span></div>
+
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span> <span class="nf">_save_signatures_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save signatures to a temporary file and yield the file.&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+            <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_upload_signatures_&quot;</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">signature_file</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">signatures</span><span class="p">,</span> <span class="n">signature_file</span><span class="p">)</span>
+            <span class="n">signature_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="k">yield</span> <span class="n">signature_file</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">manifest_digests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch signatures from sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            manifest_digests (list): Manifest digests to fetch signatures for.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Dict[str, Any]]: List of fetched signatures.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span>
+        <span class="n">manifest_digests</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">)))</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--request-threads&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+        <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">manifest_digests</span><span class="p">[</span><span class="n">chunk_start</span> <span class="p">:</span> <span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;pubtools_quay_get_signatures_&quot;</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">signature_fetch_file</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">manifest_digests</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">signature_fetch_file</span><span class="p">)</span>
+                    <span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--manifest-digest&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+
+                <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">),</span>
+                    <span class="s2">&quot;pubtools-pyxis-get-signatures&quot;</span><span class="p">,</span>
+                    <span class="n">args</span><span class="p">,</span>
+                    <span class="n">env_vars</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">chunk_results</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_run_store_signed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signed_results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upload signatures to Pyxis by using a pubtools-pyxis entrypoint.</span>
+
+<span class="sd">        Data required for a Pyxis POST request:</span>
+<span class="sd">        - manifest_digest</span>
+<span class="sd">        - reference</span>
+<span class="sd">        - repository</span>
+<span class="sd">        - sig_key_id</span>
+<span class="sd">        - signature_data</span>
+
+<span class="sd">        Signatures are uploaded in batches.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signed_results: (Dict[str, Any]):</span>
+<span class="sd">                Dictionary of {&quot;signer_result&quot;:..., &quot;operation_results&quot;:..., &quot;signing_key&quot;:...}&quot;}</span>
+<span class="sd">                holding signed manifest claims data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending new signatures to Pyxis&quot;</span><span class="p">)</span>
+
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">reference</span><span class="p">,</span> <span class="n">op_res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">signed_results</span><span class="p">[</span><span class="s2">&quot;operation&quot;</span><span class="p">][</span><span class="s2">&quot;references&quot;</span><span class="p">],</span> <span class="n">signed_results</span><span class="p">[</span><span class="s2">&quot;operation_results&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;manifest_digest&quot;</span><span class="p">:</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;reference&quot;</span><span class="p">:</span> <span class="n">reference</span><span class="p">,</span>
+                    <span class="s2">&quot;repository&quot;</span><span class="p">:</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;repo&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;sig_key_id&quot;</span><span class="p">:</span> <span class="n">signed_results</span><span class="p">[</span><span class="s2">&quot;signing_key&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;signature_data&quot;</span><span class="p">:</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;signed_claim&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Uploading new signature. Reference: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;reference&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Repository: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;repository&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Digest: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;manifest_digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Key: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;sig_key_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--request-threads&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_save_signatures_file</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span> <span class="k">as</span> <span class="n">signature_file</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--signatures&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Uploading </span><span class="si">{0}</span><span class="s2"> new signatures&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signatures</span><span class="p">)))</span>
+            <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">run_entrypoint</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-upload-signatures&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;pubtools-pyxis-upload-signature&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="n">env_vars</span><span class="p">,</span>
+                <span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_remove_signatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from the sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures_to_remove (List[str]): List of signatures to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--request-threads&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">signatures_to_remove</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+            <span class="n">temp</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--ids&quot;</span><span class="p">,</span> <span class="s2">&quot;@</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">temp</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">run_entrypoint</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-delete-signatures&quot;</span><span class="p">),</span>
+                <span class="s2">&quot;pubtools-pyxis-delete-signatures&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="n">env_vars</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_filter_to_remove</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter signatures to remove.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to remove.</span>
+<span class="sd">            _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to keep.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exclude</span> <span class="o">=</span> <span class="n">_exclude</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">signatures_to_remove</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fetch_signatures</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">]))</span>
+        <span class="n">sig_ids_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">existing_signature</span> <span class="ow">in</span> <span class="n">signatures_to_remove</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
+            <span class="p">)</span> <span class="ow">in</span> <span class="n">signatures</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;repository&quot;</span><span class="p">],</span>
+            <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="n">sig_ids_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">existing_signature</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">])</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Removing signature. Reference: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">&#39;reference&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Repository: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">&#39;repository&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Digest: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">&#39;manifest_digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Key: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">&#39;sig_key_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sig_ids_to_remove</span>
+
+<div class="viewcode-block" id="MsgSignerWrapper.remove_signatures"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.MsgSignerWrapper.remove_signatures">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Remove outdated signatures&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">remove_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (list): List of tuples containing (digest, reference, repository) of</span>
+<span class="sd">            signatures to remove.</span>
+<span class="sd">            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to keep.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_signatures</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_to_remove</span><span class="p">(</span><span class="n">_signatures</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">_exclude</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_signatures</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CosignSignerSettingsSchema"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.CosignSignerSettingsSchema">[docs]</a><span class="k">class</span> <span class="nc">CosignSignerSettingsSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation schema for cosign signer settings.&quot;&quot;&quot;</span>
+
+    <span class="n">quay_namespace</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">quay_host</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dest_quay_user</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dest_quay_password</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">dest_quay_api_token</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">signing_chunk_size</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">signing_parallelism</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CosignSignerWrapper"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.CosignSignerWrapper">[docs]</a><span class="k">class</span> <span class="nc">CosignSignerWrapper</span><span class="p">(</span><span class="n">SignerWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper for cosign signer functionality.&quot;&quot;&quot;</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">&quot;cosign_signer&quot;</span>
+    <span class="n">pre_push</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pubtools-sign&quot;</span><span class="p">,</span> <span class="s2">&quot;modules&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-sign-cosign-container-sign&quot;</span><span class="p">]</span>
+
+    <span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">CosignSignerSettingsSchema</span>
+
+    <span class="c1"># TODO: Uncomment when cosign signature removal is enabled</span>
+    <span class="c1"># def _list_signatures(self, repository: str, digest: str) -&gt; List[Tuple[str, str]]:</span>
+    <span class="c1">#     &quot;&quot;&quot;List cosign signatures for given repository.</span>
+    <span class="c1">#</span>
+    <span class="c1">#     This methods runs pubtools-sign-cosign-container-list entrypoint which is expected to</span>
+    <span class="c1">#     return list of full references to signature tags in format sha256-&lt;digest&gt;.sig</span>
+    <span class="c1">#</span>
+    <span class="c1">#     Args:</span>
+    <span class="c1">#         repository (str): Repository to list signatures for.</span>
+    <span class="c1">#         tag (str): Tag to list signatures for.</span>
+    <span class="c1">#     Returns:</span>
+    <span class="c1">#         List[Tuple[str, str]]: List of (repository, signature tag) tuples</span>
+    <span class="c1">#         for existing signatures.</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     quay_client = QuayClient(</span>
+    <span class="c1">#         self.settings[&quot;dest_quay_user&quot;],</span>
+    <span class="c1">#         self.settings[&quot;dest_quay_password&quot;],</span>
+    <span class="c1">#         self.settings[&quot;quay_host&quot;],</span>
+    <span class="c1">#     )</span>
+    <span class="c1">#     try:</span>
+    <span class="c1">#         ml = quay_client.get_manifest(</span>
+    <span class="c1">#             f&quot;{self.settings[&#39;quay_host&#39;].rstrip(&#39;/&#39;)}/&quot;</span>
+    <span class="c1">#             f&quot;{self.settings[&#39;quay_namespace&#39;]}/{repository.replace(&#39;/&#39;,&#39;----&#39;)}@{digest}&quot;,</span>
+    <span class="c1">#             media_type=QuayClient.MANIFEST_LIST_TYPE,</span>
+    <span class="c1">#         )</span>
+    <span class="c1">#     except ManifestTypeError:</span>
+    <span class="c1">#         ml = None</span>
+    <span class="c1">#     if ml:</span>
+    <span class="c1">#         full_references = [</span>
+    <span class="c1">#             f&quot;{self.settings[&#39;quay_host&#39;].rstrip(&#39;/&#39;)}&quot;</span>
+    <span class="c1">#             f&quot;/{self.settings[&#39;quay_namespace&#39;]}/{repository.replace(&#39;/&#39;,&#39;----&#39;)}@{digest}&quot;</span>
+    <span class="c1">#         ]</span>
+    <span class="c1">#         for manifest in cast(ManifestList, ml)[&quot;manifests&quot;]:</span>
+    <span class="c1">#             full_references.append(</span>
+    <span class="c1">#                 (</span>
+    <span class="c1">#                     f&quot;{self.settings[&#39;quay_host&#39;].rstrip(&#39;/&#39;)}/&quot;</span>
+    <span class="c1">#                     + f&quot;{self.settings[&#39;quay_namespace&#39;]}/{repository.replace(&#39;/&#39;,&#39;----&#39;)}&quot;</span>
+    <span class="c1">#                     + f&quot;@{manifest[&#39;digest&#39;]}&quot;</span>
+    <span class="c1">#                 )</span>
+    <span class="c1">#             )</span>
+    <span class="c1">#     else:</span>
+    <span class="c1">#         full_references = [</span>
+    <span class="c1">#             (</span>
+    <span class="c1">#                 f&quot;{self.settings[&#39;quay_host&#39;].rstrip(&#39;/&#39;)}/&quot;</span>
+    <span class="c1">#                 + f&quot;{self.settings[&#39;quay_namespace&#39;]}/{repository.replace(&#39;/&#39;,&#39;----&#39;)}&quot;</span>
+    <span class="c1">#                 + f&quot;@{digest}&quot;</span>
+    <span class="c1">#             )</span>
+    <span class="c1">#         ]</span>
+    <span class="c1">#     existing_signatures = []</span>
+    <span class="c1">#     for full_reference in full_references:</span>
+    <span class="c1">#         existing_signatures.append(</span>
+    <span class="c1">#             run_entrypoint(</span>
+    <span class="c1">#                 (&quot;pubtools-sign&quot;, &quot;modules&quot;, &quot;pubtools-sign-cosign-signature-list&quot;),</span>
+    <span class="c1">#                 None,</span>
+    <span class="c1">#                 [cast(str, self.config_file), full_reference],</span>
+    <span class="c1">#                 {},</span>
+    <span class="c1">#             )</span>
+    <span class="c1">#         )</span>
+    <span class="c1">#     rets = []</span>
+    <span class="c1">#     for esig in existing_signatures:</span>
+    <span class="c1">#         if esig[0] is True:</span>
+    <span class="c1">#             for sig in esig[1]:</span>
+    <span class="c1">#                 # if not sig:</span>
+    <span class="c1">#                 #     continue</span>
+    <span class="c1">#                 rets.extend(</span>
+    <span class="c1">#                     [(repository, sig.split(&quot;:&quot;)[-1].replace(&quot;.sig&quot;, &quot;&quot;).replace(&quot;-&quot;, &quot;:&quot;))]</span>
+    <span class="c1">#                 )</span>
+    <span class="c1">#         else:</span>
+    <span class="c1">#             LOG.warning(&quot;Fetch existing signatures error:&quot; + esig[1])</span>
+    <span class="c1">#     return rets</span>
+
+    <span class="k">def</span> <span class="nf">_filter_to_remove</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Filter signatures to remove.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to remove.</span>
+<span class="sd">            _exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to keep.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: Uncomment when cosign signature removal is enabled</span>
+        <span class="c1"># signatures_to_remove = [(x[2], x[0]) for x in signatures]</span>
+        <span class="c1"># signatures_to_exclude = [(x[2], x[0]) for x in _exclude or []]</span>
+        <span class="c1"># existing_signatures = set(</span>
+        <span class="c1">#     sum(</span>
+        <span class="c1">#         run_in_parallel(</span>
+        <span class="c1">#             self._list_signatures,</span>
+        <span class="c1">#             [FData(args=digest_tag) for digest_tag in signatures_to_remove],</span>
+        <span class="c1">#         ).values(),</span>
+        <span class="c1">#         [],</span>
+        <span class="c1">#     )</span>
+        <span class="c1"># )</span>
+        <span class="c1">#</span>
+        <span class="c1"># to_remove = []</span>
+        <span class="c1"># for existing_signature in existing_signatures:</span>
+        <span class="c1">#     if (</span>
+        <span class="c1">#         existing_signature in signatures_to_remove</span>
+        <span class="c1">#         and existing_signature not in signatures_to_exclude</span>
+        <span class="c1">#     ):</span>
+        <span class="c1">#         to_remove.append(existing_signature)</span>
+        <span class="c1">#         LOG.debug(</span>
+        <span class="c1">#             f&quot;Removing signature &quot;</span>
+        <span class="c1">#             f&quot;Repository: {existing_signature[0]}, &quot;</span>
+        <span class="c1">#             f&quot;Digest: {existing_signature[1]}, &quot;</span>
+        <span class="c1">#         )</span>
+        <span class="c1"># return to_remove</span>
+        <span class="k">return</span> <span class="p">[]</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="k">def</span> <span class="nf">_run_remove_signatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from the sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures_to_remove (List[Tuple(str, str)]): List of signatures to remove.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: Uncomment when cosign signature removal is enabled</span>
+        <span class="c1"># qc = QuayApiClient(self.settings[&quot;dest_quay_api_token&quot;], host=self.settings[&quot;quay_host&quot;])</span>
+        <span class="c1"># for sig_to_remove in signatures_to_remove:</span>
+        <span class="c1">#     ref = self.settings[&quot;quay_namespace&quot;] + &quot;/&quot; + sig_to_remove[0].replace(&quot;/&quot;, &quot;----&quot;)</span>
+        <span class="c1">#     sig_tag = sig_to_remove[1].replace(&quot;:&quot;, &quot;-&quot;) + &quot;.sig&quot;</span>
+        <span class="c1">#     qc.delete_tag(ref, sig_tag)</span>
+        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
+
+    <span class="k">def</span> <span class="nf">remove_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove signatures from sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (list): List of tuples containing (digest, reference, repository) of</span>
+<span class="sd">            signatures to remove.</span>
+<span class="sd">            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)</span>
+<span class="sd">            tuples of signautres to keep.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># XXX: Removal of signatures in cosign is currently disabled. Once cosign will be able to</span>
+        <span class="c1"># remove specific annotation from a signatures, this method will be updated and enabled.</span>
+        <span class="k">return</span></div>
+        <span class="c1"># to_remove = self._filter_to_remove(signatures, _exclude=_exclude)</span>
+        <span class="c1"># self._remove_signatures(to_remove)</span>
+
+
+<span class="n">SIGNER_BY_LABEL</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">wrapper</span><span class="o">.</span><span class="n">label</span><span class="p">:</span> <span class="n">wrapper</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">wrapper</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">wrapper</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">wrapper</span><span class="p">,</span> <span class="n">SignerWrapper</span><span class="p">)</span> <span class="ow">and</span> <span class="n">wrapper</span> <span class="o">!=</span> <span class="n">SignerWrapper</span>
+<span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Red Hat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

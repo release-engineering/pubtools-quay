@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Remove repo &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -102,14 +104,16 @@
 <p>Entrypoint used for removing Quay repositories. All the images along with the repository itself will be removed. Signatures of the deleted images will be removed.</p>
 <div class="section" id="cli-reference">
 <h2>CLI reference<a class="headerlink" href="#cli-reference" title="Permalink to this heading"></a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">remove</span><span class="o">-</span><span class="n">repo</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">repositories</span> <span class="n">REPOSITORIES</span> <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">org</span>
-                                 <span class="n">QUAY_ORG</span> <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">token</span> <span class="n">QUAY_API_TOKEN</span><span class="p">]</span>
-                                 <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span> <span class="n">QUAY_USER</span>
-                                 <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">password</span> <span class="n">QUAY_PASSWORD</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">pubtools</span><span class="o">-</span><span class="n">quay</span><span class="o">-</span><span class="n">remove</span><span class="o">-</span><span class="n">repo</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span> <span class="o">--</span><span class="n">repositories</span> <span class="n">REPOSITORIES</span>
+                                 <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">host</span> <span class="n">QUAY_HOST</span><span class="p">]</span> <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">org</span> <span class="n">QUAY_ORG</span>
+                                 <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">api</span><span class="o">-</span><span class="n">token</span> <span class="n">QUAY_API_TOKEN</span><span class="p">]</span> <span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">user</span>
+                                 <span class="n">QUAY_USER</span> <span class="p">[</span><span class="o">--</span><span class="n">quay</span><span class="o">-</span><span class="n">password</span> <span class="n">QUAY_PASSWORD</span><span class="p">]</span>
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">server</span> <span class="n">PYXIS_SERVER</span>
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">crtfile</span> <span class="n">PYXIS_SSL_CRTFILE</span>
                                  <span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">ssl</span><span class="o">-</span><span class="n">keyfile</span> <span class="n">PYXIS_SSL_KEYFILE</span>
                                  <span class="p">[</span><span class="o">--</span><span class="n">pyxis</span><span class="o">-</span><span class="n">request</span><span class="o">-</span><span class="n">threads</span> <span class="n">PYXIS_REQUEST_THREADS</span><span class="p">]</span>
+                                 <span class="p">[</span><span class="o">--</span><span class="n">signers</span> <span class="n">SIGNERS</span><span class="p">]</span>
+                                 <span class="p">[</span><span class="o">--</span><span class="n">signer</span><span class="o">-</span><span class="n">configs</span> <span class="n">SIGNER_CONFIGS</span><span class="p">]</span>
 </pre></div>
 </div>
 <div class="section" id="named-arguments">
@@ -117,6 +121,10 @@
 <dl class="option-list">
 <dt><kbd>--repositories</kbd></dt>
 <dd><p>External repositories to remove as CSV.</p>
+</dd>
+<dt><kbd>--quay-host</kbd></dt>
+<dd><p>quay host name</p>
+<p>Default: “quay.io”</p>
 </dd>
 <dt><kbd>--quay-org</kbd></dt>
 <dd><p>Quay organization in which repositories reside.</p>
@@ -143,6 +151,14 @@
 <dd><p>Maximum number of threads to use for parallel pyxis request</p>
 <p>Default: 7</p>
 </dd>
+<dt><kbd>--signers</kbd></dt>
+<dd><p>Comma separated list of signerrs</p>
+<p>Default: “”</p>
+</dd>
+<dt><kbd>--signer-configs</kbd></dt>
+<dd><p>Comma separated list of signerrs</p>
+<p>Default: “”</p>
+</dd>
 </dl>
 </div>
 </div>
@@ -150,12 +166,14 @@
 <h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="pubtools._quay.remove_repo.remove_repositories">
-<span class="sig-prename descclassname"><span class="pre">pubtools._quay.remove_repo.</span></span><span class="sig-name descname"><span class="pre">remove_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_api_token</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quay_password</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_crtfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_ssl_keyfile</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pyxis_request_threads</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/remove_repo.html#remove_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.remove_repo.remove_repositories" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">pubtools._quay.remove_repo.</span></span><span class="sig-name descname"><span class="pre">remove_repositories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repositories</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/remove_repo.html#remove_repositories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.remove_repo.remove_repositories" title="Permalink to this definition"></a></dt>
 <dd><p>Remove Quay repository.</p>
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>repositories (str):</dt><dd><p>External repositories to remove. Comma separated values.</p>
 </dd>
+<dt>settings (dict):</dt><dd><dl class="simple">
+<dt>Settings dictionary with following keys:</dt><dd><dl class="simple">
 <dt>quay_org (str):</dt><dd><p>Quay organization in which repositories reside.</p>
 </dd>
 <dt>quay_api_token (str):</dt><dd><p>OAuth token for authentication of Quay REST API.</p>
@@ -171,6 +189,10 @@
 <dt>pyxis_ssl_keyfile (str):</dt><dd><p>Path to .key file for SSL authentication.</p>
 </dd>
 <dt>pyxis_request_threads:</dt><dd><p>Maximum number of threads to use for parallel pyxis request.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd>

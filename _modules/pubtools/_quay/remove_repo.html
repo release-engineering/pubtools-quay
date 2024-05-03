@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.remove_repo &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -77,17 +79,22 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.remove_repo</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
 
-<span class="kn">from</span> <span class="nn">.signature_remover</span> <span class="kn">import</span> <span class="n">SignatureRemover</span>
+<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.quay_api_client</span> <span class="kn">import</span> <span class="n">QuayApiClient</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">setup_arg_parser</span><span class="p">,</span>
     <span class="n">add_args_env_variables</span><span class="p">,</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="n">item_processor_for_internal_data</span><span class="p">,</span> <span class="n">VirtualPushItem</span>
+<span class="kn">from</span> <span class="nn">.signer_wrapper</span> <span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -96,6 +103,12 @@
         <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;External repositories to remove as CSV.&quot;</span><span class="p">,</span>
         <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--quay-host&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;quay host name&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">,</span>
     <span class="p">},</span>
     <span class="p">(</span><span class="s2">&quot;--quay-org&quot;</span><span class="p">,):</span> <span class="p">{</span>
         <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Quay organization in which repositories reside.&quot;</span><span class="p">,</span>
@@ -140,73 +153,100 @@
         <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--signers&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Comma separated list of signerrs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">(</span><span class="s2">&quot;--signer-configs&quot;</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Comma separated list of signerrs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="remove_repositories"><a class="viewcode-back" href="../../../remove_repo.html#pubtools._quay.remove_repo.remove_repositories">[docs]</a><span class="k">def</span> <span class="nf">remove_repositories</span><span class="p">(</span>
-    <span class="n">repositories</span><span class="p">,</span>
-    <span class="n">quay_org</span><span class="p">,</span>
-    <span class="n">quay_api_token</span><span class="p">,</span>
-    <span class="n">quay_user</span><span class="p">,</span>
-    <span class="n">quay_password</span><span class="p">,</span>
-    <span class="n">pyxis_server</span><span class="p">,</span>
-    <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
-    <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
-    <span class="n">pyxis_request_threads</span><span class="p">,</span>
-<span class="p">):</span>
+<div class="viewcode-block" id="remove_repositories"><a class="viewcode-back" href="../../../remove_repo.html#pubtools._quay.remove_repo.remove_repositories">[docs]</a><span class="k">def</span> <span class="nf">remove_repositories</span><span class="p">(</span><span class="n">repositories</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Remove Quay repository.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        repositories (str):</span>
 <span class="sd">            External repositories to remove. Comma separated values.</span>
-<span class="sd">        quay_org (str):</span>
-<span class="sd">            Quay organization in which repositories reside.</span>
-<span class="sd">        quay_api_token (str):</span>
-<span class="sd">            OAuth token for authentication of Quay REST API.</span>
-<span class="sd">        quay_user (str):</span>
-<span class="sd">            Quay username for Docker HTTP API.</span>
-<span class="sd">        quay_password (str):</span>
-<span class="sd">            Quay password for Docker HTTP API.</span>
-<span class="sd">        pyxis_server (str):</span>
-<span class="sd">            Pyxis service hostname:</span>
-<span class="sd">        pyxis_ssl_crtfile (str):</span>
-<span class="sd">            Path to .crt file for SSL authentication.</span>
-<span class="sd">        pyxis_ssl_keyfile (str):</span>
-<span class="sd">            Path to .key file for SSL authentication.</span>
-<span class="sd">        pyxis_request_threads:</span>
-<span class="sd">            Maximum number of threads to use for parallel pyxis request.</span>
+<span class="sd">        settings (dict):</span>
+<span class="sd">            Settings dictionary with following keys:</span>
+<span class="sd">                quay_org (str):</span>
+<span class="sd">                    Quay organization in which repositories reside.</span>
+<span class="sd">                quay_api_token (str):</span>
+<span class="sd">                    OAuth token for authentication of Quay REST API.</span>
+<span class="sd">                quay_user (str):</span>
+<span class="sd">                    Quay username for Docker HTTP API.</span>
+<span class="sd">                quay_password (str):</span>
+<span class="sd">                    Quay password for Docker HTTP API.</span>
+<span class="sd">                pyxis_server (str):</span>
+<span class="sd">                    Pyxis service hostname:</span>
+<span class="sd">                pyxis_ssl_crtfile (str):</span>
+<span class="sd">                    Path to .crt file for SSL authentication.</span>
+<span class="sd">                pyxis_ssl_keyfile (str):</span>
+<span class="sd">                    Path to .key file for SSL authentication.</span>
+<span class="sd">                pyxis_request_threads:</span>
+<span class="sd">                    Maximum number of threads to use for parallel pyxis request.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">parsed_repositories</span> <span class="o">=</span> <span class="n">repositories</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
 
     <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing repositories &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repositories</span><span class="p">))</span>
-    <span class="n">quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span><span class="n">quay_api_token</span><span class="p">)</span>
+    <span class="n">quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_api_token&quot;</span><span class="p">])</span>
+    <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_user&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_password&quot;</span><span class="p">],</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span>
+    <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+        <span class="n">quay_client</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_org&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">item_processor</span><span class="o">.</span><span class="n">extractor</span><span class="o">.</span><span class="n">full_extract</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># Remove repository doesn&#39;t work with push item by default, therefore we create VirtualPushItem</span>
+    <span class="c1"># to support existing code to generate needed repository data.</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="n">VirtualPushItem</span><span class="p">(</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">repo</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">parsed_repositories</span><span class="p">}},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="n">repo</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">parsed_repositories</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">existing_manifests</span> <span class="o">=</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_all_existing_manifests_metadata</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">signers</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;signers&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">signer_configs</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;signer_configs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+    <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">mad</span> <span class="ow">in</span> <span class="n">existing_manifests</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mad</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mad</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">repo</span><span class="p">))</span>
 
-    <span class="n">sig_remover</span> <span class="o">=</span> <span class="n">SignatureRemover</span><span class="p">(</span><span class="n">quay_user</span><span class="o">=</span><span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="o">=</span><span class="n">quay_password</span><span class="p">)</span>
+    <span class="n">signer_settings</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;quay_org&quot;</span><span class="p">]}</span>
+    <span class="n">signer_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_org&quot;</span><span class="p">]</span>
+    <span class="n">signer_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;QUAY_API_TOKEN&quot;</span><span class="p">)</span>
+    <span class="n">signer_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;quay.io&quot;</span>
+
+    <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">signer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">signers</span><span class="p">):</span>
+        <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">signercls</span><span class="o">.</span><span class="n">pre_push</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span><span class="n">config_file</span><span class="o">=</span><span class="n">signer_configs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="n">signer_settings</span><span class="p">)</span>
+        <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="p">[])</span>
 
     <span class="k">for</span> <span class="n">repository</span> <span class="ow">in</span> <span class="n">parsed_repositories</span><span class="p">:</span>
-        <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_repository_signatures</span><span class="p">(</span>
-            <span class="n">repository</span><span class="p">,</span>
-            <span class="n">quay_org</span><span class="p">,</span>
-            <span class="n">pyxis_server</span><span class="p">,</span>
-            <span class="n">pyxis_ssl_crtfile</span><span class="p">,</span>
-            <span class="n">pyxis_ssl_keyfile</span><span class="p">,</span>
-            <span class="n">pyxis_request_threads</span><span class="p">,</span>
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;quay_org&quot;</span><span class="p">],</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repository</span><span class="p">)</span>
         <span class="p">)</span>
-
-        <span class="n">internal_repo</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quay_org</span><span class="p">,</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repository</span><span class="p">))</span>
         <span class="n">quay_api_client</span><span class="o">.</span><span class="n">delete_repository</span><span class="p">(</span><span class="n">internal_repo</span><span class="p">)</span>
 
     <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Repositories have been removed&quot;</span><span class="p">)</span>
+
     <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_repositories_removed</span><span class="p">(</span><span class="n">repository_ids</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">parsed_repositories</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">setup_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">REMOVE_REPO_ARGS</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">remove_repositories_main</span><span class="p">(</span><span class="n">sysargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">remove_repositories_main</span><span class="p">(</span><span class="n">sysargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for removing repositories.&quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
@@ -225,7 +265,8 @@
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="vm">__dict__</span>
 
     <span class="k">with</span> <span class="n">task_context</span><span class="p">():</span>
-        <span class="n">remove_repositories</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">repositories</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;repositories&quot;</span><span class="p">)</span>
+        <span class="n">remove_repositories</span><span class="p">(</span><span class="n">repositories</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
 </pre></div>
 
            </div>

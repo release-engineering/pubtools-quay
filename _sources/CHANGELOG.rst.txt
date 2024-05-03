@@ -1,6 +1,43 @@
 ChangeLog
 =========
 
+0.18.0 (2024-03-18)
+-------------------
+
+* Generate SBOM attestations for manifest lists
+
+0.17.0 (2024-02-27)
+------------------
+
+* Should not call IIB if bundle is opted in fbc and targets OCP >=4.11
+
+
+0.16.0 (2024-02-08)
+-------------------
+
+* Instrument tracing for container push
+* Add option to disable sending transparency logs to rekor
+
+0.15.0 (2023-12-07)
+-------------------
+
+* End task when IIB request fails
+* Set AWS KMS credentials from target settings
+* Fix a bug where 0 IIB builds cause a push to fail
+
+0.14.0 (2023-10-17)
+-------------------
+
+* Add --check-related-images option while calling iib-add-bundles
+* Remove --skip-pulp argument when calling pubtools-iib
+
+0.13.0 (2023-09-27)
+-------------------
+
+* Implement workflow to push container security manifests
+* Support prerelease floating tag
+* Remove images created by cosign
+
 0.12.1 (2023-09-13)
 -------------------
 

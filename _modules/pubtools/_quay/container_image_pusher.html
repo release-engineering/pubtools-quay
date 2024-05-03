@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.container_image_pusher &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -81,6 +83,8 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures.thread</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
 
 <span class="kn">import</span> <span class="nn">requests</span>
 
@@ -95,7 +99,11 @@
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.tag_images</span> <span class="kn">import</span> <span class="n">tag_images</span>
 <span class="kn">from</span> <span class="nn">.manifest_list_merger</span> <span class="kn">import</span> <span class="n">ManifestListMerger</span>
+<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">Manifest</span>
 
+<span class="kn">from</span> <span class="nn">pubtools.tracing</span> <span class="kn">import</span> <span class="n">get_trace_wrapper</span>
+
+<span class="n">tw</span> <span class="o">=</span> <span class="n">get_trace_wrapper</span><span class="p">()</span>
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
 
@@ -106,7 +114,7 @@
 <span class="sd">    No validation is performed, push items are expected to be correct.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="ContainerImagePusher.__init__"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+<div class="viewcode-block" id="ContainerImagePusher.__init__"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
@@ -120,11 +128,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span> <span class="o">=</span> <span class="n">target_settings</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="kc">None</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -135,7 +143,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -146,7 +154,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.run_tag_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_tag_images">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">run_tag_images</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="n">all_arch</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">run_tag_images</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">all_arch</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prepare the &quot;tag images&quot; entrypoint with all the necessary arguments and run it.</span>
 
@@ -190,7 +200,7 @@
             <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_wait_time_increase&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
         <span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">_prepare_dest_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_prepare_dest_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare destination references for push.</span>
 
 <span class="sd">        Construct destination references based on tags and repo of push item.</span>
@@ -216,7 +226,7 @@
                 <span class="n">dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">dest_refs</span>
 
-<div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+<div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
 
@@ -230,7 +240,7 @@
         <span class="n">dest_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dest_refs</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">copy_v1_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">is_source</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">copy_v1_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the tagging operation for a push item containing a v1 image.</span>
 
@@ -245,7 +255,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">):</span>
+<div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span> <span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform Docker push and manifest list merge workflow.</span>
 
@@ -263,8 +273,9 @@
 
         <span class="c1"># get unique destination repositories</span>
         <span class="n">dest_repos</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">])))</span>
-        <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
-            <span class="n">source_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+        <span class="n">source_ml</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">ManifestList</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">),</span>
         <span class="p">)</span>
 
         <span class="c1"># copy each arch source image to all destination repos</span>
@@ -286,7 +297,7 @@
             <span class="n">merger</span><span class="o">.</span><span class="n">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
             <span class="n">merger</span><span class="o">.</span><span class="n">merge_manifest_lists</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">):</span>
+<div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span> <span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">:</span> <span class="n">ManifestList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate the correct tagging and manifest list merging strategy of multiarch push item.</span>
 
@@ -317,7 +328,9 @@
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">try</span><span class="p">:</span>
-                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+                        <span class="n">Union</span><span class="p">[</span><span class="n">Manifest</span><span class="p">,</span> <span class="n">ManifestList</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
+                    <span class="p">)</span>
                     <span class="k">if</span> <span class="n">dest_ml</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mediaType&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
                         <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                             <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a manifest list, it will be overwritten&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -332,7 +345,7 @@
                             <span class="p">)</span>
                         <span class="p">)</span>
                         <span class="n">missing_archs</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span>
-                            <span class="n">source_ml</span><span class="p">,</span> <span class="n">dest_ml</span>
+                            <span class="n">source_ml</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">dest_ml</span><span class="p">)</span>
                         <span class="p">)</span>
                         <span class="c1"># Option 1: Dest doesn&#39;t contain extra archs, ML merging is unnecessary</span>
                         <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_archs</span><span class="p">:</span>
@@ -363,7 +376,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">run_merge_workflow</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">merge_mls_dest_refs</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push images to Quay&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Push container images to Quay.</span>
 
@@ -372,7 +385,8 @@
 <span class="sd">        destination image contains more architectures than source.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">push_container_image</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+        <span class="nd">@tw</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">push_container_image</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Push container images to Quay.</span>
 
@@ -411,7 +425,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">copy_v1_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
             <span class="c1"># Multiarch images</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">copy_multiarch_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_multiarch_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">))</span>
 
         <span class="n">num_thread_container_push</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_container_push&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 
@@ -421,7 +435,7 @@
             <span class="p">]</span>
             <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">futures</span><span class="o">.</span><span class="n">as_completed</span><span class="p">(</span><span class="n">future_results</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">():</span>
-                    <span class="k">raise</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span></div></div>
+                    <span class="k">raise</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>  <span class="c1"># type: ignore</span></div></div>
 </pre></div>
 
            </div>

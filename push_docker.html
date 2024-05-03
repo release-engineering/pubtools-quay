@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Push Docker &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -55,12 +57,26 @@
 <li class="toctree-l2"><a class="reference internal" href="image_untagger.html">Image untagger</a></li>
 <li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Push Docker</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Push Docker</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker"><code class="docutils literal notranslate"><span class="pre">PushDocker</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.run"><code class="docutils literal notranslate"><span class="pre">PushDocker.run()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.__init__"><code class="docutils literal notranslate"><span class="pre">PushDocker.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.verify_target_settings"><code class="docutils literal notranslate"><span class="pre">PushDocker.verify_target_settings()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.get_docker_push_items"><code class="docutils literal notranslate"><span class="pre">PushDocker.get_docker_push_items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.get_operator_push_items"><code class="docutils literal notranslate"><span class="pre">PushDocker.get_operator_push_items()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.check_repos_validity"><code class="docutils literal notranslate"><span class="pre">PushDocker.check_repos_validity()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.generate_backup_mapping"><code class="docutils literal notranslate"><span class="pre">PushDocker.generate_backup_mapping()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.push_docker.PushDocker.rollback"><code class="docutils literal notranslate"><span class="pre">PushDocker.rollback()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quay_client.html">Quay Client</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
-<li class="toctree-l2"><a class="reference internal" href="signature_handler.html">Signature Handler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="signature_remover.html">Signature Remover</a></li>
+<li class="toctree-l2"><a class="reference internal" href="item_processor.html">Item Processor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signer_wrapper.html">Signer Wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security_manifest_pusher.html">Security manifest pusher</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tag_docker.html">Tag Docker</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
@@ -99,7 +115,142 @@
   <div class="section" id="push-docker">
 <h1>Push Docker<a class="headerlink" href="#push-docker" title="Permalink to this heading"></a></h1>
 <p>This is the main class for the Push Docker workflow, which is the primary workflow for container and operator related content.</p>
-<span class="target" id="module-pubtools._quay.push_docker"></span></div>
+<span class="target" id="module-pubtools._quay.push_docker"></span><dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.push_docker.</span></span><span class="sig-name descname"><span class="pre">PushDocker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker" title="Permalink to this definition"></a></dt>
+<dd><p>Handle full Docker push workflow.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.run" title="Permalink to this definition"></a></dt>
+<dd><p>Perform the full push-docker workflow.</p>
+<p>The workflow can be summarized as:
+- Filter out push items to only include container image items
+- Check if the destination repos may be pushed to (using Pyxis)
+- Generate backup mapping that will be used for rollback if something goes wrong.
+- Sign container images using RADAS and upload signatures to Pyxis
+- Push container images to their destinations
+- Generate and push container security manifests for pushed images
+- Fetch digests for missing media types of pushed items
+- Sign manifests for missing media types (has to be done after pushing)
+- Filter out push items to only include operator image items
+- Add operator bundles to index images by using IIB
+- Sign index images using RADAS and upload signatures to Pyxis
+- Push the index images to Quay
+- Remove outdated container signatures
+- (in case of failure) Rollback destination repos to the pre-push state</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.__init__" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_items ([_PushItem]):</dt><dd><p>List of push items.</p>
+</dd>
+<dt>hub (HubProxy):</dt><dd><p>Instance of XMLRPC pub-hub proxy.</p>
+</dd>
+<dt>task_id (str):</dt><dd><p>task id</p>
+</dd>
+<dt>target_name (str):</dt><dd><p>Name of the target.</p>
+</dd>
+<dt>target_settings (dict):</dt><dd><p>Target settings.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.verify_target_settings">
+<span class="sig-name descname"><span class="pre">verify_target_settings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.verify_target_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.verify_target_settings" title="Permalink to this definition"></a></dt>
+<dd><p>Verify that target settings contains all the necessary data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.get_docker_push_items">
+<span class="sig-name descname"><span class="pre">get_docker_push_items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.get_docker_push_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.get_docker_push_items" title="Permalink to this definition"></a></dt>
+<dd><p>Filter push items to only include docker ones.</p>
+<p>Also, Check the validity of these items and raise an exception in case of incorrect data.</p>
+<p>For items having the same pull_url, only one of them is returned to avoid duplication.</p>
+<dl class="simple">
+<dt>Returns ([ContainerPushItem]):</dt><dd><p>Docker push items.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.get_operator_push_items">
+<span class="sig-name descname"><span class="pre">get_operator_push_items</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.get_operator_push_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.get_operator_push_items" title="Permalink to this definition"></a></dt>
+<dd><p>Filter out push items to only include operator ones.</p>
+<p>Also, Check the validity of these items and raise an exception in case of incorrect data.</p>
+<dl class="simple">
+<dt>Returns ([ContainerPushItem]):</dt><dd><p>Operator push items.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.check_repos_validity">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">check_repos_validity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hub</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.check_repos_validity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.check_repos_validity" title="Permalink to this definition"></a></dt>
+<dd><p>Check if specified repos are valid and pushing to them is allowed.</p>
+<p>Specifically, this method checks if the repo exists in Comet and if it’s not deprecated
+If pushing to prod, also check if the repo already exists in stage.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_items ([ContainerPushItem]):</dt><dd><p>Container push items containing the repositories.</p>
+</dd>
+<dt>hub (HubProxy):</dt><dd><p>Instance of XMLRPC pub-hub proxy.</p>
+</dd>
+<dt>target_settings (dict):</dt><dd><p>Target settings.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.generate_backup_mapping">
+<span class="sig-name descname"><span class="pre">generate_backup_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">push_items</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_arches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">ImageData</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ImageData</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.generate_backup_mapping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.generate_backup_mapping" title="Permalink to this definition"></a></dt>
+<dd><p>Create resources which will be used for rollback if something goes wrong during the push.</p>
+<p>Specifically, create two resources: ‘backup_tags’ and ‘rollback_tags’.
+- ‘backup_tags’ is a mapping of ImageData-&gt;manifest, and consists of images which will
+be overwritten. During rollback, tag is made to re-reference the old manifest.
+- ‘rollback_tags’ is a list of ImageData which don’t yet exist. During rollback, they
+will be removed to preserve pre-push state.
+If all_arches is set to true, return all arches for v2s2 and v2s1 manifests</p>
+<p>ImageData is a namedtuple used to assign and access parts of an image in a formatted way.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>push_items ([ContainerPushItem]):</dt><dd><p>Container push items.</p>
+</dd>
+<dt>all_arches: bool</dt><dd><p>If set to True include all manifests in results. If False only amd64 are included</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns (({ImageData: Tuple[str,str]}, [ImageData])):</dt><dd><p>Tuple of backup_tags and rollback_tags</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.push_docker.PushDocker.rollback">
+<span class="sig-name descname"><span class="pre">rollback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">backup_tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">ImageData</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rollback_tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">ImageData</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/push_docker.html#PushDocker.rollback"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.push_docker.PushDocker.rollback" title="Permalink to this definition"></a></dt>
+<dd><p>Perform a rollback.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>backup_tags ({ImageData: str}):</dt><dd><p>Dictionary mapping of ImageData and a manifest before it was overwritten.</p>
+</dd>
+<dt>rollback_tags ([ImageData]):</dt><dd><p>List of newly added ImageData.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 
 
            </div>

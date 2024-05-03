@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pubtools._quay.tag_docker &mdash; pubtools-quay 0.12.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            pubtools-quay
+          </a>
+              <div class="version">
+                0.12.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules_reference.html">Modules reference</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">pubtools-quay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pubtools._quay.tag_docker</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pubtools._quay.tag_docker</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">urllib3</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">LocalExecutor</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BadPushItem</span><span class="p">,</span>
+    <span class="n">InvalidTargetSettings</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
+    <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
+    <span class="n">set_aws_kms_environment_variables</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
+<span class="kn">from</span> <span class="nn">.manifest_list_merger</span> <span class="kn">import</span> <span class="n">ManifestListMerger</span>
+<span class="kn">from</span> <span class="nn">.untag_images</span> <span class="kn">import</span> <span class="n">untag_images</span>
+<span class="kn">from</span> <span class="nn">.push_docker</span> <span class="kn">import</span> <span class="n">PushDocker</span>
+<span class="kn">from</span> <span class="nn">.signer_wrapper</span> <span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
+<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="n">item_processor_for_internal_data</span><span class="p">,</span> <span class="n">SignEntry</span>
+<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">Executor</span>
+<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">ManifestList</span>
+
+<span class="c1"># TODO: do we want this, or should I remove it?</span>
+<span class="kn">from</span> <span class="nn">urllib3.exceptions</span> <span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
+
+<span class="n">urllib3</span><span class="o">.</span><span class="n">disable_warnings</span><span class="p">(</span><span class="n">InsecureRequestWarning</span><span class="p">)</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TagDocker"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker">[docs]</a><span class="k">class</span> <span class="nc">TagDocker</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle full tag-docker workflow.&quot;&quot;&quot;</span>
+
+    <span class="n">ImageDetails</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ImageDetails&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest_type&quot;</span><span class="p">,</span> <span class="s2">&quot;digest&quot;</span><span class="p">])</span>
+    <span class="n">MANIFEST_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>
+    <span class="n">MANIFEST_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>
+
+<div class="viewcode-block" id="TagDocker.__init__"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_items ([_PushItem]):</span>
+<span class="sd">                List of push items.</span>
+<span class="sd">            hub (HubProxy):</span>
+<span class="sd">                Instance of XMLRPC pub-hub proxy.</span>
+<span class="sd">            task_id (str):</span>
+<span class="sd">                task id</span>
+<span class="sd">            target_name (str):</span>
+<span class="sd">                Name of the target.</span>
+<span class="sd">            target_settings (dict):</span>
+<span class="sd">                Target settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span> <span class="o">=</span> <span class="n">push_items</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hub</span> <span class="o">=</span> <span class="n">hub</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span> <span class="o">=</span> <span class="n">task_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_name</span> <span class="o">=</span> <span class="n">target_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span> <span class="o">=</span> <span class="n">target_settings</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">verify_target_settings</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verify_input_data</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source and dest images.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quay_client</span>
+
+<div class="viewcode-block" id="TagDocker.verify_target_settings"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.verify_target_settings">[docs]</a>    <span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify that target settings contains all the necessary data.&quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying the necessary target settings&quot;</span><span class="p">)</span>
+        <span class="n">required_settings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;source_quay_user&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;source_quay_password&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dest_quay_user&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dest_quay_password&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pyxis_server&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;quay_namespace&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;iib_index_image&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">required_settings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">setting</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">InvalidTargetSettings</span><span class="p">(</span>
+                    <span class="s2">&quot;&#39;</span><span class="si">{0}</span><span class="s2">&#39; must be present in the target settings.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">required_docker_settings</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;umb_urls&quot;</span><span class="p">,</span> <span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">required_docker_settings</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">setting</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">InvalidTargetSettings</span><span class="p">(</span>
+                    <span class="s2">&quot;&#39;</span><span class="si">{0}</span><span class="s2">&#39; must be present in the docker settings.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">setting</span><span class="p">)</span>
+                <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.verify_input_data"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.verify_input_data">[docs]</a>    <span class="k">def</span> <span class="nf">verify_input_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify that the data specified for the TagDocker operation are correct.&quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying the input data&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">file_type</span> <span class="o">!=</span> <span class="s2">&quot;docker&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Push items must be of &#39;docker&#39; type&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">repos</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;In tag-docker, push items must have precisely one repository.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;add_tags&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Source must be provided if tags were requested to be added.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;new_method&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Only new method is supported for tag-docker in Quay.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Specifying source via digest is not allowed.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.check_input_validity"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.check_input_validity">[docs]</a>    <span class="k">def</span> <span class="nf">check_input_validity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if input data satisfies tag-docker specific constraints.</span>
+
+<span class="sd">        The constraints are following:</span>
+<span class="sd">        1. If adding tags to prod target, these tags must already exist in stage target.</span>
+<span class="sd">        2. If removing tags from prod target, these tags must already not exist in stage target.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;propagated_from&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">:</span>
+            <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+            <span class="n">stage_target_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">worker</span><span class="o">.</span><span class="n">get_target_info</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;propagated_from&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">stage_namespace</span> <span class="o">=</span> <span class="n">stage_target_info</span><span class="p">[</span><span class="s2">&quot;settings&quot;</span><span class="p">][</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+            <span class="n">stage_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+                <span class="n">stage_target_info</span><span class="p">[</span><span class="s2">&quot;settings&quot;</span><span class="p">][</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+                <span class="n">stage_target_info</span><span class="p">[</span><span class="s2">&quot;settings&quot;</span><span class="p">][</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
+                <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">stage_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">stage_namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+                <span class="p">)</span>
+
+                <span class="c1"># all to-be-added tags must already exist in stage repo</span>
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;add_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">stage_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stage_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">stage_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">stage_image</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                                <span class="s2">&quot;To-be-added tag </span><span class="si">{0}</span><span class="s2"> must already exist in stage repo&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span>
+
+                <span class="c1"># all to-be-removed tags must already be removed from stage</span>
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;remove_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">stage_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">stage_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">stage_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">stage_image</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                            <span class="c1"># 404/401 -&gt; all good</span>
+                            <span class="k">pass</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                            <span class="s2">&quot;To-be-removed tag </span><span class="si">{0}</span><span class="s2"> must already be removed from stage repo&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                <span class="n">tag</span>
+                            <span class="p">)</span>
+                        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.get_image_details"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.get_image_details">[docs]</a>    <span class="k">def</span> <span class="nf">get_image_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Executor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ImageDetails</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create an ImageDetails namedtuple for the given image reference.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reference (str):</span>
+<span class="sd">                Image reference.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
+<span class="sd">        Returns (Optional[ImageDetails]):</span>
+<span class="sd">            Namedtuple filled with images data, or None if image doesn&#39;t exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Getting image details of </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Union</span><span class="p">[</span><span class="n">Manifest</span><span class="p">,</span> <span class="n">ManifestList</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Image &#39;</span><span class="si">{0}</span><span class="s2">&#39; doesn&#39;t exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">))</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+
+        <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">manifest_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> has manifest type different than V2S2 or manifest list&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check arch if the image is V2S2 manifest</span>
+        <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_inspect</span><span class="p">(</span><span class="n">reference</span><span class="p">)[</span><span class="s2">&quot;Architecture&quot;</span><span class="p">]</span>
+            <span class="c1"># Arch check is not a great way to verify that this is a source image, but there are</span>
+            <span class="c1"># no better options without having build details</span>
+            <span class="k">if</span> <span class="n">arch</span> <span class="o">!=</span> <span class="s2">&quot;amd64&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                    <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> has V2S2 manifest and contains an architecture </span><span class="si">{1}</span><span class="s2">. Only source &quot;</span>
+                    <span class="s2">&quot;images are supported, which have arch &#39;amd64&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">digest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest_digest</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">ImageDetails</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">],</span> <span class="n">digest</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.is_arch_relevant"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.is_arch_relevant">[docs]</a>    <span class="k">def</span> <span class="nf">is_arch_relevant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">arch</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find out if an operation should be performed on a given architecture.</span>
+
+<span class="sd">        Uses values of &#39;archs&#39; and &#39;exclude_archs&#39; in push item&#39;s metadata.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            arch (str):</span>
+<span class="sd">                Arch to investigate.</span>
+<span class="sd">        Returns (bool):</span>
+<span class="sd">            True if an operation should be performed on a given arch, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;exclude_archs&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">arch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;archs&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;archs&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="TagDocker.tag_remove_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_remove_calculate_archs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Executor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate which architectures would be removed, and which would remain from a given tag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag, for which a &#39;remove&#39; operation will be performed.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
+<span class="sd">        Returns ([str], [str]):</span>
+<span class="sd">            Tuple where first element contains archs that will be removed, and second element</span>
+<span class="sd">            contains archs that will remain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">]:</span>
+            <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
+            <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">source_details</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dest_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; already doesn&#39;t exist, no removal necessary&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>
+
+        <span class="k">if</span> <span class="n">source_details</span> <span class="ow">and</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">!=</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                <span class="s2">&quot;Mismatch between manifest types of source </span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2"> and tag </span><span class="si">{2}</span><span class="s2">:</span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">],</span>
+                    <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Scenario 1: source image</span>
+        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs_source_image</span><span class="p">(</span>
+                <span class="n">push_item</span><span class="p">,</span> <span class="n">source_details</span><span class="p">,</span> <span class="n">dest_details</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Scenario 2: multiarch image</span>
+        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs_multiarch_image</span><span class="p">(</span>
+                <span class="n">push_item</span><span class="p">,</span> <span class="n">source_details</span><span class="p">,</span> <span class="n">dest_details</span>
+            <span class="p">)</span>
+
+        <span class="c1"># this should never happen</span>
+        <span class="k">return</span> <span class="p">([],</span> <span class="p">[])</span>  <span class="c1"># pragma: no cover</span></div>
+
+<div class="viewcode-block" id="TagDocker.tag_remove_calculate_archs_source_image"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image">[docs]</a>    <span class="k">def</span> <span class="nf">tag_remove_calculate_archs_source_image</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">source_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ImageDetails</span><span class="p">],</span> <span class="n">dest_details</span><span class="p">:</span> <span class="n">ImageDetails</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate which archs would be removed if the specified images were source images.</span>
+
+<span class="sd">        This method is a sub-step of the &#39;tag_remove_calculate_archs&#39; method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            source_details (Optional[ImageDetails]):</span>
+<span class="sd">                ImageDetails of source image, or None if it wasn&#39;t specified.</span>
+<span class="sd">            dest_details (ImageDetails):</span>
+<span class="sd">                ImageDetails of destination image.</span>
+<span class="sd">        Returns ([str], [str]):</span>
+<span class="sd">            Tuple where first element contains archs that will be removed, and second element</span>
+<span class="sd">            contains archs that will remain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Option A: arch is relevant, source is specified and digests correspond -&gt; remove</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="s2">&quot;amd64&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">source_details</span><span class="o">.</span><span class="n">digest</span> <span class="o">==</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">digest</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="p">([</span><span class="s2">&quot;amd64&quot;</span><span class="p">],</span> <span class="p">[])</span>
+        <span class="c1"># Option B: arch is relevant, source is specified, but digests don&#39;t correspond -&gt; keep</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="s2">&quot;amd64&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">source_details</span><span class="o">.</span><span class="n">digest</span> <span class="o">!=</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">digest</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="p">([],</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">])</span>
+        <span class="c1"># Option C: arch is relevant, source is not specified (no digest check) -&gt; remove</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="s2">&quot;amd64&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">([</span><span class="s2">&quot;amd64&quot;</span><span class="p">],</span> <span class="p">[])</span>
+        <span class="c1"># Option D: arch is not relevant -&gt; keep</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">([],</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="TagDocker.tag_remove_calculate_archs_multiarch_image"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_multiarch_image">[docs]</a>    <span class="k">def</span> <span class="nf">tag_remove_calculate_archs_multiarch_image</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">source_details</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ImageDetails</span><span class="p">],</span> <span class="n">dest_details</span><span class="p">:</span> <span class="n">ImageDetails</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate which archs would be removed if the specified images were multiarch images.</span>
+
+<span class="sd">        This method is a sub-step of the &#39;tag_remove_calculate_archs&#39; method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            source_details (Optional[ImageDetails]):</span>
+<span class="sd">                ImageDetails of source image, or None if it wasn&#39;t specified.</span>
+<span class="sd">            dest_details (ImageDetails):</span>
+<span class="sd">                ImageDetails of destination image.</span>
+<span class="sd">        Returns ([str], [str]):</span>
+<span class="sd">            Tuple where first element contains archs that will be removed, and second element</span>
+<span class="sd">            contains archs that will remain.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">remove_archs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">keep_archs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dest_manifest_data</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+        <span class="n">source_manifest_data</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">source_details</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">dest_digest</span><span class="p">,</span> <span class="n">dest_arch</span> <span class="ow">in</span> <span class="n">dest_manifest_data</span><span class="p">:</span>
+            <span class="c1"># Option A: arch is relevant, src exists, digest matches in src and dest -&gt; remove</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="n">dest_arch</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="n">dest_digest</span><span class="p">,</span> <span class="n">dest_arch</span><span class="p">)</span> <span class="ow">in</span> <span class="n">source_manifest_data</span>
+            <span class="p">):</span>
+                <span class="n">remove_archs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch</span><span class="p">)</span>
+            <span class="c1"># Option B: arch is relevant, src exists, no digest match in src and dest -&gt; keep</span>
+            <span class="k">elif</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="n">dest_arch</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="n">dest_digest</span><span class="p">,</span> <span class="n">dest_arch</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">source_manifest_data</span>
+            <span class="p">):</span>
+                <span class="n">keep_archs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch</span><span class="p">)</span>
+            <span class="c1"># Option C: arch is relevant, src doesn&#39;t exist (digest match not possible)-&gt; remove</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="n">dest_arch</span><span class="p">)</span> <span class="ow">and</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">remove_archs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch</span><span class="p">)</span>
+            <span class="c1"># Option D: arch is not relevant -&gt; keep</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">keep_archs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">remove_archs</span><span class="p">,</span> <span class="n">keep_archs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.tag_add_calculate_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.tag_add_calculate_archs">[docs]</a>    <span class="k">def</span> <span class="nf">tag_add_calculate_archs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Executor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculate which architectures are present in a given tag, and which ones would be added.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag, for which an &#39;add&#39; operation will be performed.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
+<span class="sd">        Returns (Optional[List[str]]):</span>
+<span class="sd">            In case of multiarch image, arches which would be copied to the destination. In case</span>
+<span class="sd">            of a source image, None if the copy operation is relevant or [] otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+        <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="n">source_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+        <span class="n">dest_details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">source_details</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Source image must be specified if add operation was requested&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dest_details</span> <span class="ow">and</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">!=</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                <span class="s2">&quot;Mismatch between manifest types of source </span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2"> and tag </span><span class="si">{2}</span><span class="s2">:</span><span class="si">{3}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">],</span>
+                    <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">,</span>
+                    <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Scenario 1: source image</span>
+        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+            <span class="c1"># source arch is relevant, proceed with copying the source image</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="s2">&quot;amd64&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="c1"># arch is irrelevant we want no-op</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Scenario 2: multiarch image</span>
+        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+            <span class="n">add_archs</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">])</span>
+            <span class="p">]</span>
+            <span class="k">return</span> <span class="n">add_archs</span>
+
+        <span class="c1"># this should never happen</span>
+        <span class="k">return</span> <span class="p">[]</span>  <span class="c1"># pragma: no cover</span></div>
+
+<div class="viewcode-block" id="TagDocker.copy_tag_sign_images"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.copy_tag_sign_images">[docs]</a>    <span class="k">def</span> <span class="nf">copy_tag_sign_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">executor</span><span class="p">:</span> <span class="n">Executor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Copy image from source to the destination tag and sign new manifest claims.</span>
+
+<span class="sd">        If destination tag already contains a manifest, it will be overwritten.</span>
+<span class="sd">        This workflow is expected to use on single-arch source images.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag, which acts as a destination to the copy operation.</span>
+<span class="sd">            signature_handler (BasicSignatureHandler):</span>
+<span class="sd">                Instance of signature handler which will perform the signing.</span>
+<span class="sd">            executor (Executor):</span>
+<span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">external_image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="n">repo</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+        <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Source image tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; will be copied to destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">],</span> <span class="n">tag</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">to_sign_entries_internal</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current_signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">details</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_image_details</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">details</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Source image must be specified if add operation was requested&quot;</span><span class="p">)</span>
+        <span class="n">registries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tagging workflow is not supported for multiarch images&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
+            <span class="c1"># add entries in internal format for cosign</span>
+            <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SignEntry</span><span class="p">(</span>
+                    <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
+                    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;quay.io/&quot;</span>
+                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+                    <span class="o">+</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="o">+</span> <span class="s2">&quot;:&quot;</span>
+                    <span class="o">+</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">digest</span><span class="o">=</span><span class="n">details</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                    <span class="n">signing_key</span><span class="o">=</span><span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">,</span>
+                    <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="n">registries</span><span class="p">:</span>
+                <span class="n">reference</span> <span class="o">=</span> <span class="n">external_image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">host</span><span class="o">=</span><span class="n">registry</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
+                <span class="p">)</span>
+                <span class="n">to_sign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">SignEntry</span><span class="p">(</span>
+                        <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
+                        <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                        <span class="n">digest</span><span class="o">=</span><span class="n">details</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                        <span class="n">signing_key</span><span class="o">=</span><span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">,</span>
+                        <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+            <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="n">existing_manifests</span> <span class="o">=</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_existing_manifests_metadata</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">mad</span> <span class="ow">in</span> <span class="n">existing_manifests</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">mad</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">_tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
+                    <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mad</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">repo</span><span class="p">))</span>
+
+            <span class="n">set_aws_kms_environment_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="s2">&quot;cosign_signer&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]:</span>
+                    <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                    <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span>
+                        <span class="n">config_file</span><span class="o">=</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                    <span class="p">)</span>
+                    <span class="c1"># exclude should be bool, and outdated manifests should be list?</span>
+                    <span class="k">if</span> <span class="n">outdated_manifests</span><span class="p">:</span>
+                        <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">current_signatures</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pre_push</span><span class="p">:</span>
+                        <span class="n">signer</span><span class="o">.</span><span class="n">sign_containers</span><span class="p">(</span>
+                            <span class="n">to_sign_entries</span><span class="p">,</span>
+                            <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+                        <span class="p">)</span>
+
+        <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
+            <span class="n">set_aws_kms_environment_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="s2">&quot;cosign_signer&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pre_push</span><span class="p">:</span>
+                    <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                    <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span>
+                        <span class="n">config_file</span><span class="o">=</span><span class="n">_signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                    <span class="p">)</span>
+                    <span class="n">signer</span><span class="o">.</span><span class="n">sign_containers</span><span class="p">(</span>
+                        <span class="n">to_sign_entries_internal</span><span class="p">,</span>
+                        <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.merge_manifest_lists_sign_images"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.merge_manifest_lists_sign_images">[docs]</a>    <span class="k">def</span> <span class="nf">merge_manifest_lists_sign_images</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">add_archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Merge manifest lists between source and destination tag and sign manifest claims.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag, which acts as a destination to the merge operation.</span>
+<span class="sd">            add_archs ([str]):</span>
+<span class="sd">                Architectures which should be copied to the existing manifest list.</span>
+<span class="sd">            signature_handler (BasicSignatureHandler):</span>
+<span class="sd">                Instance of signature handler which will perform the signing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Architectures </span><span class="si">{0}</span><span class="s2"> of tag &#39;</span><span class="si">{1}</span><span class="s2">&#39; will be copied to destination tag &#39;</span><span class="si">{2}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">add_archs</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">],</span> <span class="n">tag</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">external_image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+        <span class="n">source_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tag_source&quot;</span><span class="p">])</span>
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+
+        <span class="c1"># NOTE: Arch images don&#39;t need to be copied, since they already exist in the same repo</span>
+        <span class="n">merger</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">)</span>
+        <span class="n">merger</span><span class="o">.</span><span class="n">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">)</span>
+        <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="n">merger</span><span class="o">.</span><span class="n">merge_manifest_lists_selected_architectures</span><span class="p">(</span><span class="n">add_archs</span><span class="p">)</span>
+        <span class="n">dest_registries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
+
+        <span class="n">current_signatures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
+            <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">to_sign_entries_internal</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
+                <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">SignEntry</span><span class="p">(</span>
+                        <span class="n">repo</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;quay.io/&quot;</span>
+                        <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+                        <span class="o">+</span> <span class="n">internal_repo</span>
+                        <span class="o">+</span> <span class="s2">&quot;:&quot;</span>
+                        <span class="o">+</span> <span class="n">tag</span><span class="p">,</span>
+                        <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span>
+                        <span class="n">arch</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">],</span>
+                        <span class="n">signing_key</span><span class="o">=</span><span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="n">dest_registries</span><span class="p">:</span>
+                    <span class="n">reference</span> <span class="o">=</span> <span class="n">external_image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">host</span><span class="o">=</span><span class="n">registry</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span>
+                    <span class="p">)</span>
+                    <span class="n">to_sign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">SignEntry</span><span class="p">(</span>
+                            <span class="n">repo</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span>
+                            <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                            <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span>
+                            <span class="n">arch</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">],</span>
+                            <span class="n">signing_key</span><span class="o">=</span><span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">current_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">)</span>
+                    <span class="p">)</span>
+
+            <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+            <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">mad</span> <span class="ow">in</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_existing_manifests_metadata</span><span class="p">(</span><span class="n">push_item</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">mad</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">mad</span><span class="o">.</span><span class="n">digest</span>
+                    <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]]</span>
+                    <span class="ow">and</span> <span class="n">tag</span> <span class="o">==</span> <span class="n">_tag</span>
+                <span class="p">):</span>
+                    <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mad</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">repo</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pre_push</span><span class="p">:</span>
+                    <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                    <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span>
+                        <span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">outdated_manifests</span><span class="p">:</span>
+                        <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">current_signatures</span><span class="p">)</span>
+                    <span class="n">signer</span><span class="o">.</span><span class="n">sign_containers</span><span class="p">(</span>
+                        <span class="n">to_sign_entries</span><span class="p">,</span>
+                        <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+        <span class="n">raw_src_manifest</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+                <span class="n">source_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Special case: if the source manifest and the merged manifest are the same, upload the</span>
+        <span class="c1"># raw source manifest. The reason is that otherwise the digests of the copied manifests</span>
+        <span class="c1"># will not correspond due to Python dicitonaries randomizing the element order</span>
+        <span class="k">if</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span>
+        <span class="p">)</span> <span class="o">==</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw_src_manifest</span><span class="p">)[</span><span class="s2">&quot;manifests&quot;</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="n">ml_to_sign</span> <span class="o">=</span> <span class="n">raw_src_manifest</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">raw_src_manifest</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ml_to_sign</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ml_to_sign</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
+            <span class="c1"># for cosign sign also manifest list</span>
+            <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">SignEntry</span><span class="p">(</span>
+                    <span class="n">repo</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">reference</span><span class="o">=</span><span class="s2">&quot;quay.io/&quot;</span>
+                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+                    <span class="o">+</span> <span class="n">internal_repo</span>
+                    <span class="o">+</span> <span class="s2">&quot;:&quot;</span>
+                    <span class="o">+</span> <span class="n">tag</span><span class="p">,</span>
+                    <span class="n">digest</span><span class="o">=</span><span class="s2">&quot;sha256:&quot;</span> <span class="o">+</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">ml_to_sign</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+                    <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="n">signing_key</span><span class="o">=</span><span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">set_aws_kms_environment_variables</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">,</span> <span class="s2">&quot;cosign_signer&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pre_push</span><span class="p">:</span>
+                    <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                    <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span>
+                        <span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span>
+                    <span class="p">)</span>
+                    <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">current_signatures</span><span class="p">)</span>
+                    <span class="n">signer</span><span class="o">.</span><span class="n">sign_containers</span><span class="p">(</span>
+                        <span class="n">to_sign_entries_internal</span><span class="p">,</span>
+                        <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.run_untag_images"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.run_untag_images">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run_untag_images</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">references</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">remove_last</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Prepare the &quot;untag images&quot; entrypoint with all the necessary arguments and run it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            references ([str]):</span>
+<span class="sd">                Image references which should be untagged.</span>
+<span class="sd">            remove_last (bool):</span>
+<span class="sd">                Whether to remove a tag when it&#39;s the last reference of an image (in that repo).</span>
+<span class="sd">            target_settings (dict):</span>
+<span class="sd">                Settings used for setting the value of untag parameters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">untag_images</span><span class="p">(</span>
+            <span class="n">references</span><span class="o">=</span><span class="n">references</span><span class="p">,</span>
+            <span class="n">quay_api_token</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">],</span>
+            <span class="n">remove_last</span><span class="o">=</span><span class="n">remove_last</span><span class="p">,</span>
+            <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+            <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.untag_image"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.untag_image">[docs]</a>    <span class="k">def</span> <span class="nf">untag_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Untag image specified by tag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag which should be removed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; will be removed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+        <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+        <span class="n">to_unsign_entries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">to_unsign_entry</span> <span class="ow">in</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_to_unsign</span><span class="p">(</span><span class="n">push_item</span><span class="p">):</span>
+            <span class="n">to_unsign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">to_unsign_entry</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">tag</span><span class="p">,</span> <span class="n">to_unsign_entry</span><span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">]))</span>
+
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]:</span>
+                <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span><span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+                <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">to_unsign_entries</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="p">[])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_untag_images</span><span class="p">([</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.manifest_list_remove_archs"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.manifest_list_remove_archs">[docs]</a>    <span class="k">def</span> <span class="nf">manifest_list_remove_archs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">remove_archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove specified archs from a manifest list and upload a new manifest list to Quay.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            push_item (ContainerPushItem):</span>
+<span class="sd">                Push item to perform the workflow with.</span>
+<span class="sd">            tag (str):</span>
+<span class="sd">                Tag whose manifest&#39;s archs will be removed.</span>
+<span class="sd">            remove_archs ([str]):</span>
+<span class="sd">                Architectures to remove from the manifest list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Architectures </span><span class="si">{0}</span><span class="s2"> of tag &#39;</span><span class="si">{1}</span><span class="s2">&#39; will be removed&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">remove_archs</span><span class="p">,</span> <span class="n">tag</span><span class="p">))</span>
+        <span class="n">full_repo_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+
+        <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">full_repo</span> <span class="o">=</span> <span class="n">full_repo_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
+        <span class="p">)</span>
+        <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="n">ManifestList</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">keep_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">remove_manifest_sigs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">remove_archs</span><span class="p">:</span>
+                <span class="n">keep_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">manifest</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">remove_manifest_sigs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
+
+        <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">manifest_list</span><span class="p">)</span>
+        <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">keep_manifests</span>
+
+        <span class="n">to_remove_sig_entries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">to_remove_man</span> <span class="ow">in</span> <span class="n">remove_manifest_sigs</span><span class="p">:</span>
+            <span class="n">to_remove_sig_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">to_remove_man</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">tag</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]:</span>
+                <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+                <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span><span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+                <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">to_remove_sig_entries</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="p">[])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TagDocker.run"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Perform the full tag-docker workflow.</span>
+
+<span class="sd">        The workflow adds or removes images to/from given tags. It&#39;s possible to specify only</span>
+<span class="sd">        certain architectures to be added or removed. Based on the task arguments, five different</span>
+<span class="sd">        scenarios may occur:</span>
+<span class="sd">        - Copying whole image to tag (if tag is unused, or all its archs will be overwritten)</span>
+<span class="sd">        - Copying only certain archs and adding them to the destination manifest list</span>
+<span class="sd">        - Removing certain archs from a tag</span>
+<span class="sd">        - Removing a tag (if all archs are to be removed from it)</span>
+<span class="sd">        - No operation (to-be-removed tag already doesn&#39;t exist, or all archs are restricted)</span>
+
+<span class="sd">        The workflow may be summarized as:</span>
+<span class="sd">        - Verify that all repos may be worked with (same conditions are in PushDocker)</span>
+<span class="sd">        - Evaluate which archs are to be added/removed from a given tag</span>
+<span class="sd">        - If new images were created, perform signing workflow on them</span>
+<span class="sd">        - Perform the appropriate add/remove/merge operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Validate repos, same as in PushDocker</span>
+        <span class="n">PushDocker</span><span class="o">.</span><span class="n">check_repos_validity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
+        <span class="c1"># perform tag-docker-specific checks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_input_validity</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">LocalExecutor</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;add_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing add tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                    <span class="n">add_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_add_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># If all archs were somehow excluded from being added, no-op</span>
+                    <span class="k">if</span> <span class="n">add_archs</span> <span class="o">==</span> <span class="p">[]:</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be added to tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If None, we&#39;re dealing with a source image and we want to copy to destination</span>
+                    <span class="k">elif</span> <span class="n">add_archs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">copy_tag_sign_images</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># Otherwise, merge relevant archs of source and dest</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">merge_manifest_lists_sign_images</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">add_archs</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;remove_tags&quot;</span><span class="p">]:</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Processing remove tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                    <span class="n">remove_archs</span><span class="p">,</span> <span class="n">keep_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">executor</span><span class="p">)</span>
+                    <span class="c1"># If all archs were somehow excluded from removal, no-op</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">remove_archs</span><span class="p">:</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No archs can be removed from tag &#39;</span><span class="si">{0}</span><span class="s2">&#39;, skipping&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># If no archs will remain after removal, just perform untagging</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="n">keep_archs</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">untag_image</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+                    <span class="c1"># if some archs will be removed and some will remain, create new manifest list</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">manifest_list_remove_archs</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">remove_archs</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">mod_entry_point</span><span class="p">(</span>
+    <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
+    <span class="n">tag_docker</span> <span class="o">=</span> <span class="n">TagDocker</span><span class="p">(</span><span class="n">push_items</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_name</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tag_docker</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Red Hat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

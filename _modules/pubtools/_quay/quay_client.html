@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.quay_client &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -82,12 +84,14 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">from</span> <span class="nn">requests.packages.urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
+<span class="kn">from</span> <span class="nn">urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
 <span class="kn">from</span> <span class="nn">urllib</span> <span class="kn">import</span> <span class="n">request</span>
 <span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Mapping</span>
 
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">ManifestTypeError</span><span class="p">,</span> <span class="n">RegistryAuthError</span><span class="p">,</span> <span class="n">ManifestNotFoundError</span>
 <span class="kn">from</span> <span class="nn">.quay_session</span> <span class="kn">import</span> <span class="n">QuaySession</span>
+<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">Manifest</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -98,8 +102,12 @@
     <span class="n">MANIFEST_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>
     <span class="n">MANIFEST_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>
     <span class="n">MANIFEST_V2S1_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v1+json&quot;</span>
+    <span class="n">MANIFEST_OCI_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.oci.image.index.v1+json&quot;</span>
+    <span class="n">MANIFEST_OCI_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.oci.image.manifest.v1+json&quot;</span>
 
-<div class="viewcode-block" id="QuayClient.__init__"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.__init__"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
@@ -117,13 +125,19 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">thread_local</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">QuaySession</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create QuaySession object per thread.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thread_local</span><span class="p">,</span> <span class="s2">&quot;session&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">thread_local</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">QuaySession</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">&quot;docker&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">thread_local</span><span class="o">.</span><span class="n">session</span>
 
-<div class="viewcode-block" id="QuayClient.get_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.get_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">media_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">return_headers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get manifest of given media type.</span>
 
@@ -137,10 +151,12 @@
 <span class="sd">            media_type (str):</span>
 <span class="sd">                Can be application/vnd.docker.distribution.manifest.list.v2+json,</span>
 <span class="sd">                application/vnd.docker.distribution.manifest.v2+json,</span>
-<span class="sd">                application/vnd.docker.distribution.manifest.v1+json or None</span>
-<span class="sd">                indicating which manifest type is requested. If it&#39;s None,</span>
+<span class="sd">                application/vnd.docker.distribution.manifest.v1+json,</span>
+<span class="sd">                application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json</span>
+<span class="sd">                or None indicating which manifest type is requested. If it&#39;s None,</span>
 <span class="sd">                manifest list is prefered, but if v2s2 is returned instead, v2s2</span>
-<span class="sd">                is returned as final result.</span>
+<span class="sd">                is returned as final result. If neither is found, same order is attempted with</span>
+<span class="sd">                OCI type images.</span>
 <span class="sd">        Returns (dict|str):</span>
 <span class="sd">            Image manifest</span>
 <span class="sd">        Raises:</span>
@@ -152,7 +168,7 @@
         <span class="n">repo</span><span class="p">,</span> <span class="n">ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_and_validate_image_url</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
         <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/manifests/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">media_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">media_type</span><span class="p">:</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">media_type</span><span class="p">}}</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
 
@@ -165,32 +181,34 @@
                     <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a </span><span class="si">{1}</span><span class="s2"> manifest&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">return_headers</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">),</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
 
-        <span class="c1"># request &#39;Content-Type&#39; to be manifest list</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">}}</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">media_type</span> <span class="o">==</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
-            <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+        <span class="c1"># If type is not specified, try to get manifests in this order</span>
+        <span class="c1"># If somehow none of these match, we&#39;ll accept whatever we got</span>
+        <span class="k">for</span> <span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_OCI_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_OCI_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span><span class="p">,</span>
         <span class="p">):</span>
-            <span class="k">raise</span> <span class="n">ManifestTypeError</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a manifest list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image</span><span class="p">))</span>
-        <span class="c1"># We asked for ML but received neither ML nor V2S2. Let&#39;s ask again for V2S2</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
-            <span class="ow">and</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span>
-        <span class="p">):</span>
-            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">}}</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="n">manifest_type</span><span class="p">}}</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">manifest_type</span><span class="p">:</span>
+                <span class="k">break</span>
 
         <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span></div>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">())</span></div>
 
-<div class="viewcode-block" id="QuayClient.get_manifest_digest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest_digest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.get_manifest_digest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_manifest_digest">[docs]</a>    <span class="k">def</span> <span class="nf">get_manifest_digest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">media_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get manifest of the specified image and calculate its digest by hashing it.</span>
 
@@ -204,7 +222,7 @@
 <span class="sd">            Manifest digest of the image.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">media_type</span><span class="p">)</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">media_type</span><span class="p">))</span>
         <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">exc</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ManifestNotFoundError</span><span class="p">()</span>
@@ -217,7 +235,9 @@
 
         <span class="k">return</span> <span class="s2">&quot;sha256:</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">digest</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="QuayClient.upload_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.upload_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">upload_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manifest</span><span class="p">,</span> <span class="n">image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.upload_manifest"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.upload_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">upload_manifest</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">manifest</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ManifestList</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Upload manifest to a specified image.</span>
 
@@ -235,20 +255,24 @@
         <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">/manifests/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
-            <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">manifest</span><span class="p">)[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span>
+            <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">manifest</span><span class="p">))</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                <span class="s2">&quot;mediaType&quot;</span><span class="p">,</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span>
+            <span class="p">)</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="n">manifest_type</span><span class="p">},</span>
-                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">manifest</span><span class="p">,</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">manifest</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span>
+            <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Manifest</span><span class="p">,</span> <span class="n">manifest</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mediaType&quot;</span><span class="p">,</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_V2S1_TYPE</span><span class="p">)</span>
             <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;headers&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="n">manifest_type</span><span class="p">},</span>
-                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
+                <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">manifest</span><span class="p">),</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span>
             <span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_request_quay</span><span class="p">(</span><span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="QuayClient.get_repository_tags"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_repository_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_repository_tags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient.get_repository_tags"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient.get_repository_tags">[docs]</a>    <span class="k">def</span> <span class="nf">get_repository_tags</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get tags of a provided repository.</span>
 
@@ -279,9 +303,11 @@
         <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">tags</span></div>
+            <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">tags</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="QuayClient._request_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._request_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_request_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{}):</span>
+<div class="viewcode-block" id="QuayClient._request_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._request_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_request_quay</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a Docker HTTP API request on Quay registry. Handle authentication.</span>
 
@@ -312,7 +338,7 @@
 
         <span class="k">return</span> <span class="n">r</span></div>
 
-<div class="viewcode-block" id="QuayClient._authenticate_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._authenticate_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_authenticate_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient._authenticate_quay"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._authenticate_quay">[docs]</a>    <span class="k">def</span> <span class="nf">_authenticate_quay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Attempt to perform an authentication with registry&#39;s authentication server.</span>
 
@@ -355,14 +381,16 @@
         <span class="n">session</span><span class="o">.</span><span class="n">mount</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="n">adapter</span><span class="p">)</span>
         <span class="c1"># Make an authentication request to the specified realm with the provided REST parameters.</span>
         <span class="c1"># Basic username + password authentication is expected.</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">host</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
         <span class="n">r</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="s2">&quot;token&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">():</span>
             <span class="k">raise</span> <span class="n">RegistryAuthError</span><span class="p">(</span><span class="s2">&quot;Authentication server response doesn&#39;t contain a token.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">set_auth_token</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;token&quot;</span><span class="p">])</span></div>
 
-<div class="viewcode-block" id="QuayClient._parse_and_validate_image_url"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url">[docs]</a>    <span class="k">def</span> <span class="nf">_parse_and_validate_image_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">):</span>
+<div class="viewcode-block" id="QuayClient._parse_and_validate_image_url"><a class="viewcode-back" href="../../../quay_client.html#pubtools._quay.quay_client.QuayClient._parse_and_validate_image_url">[docs]</a>    <span class="k">def</span> <span class="nf">_parse_and_validate_image_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract image repository + reference from an image and validate its data.</span>
 

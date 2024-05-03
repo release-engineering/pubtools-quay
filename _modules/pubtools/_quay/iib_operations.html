@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.iib_operations &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -77,24 +79,35 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.iib_operations</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
 <span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">InvalidTargetSettings</span>
 <span class="kn">from</span> <span class="nn">.operator_pusher</span> <span class="kn">import</span> <span class="n">OperatorPusher</span>
-<span class="kn">from</span> <span class="nn">.signature_handler</span> <span class="kn">import</span> <span class="n">OperatorSignatureHandler</span>
-<span class="kn">from</span> <span class="nn">.signature_remover</span> <span class="kn">import</span> <span class="n">SignatureRemover</span>
+
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
-    <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
     <span class="n">timestamp</span><span class="p">,</span>
     <span class="n">parse_index_image</span><span class="p">,</span>
+    <span class="n">set_aws_kms_environment_variables</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.signer_wrapper</span> <span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
+<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">VirtualPushItem</span><span class="p">,</span>
+    <span class="n">SignEntry</span><span class="p">,</span>
+    <span class="n">item_processor_for_internal_data</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">ManifestList</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="verify_target_settings"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.verify_target_settings">[docs]</a><span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="n">target_settings</span><span class="p">):</span>
+<div class="viewcode-block" id="verify_target_settings"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.verify_target_settings">[docs]</a><span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the presence and validity of target settings.</span>
 
@@ -133,17 +146,158 @@
             <span class="p">)</span></div>
 
 
+<span class="k">def</span> <span class="nf">_get_operator_quay_client</span><span class="p">(</span><span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for src index image.&quot;&quot;&quot;</span>
+    <span class="n">index_image_credential</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_overwrite_from_index_token&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">QuayClient</span><span class="p">(</span>
+        <span class="n">index_image_credential</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">index_image_credential</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_index_image_to_sign_entries</span><span class="p">(</span>
+    <span class="n">src_index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dest_tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">internal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate entries to sign.</span>
+
+<span class="sd">    Method generates sign entries for index image with &lt;dest_tags&gt; tags</span>
+<span class="sd">    and given signing_keys. Only manifests with architecture amd64 are included in the output.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        src_index_image (str): Source index image.</span>
+<span class="sd">        dest_tags (List[str]): Destination tags.</span>
+<span class="sd">        index_stamp (str): Index stamp.</span>
+<span class="sd">        signing_keys (list): List of signing keys.</span>
+<span class="sd">        internal (bool): indicates if to sign registries should be generated with iternal/external</span>
+<span class="sd">            reference</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">iib_repo</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]</span>
+    <span class="n">dest_registries</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
+    <span class="n">dest_registries</span> <span class="o">=</span> <span class="n">dest_registries</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dest_registries</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">dest_registries</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">internal</span><span class="p">:</span>
+        <span class="n">dest_registries</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;quay.io&quot;</span><span class="p">]</span>
+        <span class="n">iib_repo</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">iib_repo</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">dest_operator_quay_client</span> <span class="o">=</span> <span class="n">_get_operator_quay_client</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">dest_operator_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
+            <span class="n">src_index_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span> <span class="n">return_headers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">manifest_list_str</span><span class="p">,</span> <span class="n">headers</span> <span class="o">=</span> <span class="n">ret</span>
+    <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">manifest_list_str</span><span class="p">))</span>
+
+    <span class="n">index_image_digests</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">m</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span> <span class="s2">&quot;x86_64&quot;</span><span class="p">]</span>
+    <span class="p">]</span>
+    <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># if signing external images, sign also manifest list</span>
+    <span class="k">if</span> <span class="n">internal</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_dest_tag</span> <span class="ow">in</span> <span class="n">dest_tags</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="n">dest_registries</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">signing_keys</span><span class="p">:</span>
+                    <span class="n">to_sign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">SignEntry</span><span class="p">(</span>
+                            <span class="n">reference</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">iib_repo</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_dest_tag</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="n">repo</span><span class="o">=</span><span class="n">iib_repo</span><span class="p">,</span>
+                            <span class="n">digest</span><span class="o">=</span><span class="n">headers</span><span class="p">[</span><span class="s2">&quot;docker-content-digest&quot;</span><span class="p">],</span>
+                            <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
+                            <span class="n">signing_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="n">dest_registries</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_dest_tag</span> <span class="ow">in</span> <span class="n">dest_tags</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">digest</span> <span class="ow">in</span> <span class="n">index_image_digests</span><span class="p">:</span>
+                <span class="n">reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">iib_repo</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">_dest_tag</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">signing_keys</span><span class="p">:</span>
+                    <span class="n">to_sign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">SignEntry</span><span class="p">(</span>
+                            <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
+                            <span class="n">repo</span><span class="o">=</span><span class="n">iib_repo</span><span class="p">,</span>
+                            <span class="n">digest</span><span class="o">=</span><span class="n">digest</span><span class="p">,</span>
+                            <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
+                            <span class="n">signing_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">to_sign_entries</span>
+
+
+<span class="k">def</span> <span class="nf">_remove_index_image_signatures</span><span class="p">(</span>
+    <span class="n">outdated_manifests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">current_signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Remove signatures of outdated manifests with confitured signers for the target.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        outdated_manifests (list): List of outdated manifests.</span>
+<span class="sd">        current_signatures (list): List of current signatures.</span>
+<span class="sd">        target_settings (dict): Target settings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]:</span>
+            <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+            <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span><span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">)</span>
+            <span class="n">signer</span><span class="o">.</span><span class="n">remove_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">current_signatures</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_sign_index_image</span><span class="p">(</span>
+    <span class="n">built_index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">dest_tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">pre_push</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sign index image with configured signers for the target.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        built_index_image (str): Index image built results.</span>
+<span class="sd">        dest_tags (List[str]): Destination tag.</span>
+<span class="sd">        signing_keys (list): List of signing keys.</span>
+<span class="sd">        task_id (str): Task ID.</span>
+<span class="sd">        target_settings (dict): Target settings.</span>
+<span class="sd">        pre_push (bool): Whether to sign before push.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        list: List of current signatures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="n">_index_image_to_sign_entries</span><span class="p">(</span>
+        <span class="n">built_index_image</span><span class="p">,</span> <span class="n">dest_tags</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">internal</span><span class="o">=</span><span class="ow">not</span> <span class="n">pre_push</span>
+    <span class="p">)</span>
+    <span class="n">current_signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">signing_key</span><span class="p">)</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">to_sign_entries</span>
+    <span class="p">]</span>
+    <span class="n">set_aws_kms_environment_variables</span><span class="p">(</span><span class="n">target_settings</span><span class="p">,</span> <span class="s2">&quot;cosign_signer&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">pre_push</span> <span class="o">==</span> <span class="n">pre_push</span><span class="p">:</span>
+            <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
+            <span class="n">signer</span> <span class="o">=</span> <span class="n">signercls</span><span class="p">(</span><span class="n">config_file</span><span class="o">=</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;config_file&quot;</span><span class="p">],</span> <span class="n">settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">)</span>
+            <span class="n">signer</span><span class="o">.</span><span class="n">sign_containers</span><span class="p">(</span><span class="n">to_sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="o">=</span><span class="n">task_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">current_signatures</span>
+
+
 <div class="viewcode-block" id="task_iib_add_bundles"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.task_iib_add_bundles">[docs]</a><span class="k">def</span> <span class="nf">task_iib_add_bundles</span><span class="p">(</span>
-    <span class="n">bundles</span><span class="p">,</span>
-    <span class="n">archs</span><span class="p">,</span>
-    <span class="n">index_image</span><span class="p">,</span>
-    <span class="n">deprecation_list</span><span class="p">,</span>
-    <span class="n">signing_keys</span><span class="p">,</span>
-    <span class="n">hub</span><span class="p">,</span>
-    <span class="n">task_id</span><span class="p">,</span>
-    <span class="n">target_settings</span><span class="p">,</span>
-    <span class="n">target_name</span><span class="p">,</span>
-<span class="p">):</span>
+    <span class="n">bundles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">deprecation_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushAddIIBBundles&#39; entrypoint.</span>
 
@@ -169,6 +323,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">image_schema_tag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
     <span class="n">verify_target_settings</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+    <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span> <span class="s2">&quot;quay.io&quot;</span>
+    <span class="p">)</span>
 
     <span class="c1"># Build new index image in IIB</span>
     <span class="n">build_details</span> <span class="o">=</span> <span class="n">OperatorPusher</span><span class="o">.</span><span class="n">iib_add_bundles</span><span class="p">(</span>
@@ -179,47 +336,52 @@
         <span class="n">build_tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span> <span class="n">task_id</span><span class="p">)],</span>
         <span class="n">target_settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">,</span>
     <span class="p">)</span>
-
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">build_details</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
+    <span class="n">quay_operator_namespace</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+        <span class="n">quay_client</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="n">quay_operator_namespace</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">item_processor</span><span class="o">.</span><span class="n">extractor</span><span class="o">.</span><span class="n">full_extract</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># Add bundles task doesn&#39;t work with pushitem so we create VirtualPushItem to enable</span>
+    <span class="c1"># existing code for fetching needed data.</span>
+    <span class="n">vitem</span> <span class="o">=</span> <span class="n">VirtualPushItem</span><span class="p">(</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">tag</span><span class="p">]}},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">tag</span><span class="p">]},</span>
+    <span class="p">)</span>
+    <span class="n">existing_manifests</span> <span class="o">=</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_existing_manifests_metadata</span><span class="p">(</span><span class="n">vitem</span><span class="p">)</span>
+    <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ref</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">man_arch_dig</span> <span class="ow">in</span> <span class="n">existing_manifests</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">man_arch_dig</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">man_arch_dig</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">ref</span><span class="p">))</span>
+
+    <span class="c1"># pre push sign</span>
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="c1"># Index image used to fetch manifest list. This image will never be overwritten</span>
-    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
-    <span class="n">permanent_index_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">iib_namespace</span><span class="p">,</span>
-        <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
-        <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Sign image</span>
-    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
-    <span class="n">sig_handler</span> <span class="o">=</span> <span class="n">OperatorSignatureHandler</span><span class="p">(</span><span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">)</span>
-    <span class="n">claim_messages</span> <span class="o">=</span> <span class="n">sig_handler</span><span class="o">.</span><span class="n">sign_task_index_image</span><span class="p">(</span>
-        <span class="n">signing_keys</span><span class="p">,</span> <span class="n">permanent_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)]</span>
-    <span class="p">)</span>
-
-    <span class="n">sig_remover</span> <span class="o">=</span> <span class="n">SignatureRemover</span><span class="p">(</span>
-        <span class="n">quay_api_token</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">],</span>
-        <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
-        <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
-    <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
-
-    <span class="n">old_signatures</span> <span class="o">=</span> <span class="n">sig_remover</span><span class="o">.</span><span class="n">get_index_image_signatures</span><span class="p">(</span>
-        <span class="n">dest_image</span><span class="p">,</span>
-        <span class="n">claim_messages</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">cert</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
@@ -233,10 +395,10 @@
     <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">&quot;index_image_quay_password&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">]</span>
     <span class="p">)</span>
-
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
         <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
+    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
     <span class="n">permanent_index_image_proxy</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -249,26 +411,29 @@
         <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
 
-    <span class="n">signature_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">:</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Removing operator signature. Reference: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;reference&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Repository: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;repository&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Digest: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;manifest_digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Key: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;sig_key_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-    <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
-        <span class="n">signature_ids</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">cert</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
-    <span class="p">)</span></div>
+    <span class="c1"># after push sign</span>
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">_remove_index_image_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">current_signatures</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="task_iib_remove_operators"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.task_iib_remove_operators">[docs]</a><span class="k">def</span> <span class="nf">task_iib_remove_operators</span><span class="p">(</span>
-    <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
-<span class="p">):</span>
+    <span class="n">operators</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushRemoveIIBOperators&#39; entrypoint.</span>
 
@@ -302,47 +467,54 @@
         <span class="n">target_settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">build_details</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
+    <span class="n">quay_operator_namespace</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span> <span class="s2">&quot;quay.io&quot;</span>
+    <span class="p">)</span>
+    <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+        <span class="n">quay_client</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="n">quay_operator_namespace</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Remove operators task doesn&#39;t work with pushitem so we create VirtualPushItem to enable</span>
+    <span class="c1"># existing code for fetching needed data.</span>
+    <span class="n">vitem</span> <span class="o">=</span> <span class="n">VirtualPushItem</span><span class="p">(</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">tag</span><span class="p">]}},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">tag</span><span class="p">]},</span>
+    <span class="p">)</span>
+    <span class="n">existing_manifests</span> <span class="o">=</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_existing_manifests_metadata</span><span class="p">(</span><span class="n">vitem</span><span class="p">)</span>
+    <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ref</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">man_arch_dig</span> <span class="ow">in</span> <span class="n">existing_manifests</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">man_arch_dig</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">man_arch_dig</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">_tag</span><span class="p">,</span> <span class="n">ref</span><span class="p">))</span>
+
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Index image used to fetch manifest list. This image will never be overwritten</span>
-    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
-    <span class="n">permanent_index_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">iib_namespace</span><span class="p">,</span>
-        <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
-        <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Sign image</span>
-    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
-    <span class="n">sig_handler</span> <span class="o">=</span> <span class="n">OperatorSignatureHandler</span><span class="p">(</span><span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">)</span>
-    <span class="n">claim_messages</span> <span class="o">=</span> <span class="n">sig_handler</span><span class="o">.</span><span class="n">sign_task_index_image</span><span class="p">(</span>
-        <span class="n">signing_keys</span><span class="p">,</span> <span class="n">permanent_index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)]</span>
-    <span class="p">)</span>
-
-    <span class="n">sig_remover</span> <span class="o">=</span> <span class="n">SignatureRemover</span><span class="p">(</span>
-        <span class="n">quay_api_token</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_api_token&quot;</span><span class="p">],</span>
-        <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
-        <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
-    <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
-
-    <span class="n">old_signatures</span> <span class="o">=</span> <span class="n">sig_remover</span><span class="o">.</span><span class="n">get_index_image_signatures</span><span class="p">(</span>
-        <span class="n">dest_image</span><span class="p">,</span>
-        <span class="n">claim_messages</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">cert</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
@@ -360,6 +532,8 @@
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
         <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
+
+    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
     <span class="n">permanent_index_image_proxy</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -371,27 +545,27 @@
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
         <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
-
-    <span class="n">signature_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="n">old_signatures</span><span class="p">:</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Removing operator signature. Reference: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;reference&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Repository: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;repository&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Digest: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;manifest_digest&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;Key: </span><span class="si">{</span><span class="n">sig</span><span class="p">[</span><span class="s1">&#39;sig_key_id&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-    <span class="n">sig_remover</span><span class="o">.</span><span class="n">remove_signatures_from_pyxis</span><span class="p">(</span>
-        <span class="n">signature_ids</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">],</span>
-        <span class="n">cert</span><span class="p">,</span>
-        <span class="n">key</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_pyxis&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span>
-    <span class="p">)</span></div>
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_remove_index_image_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">current_signatures</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="task_iib_build_from_scratch"><a class="viewcode-back" href="../../../iib_operations.html#pubtools._quay.iib_operations.task_iib_build_from_scratch">[docs]</a><span class="k">def</span> <span class="nf">task_iib_build_from_scratch</span><span class="p">(</span>
-    <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
-<span class="p">):</span>
+    <span class="n">bundles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform all the necessary actions for the &#39;PushIIBBuildFromScratch&#39; entrypoint.</span>
 
@@ -423,39 +597,57 @@
         <span class="n">build_tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">-</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)],</span>
         <span class="n">target_settings</span><span class="o">=</span><span class="n">target_settings</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">build_details</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
+    <span class="n">quay_operator_namespace</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span> <span class="s2">&quot;quay.io&quot;</span>
+    <span class="p">)</span>
+    <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
+        <span class="n">quay_client</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
+        <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retry_sleep_time&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="n">quay_operator_namespace</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Build from scratch task doesn&#39;t work with pushitem so we create VirtualPushItem to enable</span>
+    <span class="c1"># existing code for fetching needed data.</span>
+    <span class="n">vitem</span> <span class="o">=</span> <span class="n">VirtualPushItem</span><span class="p">(</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">index_image_tag</span><span class="p">]}},</span>
+        <span class="n">repos</span><span class="o">=</span><span class="p">{</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]:</span> <span class="p">[</span><span class="n">index_image_tag</span><span class="p">]},</span>
+    <span class="p">)</span>
+    <span class="n">existing_manifests</span> <span class="o">=</span> <span class="n">item_processor</span><span class="o">.</span><span class="n">generate_existing_manifests_metadata</span><span class="p">(</span><span class="n">vitem</span><span class="p">)</span>
+    <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ref</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">man_arch_dig</span> <span class="ow">in</span> <span class="n">existing_manifests</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">man_arch_dig</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">outdated_manifests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">man_arch_dig</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">ref</span><span class="p">))</span>
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index_image_tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">dest_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="n">index_image_tag</span><span class="p">,</span>
     <span class="p">)</span>
-
-    <span class="c1"># Index image used to fetch manifest list. This image will never be overwritten</span>
-    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
-    <span class="n">permanent_index_image</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">iib_namespace</span><span class="p">,</span>
-        <span class="n">repo</span><span class="o">=</span><span class="n">iib_intermediate_repo</span><span class="p">,</span>
-        <span class="n">tag</span><span class="o">=</span><span class="n">build_details</span><span class="o">.</span><span class="n">build_tags</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="p">)</span>
-    <span class="n">index_stamp</span> <span class="o">=</span> <span class="n">timestamp</span><span class="p">()</span>
     <span class="n">dest_image_stamp</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
-        <span class="n">namespace</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]),</span>
+        <span class="n">namespace</span><span class="o">=</span><span class="n">quay_operator_namespace</span><span class="p">,</span>
         <span class="n">repo</span><span class="o">=</span><span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_operator_repository&quot;</span><span class="p">]),</span>
         <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="c1"># Sign image</span>
-    <span class="n">sig_handler</span> <span class="o">=</span> <span class="n">OperatorSignatureHandler</span><span class="p">(</span><span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span><span class="p">)</span>
-    <span class="n">sig_handler</span><span class="o">.</span><span class="n">sign_task_index_image</span><span class="p">(</span>
-        <span class="n">signing_keys</span><span class="p">,</span>
-        <span class="n">permanent_index_image</span><span class="p">,</span>
-        <span class="p">[</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="n">index_stamp</span><span class="p">)],</span>
-    <span class="p">)</span>
-
     <span class="c1"># Push image to Quay</span>
+    <span class="c1"># Copy target settings and override username and password for quay_operator_namespace</span>
     <span class="n">index_image_ts</span> <span class="o">=</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">index_image_ts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="s2">&quot;index_image_quay_user&quot;</span><span class="p">,</span> <span class="n">index_image_ts</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">]</span>
@@ -466,6 +658,7 @@
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
         <span class="n">build_details</span><span class="o">.</span><span class="n">index_image</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
     <span class="p">)</span>
+    <span class="n">iib_feed</span><span class="p">,</span> <span class="n">iib_namespace</span><span class="p">,</span> <span class="n">iib_intermediate_repo</span> <span class="o">=</span> <span class="n">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">)</span>
     <span class="c1"># Permanent index image with proxy as a host must be used because skopeo cannot handle</span>
     <span class="c1"># login to two Quay namespaces at the same time</span>
     <span class="n">permanent_index_image_proxy</span> <span class="o">=</span> <span class="n">image_schema_tag</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -476,20 +669,29 @@
     <span class="p">)</span>
     <span class="n">ContainerImagePusher</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span>
         <span class="n">permanent_index_image_proxy</span><span class="p">,</span> <span class="p">[</span><span class="n">dest_image_stamp</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="n">index_image_ts</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+    <span class="n">current_signatures</span> <span class="o">=</span> <span class="n">_sign_index_image</span><span class="p">(</span>
+        <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">index_image_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index_image_tag</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">index_stamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span>
+        <span class="n">signing_keys</span><span class="p">,</span>
+        <span class="n">task_id</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">,</span>
+        <span class="n">pre_push</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_remove_index_image_signatures</span><span class="p">(</span><span class="n">outdated_manifests</span><span class="p">,</span> <span class="n">current_signatures</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">iib_add_entrypoint</span><span class="p">(</span>
-    <span class="n">bundles</span><span class="p">,</span>
-    <span class="n">archs</span><span class="p">,</span>
-    <span class="n">index_image</span><span class="p">,</span>
-    <span class="n">deprecation_list</span><span class="p">,</span>
-    <span class="n">signing_keys</span><span class="p">,</span>
-    <span class="n">hub</span><span class="p">,</span>
-    <span class="n">task_id</span><span class="p">,</span>
-    <span class="n">target_settings</span><span class="p">,</span>
-    <span class="n">target_name</span><span class="p">,</span>
-<span class="p">):</span>
+    <span class="n">bundles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">deprecation_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_add_bundles</span><span class="p">(</span>
         <span class="n">bundles</span><span class="p">,</span>
@@ -505,8 +707,15 @@
 
 
 <span class="k">def</span> <span class="nf">iib_remove_entrypoint</span><span class="p">(</span>
-    <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
-<span class="p">):</span>
+    <span class="n">operators</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_remove_operators</span><span class="p">(</span>
         <span class="n">operators</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
@@ -514,8 +723,15 @@
 
 
 <span class="k">def</span> <span class="nf">iib_from_scratch_entrypoint</span><span class="p">(</span>
-    <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>
-<span class="p">):</span>
+    <span class="n">bundles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">index_image_tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">signing_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>
     <span class="n">task_iib_build_from_scratch</span><span class="p">(</span>
         <span class="n">bundles</span><span class="p">,</span> <span class="n">archs</span><span class="p">,</span> <span class="n">index_image_tag</span><span class="p">,</span> <span class="n">signing_keys</span><span class="p">,</span> <span class="n">hub</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">,</span> <span class="n">target_name</span>

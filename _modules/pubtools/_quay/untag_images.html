@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.untag_images &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -78,6 +80,8 @@
              
   <h1>Source code for pubtools._quay.untag_images</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
 
 <span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
 
@@ -118,7 +122,7 @@
 <span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Construct a kwargs dictionary based on the entered command line arguments.</span>
 
@@ -144,7 +148,9 @@
     <span class="k">return</span> <span class="n">kwargs</span>
 
 
-<span class="k">def</span> <span class="nf">verify_untag_images_args</span><span class="p">(</span><span class="n">references</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">verify_untag_images_args</span><span class="p">(</span>
+    <span class="n">references</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">quay_user</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">quay_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify the presence and correctness of input parameters.</span>
 
@@ -165,12 +171,12 @@
 
 
 <div class="viewcode-block" id="untag_images"><a class="viewcode-back" href="../../../untag_images.html#pubtools._quay.untag_images.untag_images">[docs]</a><span class="k">def</span> <span class="nf">untag_images</span><span class="p">(</span>
-    <span class="n">references</span><span class="p">,</span>
-    <span class="n">quay_api_token</span><span class="p">,</span>
-    <span class="n">remove_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">quay_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">quay_password</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-<span class="p">):</span>
+    <span class="n">references</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">quay_api_token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">remove_last</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">quay_user</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">quay_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Untag images from Quay.</span>
 
@@ -196,12 +202,12 @@
     <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_images_untagged</span><span class="p">(</span><span class="n">untag_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">references</span><span class="p">),</span> <span class="n">lost_refs</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">lost_images</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">setup_args</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">setup_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">UNTAG_IMAGES_ARGS</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">untag_images_main</span><span class="p">(</span><span class="n">sysargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">untag_images_main</span><span class="p">(</span><span class="n">sysargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for untagging images.&quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 

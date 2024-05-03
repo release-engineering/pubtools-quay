@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Signer Wrapper &mdash; pubtools-quay 0.12.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Security manifest pusher" href="security_manifest_pusher.html" />
+    <link rel="prev" title="Item Processor" href="item_processor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            pubtools-quay
+          </a>
+              <div class="version">
+                0.12.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="README.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="entrypoints_reference.html">Entrypoints reference</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules_reference.html">Modules reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="command_executor.html">Command Executor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="container_image_pusher.html">Container image pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iib_operations.html">IIB operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="image_untagger.html">Image untagger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="manifest_list_merger.html">Manifest list merger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="operator_pusher.html">Operator Pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="push_docker.html">Push Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_api_client.html">Quay API Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_client.html">Quay Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quay_session.html">Quay Session</a></li>
+<li class="toctree-l2"><a class="reference internal" href="item_processor.html">Item Processor</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Signer Wrapper</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerSettingsSchema"><code class="docutils literal notranslate"><span class="pre">MsgSignerSettingsSchema</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper"><code class="docutils literal notranslate"><span class="pre">SignerWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.SCHEMA"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.SCHEMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.entry_point"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.entry_point</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.remove_signatures"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.remove_signatures()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.sign_container_opt_args"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.sign_container_opt_args()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.sign_containers"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.sign_containers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.SignerWrapper.validate_settings"><code class="docutils literal notranslate"><span class="pre">SignerWrapper.validate_settings()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper"><code class="docutils literal notranslate"><span class="pre">MsgSignerWrapper</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.SCHEMA"><code class="docutils literal notranslate"><span class="pre">MsgSignerWrapper.SCHEMA</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.remove_signatures"><code class="docutils literal notranslate"><span class="pre">MsgSignerWrapper.remove_signatures()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.sign_container_opt_args"><code class="docutils literal notranslate"><span class="pre">MsgSignerWrapper.sign_container_opt_args()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.signer_wrapper.CosignSignerSettingsSchema"><code class="docutils literal notranslate"><span class="pre">CosignSignerSettingsSchema</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pubtools._quay.signer_wrapper.CosignSignerWrapper"><code class="docutils literal notranslate"><span class="pre">CosignSignerWrapper</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security_manifest_pusher.html">Security manifest pusher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tag_docker.html">Tag Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utilities.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="CHANGELOG.html">ChangeLog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">pubtools-quay</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules_reference.html">Modules reference</a></li>
+      <li class="breadcrumb-item active">Signer Wrapper</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/signer_wrapper.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="signer-wrapper">
+<h1>Signer Wrapper<a class="headerlink" href="#signer-wrapper" title="Permalink to this heading"></a></h1>
+<p>Set of signing wrappers which wraps functionality of pubtools-sign projects and provides extra methods needed for the signign process.</p>
+<span class="target" id="module-pubtools._quay.signer_wrapper"></span><dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.MsgSignerSettingsSchema">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signer_wrapper.</span></span><span class="sig-name descname"><span class="pre">MsgSignerSettingsSchema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dump_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#MsgSignerSettingsSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.MsgSignerSettingsSchema" title="Permalink to this definition"></a></dt>
+<dd><p>Validation schema for messaging signer settings.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signer_wrapper.</span></span><span class="sig-name descname"><span class="pre">SignerWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#SignerWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper providing functionality to sign containers with a generic signer.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.SCHEMA">
+<span class="sig-name descname"><span class="pre">SCHEMA</span></span><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.SCHEMA" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">NoSchema</span></code></p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.entry_point">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">entry_point</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.entry_point" title="Permalink to this definition"></a></dt>
+<dd><p>Load and return entry point for pubtools-sign project.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.remove_signatures">
+<span class="sig-name descname"><span class="pre">remove_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#SignerWrapper.remove_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.remove_signatures" title="Permalink to this definition"></a></dt>
+<dd><p>Remove signatures from a sigstore.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.sign_container_opt_args">
+<span class="sig-name descname"><span class="pre">sign_container_opt_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign_entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SignEntry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#SignerWrapper.sign_container_opt_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.sign_container_opt_args" title="Permalink to this definition"></a></dt>
+<dd><p>Return optional arguments for signing a container.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>sign_entry (SignEntry): SignEntry to sign.
+task_id (str): Task ID to identify the signing task if needed.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: Optional arguments for signing a container.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.sign_containers">
+<span class="sig-name descname"><span class="pre">sign_containers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">to_sign_entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">SignEntry</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#SignerWrapper.sign_containers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.sign_containers" title="Permalink to this definition"></a></dt>
+<dd><p>Sign signing entries.</p>
+<p>Entries are sent to signer in chunks of chunk_size size.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>to_sign_entries (List[SignEntry]): list of entries to sign.
+task_id (str): optional identifier used in signing process.
+parallelism (int): determines how many entries should be signed in parallel.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.SignerWrapper.validate_settings">
+<span class="sig-name descname"><span class="pre">validate_settings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#SignerWrapper.validate_settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.SignerWrapper.validate_settings" title="Permalink to this definition"></a></dt>
+<dd><p>Validate provided settings for the SignerWrapper.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.MsgSignerWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signer_wrapper.</span></span><span class="sig-name descname"><span class="pre">MsgSignerWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#MsgSignerWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for messaging signer functionality.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.MsgSignerWrapper.SCHEMA">
+<span class="sig-name descname"><span class="pre">SCHEMA</span></span><a class="headerlink" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.SCHEMA" title="Permalink to this definition"></a></dt>
+<dd><p>alias of <a class="reference internal" href="#pubtools._quay.signer_wrapper.MsgSignerSettingsSchema" title="pubtools._quay.signer_wrapper.MsgSignerSettingsSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">MsgSignerSettingsSchema</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.MsgSignerWrapper.remove_signatures">
+<span class="sig-name descname"><span class="pre">remove_signatures</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#MsgSignerWrapper.remove_signatures"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.remove_signatures" title="Permalink to this definition"></a></dt>
+<dd><p>Remove signatures from sigstore.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>signatures (list): List of tuples containing (digest, reference, repository) of
+signatures to remove.
+exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+tuples of signautres to keep.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.MsgSignerWrapper.sign_container_opt_args">
+<span class="sig-name descname"><span class="pre">sign_container_opt_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sign_entry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SignEntry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#MsgSignerWrapper.sign_container_opt_args"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.MsgSignerWrapper.sign_container_opt_args" title="Permalink to this definition"></a></dt>
+<dd><p>Return optional arguments for signing a container.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>sign_entry (SignEntry): SignEntry to sign.
+task_id (str): Task ID to identify the signing task if needed.</p>
+</dd>
+<dt>Returns:</dt><dd><p>dict: Optional arguments for signing a container.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.CosignSignerSettingsSchema">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signer_wrapper.</span></span><span class="sig-name descname"><span class="pre">CosignSignerSettingsSchema</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">many</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dump_only</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">types.StrSequenceOrSet</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unknown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#CosignSignerSettingsSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.CosignSignerSettingsSchema" title="Permalink to this definition"></a></dt>
+<dd><p>Validation schema for cosign signer settings.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pubtools._quay.signer_wrapper.CosignSignerWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pubtools._quay.signer_wrapper.</span></span><span class="sig-name descname"><span class="pre">CosignSignerWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pubtools/_quay/signer_wrapper.html#CosignSignerWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.signer_wrapper.CosignSignerWrapper" title="Permalink to this definition"></a></dt>
+<dd><p>Wrapper for cosign signer functionality.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="item_processor.html" class="btn btn-neutral float-left" title="Item Processor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="security_manifest_pusher.html" class="btn btn-neutral float-right" title="Security manifest pusher" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Red Hat.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

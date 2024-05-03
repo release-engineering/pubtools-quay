@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>pubtools._quay.operator_pusher &mdash; pubtools-quay 0.12.0 documentation</title>
-      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
+
+  
   <!--[if lt IE 9]>
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
@@ -84,10 +86,11 @@
 <span class="kn">from</span> <span class="nn">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
 <span class="kn">from</span> <span class="nn">concurrent.futures.thread</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">requests</span>
 <span class="kn">from</span> <span class="nn">requests.adapters</span> <span class="kn">import</span> <span class="n">HTTPAdapter</span>
-<span class="kn">from</span> <span class="nn">requests.packages.urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
+<span class="kn">from</span> <span class="nn">urllib3.util.retry</span> <span class="kn">import</span> <span class="n">Retry</span>
 
 <span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
@@ -101,7 +104,9 @@
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">parse_index_image</span><span class="p">,</span> <span class="n">pyxis_get_repo_metadata</span>
 <span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">BuildIndexImageParam</span>
+<span class="kn">from</span> <span class="nn">pubtools.tracing</span> <span class="kn">import</span> <span class="n">get_trace_wrapper</span>
 
+<span class="n">tx</span> <span class="o">=</span> <span class="n">get_trace_wrapper</span><span class="p">()</span>
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
 
@@ -112,7 +117,9 @@
 <span class="sd">    No validation is performed, push items are expected to be correct.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="OperatorPusher.__init__"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">,</span> <span class="n">task_id</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+<div class="viewcode-block" id="OperatorPusher.__init__"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
@@ -129,11 +136,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">task_id</span> <span class="o">=</span> <span class="n">task_id</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_version_items_mapping</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ocp_versions_resolved</span> <span class="o">=</span> <span class="p">{}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_version_items_mapping</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ocp_versions_resolved</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span></div>
 
 <div class="viewcode-block" id="OperatorPusher._get_immutable_tag"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher._get_immutable_tag">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_get_immutable_tag</span><span class="p">(</span><span class="n">push_item</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_immutable_tag</span><span class="p">(</span><span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return immutable tag from operator push item production tags.</span>
 
@@ -156,7 +163,7 @@
 
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tags</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="OperatorPusher.public_bundle_ref"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.public_bundle_ref">[docs]</a>    <span class="k">def</span> <span class="nf">public_bundle_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+<div class="viewcode-block" id="OperatorPusher.public_bundle_ref"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.public_bundle_ref">[docs]</a>    <span class="k">def</span> <span class="nf">public_bundle_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get public reference of a bundle image.</span>
 
@@ -177,7 +184,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_get_immutable_tag</span><span class="p">(</span><span class="n">push_item</span><span class="p">),</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="OperatorPusher.pyxis_get_ocp_versions"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.pyxis_get_ocp_versions">[docs]</a>    <span class="k">def</span> <span class="nf">pyxis_get_ocp_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">):</span>
+<div class="viewcode-block" id="OperatorPusher.pyxis_get_ocp_versions"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.pyxis_get_ocp_versions">[docs]</a>    <span class="k">def</span> <span class="nf">pyxis_get_ocp_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a list of supported ocp versions from Pyxis.</span>
 
@@ -198,7 +205,7 @@
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--organization&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_organization&quot;</span><span class="p">]]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--ocp-versions-range&quot;</span><span class="p">,</span> <span class="n">ocp_versions</span><span class="p">]</span>
-        <span class="n">env_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
             <span class="p">(</span>
@@ -221,7 +228,7 @@
         <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;v</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;ocp_version&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">version_items_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">version_items_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate mapping of OCP version -&gt; push_items.</span>
 
@@ -243,7 +250,7 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_version_items_mapping</span>
 
-<div class="viewcode-block" id="OperatorPusher.get_deprecation_list"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_deprecation_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+<div class="viewcode-block" id="OperatorPusher.get_deprecation_list"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_deprecation_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get bundles to be deprecated in the index image.</span>
 
@@ -258,7 +265,7 @@
 <span class="sd">                            deprecation list URL was not specified.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">_get_requests_session</span><span class="p">():</span>
+        <span class="k">def</span> <span class="nf">_get_requests_session</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">:</span>
             <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
             <span class="n">retry</span> <span class="o">=</span> <span class="n">Retry</span><span class="p">(</span>
                 <span class="n">total</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
@@ -309,7 +316,9 @@
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">deprecation_list</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="OperatorPusher.pubtools_iib_get_common_args"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.pubtools_iib_get_common_args">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">pubtools_iib_get_common_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">pubtools_iib_get_common_args</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create an argument list common for all pubtools-iib operations.</span>
 
@@ -321,9 +330,7 @@
 <span class="sd">        Returns (([str]), {str:str}):</span>
 <span class="sd">            Tuple of arguments and environment variables to be used when calling pubtools-iib.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--skip-pulp&quot;</span><span class="p">]</span>
-
-        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--iib-server&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_server&quot;</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--iib-server&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_server&quot;</span><span class="p">]]</span>
         <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--iib-krb-principal&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;iib_krb_principal&quot;</span><span class="p">]]</span>
 
         <span class="k">if</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;iib_overwrite_from_index&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
@@ -337,18 +344,22 @@
                 <span class="s2">&quot;iib_overwrite_from_index_token&quot;</span>
             <span class="p">]</span>
 
+        <span class="k">if</span> <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;check_related_images&quot;</span><span class="p">):</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--check-related-images&quot;</span><span class="p">]</span>
+
         <span class="k">return</span> <span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">env_vars</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="OperatorPusher.iib_add_bundles"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="nd">@tx</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">iib_add_bundles</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">bundles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">archs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">index_image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">deprecation_list</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">build_tags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="o">=</span><span class="p">{},</span>
-    <span class="p">):</span>
+        <span class="n">bundles</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">archs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">index_image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">deprecation_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">build_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct and execute pubtools-iib command to add bundles to index image.</span>
 
@@ -402,14 +413,15 @@
             <span class="k">return</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="OperatorPusher.iib_remove_operators"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.iib_remove_operators">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="nd">@tx</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">iib_remove_operators</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
-        <span class="n">operators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">archs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">index_image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">build_tags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">target_settings</span><span class="o">=</span><span class="p">{},</span>
-    <span class="p">):</span>
+        <span class="n">operators</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">archs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">index_image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">build_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Construct and execute pubtools-iib command to remove operators from index image.</span>
 
@@ -454,14 +466,14 @@
             <span class="n">env_vars</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="OperatorPusher.get_existing_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images">[docs]</a>    <span class="k">def</span> <span class="nf">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">):</span>
+<div class="viewcode-block" id="OperatorPusher.get_existing_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images">[docs]</a>    <span class="k">def</span> <span class="nf">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">:</span> <span class="n">QuayClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return existing index images for push items.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            quay_client (QuayClient): quay_client_instance</span>
 
-<span class="sd">        Returns [(digest, tag)]:</span>
+<span class="sd">        Returns [(digest, tag, repo)]:</span>
 <span class="sd">            List of tuples containing digest and tag of existing index image</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">&quot;</span>
@@ -477,7 +489,7 @@
         <span class="p">)</span>
         <span class="n">current_index_images</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="n">manifest_list</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">manifest_list</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="n">image_ref</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
@@ -500,7 +512,7 @@
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">current_index_images</span><span class="p">))</span></div>
 
     <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Verify bundles presence&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">ensure_bundles_present</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">ensure_bundles_present</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make sure bundles are present in Quay.</span>
 
@@ -510,7 +522,7 @@
         <span class="n">bundles</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">public_bundle_ref</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">bundle</span> <span class="ow">in</span> <span class="n">bundles</span><span class="p">:</span>
             <span class="n">registry</span> <span class="o">=</span> <span class="n">bundle</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">username</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">get_basic_auth</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span>
+            <span class="n">username</span><span class="p">,</span> <span class="n">password</span> <span class="o">=</span> <span class="n">get_basic_auth</span><span class="p">(</span><span class="n">registry</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">get_manifest_partial</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">,</span> <span class="n">bundle</span><span class="p">)</span>
@@ -526,12 +538,12 @@
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Bundle </span><span class="si">{0}</span><span class="s2"> is present&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bundle</span><span class="p">))</span>
         <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="k">def</span> <span class="nf">_get_fbc_opted_in_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_fbc_opted_in_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Get items that are opted in for fbc.</span>
 
 <span class="sd">        An item needs to be targeted for repos with fbc_opt_in set to True and</span>
-<span class="sd">        ocp versions needs to be higher than 4.12. Inconsistencies in versions</span>
-<span class="sd">        (like support for both &gt; 4.12 and &lt;= 4.12) results  in item error.</span>
+<span class="sd">        ocp versions needs to be higher than 4.10. Inconsistencies in versions</span>
+<span class="sd">        (like support for both &gt; 4.10 and &lt;= 4.10) results  in item error.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">repos_opted_in</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">items_opted_in</span> <span class="o">=</span> <span class="p">{}</span>
@@ -562,32 +574,34 @@
                 <span class="p">[</span>
                     <span class="n">version</span>
                     <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ocp_versions_resolved</span><span class="p">[</span><span class="n">ocp_versions</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span> <span class="o">&lt;</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
                 <span class="p">]</span>
                 <span class="ow">and</span> <span class="p">[</span>
                     <span class="n">version</span>
                     <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ocp_versions_resolved</span><span class="p">[</span><span class="n">ocp_versions</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
                 <span class="p">]</span>
                 <span class="ow">and</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span>
             <span class="p">):</span>
                 <span class="n">item</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span>
                     <span class="s2">&quot;INVALIDFILE&quot;</span><span class="p">,</span>
                     <span class="s2">&quot;Cannot push item to index image &quot;</span>
-                    <span class="s2">&quot;as it supports both &lt;= 4.12 and &gt;= 4.13 and is opted in FBC: </span><span class="si">{item}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="s2">&quot;as it supports both &lt;= 4.10 and &gt;= 4.11 and is opted in FBC: </span><span class="si">{item}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">item</span><span class="o">=</span><span class="n">item</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
                     <span class="s2">&quot;Cannot push item to index image &quot;</span>
-                    <span class="s2">&quot;as it supports both &lt;= 4.12 and &gt;= 4.13 and is opted in FBC: </span><span class="si">{item}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="s2">&quot;as it supports both &lt;= 4.10 and &gt;= 4.11 and is opted in FBC: </span><span class="si">{item}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                         <span class="n">item</span><span class="o">=</span><span class="n">item</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
                 <span class="n">failed_items</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">return</span> <span class="n">items_opted_in</span><span class="p">,</span> <span class="n">failed_items</span>
 
-    <span class="k">def</span> <span class="nf">_get_non_fbc_items_for_version</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">items_opted_in</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_get_non_fbc_items_for_version</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">items_opted_in</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return non fbc items for given ocp version.</span>
 
 <span class="sd">        Args:</span>
@@ -603,18 +617,22 @@
         <span class="n">non_fbc_items</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">osev_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span>
         <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">or</span> <span class="p">(</span><span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">or</span> <span class="p">(</span><span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">10</span><span class="p">)):</span>
                 <span class="n">non_fbc_items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">13</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="n">items_opted_in</span><span class="p">[</span><span class="nb">id</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="ow">and</span> <span class="n">osev_tuple</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">11</span><span class="p">):</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="s2">&quot;Skipping </span><span class="si">{i}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="n">item</span><span class="p">)</span>
-                    <span class="o">+</span> <span class="s2">&quot;from iib build as it&#39;s opted in for FBC and targeting OCP version &gt;=4.13&quot;</span>
+                    <span class="o">+</span> <span class="s2">&quot;from iib build as it&#39;s opted in for FBC and targeting OCP version &gt;=4.11&quot;</span>
                 <span class="p">)</span>
         <span class="k">return</span> <span class="n">non_fbc_items</span>
 
     <span class="k">def</span> <span class="nf">_create_item_groups_for_version</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">non_fbc_items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">is_hotfix</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_prerelease</span><span class="o">=</span><span class="kc">False</span>
-    <span class="p">):</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">non_fbc_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">is_hotfix</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">is_prerelease</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Iterate thought non fbc items and group those together based on destination tag.</span>
 
 <span class="sd">        Args:</span>
@@ -629,7 +647,7 @@
 <span class="sd">        Returns Dict[str, Dict[str, Any]]:</span>
 <span class="sd">            Dictionary of items grouped by ocp version</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">item_groups</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">item_groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">version</span><span class="p">:</span> <span class="p">{</span>
                 <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">[],</span>
                 <span class="s2">&quot;overwrite&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
@@ -674,7 +692,7 @@
         <span class="k">return</span> <span class="n">item_groups</span>
 
 <div class="viewcode-block" id="OperatorPusher.build_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.build_index_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Build index images&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">build_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">build_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the &#39;build&#39; part of the operator workflow.</span>
 
@@ -691,11 +709,11 @@
 <span class="sd">            Dictionary containing IIB results and signing keys for all OPM versions. Data will be</span>
 <span class="sd">            used in operator signing. Dictionary structure:</span>
 <span class="sd">            {</span>
-<span class="sd">                &lt;target_tag&gt;: {</span>
-<span class="sd">                    &quot;iib_result&quot;: (...) (object returned by iiblib)</span>
-<span class="sd">                    &quot;signing_keys&quot;: [...] (list of signing keys to be used for signing)</span>
-<span class="sd">                    &quot;destination_tags&quot;: [...] (list of destination tags)</span>
-<span class="sd">                }</span>
+<span class="sd">            &lt;target_tag&gt;: {</span>
+<span class="sd">            &quot;iib_result&quot;: (...) (object returned by iiblib)</span>
+<span class="sd">            &quot;signing_keys&quot;: [...] (list of signing keys to be used for signing)</span>
+<span class="sd">            &quot;destination_tags&quot;: [...] (list of destination tags)</span>
+<span class="sd">            }</span>
 <span class="sd">            }</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">iib_results</span> <span class="o">=</span> <span class="p">{}</span>
@@ -812,7 +830,9 @@
         <span class="k">return</span> <span class="n">iib_results</span></div>
 
 <div class="viewcode-block" id="OperatorPusher.push_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.push_index_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push index images to Quay&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">push_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iib_results</span><span class="p">,</span> <span class="n">tag_suffix</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">push_index_images</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">iib_results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">tag_suffix</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Push index images which were built in the previous stage to Quay.</span>
 
