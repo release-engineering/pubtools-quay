@@ -17,8 +17,8 @@ API reference to modules used by pubtools-quay. Isolated usage outside of pubtoo
    quay_api_client
    quay_client
    quay_session
-   signature_handler
-   signature_remover
+   item_processor
+   signer_wrapper
    security_manifest_pusher
    tag_docker
    utilities

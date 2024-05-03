@@ -5,7 +5,7 @@ import yaml
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
 import os
-from typing import Any
+from typing import Any, Union, Optional, List, Dict, Tuple
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -37,7 +37,7 @@ class OperatorPusher:
     """
 
     def __init__(
-        self, push_items: list[Any], task_id: str, target_settings: dict[str, Any]
+        self, push_items: List[Any], task_id: str, target_settings: Dict[str, Any]
     ) -> None:
         """
         Initialize.
@@ -55,11 +55,11 @@ class OperatorPusher:
         self.task_id = task_id
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-        self._version_items_mapping: dict[str, Any] = {}
-        self.ocp_versions_resolved: dict[str, list[str]] = {}
+        self._version_items_mapping: Dict[str, Any] = {}
+        self.ocp_versions_resolved: Dict[str, List[str]] = {}
 
     @staticmethod
-    def _get_immutable_tag(push_item: Any) -> str | Any:
+    def _get_immutable_tag(push_item: Any) -> Union[str, Any]:
         """
         Return immutable tag from operator push item production tags.
 
@@ -103,7 +103,7 @@ class OperatorPusher:
             self._get_immutable_tag(push_item),
         )
 
-    def pyxis_get_ocp_versions(self, push_item: Any) -> list[str]:
+    def pyxis_get_ocp_versions(self, push_item: Any) -> List[str]:
         """
         Get a list of supported ocp versions from Pyxis.
 
@@ -124,7 +124,7 @@ class OperatorPusher:
         args += ["--pyxis-ssl-keyfile", key]
         args += ["--organization", self.target_settings["iib_organization"]]
         args += ["--ocp-versions-range", ocp_versions]
-        env_vars: dict[str, str] = {}
+        env_vars: Dict[str, str] = {}
 
         data = run_entrypoint(
             (
@@ -147,7 +147,7 @@ class OperatorPusher:
         return ["v{0}".format(item["ocp_version"]) for item in data]
 
     @property
-    def version_items_mapping(self) -> dict[str, list[Any]]:
+    def version_items_mapping(self) -> Dict[str, List[Any]]:
         """
         Generate mapping of OCP version -> push_items.
 
@@ -169,7 +169,7 @@ class OperatorPusher:
 
         return self._version_items_mapping
 
-    def get_deprecation_list(self, version: str) -> list[str] | None:
+    def get_deprecation_list(self, version: str) -> Optional[List[str]]:
         """
         Get bundles to be deprecated in the index image.
 
@@ -236,8 +236,8 @@ class OperatorPusher:
 
     @classmethod
     def pubtools_iib_get_common_args(
-        cls, target_settings: dict[str, Any]
-    ) -> tuple[list[str], dict[str, str]]:
+        cls, target_settings: Dict[str, Any]
+    ) -> Tuple[List[str], Dict[str, str]]:
         """
         Create an argument list common for all pubtools-iib operations.
 
@@ -272,12 +272,12 @@ class OperatorPusher:
     @tx.instrument_func()
     def iib_add_bundles(
         cls,
-        bundles: list[str] | None = None,
-        archs: list[str] | None = None,
-        index_image: str | None = None,
-        deprecation_list: list[str] | str | None = None,
-        build_tags: list[str] | None = None,
-        target_settings: dict[str, Any] = {},
+        bundles: Optional[List[str]] = None,
+        archs: Optional[List[str]] = None,
+        index_image: Optional[str] = None,
+        deprecation_list: Union[List[str], str, None] = None,
+        build_tags: Optional[List[str]] = None,
+        target_settings: Dict[str, Any] = {},
     ) -> Any:
         """
         Construct and execute pubtools-iib command to add bundles to index image.
@@ -335,11 +335,11 @@ class OperatorPusher:
     @tx.instrument_func()
     def iib_remove_operators(
         cls,
-        operators: list[str] | None = None,
-        archs: list[str] | None = None,
-        index_image: str | None = None,
-        build_tags: list[str] | None = None,
-        target_settings: dict[str, Any] = {},
+        operators: Optional[List[str]] = None,
+        archs: Optional[List[str]] = None,
+        index_image: Optional[str] = None,
+        build_tags: Optional[List[str]] = None,
+        target_settings: Dict[str, Any] = {},
     ) -> Any:
         """
         Construct and execute pubtools-iib command to remove operators from index image.
@@ -385,7 +385,7 @@ class OperatorPusher:
             env_vars,
         )
 
-    def get_existing_index_images(self, quay_client: QuayClient) -> list[tuple[str, str, str]]:
+    def get_existing_index_images(self, quay_client: QuayClient) -> List[Tuple[str, str, str]]:
         """
         Return existing index images for push items.
 
@@ -457,7 +457,7 @@ class OperatorPusher:
             LOG.info("Bundle {0} is present".format(bundle))
         return True
 
-    def _get_fbc_opted_in_items(self) -> tuple[dict[int, bool], dict[int, bool]]:
+    def _get_fbc_opted_in_items(self) -> Tuple[Dict[int, bool], Dict[int, bool]]:
         """Get items that are opted in for fbc.
 
         An item needs to be targeted for repos with fbc_opt_in set to True and
@@ -519,8 +519,8 @@ class OperatorPusher:
         return items_opted_in, failed_items
 
     def _get_non_fbc_items_for_version(
-        self, items: list[Any], version: str, items_opted_in: dict[int, bool]
-    ) -> list[Any]:
+        self, items: List[Any], version: str, items_opted_in: Dict[int, bool]
+    ) -> List[Any]:
         """Return non fbc items for given ocp version.
 
         Args:
@@ -547,11 +547,11 @@ class OperatorPusher:
 
     def _create_item_groups_for_version(
         self,
-        non_fbc_items: list[Any],
+        non_fbc_items: List[Any],
         version: str,
         is_hotfix: bool = False,
         is_prerelease: bool = False,
-    ) -> dict[str, dict[str, Any]]:
+    ) -> Dict[str, Dict[str, Any]]:
         """Iterate thought non fbc items and group those together based on destination tag.
 
         Args:
@@ -566,7 +566,7 @@ class OperatorPusher:
         Returns Dict[str, Dict[str, Any]]:
             Dictionary of items grouped by ocp version
         """
-        item_groups: dict[str, dict[str, Any]] = {
+        item_groups: Dict[str, Dict[str, Any]] = {
             version: {
                 "items": [],
                 "overwrite": True,
@@ -611,7 +611,7 @@ class OperatorPusher:
         return item_groups
 
     @log_step("Build index images")
-    def build_index_images(self) -> dict[str, dict[Any, Any]]:
+    def build_index_images(self) -> Dict[str, Dict[Any, Any]]:
         """
         Perform the 'build' part of the operator workflow.
 
@@ -749,7 +749,9 @@ class OperatorPusher:
         return iib_results
 
     @log_step("Push index images to Quay")
-    def push_index_images(self, iib_results: dict[Any, Any], tag_suffix: str | None = None) -> None:
+    def push_index_images(
+        self, iib_results: Dict[Any, Any], tag_suffix: Optional[str] = None
+    ) -> None:
         """
         Push index images which were built in the previous stage to Quay.
 

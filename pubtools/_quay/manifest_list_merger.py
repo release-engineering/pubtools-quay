@@ -1,6 +1,6 @@
 from copy import deepcopy
 import logging
-from typing import List, cast
+from typing import List, cast, Optional
 
 import requests
 
@@ -17,12 +17,12 @@ class ManifestListMerger:
         self,
         src_image: str,
         dest_image: str,
-        src_quay_host: str | None = None,
-        src_quay_username: str | None = None,
-        src_quay_password: str | None = None,
-        dest_quay_username: str | None = None,
-        dest_quay_password: str | None = None,
-        host: str | None = None,
+        src_quay_host: Optional[str] = None,
+        src_quay_username: Optional[str] = None,
+        src_quay_password: Optional[str] = None,
+        dest_quay_username: Optional[str] = None,
+        dest_quay_password: Optional[str] = None,
+        host: Optional[str] = None,
     ) -> None:
         """
         Initialize.
@@ -48,13 +48,13 @@ class ManifestListMerger:
         self.src_image = src_image
         self.dest_image = dest_image
         if src_quay_username and src_quay_password:
-            self._src_quay_client: QuayClient | None = QuayClient(
+            self._src_quay_client: Optional[QuayClient] = QuayClient(
                 src_quay_username, src_quay_password, src_quay_host or host
             )
         else:
             self._src_quay_client = None
         if dest_quay_username and dest_quay_password:
-            self._dest_quay_client: QuayClient | None = QuayClient(
+            self._dest_quay_client: Optional[QuayClient] = QuayClient(
                 dest_quay_username, dest_quay_password, host
             )
         else:
@@ -155,7 +155,7 @@ class ManifestListMerger:
         return new_manifest_list
 
     def merge_manifest_lists_selected_architectures(
-        self, eligible_archs: list[str]
+        self, eligible_archs: List[str]
     ) -> ManifestList:
         """
         Merge manifests lists. Only specified archs are eligible for merging.

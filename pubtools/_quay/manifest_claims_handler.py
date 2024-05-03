@@ -2,8 +2,7 @@
 import logging
 import os
 import json
-from typing import Any, Callable, Sequence, Mapping, cast, Optional
-
+from typing import Any, Callable, Sequence, Mapping, cast, Optional, List, Dict
 import monotonic
 import proton
 from proton.handlers import MessagingHandler
@@ -38,7 +37,7 @@ class UMBSettings(object):
 
     def __init__(
         self,
-        broker_urls: list[str],
+        broker_urls: List[str],
         radas_address: str = "VirtualTopic.eng.robosignatory.container.sign",
         pub_cert: str = "/etc/pub/umb-pub-cert-key.pem",
         ca_cert: str = "/etc/pki/tls/certs/ca-bundle.crt",
@@ -90,7 +89,7 @@ class AMQPEndpointError(AMQPError):
         return repr(self)
 
 
-def _get_endpoint_error_condition(endpoint: proton.Endpoint) -> proton.Condition | None:
+def _get_endpoint_error_condition(endpoint: proton.Endpoint) -> Optional[proton.Condition]:
     """Return the error condition on this endpoint if there is one.
 
     If there's no local error condition, return the remote error
@@ -160,7 +159,7 @@ class ManifestClaimsHandler(MessagingHandler):  # type: ignore
     def __init__(
         self,
         settings: UMBSettings,
-        claim_messages: list[dict[str, Any]],
+        claim_messages: List[Dict[str, Any]],
         message_sender_callback: Callable[[Any], Any],
         on_message_callback: Callable[[Any], None] = do_nothing,
         on_error_callback: Callable[[Any], None] = raise_error,
@@ -341,7 +340,7 @@ class ManifestClaimsHandler(MessagingHandler):  # type: ignore
             if error_tag in self._PROTON_KNOWN_UNHANDLED_ERRORS:
                 self._endpoint_error(event, endpoint)
 
-    def _send_message(self, count: int | None = None) -> None:
+    def _send_message(self, count: Optional[int] = None) -> None:
         if not self.to_send:  # pragma: no cover
             return
 
@@ -384,7 +383,7 @@ class _ManifestClaimsRunner(object):
     def __init__(
         self,
         settings: UMBSettings,
-        claim_messages: list[dict[str, Any]],
+        claim_messages: List[Dict[str, Any]],
         send_action: Callable[[Sequence[Mapping[str, Any]]], None],
     ):
         self._settings = settings
@@ -399,7 +398,7 @@ class _ManifestClaimsRunner(object):
         """:obj:`Sequence[Mapping[str, Any]]`: The set of received messages."""
         return list(self._received_messages.values())
 
-    def on_next(self, message: dict[str, Any]) -> None:  # pragma: no cover
+    def on_next(self, message: Dict[str, Any]) -> None:  # pragma: no cover
         """Track incoming response messages."""
         request_id = message["request_id"]
         self._received_messages.setdefault(request_id, message)
@@ -433,7 +432,7 @@ class _ManifestClaimsRunner(object):
         """Start manifest claim messaging for the first time."""
         self._run(self._claim_messages)
 
-    def _run(self, claims: list[dict[str, Any]]) -> None:  # pragma: no cover
+    def _run(self, claims: List[Dict[str, Any]]) -> None:  # pragma: no cover
         """Run manifest claim messaging with the given set of claims."""
         handler = ManifestClaimsHandler(
             self._settings,

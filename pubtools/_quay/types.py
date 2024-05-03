@@ -1,4 +1,5 @@
-from typing import List, TypedDict
+from typing_extensions import TypedDict
+from typing import List
 
 
 Platform = TypedDict(

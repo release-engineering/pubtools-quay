@@ -1,5 +1,6 @@
 import logging
 import argparse
+from typing import Optional, List
 
 from pubtools.pluggy import task_context
 
@@ -62,7 +63,7 @@ def setup_args() -> argparse.ArgumentParser:
     return setup_arg_parser(MERGE_MANIFEST_LIST_ARGS)
 
 
-def merge_manifest_list_main(sysargs: list[str] | None = None) -> None:
+def merge_manifest_list_main(sysargs: Optional[List[str]] = None) -> None:
     """Entrypoint for manifest list merging."""
     logging.basicConfig(level=logging.INFO)
 

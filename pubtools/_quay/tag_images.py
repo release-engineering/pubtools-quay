@@ -1,7 +1,7 @@
 import functools
 import logging
 import argparse
-from typing import Any
+from typing import Any, Optional, List, Dict
 
 from pubtools.pluggy import pm, task_context
 
@@ -141,7 +141,7 @@ TAG_IMAGES_ARGS = {
 }
 
 
-def construct_kwargs(args: argparse.Namespace) -> dict[Any, Any]:
+def construct_kwargs(args: argparse.Namespace) -> Dict[Any, Any]:
     """
     Construct a kwargs dictionary based on the entered command line arguments.
 
@@ -168,28 +168,28 @@ def construct_kwargs(args: argparse.Namespace) -> dict[Any, Any]:
 
 def tag_images(
     source_ref: str,
-    dest_refs: list[str],
+    dest_refs: List[str],
     all_arch: bool = False,
-    quay_user: str | None = None,
-    quay_password: str | None = None,
-    source_quay_host: str | None = None,
-    source_quay_user: str | None = None,
-    source_quay_password: str | None = None,
+    quay_user: Optional[str] = None,
+    quay_password: Optional[str] = None,
+    source_quay_host: Optional[str] = None,
+    source_quay_user: Optional[str] = None,
+    source_quay_password: Optional[str] = None,
     remote_exec: bool = False,
-    ssh_remote_host: str | None = None,
-    ssh_remote_host_port: str | None = None,
+    ssh_remote_host: Optional[str] = None,
+    ssh_remote_host_port: Optional[str] = None,
     ssh_reject_unknown_host: bool = False,
-    ssh_username: str | None = None,
-    ssh_password: str | None = None,
-    ssh_key_filename: str | None = None,
+    ssh_username: Optional[str] = None,
+    ssh_password: Optional[str] = None,
+    ssh_key_filename: Optional[str] = None,
     container_exec: bool = False,
-    container_image: str | None = None,
+    container_image: Optional[str] = None,
     docker_url: str = "unix://var/run/docker.sock",
-    docker_timeout: int | None = None,
+    docker_timeout: Optional[int] = None,
     docker_verify_tls: bool = False,
-    docker_cert_path: str | None = None,
-    registry_username: str | None = None,
-    registry_password: str | None = None,
+    docker_cert_path: Optional[str] = None,
+    registry_username: Optional[str] = None,
+    registry_password: Optional[str] = None,
 ) -> None:
     """
     Tag images in Quay.
@@ -298,14 +298,14 @@ def tag_images(
 
 
 def verify_tag_images_args(
-    quay_user: str | None,
-    quay_password: str | None,
-    source_quay_user: str | None,
-    source_quay_password: str | None,
+    quay_user: Optional[str],
+    quay_password: Optional[str],
+    source_quay_user: Optional[str],
+    source_quay_password: Optional[str],
     remote_exec: bool,
-    ssh_remote_host: str | None,
+    ssh_remote_host: Optional[str],
     container_exec: bool,
-    container_image: str | None,
+    container_image: Optional[str],
 ) -> None:
     """Verify the presence of input parameters."""
     if remote_exec:
@@ -332,7 +332,7 @@ def setup_args() -> argparse.ArgumentParser:
     return setup_arg_parser(TAG_IMAGES_ARGS)
 
 
-def tag_images_main(sysargs: list[str] | None = None) -> None:
+def tag_images_main(sysargs: Optional[List[str]] = None) -> None:
     """Entrypoint for image tagging."""
     logging.basicConfig(level=logging.INFO)
 

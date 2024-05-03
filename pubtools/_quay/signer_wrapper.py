@@ -6,7 +6,7 @@ import tempfile
 import json
 import io
 
-from typing import Optional, List, Dict, Any, Tuple, Generator
+from typing import Optional, List, Dict, Any, Tuple, Generator, Type
 
 from marshmallow import Schema, fields, EXCLUDE
 
@@ -45,11 +45,11 @@ class SignerWrapper:
     label = "unused"
     pre_push = False
 
-    SCHEMA: type[Schema] = NoSchema
+    SCHEMA: Type[Schema] = NoSchema
     entry_point_conf = ["signer", "group", "signer"]
 
     def __init__(
-        self, config_file: Optional[str] = None, settings: Dict[str, Any] | None = None
+        self, config_file: Optional[str] = None, settings: Optional[Dict[str, Any]] = None
     ) -> None:
         """Initialize SignerWrapper.
 
@@ -194,7 +194,7 @@ class SignerWrapper:
         with redirect_stdout(io.StringIO()):
             self._sign_containers(to_sign_entries_filtered, task_id)
 
-    def validate_settings(self, settings: Dict[str, Any] | None = None) -> None:
+    def validate_settings(self, settings: Optional[Dict[str, Any]] = None) -> None:
         """Validate provided settings for the SignerWrapper."""
         settings = settings or self.settings
         schema = self.SCHEMA(unknown=EXCLUDE)
@@ -250,7 +250,7 @@ class MsgSignerWrapper(SignerWrapper):
 
     def _fetch_signatures(
         self, manifest_digests: List[str]
-    ) -> Generator[dict[str, Any], None, None]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """Fetch signatures from sigstore.
 
         Args:
@@ -282,7 +282,7 @@ class MsgSignerWrapper(SignerWrapper):
                     signature_fetch_file.flush()
                     args += ["--manifest-digest", "@{0}".format(signature_fetch_file.name)]
 
-                env_vars: dict[Any, Any] = {}
+                env_vars: Dict[Any, Any] = {}
                 chunk_results = run_entrypoint(
                     ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                     "pubtools-pyxis-get-signatures",
@@ -345,7 +345,7 @@ class MsgSignerWrapper(SignerWrapper):
         with self._save_signatures_file(signatures) as signature_file:
             args += ["--signatures", "@{0}".format(signature_file.name)]
             LOG.info("Uploading {0} new signatures".format(len(signatures)))
-            env_vars: dict[Any, Any] = {}
+            env_vars: Dict[Any, Any] = {}
             run_entrypoint(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
@@ -373,7 +373,7 @@ class MsgSignerWrapper(SignerWrapper):
 
             args += ["--ids", "@%s" % temp.name]
 
-            env_vars: dict[Any, Any] = {}
+            env_vars: Dict[Any, Any] = {}
             run_entrypoint(
                 ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-delete-signatures"),
                 "pubtools-pyxis-delete-signatures",

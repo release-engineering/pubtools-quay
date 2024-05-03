@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import base64
 import contextlib
@@ -11,7 +13,7 @@ import pkg_resources
 import sys
 import textwrap
 import time
-from typing import Any, Callable, Dict, Generator, cast, Optional
+from typing import Any, Callable, Dict, Generator, cast, Optional, List, Union, Tuple
 
 
 from concurrent import futures
@@ -42,7 +44,7 @@ class FData:
     kwargs: Dict[str, Any] = field(default_factory=dict)
 
 
-def run_in_parallel(func: Callable[..., Any], data: list[Any], threads: int = 10) -> dict[Any, Any]:
+def run_in_parallel(func: Callable[..., Any], data: List[Any], threads: int = 10) -> Dict[Any, Any]:
     """Run method on data in parallel.
 
     Args:
@@ -65,7 +67,7 @@ def run_in_parallel(func: Callable[..., Any], data: list[Any], threads: int = 10
     return dict(sorted(results.items(), key=lambda kv: kv[0]))
 
 
-def setup_arg_parser(args: dict[Any, Any]) -> argparse.ArgumentParser:
+def setup_arg_parser(args: Dict[Any, Any]) -> argparse.ArgumentParser:
     """
     Set up ArgumentParser with the provided arguments.
 
@@ -76,7 +78,7 @@ def setup_arg_parser(args: dict[Any, Any]) -> argparse.ArgumentParser:
         (ArgumentParser) Configured instance of ArgumentParser.
     """
     parser = argparse.ArgumentParser()
-    arg_groups: dict[Any, Any] = {}
+    arg_groups: Dict[Any, Any] = {}
     for aliases, arg_data in args.items():
         holder = parser
         if "group" in arg_data:
@@ -102,7 +104,7 @@ def setup_arg_parser(args: dict[Any, Any]) -> argparse.ArgumentParser:
 
 
 def add_args_env_variables(
-    parsed_args: argparse.Namespace, args: dict[Any, Any]
+    parsed_args: argparse.Namespace, args: Dict[Any, Any]
 ) -> argparse.Namespace:
     """
     Add argument values from environment variables.
@@ -137,10 +139,10 @@ def capture_stdout() -> Generator[StringIO, None, None]:
 
 @contextlib.contextmanager
 def setup_entry_point_cli(
-    entry_tuple: tuple[str, str, str],
+    entry_tuple: Tuple[str, str, str],
     name: Optional[str],
-    args: list[str],
-    environ_vars: dict[str, Any],
+    args: List[str],
+    environ_vars: Dict[str, Any],
 ) -> Generator[Callable[[], Any], None, None]:
     """
     Set up an entrypoint as a context manager.
@@ -186,10 +188,10 @@ def setup_entry_point_cli(
 
 
 def run_entrypoint(
-    entry_tuple: tuple[str, str, str],
+    entry_tuple: Tuple[str, str, str],
     name: Optional[str],
-    args: list[str],
-    environ_vars: dict[str, Any],
+    args: List[str],
+    environ_vars: Dict[str, Any],
     capture_out: bool = True,
 ) -> Any:
     """
@@ -295,7 +297,7 @@ def get_external_container_repo_name(internal_name: str) -> str:
     return internal_name.replace(INTERNAL_DELIMITER, "/")
 
 
-def task_status(event: str) -> dict[str, dict[str, str]]:
+def task_status(event: str) -> Dict[str, Dict[str, str]]:
     """Helper function. Expand as necessary."""  # noqa: D401
     return dict(event={"type": event})
 
@@ -330,7 +332,7 @@ def log_step(step_name: str) -> Callable[[Any], Any]:
     return decorate
 
 
-def get_pyxis_ssl_paths(target_settings: dict[str, Any]) -> tuple[str, str]:
+def get_pyxis_ssl_paths(target_settings: Dict[str, Any]) -> Tuple[str, str]:
     """
     Get certificate and key paths for Pyxis SSL authentication.
 
@@ -433,7 +435,7 @@ def retry(
     return inner_retry
 
 
-def parse_index_image(build_details: Any) -> tuple[str, str, str]:
+def parse_index_image(build_details: Any) -> Tuple[str, str, str]:
     """
     Get registry, namespace and repository of a resolved internal index image.
 
@@ -449,7 +451,7 @@ def parse_index_image(build_details: Any) -> tuple[str, str, str]:
     return (registry, namespace, repo)
 
 
-def get_basic_auth(host: str) -> tuple[str | None, str | None] | list[str]:
+def get_basic_auth(host: str) -> Union[Tuple[Optional[str], Optional[str]], List[str]]:
     """
     Look for container config file for username and password.
 
@@ -470,7 +472,7 @@ def get_basic_auth(host: str) -> tuple[str | None, str | None] | list[str]:
     return None, None
 
 
-def pyxis_get_repo_metadata(repo: str, target_settings: dict[str, Any]) -> Any:
+def pyxis_get_repo_metadata(repo: str, target_settings: Dict[str, Any]) -> Any:
     """
     Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.
 
@@ -490,7 +492,7 @@ def pyxis_get_repo_metadata(repo: str, target_settings: dict[str, Any]) -> Any:
     args += ["--pyxis-ssl-keyfile", key]
     args += ["--repo-name", repo]
 
-    env_vars: dict[Any, Any] = {}
+    env_vars: Dict[Any, Any] = {}
     metadata = run_entrypoint(
         ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
         "pubtools-pyxis-get-repo-metadata",
@@ -500,7 +502,7 @@ def pyxis_get_repo_metadata(repo: str, target_settings: dict[str, Any]) -> Any:
     return metadata
 
 
-def set_aws_kms_environment_variables(target_settings: dict[str, Any], profile_name: str) -> None:
+def set_aws_kms_environment_variables(target_settings: Dict[str, Any], profile_name: str) -> None:
     """
     Set environment variables required to use an AWS KMS key.
 

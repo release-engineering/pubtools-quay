@@ -1,7 +1,7 @@
 import os
 import logging
 import argparse
-from typing import Any
+from typing import Any, Optional, List, Dict
 
 from pubtools.pluggy import pm, task_context
 
@@ -87,7 +87,7 @@ REMOVE_REPO_ARGS = {
 }
 
 
-def remove_repositories(repositories: str, settings: dict[str, Any]) -> None:
+def remove_repositories(repositories: str, settings: Dict[str, Any]) -> None:
     """
     Remove Quay repository.
 
@@ -165,7 +165,7 @@ def setup_args() -> argparse.ArgumentParser:
     return setup_arg_parser(REMOVE_REPO_ARGS)
 
 
-def remove_repositories_main(sysargs: list[str] | None = None) -> None:
+def remove_repositories_main(sysargs: Optional[List[str]] = None) -> None:
     """Entrypoint for removing repositories."""
     logging.basicConfig(level=logging.INFO)
 

@@ -1,7 +1,7 @@
 import argparse
 import logging
 import os
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, cast, Optional
 
 from pubtools.pluggy import task_context, pm
 
@@ -90,7 +90,7 @@ CLEAR_REPO_ARGS = {
 }
 
 
-def clear_repositories(repositories: str, settings: dict[str, Any]) -> None:
+def clear_repositories(repositories: str, settings: Dict[str, Any]) -> None:
     """
     Clear Quay repository.
 
@@ -178,7 +178,7 @@ def setup_args() -> argparse.ArgumentParser:
     return setup_arg_parser(CLEAR_REPO_ARGS)
 
 
-def clear_repositories_main(sysargs: list[str] | None = None) -> None:
+def clear_repositories_main(sysargs: Optional[List[str]] = None) -> None:
     """Entrypoint for clearing repositories."""
     logging.basicConfig(level=logging.INFO)
 

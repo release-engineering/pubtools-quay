@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -11,7 +11,7 @@ class QuaySession(object):
 
     def __init__(
         self,
-        hostname: str | None = None,
+        hostname: Union[str, None] = None,
         retries: int = 3,
         backoff_factor: int = 2,
         verify: bool = False,

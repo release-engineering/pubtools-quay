@@ -2,7 +2,7 @@ import functools
 import logging
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Any, cast
+from typing import Any, cast, Dict, List, Optional, Union
 
 
 import requests
@@ -33,7 +33,7 @@ class ContainerImagePusher:
     No validation is performed, push items are expected to be correct.
     """
 
-    def __init__(self, push_items: list[Any], target_settings: dict[str, Any]) -> None:
+    def __init__(self, push_items: List[Any], target_settings: Dict[str, Any]) -> None:
         """
         Initialize.
 
@@ -47,8 +47,8 @@ class ContainerImagePusher:
         self.target_settings = target_settings
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
-        self._src_quay_client: QuayClient | None = None
-        self._dest_quay_client: QuayClient | None = None
+        self._src_quay_client: Optional[QuayClient] = None
+        self._dest_quay_client: Optional[QuayClient] = None
 
     @property
     def src_quay_client(self) -> QuayClient:
@@ -74,7 +74,7 @@ class ContainerImagePusher:
 
     @classmethod
     def run_tag_images(
-        cls, source_ref: str, dest_refs: list[str], all_arch: bool, target_settings: dict[str, Any]
+        cls, source_ref: str, dest_refs: List[str], all_arch: bool, target_settings: Dict[str, Any]
     ) -> None:
         """
         Prepare the "tag images" entrypoint with all the necessary arguments and run it.
@@ -119,7 +119,7 @@ class ContainerImagePusher:
             target_settings.get("tag_images_wait_time_increase", 10),
         )
 
-    def _prepare_dest_refs(self, push_item: Any) -> list[str]:
+    def _prepare_dest_refs(self, push_item: Any) -> List[str]:
         """Prepare destination references for push.
 
         Construct destination references based on tags and repo of push item.
@@ -174,7 +174,7 @@ class ContainerImagePusher:
 
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
-    def run_merge_workflow(self, source_ref: str, dest_refs: list[str]) -> None:
+    def run_merge_workflow(self, source_ref: str, dest_refs: List[str]) -> None:
         """
         Perform Docker push and manifest list merge workflow.
 
@@ -248,7 +248,7 @@ class ContainerImagePusher:
                 )
                 try:
                     dest_ml = cast(
-                        Manifest | ManifestList, self.dest_quay_client.get_manifest(dest_ref)
+                        Union[Manifest, ManifestList], self.dest_quay_client.get_manifest(dest_ref)
                     )
                     if dest_ml.get("mediaType") != QuayClient.MANIFEST_LIST_TYPE:
                         LOG.warning(

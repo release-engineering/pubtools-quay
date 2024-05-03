@@ -1,7 +1,7 @@
 import json
 import logging
 import sys
-from typing import Any, List, Tuple, cast
+from typing import Any, List, Tuple, cast, Dict
 
 from .container_image_pusher import ContainerImagePusher
 from .exceptions import InvalidTargetSettings
@@ -26,7 +26,7 @@ from .types import ManifestList
 LOG = logging.getLogger("pubtools.quay")
 
 
-def verify_target_settings(target_settings: dict[str, Any]) -> None:
+def verify_target_settings(target_settings: Dict[str, Any]) -> None:
     """
     Verify the presence and validity of target settings.
 
@@ -65,7 +65,7 @@ def verify_target_settings(target_settings: dict[str, Any]) -> None:
             )
 
 
-def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
+def _get_operator_quay_client(target_settings: Dict[str, Any]) -> QuayClient:
     """Create and access QuayClient for src index image."""
     index_image_credential = target_settings["iib_overwrite_from_index_token"].split(":")
     return QuayClient(
@@ -77,11 +77,11 @@ def _get_operator_quay_client(target_settings: dict[str, Any]) -> QuayClient:
 
 def _index_image_to_sign_entries(
     src_index_image: str,
-    dest_tags: list[str],
-    signing_keys: list[str],
-    target_settings: dict[str, Any],
+    dest_tags: List[str],
+    signing_keys: List[str],
+    target_settings: Dict[str, Any],
     internal: bool = False,
-) -> list[SignEntry]:
+) -> List[SignEntry]:
     """Generate entries to sign.
 
     Method generates sign entries for index image with <dest_tags> tags
@@ -106,7 +106,7 @@ def _index_image_to_sign_entries(
 
     dest_operator_quay_client = _get_operator_quay_client(target_settings)
     ret = cast(
-        Tuple[str, dict[str, str]],
+        Tuple[str, Dict[str, str]],
         dest_operator_quay_client.get_manifest(
             src_index_image, media_type=QuayClient.MANIFEST_LIST_TYPE, return_headers=True, raw=True
         ),
@@ -155,7 +155,7 @@ def _index_image_to_sign_entries(
 def _remove_index_image_signatures(
     outdated_manifests: List[Tuple[str, str, str]],
     current_signatures: List[Tuple[str, str, str]],
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
 ) -> None:
     """Remove signatures of outdated manifests with confitured signers for the target.
 
@@ -173,12 +173,12 @@ def _remove_index_image_signatures(
 
 def _sign_index_image(
     built_index_image: str,
-    dest_tags: list[str],
-    signing_keys: list[str],
+    dest_tags: List[str],
+    signing_keys: List[str],
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     pre_push: bool = False,
-) -> list[tuple[str, str, str]]:
+) -> List[Tuple[str, str, str]]:
     """Sign index image with configured signers for the target.
 
     Args:
@@ -194,7 +194,7 @@ def _sign_index_image(
     to_sign_entries = _index_image_to_sign_entries(
         built_index_image, dest_tags, signing_keys, target_settings, internal=not pre_push
     )
-    current_signatures: list[tuple[str, str, str]] = [
+    current_signatures: List[Tuple[str, str, str]] = [
         (e.reference, e.digest, e.signing_key) for e in to_sign_entries
     ]
     set_aws_kms_environment_variables(target_settings, "cosign_signer")
@@ -207,14 +207,14 @@ def _sign_index_image(
 
 
 def task_iib_add_bundles(
-    bundles: list[str],
-    archs: list[str],
+    bundles: List[str],
+    archs: List[str],
     index_image: str,
-    deprecation_list: list[str],
-    signing_keys: list[str],
+    deprecation_list: List[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """
@@ -344,13 +344,13 @@ def task_iib_add_bundles(
 
 
 def task_iib_remove_operators(
-    operators: list[str],
-    archs: list[str],
+    operators: List[str],
+    archs: List[str],
     index_image: str,
-    signing_keys: list[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """
@@ -476,13 +476,13 @@ def task_iib_remove_operators(
 
 
 def task_iib_build_from_scratch(
-    bundles: list[str],
-    archs: list[str],
+    bundles: List[str],
+    archs: List[str],
     index_image_tag: str,
-    signing_keys: list[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """
@@ -601,14 +601,14 @@ def task_iib_build_from_scratch(
 
 
 def iib_add_entrypoint(
-    bundles: list[str],
-    archs: list[str],
+    bundles: List[str],
+    archs: List[str],
     index_image: str,
-    deprecation_list: list[str],
-    signing_keys: list[str],
+    deprecation_list: List[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """Entry point for use in another python code."""
@@ -626,13 +626,13 @@ def iib_add_entrypoint(
 
 
 def iib_remove_entrypoint(
-    operators: list[str],
-    archs: list[str],
+    operators: List[str],
+    archs: List[str],
     index_image: str,
-    signing_keys: list[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """Entry point for use in another python code."""
@@ -642,13 +642,13 @@ def iib_remove_entrypoint(
 
 
 def iib_from_scratch_entrypoint(
-    bundles: list[str],
-    archs: list[str],
+    bundles: List[str],
+    archs: List[str],
     index_image_tag: str,
-    signing_keys: list[str],
+    signing_keys: List[str],
     hub: Any,
     task_id: str,
-    target_settings: dict[str, Any],
+    target_settings: Dict[str, Any],
     target_name: str,
 ) -> None:
     """Entry point for use in another python code."""

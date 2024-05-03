@@ -8,7 +8,7 @@ import base64
 from dataclasses import dataclass
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Any, cast
+from typing import Any, cast, List, Dict, Union, Optional, Set
 
 from .quay_client import QuayClient
 from .utils.misc import get_internal_container_repo_name, log_step
@@ -33,7 +33,7 @@ class SecurityManifestPusher:
 
     COSIGN_TRIANGULATE_TYPES = ("attestation", "sbom", "signature")
 
-    def __init__(self, push_items: list[object], target_settings: dict[str, Any]) -> None:
+    def __init__(self, push_items: List[object], target_settings: Dict[str, Any]) -> None:
         """
         Initialize.
 
@@ -50,9 +50,9 @@ class SecurityManifestPusher:
         self.cosign_public_key_path = self.target_settings["cosign_public_key_path"]
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._src_quay_client: QuayClient | None = None
-        self._dest_quay_client: QuayClient | None = None
-        self._dest_quay_api_client: QuayApiClient | None = None
+        self._src_quay_client: Optional[QuayClient] = None
+        self._dest_quay_client: Optional[QuayClient] = None
+        self._dest_quay_api_client: Optional[QuayApiClient] = None
 
     @property
     def src_quay_client(self) -> QuayClient:
@@ -112,7 +112,7 @@ class SecurityManifestPusher:
         self,
         image_ref: str,
         output_file: str,
-        rekor_url: str | None = None,
+        rekor_url: Optional[str] = None,
         skip_verify_rekor: bool = False,
     ) -> bool:
         """
@@ -158,7 +158,7 @@ class SecurityManifestPusher:
         self,
         security_manifest_path: str,
         image_ref: str,
-        rekor_url: str | None = None,
+        rekor_url: Optional[str] = None,
         skip_upload_rekor: bool = False,
     ) -> None:
         """
@@ -243,7 +243,7 @@ class SecurityManifestPusher:
         with open(reference_file, "r") as f:
             return f.read().strip()
 
-    def get_security_manifest_from_attestation(self, file_path: str) -> dict[Any, Any] | Any:
+    def get_security_manifest_from_attestation(self, file_path: str) -> Union[Dict[Any, Any], Any]:
         """
         Parse image attestation and extract a security manifest.
 
@@ -259,7 +259,7 @@ class SecurityManifestPusher:
 
         return json.loads(data)
 
-    def security_manifest_get_products(self, security_manifest: dict[Any, Any]) -> set[str]:
+    def security_manifest_get_products(self, security_manifest: Dict[Any, Any]) -> Set[str]:
         """
         Get a list of products from an already uploaded security manifest.
 
@@ -288,7 +288,7 @@ class SecurityManifestPusher:
 
         return products
 
-    def get_destination_repos(self, item: Any) -> list[str]:
+    def get_destination_repos(self, item: Any) -> List[str]:
         """
         Get a list of destination refs (without tag/digest) of a push item.
 
@@ -313,7 +313,7 @@ class SecurityManifestPusher:
         return list(set(dest_repos))
 
     def security_manifest_add_products(
-        self, security_manifest_path: str, products: set[str]
+        self, security_manifest_path: str, products: Set[str]
     ) -> str:
         """
         Add product names of the shipped image to the security manifest.
@@ -373,7 +373,7 @@ class SecurityManifestPusher:
         self,
         item: Any,
         image_manifest: DigestSecurityManifest,
-        destination_repos: list[str],
+        destination_repos: List[str],
         dir_path: str,
     ) -> None:
         """
@@ -536,7 +536,7 @@ class SecurityManifestPusher:
 
     def get_source_item_security_manifests(
         self, item: Any, dir_path: str
-    ) -> list[DigestSecurityManifest]:
+    ) -> List[DigestSecurityManifest]:
         """
         Get security manifest of a source image.
 
@@ -569,7 +569,7 @@ class SecurityManifestPusher:
 
     def get_multiarch_item_security_manifests(
         self, item: Any, dir_path: str
-    ) -> list[DigestSecurityManifest]:
+    ) -> List[DigestSecurityManifest]:
         """
         Get security manifests of a multiarch image.
 

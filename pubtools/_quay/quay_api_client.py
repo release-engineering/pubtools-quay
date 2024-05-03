@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import requests
 
@@ -10,7 +11,7 @@ LOG = logging.getLogger("pubtools.quay")
 class QuayApiClient:
     """Class for performing Quay REST API queries."""
 
-    def __init__(self, token: str, host: str | None = None) -> None:
+    def __init__(self, token: str, host: Optional[str] = None) -> None:
         """
         Initialize.
 

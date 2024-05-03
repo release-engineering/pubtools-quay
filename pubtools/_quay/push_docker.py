@@ -2,7 +2,7 @@ from collections import namedtuple
 import logging
 import sys
 import json
-from typing import Tuple, List, Dict, Any, cast
+from typing import Tuple, List, Dict, Any, cast, Optional
 
 import requests
 import urllib3
@@ -51,11 +51,11 @@ class PushDocker:
 
     def __init__(
         self,
-        push_items: list[Any],
+        push_items: List[Any],
         hub: Any,
         task_id: str,
         target_name: str,
-        target_settings: dict[str, Any],
+        target_settings: Dict[str, Any],
     ) -> None:
         """
         Initialize.
@@ -82,10 +82,10 @@ class PushDocker:
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
-        self._src_quay_client: QuayClient | None = None
-        self._dest_quay_client: QuayClient | None = None
-        self._dest_operator_quay_client: QuayClient | None = None
-        self._dest_quay_api_client: QuayApiClient | None = None
+        self._src_quay_client: Optional[QuayClient] = None
+        self._dest_quay_client: Optional[QuayClient] = None
+        self._dest_operator_quay_client: Optional[QuayClient] = None
+        self._dest_quay_api_client: Optional[QuayApiClient] = None
         self._index_image_quay_client = None
         self.dest_registries = self.target_settings["docker_settings"]["docker_reference_registry"]
         self.dest_registries = (
@@ -172,7 +172,7 @@ class PushDocker:
                 )
 
     @log_step("Get container push items")
-    def get_docker_push_items(self) -> list[Any]:
+    def get_docker_push_items(self) -> List[Any]:
         """
         Filter push items to only include docker ones.
 
@@ -184,7 +184,7 @@ class PushDocker:
             Docker push items.
         """
         docker_push_items = []
-        url_items: dict[str, Any] = {}
+        url_items: Dict[str, Any] = {}
         for item in self.push_items:
             if item.file_type != "docker":
                 LOG.warning("Push item {0} doesn't have 'docker' type, skipping.".format(item))
@@ -212,7 +212,7 @@ class PushDocker:
         return docker_push_items
 
     @log_step("Get operator push items")
-    def get_operator_push_items(self) -> list[Any]:
+    def get_operator_push_items(self) -> List[Any]:
         """
         Filter out push items to only include operator ones.
 
@@ -250,7 +250,7 @@ class PushDocker:
 
     @classmethod
     def check_repos_validity(
-        cls, push_items: list[Any], hub: Any, target_settings: dict[str, Any]
+        cls, push_items: List[Any], hub: Any, target_settings: Dict[str, Any]
     ) -> None:
         """
         Check if specified repos are valid and pushing to them is allowed.
@@ -320,7 +320,7 @@ class PushDocker:
 
     @log_step("Generate backup mapping")
     def generate_backup_mapping(
-        self, push_items: list[Any], all_arches: bool = False
+        self, push_items: List[Any], all_arches: bool = False
     ) -> Tuple[Dict[ImageData, Tuple[str, str]], List[ImageData]]:
         """
         Create resources which will be used for rollback if something goes wrong during the push.
@@ -382,8 +382,8 @@ class PushDocker:
                                 ]
                             else:
                                 arch_mads = cast(List[ManifestArchDigest], man_arch_digs)
-                            v2list_mads: List[ManifestArchDigest | None] = cast(
-                                List[ManifestArchDigest | None],
+                            v2list_mads: List[Optional[ManifestArchDigest]] = cast(
+                                List[Optional[ManifestArchDigest]],
                                 [
                                     m
                                     for m in cast(List[ManifestArchDigest], man_arch_digs)
@@ -391,13 +391,13 @@ class PushDocker:
                                 ]
                                 or [None],
                             )
-                            v2s1_mads: List[ManifestArchDigest | None] = cast(
-                                List[ManifestArchDigest | None],
+                            v2s1_mads: List[Optional[ManifestArchDigest]] = cast(
+                                List[Optional[ManifestArchDigest]],
                                 [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S1_TYPE]
                                 or [None],
                             )
-                            v2s2_mads: List[ManifestArchDigest | None] = cast(
-                                List[ManifestArchDigest | None],
+                            v2s2_mads: List[Optional[ManifestArchDigest]] = cast(
+                                List[Optional[ManifestArchDigest]],
                                 [m for m in arch_mads if m.type_ == QuayClient.MANIFEST_V2S2_TYPE]
                                 or [None],
                             )
@@ -436,7 +436,7 @@ class PushDocker:
         return (backup_tags, rollback_tags)
 
     @log_step("Perform rollback")
-    def rollback(self, backup_tags: dict[ImageData, str], rollback_tags: list[ImageData]) -> None:
+    def rollback(self, backup_tags: Dict[ImageData, str], rollback_tags: List[ImageData]) -> None:
         """
         Perform a rollback.
 
@@ -468,7 +468,7 @@ class PushDocker:
                     raise
 
     def get_outdated_manifests(
-        self, backup_tags: dict[ImageData, str]
+        self, backup_tags: Dict[ImageData, str]
     ) -> List[Tuple[str, str, str]]:
         """Return list of existing manifests which are being replaced with new ones.
 
@@ -487,8 +487,8 @@ class PushDocker:
         return outdated_signatures
 
     def fetch_missing_push_items_digests(
-        self, push_items: list[Any]
-    ) -> dict[str, dict[str, dict[str, dict[str, tuple[str, Any]]]]]:
+        self, push_items: List[Any]
+    ) -> Dict[str, Dict[str, Dict[str, Dict[str, Tuple[str, Any]]]]]:
         """Fetch digests for media types which weren't originally pushed.
 
         In order to be able to sign v2s1 for images which were pushed as
@@ -507,7 +507,7 @@ class PushDocker:
             self.target_settings["quay_namespace"],
         )
 
-        new_digests: dict[str, dict[str, dict[str, dict[str, tuple[str, Any]]]]] = {}
+        new_digests: Dict[str, Dict[str, Dict[str, Dict[str, Tuple[str, Any]]]]] = {}
         for item in push_items:
             missing_media_types = set(
                 [QuayClient.MANIFEST_V2S2_TYPE, QuayClient.MANIFEST_V2S1_TYPE]
@@ -532,7 +532,7 @@ class PushDocker:
                             )
         return new_digests
 
-    def sign_new_manifests(self, docker_push_items: list[Any]) -> list[tuple[str, str, Any]]:
+    def sign_new_manifests(self, docker_push_items: List[Any]) -> List[Tuple[str, str, Any]]:
         """Sign newly pushed images with signers enabled in target settings.
 
         Args:
@@ -841,7 +841,7 @@ class PushDocker:
 
 
 def mod_entry_point(
-    push_items: list[Any], hub: Any, task_id: str, target_name: str, target_settings: dict[str, Any]
+    push_items: List[Any], hub: Any, task_id: str, target_name: str, target_settings: Dict[str, Any]
 ) -> None:
     """Entry point for use in another python code."""
     push = PushDocker(push_items, hub, task_id, target_name, target_settings)

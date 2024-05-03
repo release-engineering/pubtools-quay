@@ -6,12 +6,11 @@ import re
 from urllib3.util.retry import Retry
 from urllib import request
 import threading
-from typing import Any, cast, Dict, List, Tuple
+from typing import Any, cast, Dict, List, Tuple, Optional, Union, Mapping
 
 from .exceptions import ManifestTypeError, RegistryAuthError, ManifestNotFoundError
 from .quay_session import QuaySession
 from .types import ManifestList, Manifest
-from requests.structures import CaseInsensitiveDict
 
 LOG = logging.getLogger("pubtools.quay")
 
@@ -25,7 +24,9 @@ class QuayClient:
     MANIFEST_OCI_LIST_TYPE = "application/vnd.oci.image.index.v1+json"
     MANIFEST_OCI_V2S2_TYPE = "application/vnd.oci.image.manifest.v1+json"
 
-    def __init__(self, username: str | None, password: str | None, host: str | None = None) -> None:
+    def __init__(
+        self, username: Optional[str], password: Optional[str], host: Optional[str] = None
+    ) -> None:
         """
         Initialize.
 
@@ -43,7 +44,7 @@ class QuayClient:
         self.thread_local = threading.local()
 
     @property
-    def session(self) -> Any | QuaySession:
+    def session(self) -> Union[Any, QuaySession]:
         """Create QuaySession object per thread."""
         if not hasattr(self.thread_local, "session"):
             self.thread_local.session = QuaySession(hostname=self.host, api="docker")
@@ -53,9 +54,9 @@ class QuayClient:
         self,
         image: str,
         raw: bool = False,
-        media_type: str | None = None,
+        media_type: Optional[str] = None,
         return_headers: bool = False,
-    ) -> ManifestList | Manifest | str | Tuple[str, CaseInsensitiveDict[str]]:
+    ) -> Union[ManifestList, Manifest, str, Tuple[str, Mapping[str, str]]]:
         """
         Get manifest of given media type.
 
@@ -126,7 +127,7 @@ class QuayClient:
         else:
             return cast(ManifestList, response.json())
 
-    def get_manifest_digest(self, image: str, media_type: str | None = None) -> str:
+    def get_manifest_digest(self, image: str, media_type: Optional[str] = None) -> str:
         """
         Get manifest of the specified image and calculate its digest by hashing it.
 
@@ -153,7 +154,9 @@ class QuayClient:
 
         return "sha256:{0}".format(digest)
 
-    def upload_manifest(self, manifest: ManifestList | str, image: str, raw: bool = False) -> None:
+    def upload_manifest(
+        self, manifest: Union[ManifestList, str], image: str, raw: bool = False
+    ) -> None:
         """
         Upload manifest to a specified image.
 
@@ -186,7 +189,9 @@ class QuayClient:
             }
         self._request_quay("PUT", endpoint, kwargs)
 
-    def get_repository_tags(self, repository: str, raw: bool = False) -> str | Dict[str, List[str]]:
+    def get_repository_tags(
+        self, repository: str, raw: bool = False
+    ) -> Union[str, Dict[str, List[str]]]:
         """
         Get tags of a provided repository.
 
@@ -220,7 +225,7 @@ class QuayClient:
             return cast(Dict[str, List[str]], tags)
 
     def _request_quay(
-        self, method: str, endpoint: str, kwargs: dict[Any, Any] = {}
+        self, method: str, endpoint: str, kwargs: Dict[Any, Any] = {}
     ) -> requests.Response:
         """
         Perform a Docker HTTP API request on Quay registry. Handle authentication.
@@ -252,9 +257,7 @@ class QuayClient:
 
         return r
 
-    def _authenticate_quay(
-        self, headers: dict[Any, Any] | requests.structures.CaseInsensitiveDict[Any]
-    ) -> None:
+    def _authenticate_quay(self, headers: Union[Dict[Any, Any], Mapping[str, Any]]) -> None:
         """
         Attempt to perform an authentication with registry's authentication server.
 
@@ -306,7 +309,7 @@ class QuayClient:
             raise RegistryAuthError("Authentication server response doesn't contain a token.")
         self.session.set_auth_token(r.json()["token"])
 
-    def _parse_and_validate_image_url(self, image: str) -> tuple[str, str]:
+    def _parse_and_validate_image_url(self, image: str) -> Tuple[str, str]:
         """
         Extract image repository + reference from an image and validate its data.
 

@@ -4,7 +4,7 @@ import hashlib
 import json
 import logging
 import urllib3
-from typing import Any, cast
+from typing import Any, cast, Optional, Union, Tuple, List, Dict
 
 import requests
 
@@ -45,11 +45,11 @@ class TagDocker:
 
     def __init__(
         self,
-        push_items: list[Any],
+        push_items: List[Any],
         hub: Any,
         task_id: str,
         target_name: str,
-        target_settings: dict[str, Any],
+        target_settings: Dict[str, Any],
     ) -> None:
         """
         Initialize.
@@ -72,7 +72,7 @@ class TagDocker:
         self.target_name = target_name
         self.target_settings = target_settings
 
-        self._quay_client: QuayClient | None = None
+        self._quay_client: Optional[QuayClient] = None
 
         self.quay_host = self.target_settings.get("quay_host", "quay.io").rstrip("/")
 
@@ -197,7 +197,7 @@ class TagDocker:
                             )
                         )
 
-    def get_image_details(self, reference: str, executor: Executor) -> ImageDetails | None:
+    def get_image_details(self, reference: str, executor: Executor) -> Optional[ImageDetails]:
         """
         Create an ImageDetails namedtuple for the given image reference.
 
@@ -206,12 +206,12 @@ class TagDocker:
                 Image reference.
             executor (Executor):
                 Instance of Executor subclass used for skopeo inspect.
-        Returns (ImageDetails|None):
+        Returns (Optional[ImageDetails]):
             Namedtuple filled with images data, or None if image doesn't exist.
         """
         LOG.info("Getting image details of {0}".format(reference))
         try:
-            manifest = cast(Manifest | ManifestList, self.quay_client.get_manifest(reference))
+            manifest = cast(Union[Manifest, ManifestList], self.quay_client.get_manifest(reference))
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 404 or e.response.status_code == 401:
                 LOG.info("Image '{0}' doesn't exist".format(reference))
@@ -259,7 +259,7 @@ class TagDocker:
 
     def tag_remove_calculate_archs(
         self, push_item: Any, tag: str, executor: Executor
-    ) -> tuple[list[str], list[str]]:
+    ) -> Tuple[List[str], List[str]]:
         """
         Calculate which architectures would be removed, and which would remain from a given tag.
 
@@ -321,8 +321,8 @@ class TagDocker:
         return ([], [])  # pragma: no cover
 
     def tag_remove_calculate_archs_source_image(
-        self, push_item: Any, source_details: ImageDetails | None, dest_details: ImageDetails
-    ) -> tuple[list[str], list[str]]:
+        self, push_item: Any, source_details: Optional[ImageDetails], dest_details: ImageDetails
+    ) -> Tuple[List[str], List[str]]:
         """
         Calculate which archs would be removed if the specified images were source images.
 
@@ -331,7 +331,7 @@ class TagDocker:
         Args:
             push_item (ContainerPushItem):
                 Push item to perform the workflow with.
-            source_details (ImageDetails|None):
+            source_details (Optional[ImageDetails]):
                 ImageDetails of source image, or None if it wasn't specified.
             dest_details (ImageDetails):
                 ImageDetails of destination image.
@@ -361,8 +361,8 @@ class TagDocker:
             return ([], ["amd64"])
 
     def tag_remove_calculate_archs_multiarch_image(
-        self, push_item: Any, source_details: ImageDetails | None, dest_details: ImageDetails
-    ) -> tuple[list[str], list[str]]:
+        self, push_item: Any, source_details: Optional[ImageDetails], dest_details: ImageDetails
+    ) -> Tuple[List[str], List[str]]:
         """
         Calculate which archs would be removed if the specified images were multiarch images.
 
@@ -371,7 +371,7 @@ class TagDocker:
         Args:
             push_item (ContainerPushItem):
                 Push item to perform the workflow with.
-            source_details (ImageDetails|None):
+            source_details (Optional[ImageDetails]):
                 ImageDetails of source image, or None if it wasn't specified.
             dest_details (ImageDetails):
                 ImageDetails of destination image.
@@ -419,7 +419,7 @@ class TagDocker:
 
     def tag_add_calculate_archs(
         self, push_item: Any, tag: str, executor: Executor
-    ) -> list[str] | None:
+    ) -> Optional[List[str]]:
         """
         Calculate which architectures are present in a given tag, and which ones would be added.
 
@@ -430,7 +430,7 @@ class TagDocker:
                 Tag, for which an 'add' operation will be performed.
             executor (Executor):
                 Instance of Executor subclass used for skopeo inspect.
-        Returns ([str]|None):
+        Returns (Optional[List[str]]):
             In case of multiarch image, arches which would be copied to the destination. In case
             of a source image, None if the copy operation is relevant or [] otherwise.
         """
@@ -517,7 +517,7 @@ class TagDocker:
 
         to_sign_entries = []
         to_sign_entries_internal = []
-        current_signatures: list[Any] = []
+        current_signatures: List[Any] = []
         details = self.get_image_details(source_image, executor)
         if not details:
             raise BadPushItem("Source image must be specified if add operation was requested")
@@ -603,7 +603,7 @@ class TagDocker:
                     )
 
     def merge_manifest_lists_sign_images(
-        self, push_item: Any, tag: str, add_archs: list[str]
+        self, push_item: Any, tag: str, add_archs: List[str]
     ) -> None:
         """
         Merge manifest lists between source and destination tag and sign manifest claims.
@@ -763,7 +763,7 @@ class TagDocker:
 
     @classmethod
     def run_untag_images(
-        cls, references: list[str], remove_last: bool, target_settings: dict[str, Any]
+        cls, references: List[str], remove_last: bool, target_settings: Dict[str, Any]
     ) -> None:
         """
         Prepare the "untag images" entrypoint with all the necessary arguments and run it.
@@ -823,7 +823,7 @@ class TagDocker:
 
         self.run_untag_images([dest_image], True, self.target_settings)
 
-    def manifest_list_remove_archs(self, push_item: Any, tag: str, remove_archs: list[str]) -> None:
+    def manifest_list_remove_archs(self, push_item: Any, tag: str, remove_archs: List[str]) -> None:
         """
         Remove specified archs from a manifest list and upload a new manifest list to Quay.
 
@@ -935,7 +935,7 @@ class TagDocker:
 
 
 def mod_entry_point(
-    push_items: list[Any], hub: Any, task_id: str, target_name: str, target_settings: dict[str, Any]
+    push_items: List[Any], hub: Any, task_id: str, target_name: str, target_settings: Dict[str, Any]
 ) -> None:
     """Entry point for use in another python code."""
     tag_docker = TagDocker(push_items, hub, task_id, target_name, target_settings)

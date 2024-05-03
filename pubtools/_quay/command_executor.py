@@ -11,7 +11,7 @@ import tarfile
 import time
 import textwrap
 from types import TracebackType
-from typing import Any, Optional, Type, Generator
+from typing import Any, Optional, Type, Generator, List, Dict, Tuple
 from typing_extensions import Self
 
 import docker
@@ -61,15 +61,15 @@ class Executor(object):
     def _run_cmd(
         self,
         cmd: str,
-        err_msg: str | None = None,
+        err_msg: Optional[str] = None,
         tolerate_err: bool = False,
-        stdin: str | None = None,
-    ) -> tuple[str, str]:
+        stdin: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """Run a bash command."""
         raise NotImplementedError  # pragma: no cover"
 
     def skopeo_login(
-        self, host: str = "quay.io", username: str | None = None, password: str | None = None
+        self, host: str = "quay.io", username: Optional[str] = None, password: Optional[str] = None
     ) -> None:
         """
         Attempt to login to Quay if no login credentials are present.
@@ -105,7 +105,7 @@ class Executor(object):
                 "STDOUT: '{0}', STDERR: '{1}'".format(out, err)
             )
 
-    def tag_images(self, source_ref: str, dest_refs: list[str], all_arch: bool = False) -> None:
+    def tag_images(self, source_ref: str, dest_refs: List[str], all_arch: bool = False) -> None:
         """
         Copy image from source to destination(s) using skopeo.
 
@@ -157,7 +157,7 @@ class Executor(object):
 class LocalExecutor(Executor):
     """Run commands locally."""
 
-    def __init__(self, params: dict[str, Any] = {}) -> None:
+    def __init__(self, params: Dict[str, Any] = {}) -> None:
         """
         Initialize.
 
@@ -175,10 +175,10 @@ class LocalExecutor(Executor):
     def _run_cmd(
         self,
         cmd: str,
-        err_msg: str | None = None,
+        err_msg: Optional[str] = None,
         tolerate_err: bool = False,
-        stdin: str | None = None,
-    ) -> tuple[str, str]:
+        stdin: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """
         Run a command locally.
 
@@ -215,10 +215,10 @@ class RemoteExecutor(Executor):
     def __init__(
         self,
         hostname: str,
-        username: str | None = None,
-        key_filename: str | None = None,
-        password: str | None = None,
-        port: int | None = None,
+        username: Optional[str] = None,
+        key_filename: Optional[str] = None,
+        password: Optional[str] = None,
+        port: Optional[int] = None,
         accept_unknown_host: bool = True,
     ) -> None:
         """
@@ -253,10 +253,10 @@ class RemoteExecutor(Executor):
     def _run_cmd(
         self,
         cmd: str,
-        err_msg: str | None = None,
+        err_msg: Optional[str] = None,
         tolerate_err: bool = False,
-        stdin: str | None = None,
-    ) -> tuple[str, str]:
+        stdin: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """
         Run a command remotely via SSH.
 
@@ -310,11 +310,11 @@ class ContainerExecutor(Executor):
         self,
         image: str,
         base_url: str = "unix://var/run/docker.sock",
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
         verify_tls: bool = False,
-        cert_path: str | None = None,
-        registry_username: str | None = None,
-        registry_password: str | None = None,
+        cert_path: Optional[str] = None,
+        registry_username: Optional[str] = None,
+        registry_password: Optional[str] = None,
     ) -> None:
         """
         Initialize.
@@ -340,7 +340,7 @@ class ContainerExecutor(Executor):
         """
         self.image = image
 
-        kwargs: dict[Any, Any] = {}
+        kwargs: Dict[Any, Any] = {}
         kwargs["base_url"] = base_url
         kwargs["version"] = "auto"
         if timeout:
@@ -382,10 +382,10 @@ class ContainerExecutor(Executor):
     def _run_cmd(
         self,
         cmd: str,
-        err_msg: str | None = None,
+        err_msg: Optional[str] = None,
         tolerate_err: bool = False,
-        stdin: str | None = None,
-    ) -> tuple[str, str]:
+        stdin: Optional[str] = None,
+    ) -> Tuple[str, str]:
         """
         Run a command locally.
 
@@ -456,7 +456,7 @@ class ContainerExecutor(Executor):
             raise RuntimeError("File was not successfully added to the container")
 
     def skopeo_login(
-        self, host: str = "quay.io", username: str | None = None, password: str | None = None
+        self, host: str = "quay.io", username: Optional[str] = None, password: Optional[str] = None
     ) -> None:
         """
         Attempt to login to Quay if no login credentials are present.
