@@ -724,11 +724,12 @@ class TagDocker:
         ) == sorted(
             json.loads(raw_src_manifest)["manifests"], key=lambda manifest: manifest["digest"]
         ):
-            ml_to_sign = cast(ManifestList, raw_src_manifest)
+            ml_to_sign = raw_src_manifest
             self.quay_client.upload_manifest(raw_src_manifest, dest_image, raw=True)
         else:
-            ml_to_sign = cast(ManifestList, new_manifest_list)
+            ml_to_sign = json.dumps(new_manifest_list)
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
+        print(ml_to_sign)
 
         if push_item.claims_signing_key:
             # for cosign sign also manifest list
@@ -741,8 +742,7 @@ class TagDocker:
                     + internal_repo
                     + ":"
                     + tag,
-                    digest="sha256:"
-                    + hashlib.sha256(ml_to_sign.encode("utf-8")).hexdigest(),
+                    digest="sha256:" + hashlib.sha256(ml_to_sign.encode("utf-8")).hexdigest(),
                     arch="",
                     signing_key=push_item.claims_signing_key,
                 )
