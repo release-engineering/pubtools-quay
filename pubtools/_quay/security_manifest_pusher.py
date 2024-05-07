@@ -312,6 +312,34 @@ class SecurityManifestPusher:
 
         return list(set(dest_repos))
 
+    def security_manifest_remove_incompleteness_reasons(self, security_manifest_path: str) -> str:
+        """
+        Remove the field "incompleteness_reasons" from the security manifest.
+
+        The field is for internal use only, and isn't a part of the CycloneDX spec.
+
+        Args:
+            security_manifest_path (str):
+                Path to the extracted security manifest.
+
+        Returns (str):
+            Path to a file containing the modified security manifest.
+        """
+        with open(security_manifest_path, "r") as f1:
+            security_manifest = json.load(f1)
+
+        if "incompleteness_reasons" in security_manifest:
+            del security_manifest["incompleteness_reasons"]
+
+        modified_security_manifest_path = os.path.join(
+            os.path.dirname(security_manifest_path),
+            f"sanitized_security_manifest_{uuid.uuid4().hex}.json",
+        )
+        with open(modified_security_manifest_path, "w") as f2:
+            json.dump(security_manifest, f2, indent=4)
+
+        return modified_security_manifest_path
+
     def security_manifest_add_products(
         self, security_manifest_path: str, products: Set[str]
     ) -> str:
@@ -428,16 +456,19 @@ class SecurityManifestPusher:
                 self.delete_existing_attestation(image_ref, dir_path)
                 products = products | existing_products
 
+            sanitized_security_manifest_path = self.security_manifest_remove_incompleteness_reasons(
+                image_manifest.security_manifest_path
+            )
             if products:
                 full_security_manifest_path = self.security_manifest_add_products(
-                    image_manifest.security_manifest_path, products
+                    sanitized_security_manifest_path, products
                 )
             else:
                 LOG.warning(
                     f"Push item {item} doesn't contain a product name. A new attestation "
                     "will be created without this information."
                 )
-                full_security_manifest_path = image_manifest.security_manifest_path
+                full_security_manifest_path = sanitized_security_manifest_path
 
             self.cosign_attest_security_manifest(
                 full_security_manifest_path,
@@ -501,10 +532,11 @@ class SecurityManifestPusher:
                         self.target_settings.get("cosign_sbom_skip_verify_rekor", False),
                     )
                     if not arch_attestation_exist:
-                        raise ValueError(
+                        LOG.warning(
                             f"Arch image {arch_ref} that is a part of {dest_ref} "
                             "doesn't have an attestation"
                         )
+                        continue
                     tag_attestations.append(attestation_file)
 
                 attestation_file = os.path.join(dir_path, f"attestation_{uuid.uuid4().hex}.json")
