@@ -403,6 +403,26 @@ def test_get_destination_repos(target_settings, container_multiarch_push_item):
 @mock.patch("json.dump")
 @mock.patch("json.load")
 @mock.patch("pubtools._quay.security_manifest_pusher.open", mock.mock_open())
+def test_security_manifest_remove_incompleteness_reasons(
+    mock_load, mock_dump, mock_uuid, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_load.return_value = {"specVersion": "1.4", "incompleteness_reasons": []}
+    mock_uuid.return_value.hex = "abcd"
+
+    res = pusher.security_manifest_remove_incompleteness_reasons(__file__)
+    assert res == os.path.join(os.path.dirname(__file__), "sanitized_security_manifest_abcd.json")
+    mock_load.assert_called_once()
+    mock_dump.assert_called_once()
+    assert mock_dump.call_args_list[0][0][0] == {"specVersion": "1.4"}
+
+
+@mock.patch("uuid.uuid4")
+@mock.patch("json.dump")
+@mock.patch("json.load")
+@mock.patch("pubtools._quay.security_manifest_pusher.open", mock.mock_open())
 def test_security_manifest_add_products(
     mock_load, mock_dump, mock_uuid, target_settings, container_multiarch_push_item
 ):
@@ -452,6 +472,10 @@ def test_delete_existing_attestation(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products"
 )
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher"
+    ".security_manifest_remove_incompleteness_reasons"
+)
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "get_security_manifest_from_attestation"
 )
@@ -463,6 +487,7 @@ def test_merge_and_push_security_manifest(
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
+    mock_remove_incompleteness,
     mock_add_products,
     mock_attest,
     mock_delete_attestation,
@@ -479,6 +504,7 @@ def test_merge_and_push_security_manifest(
     mock_get_attestation.return_value = True
 
     mock_get_manifest.return_value = security_manifest
+    mock_remove_incompleteness.return_value = "/path/to/sanitized/manifest.json"
 
     mock_uuid.return_value.hex = "abcd"
     mock_add_products.return_value = "/path/to/final/manifest.json"
@@ -494,8 +520,9 @@ def test_merge_and_push_security_manifest(
         False,
     )
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
+    mock_remove_incompleteness.assert_called_once_with("path/to/manifest")
     mock_add_products.assert_called_once_with(
-        "path/to/manifest", {"new-product", "product1", "product2"}
+        "/path/to/sanitized/manifest.json", {"new-product", "product1", "product2"}
     )
     mock_delete_attestation.assert_called_once_with("quay.io/org/repo@abcdef", "/temp/temp_path")
     mock_attest.assert_called_once_with(
@@ -513,6 +540,10 @@ def test_merge_and_push_security_manifest(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products"
 )
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher"
+    ".security_manifest_remove_incompleteness_reasons"
+)
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "get_security_manifest_from_attestation"
 )
@@ -524,6 +555,7 @@ def test_merge_and_push_security_manifest_no_existing_attestation_also_disable_r
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
+    mock_remove_incompleteness,
     mock_add_products,
     mock_attest,
     mock_delete_attestation,
@@ -542,6 +574,7 @@ def test_merge_and_push_security_manifest_no_existing_attestation_also_disable_r
     mock_get_attestation.return_value = False
 
     mock_get_manifest.return_value = security_manifest
+    mock_remove_incompleteness.return_value = "/path/to/sanitized/manifest.json"
 
     mock_uuid.return_value.hex = "abcd"
     mock_add_products.return_value = "/path/to/final/manifest.json"
@@ -558,7 +591,8 @@ def test_merge_and_push_security_manifest_no_existing_attestation_also_disable_r
     )
     mock_get_manifest.assert_not_called()
     mock_delete_attestation.assert_not_called()
-    mock_add_products.assert_called_once_with("path/to/manifest", {"new-product"})
+    mock_remove_incompleteness.assert_called_once_with("path/to/manifest")
+    mock_add_products.assert_called_once_with("/path/to/sanitized/manifest.json", {"new-product"})
     mock_attest.assert_called_once_with(
         "/path/to/final/manifest.json", "quay.io/org/repo@abcdef", "https://some-rekor.com", True
     )
@@ -574,6 +608,10 @@ def test_merge_and_push_security_manifest_no_existing_attestation_also_disable_r
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products"
 )
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher"
+    ".security_manifest_remove_incompleteness_reasons"
+)
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "get_security_manifest_from_attestation"
 )
@@ -585,6 +623,7 @@ def test_merge_and_push_security_manifest_already_pushed(
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
+    mock_remove_incompleteness,
     mock_add_products,
     mock_attest,
     mock_delete_attestation,
@@ -602,6 +641,7 @@ def test_merge_and_push_security_manifest_already_pushed(
     mock_get_attestation.return_value = True
 
     mock_get_manifest.return_value = security_manifest
+    mock_remove_incompleteness.return_value = "/path/to/sanitized/manifest.json"
 
     mock_uuid.return_value.hex = "abcd"
     mock_add_products.return_value = "/path/to/final/manifest.json"
@@ -618,6 +658,7 @@ def test_merge_and_push_security_manifest_already_pushed(
     )
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
     mock_delete_attestation.assert_not_called()
+    mock_remove_incompleteness.assert_not_called()
     mock_add_products.assert_not_called()
     mock_attest.assert_not_called()
 
@@ -632,6 +673,10 @@ def test_merge_and_push_security_manifest_already_pushed(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products"
 )
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher"
+    ".security_manifest_remove_incompleteness_reasons"
+)
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "get_security_manifest_from_attestation"
 )
@@ -643,6 +688,7 @@ def test_merge_and_push_security_manifest_no_product_existing_attestation(
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
+    mock_remove_incompleteness,
     mock_add_products,
     mock_attest,
     mock_delete_attestation,
@@ -658,6 +704,7 @@ def test_merge_and_push_security_manifest_no_product_existing_attestation(
 
     digest_manifest = security_manifest_pusher.DigestSecurityManifest("abcdef", "path/to/manifest")
     mock_get_attestation.return_value = True
+    mock_remove_incompleteness.return_value = "/path/to/sanitized/manifest.json"
 
     mock_get_manifest.return_value = security_manifest
 
@@ -677,6 +724,7 @@ def test_merge_and_push_security_manifest_no_product_existing_attestation(
     mock_get_manifest.assert_called_once_with("/temp/temp_path/attestation_abcd.json")
     mock_add_products.assert_not_called()
     mock_delete_attestation.assert_not_called()
+    mock_remove_incompleteness.assert_not_called()
     mock_attest.assert_not_called()
 
 
@@ -690,6 +738,10 @@ def test_merge_and_push_security_manifest_no_product_existing_attestation(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products"
 )
 @mock.patch(
+    "pubtools._quay.security_manifest_pusher.SecurityManifestPusher"
+    ".security_manifest_remove_incompleteness_reasons"
+)
+@mock.patch(
     "pubtools._quay.security_manifest_pusher.SecurityManifestPusher."
     "get_security_manifest_from_attestation"
 )
@@ -701,6 +753,7 @@ def test_merge_and_push_security_manifest_no_product_no_existing_attestation(
     mock_uuid,
     mock_get_attestation,
     mock_get_manifest,
+    mock_remove_incompleteness,
     mock_add_products,
     mock_attest,
     mock_delete_attestation,
@@ -718,6 +771,7 @@ def test_merge_and_push_security_manifest_no_product_no_existing_attestation(
     mock_get_attestation.return_value = False
 
     mock_get_manifest.return_value = security_manifest
+    mock_remove_incompleteness.return_value = "/path/to/sanitized/manifest.json"
 
     mock_uuid.return_value.hex = "abcd"
     mock_add_products.return_value = "/path/to/final/manifest.json"
@@ -734,9 +788,13 @@ def test_merge_and_push_security_manifest_no_product_no_existing_attestation(
     )
     mock_get_manifest.assert_not_called()
     mock_add_products.assert_not_called()
+    mock_remove_incompleteness.assert_called_once_with("path/to/manifest")
     mock_delete_attestation.assert_not_called()
     mock_attest.assert_called_once_with(
-        "path/to/manifest", "quay.io/org/repo@abcdef", "https://some-rekor.com", False
+        "/path/to/sanitized/manifest.json",
+        "quay.io/org/repo@abcdef",
+        "https://some-rekor.com",
+        False,
     )
 
 
@@ -862,16 +920,15 @@ def test_push_manifest_list_security_manifests_arch_att_not_exist(
     pusher = security_manifest_pusher.SecurityManifestPusher(
         [container_multiarch_push_item], target_settings
     )
-    mock_get_attestation.side_effect = [True, True, False]
+    mock_get_attestation.side_effect = [True, True, False, True, True, True]
     mock_quay_client.return_value.get_manifest_digest.return_value = "sha256:abcdef"
     mock_quay_client.return_value.get_manifest.return_value = manifest_list_data
     mock_uuid.return_value.hex = "abcd"
 
-    with pytest.raises(ValueError, match=".*doesn't have an attestation.*"):
-        pusher.push_manifest_list_security_manifests(
-            container_multiarch_push_item,
-            "/some",
-        )
+    pusher.push_manifest_list_security_manifests(
+        container_multiarch_push_item,
+        "/some",
+    )
 
     mock_quay_client.return_value.get_manifest_digest.assert_called_once_with(
         "quay.io/some-namespace/target----repo:latest-test-tag",
@@ -882,9 +939,11 @@ def test_push_manifest_list_security_manifests_arch_att_not_exist(
         media_type=mock_quay_client.return_value.MANIFEST_LIST_TYPE,
     )
 
-    assert mock_get_attestation.call_count == 3
-    mock_delete_attestation.assert_not_called()
-    mock_attest.assert_not_called()
+    assert mock_get_attestation.call_count == 6
+    mock_delete_attestation.assert_called_once_with(
+        "quay.io/some-namespace/target----repo@sha256:abcdef", "/some"
+    )
+    assert mock_attest.call_count == 4
 
 
 @mock.patch(
