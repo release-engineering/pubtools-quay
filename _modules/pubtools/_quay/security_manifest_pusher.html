@@ -393,6 +393,34 @@
 
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dest_repos</span><span class="p">))</span></div>
 
+    <span class="k">def</span> <span class="nf">security_manifest_remove_incompleteness_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove the field &quot;incompleteness_reasons&quot; from the security manifest.</span>
+
+<span class="sd">        The field is for internal use only, and isn&#39;t a part of the CycloneDX spec.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            security_manifest_path (str):</span>
+<span class="sd">                Path to the extracted security manifest.</span>
+
+<span class="sd">        Returns (str):</span>
+<span class="sd">            Path to a file containing the modified security manifest.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">security_manifest_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f1</span><span class="p">:</span>
+            <span class="n">security_manifest</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;incompleteness_reasons&quot;</span> <span class="ow">in</span> <span class="n">security_manifest</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">security_manifest</span><span class="p">[</span><span class="s2">&quot;incompleteness_reasons&quot;</span><span class="p">]</span>
+
+        <span class="n">modified_security_manifest_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">security_manifest_path</span><span class="p">),</span>
+            <span class="sa">f</span><span class="s2">&quot;sanitized_security_manifest_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">modified_security_manifest_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f2</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">security_manifest</span><span class="p">,</span> <span class="n">f2</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">modified_security_manifest_path</span>
+
 <div class="viewcode-block" id="SecurityManifestPusher.security_manifest_add_products"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products">[docs]</a>    <span class="k">def</span> <span class="nf">security_manifest_add_products</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">products</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -509,16 +537,19 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">delete_existing_attestation</span><span class="p">(</span><span class="n">image_ref</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">)</span>
                 <span class="n">products</span> <span class="o">=</span> <span class="n">products</span> <span class="o">|</span> <span class="n">existing_products</span>
 
+            <span class="n">sanitized_security_manifest_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_manifest_remove_incompleteness_reasons</span><span class="p">(</span>
+                <span class="n">image_manifest</span><span class="o">.</span><span class="n">security_manifest_path</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="n">products</span><span class="p">:</span>
                 <span class="n">full_security_manifest_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_manifest_add_products</span><span class="p">(</span>
-                    <span class="n">image_manifest</span><span class="o">.</span><span class="n">security_manifest_path</span><span class="p">,</span> <span class="n">products</span>
+                    <span class="n">sanitized_security_manifest_path</span><span class="p">,</span> <span class="n">products</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Push item </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> doesn&#39;t contain a product name. A new attestation &quot;</span>
                     <span class="s2">&quot;will be created without this information.&quot;</span>
                 <span class="p">)</span>
-                <span class="n">full_security_manifest_path</span> <span class="o">=</span> <span class="n">image_manifest</span><span class="o">.</span><span class="n">security_manifest_path</span>
+                <span class="n">full_security_manifest_path</span> <span class="o">=</span> <span class="n">sanitized_security_manifest_path</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">cosign_attest_security_manifest</span><span class="p">(</span>
                 <span class="n">full_security_manifest_path</span><span class="p">,</span>
@@ -582,10 +613,11 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cosign_sbom_skip_verify_rekor&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
                     <span class="p">)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="n">arch_attestation_exist</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
                             <span class="sa">f</span><span class="s2">&quot;Arch image </span><span class="si">{</span><span class="n">arch_ref</span><span class="si">}</span><span class="s2"> that is a part of </span><span class="si">{</span><span class="n">dest_ref</span><span class="si">}</span><span class="s2"> &quot;</span>
                             <span class="s2">&quot;doesn&#39;t have an attestation&quot;</span>
                         <span class="p">)</span>
+                        <span class="k">continue</span>
                     <span class="n">tag_attestations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attestation_file</span><span class="p">)</span>
 
                 <span class="n">attestation_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;attestation_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
