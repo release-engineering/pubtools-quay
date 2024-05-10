@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.20.0 (2024-05-10)
+-------------------
+
+* Fix SBOM publishing for the ML merge workflow
+* Remove incompleteness_reasons field from SBOMs before publishing them
+
 0.19.0 (2024-03-18)
 -------------------
 
