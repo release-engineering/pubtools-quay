@@ -182,7 +182,9 @@
     <span class="k">if</span> <span class="n">internal</span><span class="p">:</span>
         <span class="n">dest_registries</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;quay.io&quot;</span><span class="p">]</span>
         <span class="n">iib_repo</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">iib_repo</span><span class="p">)</span>
+            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_operator_namespace&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">])</span>
+            <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+            <span class="o">+</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">iib_repo</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="n">dest_operator_quay_client</span> <span class="o">=</span> <span class="n">_get_operator_quay_client</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
