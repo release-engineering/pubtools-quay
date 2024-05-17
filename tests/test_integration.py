@@ -87,6 +87,9 @@ def test_push_docker_multiarch_merge_ml_operator(
         # pubtools-pyxis-get-repo-metadata
         {"fbc_opt_in": False},
         {"fbc_opt_in": False},
+        # pubtools-pyxis-get-repo-metadata in get_index_images
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
     ]
     signer_wrapper_run_entry_point.side_effect = [
         # fetch existing signatures
@@ -1710,7 +1713,9 @@ def test_remove_repo(
 @mock.patch("pubtools._quay.command_executor.docker.APIClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_docker_operator_verify_bundle_fail(
+    mock_get_repo_metadata,
     mock_run_cmd,
     mock_run_entrypoint_operator_pusher,
     mock_api_client,
@@ -1733,6 +1738,11 @@ def test_push_docker_operator_verify_bundle_fail(
     mock_run_entrypoint_operator_pusher.side_effect = [
         # pubtools-pyxis-get-operator-indices
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}],
+    ]
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
     ]
     mock_run_cmd.return_value = ("Login Succeeded", "err")
     mock_api_client.return_value.exec_start.return_value = b"Login Succeeded"

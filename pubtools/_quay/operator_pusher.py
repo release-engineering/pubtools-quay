@@ -387,7 +387,7 @@ class OperatorPusher:
 
     def get_existing_index_images(self, quay_client: QuayClient) -> List[Tuple[str, str, str]]:
         """
-        Return existing index images for push items.
+        Return existing index images for non-fbc push items.
 
         Args:
             quay_client (QuayClient): quay_client_instance
@@ -409,7 +409,11 @@ class OperatorPusher:
         current_index_images = []
 
         manifest_list: Any = {}
-        for version in sorted(self.version_items_mapping.keys()):
+        for version, items in sorted(self.version_items_mapping.items()):
+            items_opted_in, failed_items = self._get_fbc_opted_in_items()
+            if not self._get_non_fbc_items_for_version(items, version, items_opted_in):
+                continue
+
             image_ref = "{0}:{1}".format(index_image_repo, version)
             try:
                 manifest_list = quay_client.get_manifest(
