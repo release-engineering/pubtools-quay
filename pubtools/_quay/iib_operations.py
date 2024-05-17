@@ -101,7 +101,9 @@ def _index_image_to_sign_entries(
     if internal:
         dest_registries = ["quay.io"]
         iib_repo = (
-            target_settings["quay_namespace"] + "/" + get_internal_container_repo_name(iib_repo)
+            target_settings.get("quay_operator_namespace", target_settings["quay_namespace"])
+            + "/"
+            + get_internal_container_repo_name(iib_repo)
         )
 
     dest_operator_quay_client = _get_operator_quay_client(target_settings)
