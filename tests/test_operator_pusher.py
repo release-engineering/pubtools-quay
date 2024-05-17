@@ -1060,7 +1060,9 @@ def test_push_operators_prerelease_invalid_origin(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images(
+    mock_get_repo_metadata,
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
@@ -1069,6 +1071,10 @@ def test_get_existing_index_images(
     manifest_list_data,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.return_value = manifest_list_data
 
@@ -1147,7 +1153,9 @@ def test_get_existing_index_images(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_get_existing_index_images_raises_401(
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_get_existing_index_images_fbc(
+    mock_get_repo_metadata,
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
@@ -1156,6 +1164,64 @@ def test_get_existing_index_images_raises_401(
     manifest_list_data,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": True},
+        {"fbc_opt_in": False},
+    ]
+    mock_run_entrypoint.return_value = [{"ocp_version": "4.11"}, {"ocp_version": "4.12"}]
+    mock_quay_client.get_manifest.return_value = manifest_list_data
+
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
+    existing_index_images = pusher.get_existing_index_images(mock_quay_client)
+    print(mock_quay_client.mock_calls)
+    assert sorted(existing_index_images) == [
+        (
+            "sha256:146ab6fa7ba3ab4d154b09c1c5522e4966ecd071bf23d1ba3df6c8b9fc33f8cb",
+            "v4.12",
+            "operators/index-image",
+        ),
+        (
+            "sha256:2e8f38a0a8d2a450598430fa70c7f0b53aeec991e76c3e29c63add599b4ef7ee",
+            "v4.12",
+            "operators/index-image",
+        ),
+        (
+            "sha256:496fb0ff2057c79254c9dc6ba999608a98219c5c93142569a547277c679e532c",
+            "v4.12",
+            "operators/index-image",
+        ),
+        (
+            "sha256:b3f9218fb5839763e62e52ee6567fe331aa1f3c644f9b6f232ff23959257acf9",
+            "v4.12",
+            "operators/index-image",
+        ),
+        (
+            "sha256:bbef1f46572d1f33a92b53b0ba0ed5a1d09dab7ffe64be1ae3ae66e76275eabd",
+            "v4.12",
+            "operators/index-image",
+        ),
+    ]
+
+
+@mock.patch("pubtools._quay.push_docker.QuayClient")
+@mock.patch("pubtools._quay.push_docker.QuayApiClient")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
+def test_get_existing_index_images_raises_401(
+    mock_get_repo_metadata,
+    mock_run_entrypoint,
+    mock_quay_client,
+    mock_quay_api,
+    target_settings,
+    operator_push_item_ok,
+    manifest_list_data,
+    fake_cert_key_paths,
+):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.side_effect = [
         requests.exceptions.HTTPError(response=mock.Mock(status_code=401)),
@@ -1213,7 +1279,9 @@ def test_get_existing_index_images_raises_401(
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images_raises_500(
+    mock_get_repo_metadata,
     mock_run_entrypoint,
     mock_quay_client,
     mock_quay_api,
@@ -1222,6 +1290,11 @@ def test_get_existing_index_images_raises_500(
     manifest_list_data,
     fake_cert_key_paths,
 ):
+    mock_get_repo_metadata.side_effect = [
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+        {"fbc_opt_in": False},
+    ]
     mock_run_entrypoint.return_value = [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}]
     mock_quay_client.get_manifest.side_effect = [
         requests.exceptions.HTTPError("500", response=mock.Mock(status_code=500)),
