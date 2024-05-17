@@ -626,10 +626,10 @@ def test_task_iib_add_bundles_operator_ns(
                 config_file="test-config.yml",
                 signing_key="some-key",
                 reference=[
-                    "quay.io/some-namespace/operators----index-image:8",
-                    "quay.io/some-namespace/operators----index-image:8-timestamp",
-                    "quay.io/some-namespace/operators----index-image:8",
-                    "quay.io/some-namespace/operators----index-image:8-timestamp",
+                    "quay.io/operator-ns/operators----index-image:8",
+                    "quay.io/operator-ns/operators----index-image:8-timestamp",
+                    "quay.io/operator-ns/operators----index-image:8",
+                    "quay.io/operator-ns/operators----index-image:8-timestamp",
                 ],
                 digest=[
                     "sha256:a1a1a1",
@@ -1548,10 +1548,10 @@ def test_task_iib_build_from_scratch_operator_ns(
                 config_file="test-config.yml",
                 signing_key="some-key",
                 reference=[
-                    "quay.io/some-namespace/operators----index-image:8",
-                    "quay.io/some-namespace/operators----index-image:8-timestamp",
-                    "quay.io/some-namespace/operators----index-image:8",
-                    "quay.io/some-namespace/operators----index-image:8-timestamp",
+                    "quay.io/operator-ns/operators----index-image:8",
+                    "quay.io/operator-ns/operators----index-image:8-timestamp",
+                    "quay.io/operator-ns/operators----index-image:8",
+                    "quay.io/operator-ns/operators----index-image:8-timestamp",
                 ],
                 digest=[
                     "sha256:a1a1a1",
