@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+0.21.0 (2024-06-17)
+-------------------
+Fixed pushing index images to wrong namespace
+Fixed removing index image signatures when there are no non fbc operators
+
+
 0.20.0 (2024-05-10)
 -------------------
 

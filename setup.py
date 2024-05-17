@@ -72,7 +72,7 @@ def get_requirements():
     # to use the 'name + dependency_link' style
     if building_rpm():
         reqs = sorted(list(set(reqs)))
-        pip_version = [0, 0, 0]
+        pip_ersion = [0, 0, 0]
     else:
         import pip
 
@@ -113,7 +113,7 @@ if os.environ.get("READTHEDOCS", None):
 
 setup(
     name="pubtools-quay",
-    version="0.20.0",
+    version="0.21.0",
     description="Pubtools-quay",
     long_description=long_description,
     long_description_content_type="text/x-rst",
