@@ -468,7 +468,7 @@
 
 <div class="viewcode-block" id="OperatorPusher.get_existing_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images">[docs]</a>    <span class="k">def</span> <span class="nf">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">:</span> <span class="n">QuayClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return existing index images for push items.</span>
+<span class="sd">        Return existing index images for non-fbc push items.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            quay_client (QuayClient): quay_client_instance</span>
@@ -490,7 +490,11 @@
         <span class="n">current_index_images</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">manifest_list</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">version</span><span class="p">,</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version_items_mapping</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">items_opted_in</span><span class="p">,</span> <span class="n">failed_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fbc_opted_in_items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_non_fbc_items_for_version</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">items_opted_in</span><span class="p">):</span>
+                <span class="k">continue</span>
+
             <span class="n">image_ref</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index_image_repo</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
