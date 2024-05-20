@@ -819,6 +819,10 @@ class PushDocker:
                 ),
             ),
         ):
+            print("BT1 tag", bt1[0].tag)
+            print("BT1 v2s1", bt1[0].v2s1_digest, "BT1 v2s1", bt2[0].v2s1_digest)
+            print("BT1 v2s1", bt1[0].v2s2_digest, "BT1 v2s1", bt2[0].v2s2_digest)
+            print("BT1 v2s1", bt1[0].v2list_digest, "BT1 v2s1", bt2[0].v2list_digest)
             if (
                 bt1[0].v2list_digest != bt2[0].v2list_digest
                 or bt1[0].v2s2_digest != bt2[0].v2s2_digest
