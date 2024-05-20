@@ -408,8 +408,9 @@ class _ManifestClaimsRunner(object):
         LOG.error("Error in message handler: %s", error)
 
         if self._retry_attempts > self._maximum_retries:
-            LOG.warning("Retry limit reached. Messaging will not be restarted!")
-            return
+            raise RuntimeError(
+                f"Retry limit reached. Message handler has failed with an error: {error}"
+            )
 
         missing = [
             msg for msg in self._claim_messages if msg["request_id"] not in self._received_messages
