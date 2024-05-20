@@ -315,14 +315,14 @@ def test_manifest_claims_runner_no_more_retries(runner, debug_logs):
     runtime_error_message = "Runtime error message"
     exception = RuntimeError(runtime_error_message)
 
-    runner.on_error(exception)
+    with pytest.raises(RuntimeError, match="Retry limit reached\. Message handler has failed .*"):
+        runner.on_error(exception)
 
     runner._run.assert_not_called()
 
     logs = debug_logs.text
     check_strings = [
         "Error in message handler: {0}".format(exception),
-        "Retry limit reached. Messaging will not be restarted!",
     ]
     for string in check_strings:
         assert_that(logs, contains_string(string))
