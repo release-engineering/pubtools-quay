@@ -853,7 +853,7 @@ class PushDocker:
             if outdated:
                 LOG.debug(
                     "Marking manifest {bt1[0].tag} as outdated, {name} "
-                    "digests doesn't match {d1} != {d2}"
+                    f"digests don't match {d1} != {d2}"
                 )
                 outdated_tags[bt1[0]] = bt1[1]
 
