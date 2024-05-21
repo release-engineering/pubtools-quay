@@ -900,11 +900,42 @@
                 <span class="p">),</span>
             <span class="p">),</span>
         <span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
-                <span class="ow">or</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
-                <span class="ow">or</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>
-            <span class="p">):</span>
+            <span class="n">list_test</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
+                <span class="ow">and</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
+                <span class="ow">and</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
+            <span class="p">)</span>
+            <span class="n">s2_test</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
+                <span class="ow">and</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
+                <span class="ow">and</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
+            <span class="p">)</span>
+            <span class="n">s1_test</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>
+                <span class="ow">and</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>
+                <span class="ow">and</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span> <span class="o">!=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>
+            <span class="p">)</span>
+            <span class="n">outdated</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">list_test</span><span class="p">:</span>
+                <span class="n">d1</span> <span class="o">=</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
+                <span class="n">d2</span> <span class="o">=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2list_digest</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;manifest list&quot;</span>
+                <span class="n">outdated</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">s2_test</span><span class="p">:</span>
+                <span class="n">d1</span> <span class="o">=</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
+                <span class="n">d2</span> <span class="o">=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s2_digest</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;v2s2&quot;</span>
+                <span class="n">outdated</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">s1_test</span><span class="p">:</span>
+                <span class="n">d1</span> <span class="o">=</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>  <span class="c1"># noqa: F841</span>
+                <span class="n">d2</span> <span class="o">=</span> <span class="n">bt2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">v2s1_digest</span>  <span class="c1"># noqa: F841</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;v2s1&quot;</span>  <span class="c1"># noqa: F841</span>
+                <span class="n">outdated</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">outdated</span><span class="p">:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="s2">&quot;Marking manifest </span><span class="si">{bt1[0].tag}</span><span class="s2"> as outdated, </span><span class="si">{name}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;digests don&#39;t match </span><span class="si">{</span><span class="n">d1</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">d2</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
                 <span class="n">outdated_tags</span><span class="p">[</span><span class="n">bt1</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">bt1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="n">outdated_manifests</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outdated_manifests</span><span class="p">(</span><span class="n">outdated_tags</span><span class="p">)</span>
