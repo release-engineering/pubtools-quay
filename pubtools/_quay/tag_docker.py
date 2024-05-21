@@ -42,6 +42,8 @@ class TagDocker:
     ImageDetails = namedtuple("ImageDetails", ["reference", "manifest", "manifest_type", "digest"])
     MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
     MANIFEST_V2S2_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
+    MANIFEST_OCI_LIST_TYPE = "application/vnd.oci.image.index.v1+json"
+    MANIFEST_OCI_V2S2_TYPE = "application/vnd.oci.image.manifest.v1+json"
 
     def __init__(
         self,
@@ -220,7 +222,12 @@ class TagDocker:
                 raise
 
         manifest_type = manifest["mediaType"]
-        if manifest_type not in [TagDocker.MANIFEST_V2S2_TYPE, TagDocker.MANIFEST_LIST_TYPE]:
+        if manifest_type not in [
+            TagDocker.MANIFEST_V2S2_TYPE,
+            TagDocker.MANIFEST_LIST_TYPE,
+            TagDocker.MANIFEST_OCI_V2S2_TYPE,
+            TagDocker.MANIFEST_OCI_LIST_TYPE,
+        ]:
             raise BadPushItem("Image {0} has manifest type different than V2S2 or manifest list")
 
         # Check arch if the image is V2S2 manifest
