@@ -1046,6 +1046,7 @@ def test_push_docker_full_success(
     target_settings,
     container_multiarch_push_item,
     container_push_item_external_repos,
+    container_push_item_ok,
     operator_push_item_ok,
     fake_cert_key_paths,
     signer_wrapper_entry_point,
@@ -1098,6 +1099,9 @@ def test_push_docker_full_success(
                     "some-ns/orig-ns----some-repo", "sometag", "some-digest", None, "some-digest"
                 ): ({"digest": "some-digest"}, "amd64"),
                 push_docker.PushDocker.ImageData(
+                    "some-ns/orig-ns----some-repo", "sometag", None, "some-digest", "some-digest"
+                ): ({"digest": "some-digest"}, "amd64"),
+                push_docker.PushDocker.ImageData(
                     "some-ns/orig-ns----some-repo",
                     "sometag2",
                     "some-digest-2",
@@ -1114,6 +1118,13 @@ def test_push_docker_full_success(
                     "sometag",
                     "some-new-digest",
                     None,
+                    "some-digest",
+                ): ({"digest": "some-digest-new"}, "amd64"),
+                push_docker.PushDocker.ImageData(
+                    "some-ns/orig-ns----some-repo",
+                    "sometag",
+                    None,
+                    "some-digest-new",
                     "some-digest",
                 ): ({"digest": "some-digest-new"}, "amd64"),
                 push_docker.PushDocker.ImageData(
@@ -1180,7 +1191,7 @@ def test_push_docker_full_success(
         )
 
         push_docker_instance = push_docker.PushDocker(
-            [container_multiarch_push_item, operator_push_item_ok],
+            [container_multiarch_push_item, container_push_item_ok, operator_push_item_ok],
             hub,
             "1",
             "some-target",

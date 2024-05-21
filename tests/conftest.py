@@ -89,6 +89,15 @@ def container_push_item_ok():
                 "repo": "test-repo",
                 "tag": "test-tag",
             },
+            "pull_url": "some-registry/src/repo:1",
+            "build": {
+                "build_id": 123456,
+                "extra": {
+                    "image": {
+                        "media_types": ["application/vnd.docker.distribution.manifest.v2+json"]
+                    }
+                },
+            },
             "destination": {"tags": {"repo": ["tag1"]}},
             "tags": {"test-repo": ["latest-test-tag", "1.0"]},
             "v_r": "1.0",
