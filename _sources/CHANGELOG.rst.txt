@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.22.0 (2024-06-21)
+-------------------
+Raise an error when manifest claims retry limit is reached
+Manifest is outdated if both old and new manifests have digests
+
 0.21.0 (2024-06-17)
 -------------------
 Fixed pushing index images to wrong namespace
