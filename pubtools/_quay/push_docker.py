@@ -820,9 +820,21 @@ class PushDocker:
             ),
         ):
             if (
-                bt1[0].v2list_digest != bt2[0].v2list_digest
-                or bt1[0].v2s2_digest != bt2[0].v2s2_digest
-                or bt1[0].v2s1_digest != bt2[0].v2s1_digest
+                (
+                    bt1[0].v2list_digest
+                    and bt2[0].v2list_digest
+                    and bt1[0].v2list_digest != bt2[0].v2list_digest
+                )
+                or (
+                    bt1[0].v2s2_digest
+                    and bt2[0].v2s2_digest
+                    and bt1[0].v2s2_digest != bt2[0].v2s2_digest
+                )
+                or (
+                    bt1[0].v2s1_digest
+                    and bt2[0].v2s1_digest
+                    and bt1[0].v2s1_digest != bt2[0].v2s1_digest
+                )
             ):
                 outdated_tags[bt1[0]] = bt1[1]
 
