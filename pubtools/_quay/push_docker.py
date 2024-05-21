@@ -819,11 +819,42 @@ class PushDocker:
                 ),
             ),
         ):
-            if (
-                bt1[0].v2list_digest != bt2[0].v2list_digest
-                or bt1[0].v2s2_digest != bt2[0].v2s2_digest
-                or bt1[0].v2s1_digest != bt2[0].v2s1_digest
-            ):
+            list_test = (
+                bt1[0].v2list_digest
+                and bt2[0].v2list_digest
+                and bt1[0].v2list_digest != bt2[0].v2list_digest
+            )
+            s2_test = (
+                bt1[0].v2s2_digest
+                and bt2[0].v2s2_digest
+                and bt1[0].v2s2_digest != bt2[0].v2s2_digest
+            )
+            s1_test = (
+                bt1[0].v2s1_digest
+                and bt2[0].v2s1_digest
+                and bt1[0].v2s1_digest != bt2[0].v2s1_digest
+            )
+            outdated = False
+            if list_test:
+                d1 = bt1[0].v2list_digest
+                d2 = bt2[0].v2list_digest
+                name = "manifest list"
+                outdated = True
+            elif s2_test:
+                d1 = bt1[0].v2s2_digest
+                d2 = bt2[0].v2s2_digest
+                name = "v2s2"
+                outdated = True
+            elif s1_test:
+                d1 = bt1[0].v2s1_digest  # noqa: F841
+                d2 = bt2[0].v2s1_digest  # noqa: F841
+                name = "v2s1"  # noqa: F841
+                outdated = True
+            if outdated:
+                LOG.debug(
+                    "Marking manifest {bt1[0].tag} as outdated, {name} "
+                    f"digests don't match {d1} != {d2}"
+                )
                 outdated_tags[bt1[0]] = bt1[1]
 
         outdated_manifests = self.get_outdated_manifests(outdated_tags)
