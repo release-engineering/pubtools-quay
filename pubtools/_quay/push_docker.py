@@ -848,7 +848,7 @@ class PushDocker:
             elif s1_test:
                 d1 = bt1[0].v2s1_digest  # noqa: F841
                 d2 = bt2[0].v2s1_digest  # noqa: F841
-                name = "v2s2"  # noqa: F841
+                name = "v2s1"
                 outdated = True
             if outdated:
                 LOG.debug(
