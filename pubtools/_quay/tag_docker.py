@@ -231,7 +231,10 @@ class TagDocker:
             raise BadPushItem("Image {0} has manifest type different than V2S2 or manifest list")
 
         # Check arch if the image is V2S2 manifest
-        if manifest["mediaType"] == TagDocker.MANIFEST_V2S2_TYPE:
+        if manifest["mediaType"] in (
+            TagDocker.MANIFEST_V2S2_TYPE,
+            TagDocker.MANIFEST_OCI_V2S2_TYPE,
+        ):
             arch = executor.skopeo_inspect(reference)["Architecture"]
             # Arch check is not a great way to verify that this is a source image, but there are
             # no better options without having build details
@@ -313,13 +316,19 @@ class TagDocker:
             )
 
         # Scenario 1: source image
-        if dest_details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE:
+        if dest_details.manifest_type in (
+            TagDocker.MANIFEST_V2S2_TYPE,
+            TagDocker.MANIFEST_OCI_V2S2_TYPE,
+        ):
             return self.tag_remove_calculate_archs_source_image(
                 push_item, source_details, dest_details
             )
 
         # Scenario 2: multiarch image
-        if dest_details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
+        if dest_details.manifest_type in (
+            TagDocker.MANIFEST_LIST_TYPE,
+            TagDocker.MANIFEST_OCI_LIST_TYPE,
+        ):
             return self.tag_remove_calculate_archs_multiarch_image(
                 push_item, source_details, dest_details
             )
