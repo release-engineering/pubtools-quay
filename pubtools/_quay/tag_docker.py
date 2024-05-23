@@ -228,7 +228,9 @@ class TagDocker:
             TagDocker.MANIFEST_OCI_V2S2_TYPE,
             TagDocker.MANIFEST_OCI_LIST_TYPE,
         ]:
-            raise BadPushItem("Image {0} has manifest type different than V2S2 or manifest list")
+            raise BadPushItem(
+                "Image {0} has manifest type different than V2S2 or manifest list".format(reference)
+            )
 
         # Check arch if the image is V2S2 manifest
         if manifest["mediaType"] in (
