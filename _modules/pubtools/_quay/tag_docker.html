@@ -302,7 +302,9 @@
 
         <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">manifest_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> has manifest type different than V2S2 or manifest list&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
+                <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> has manifest type different than V2S2 or manifest list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
+            <span class="p">)</span>
 
         <span class="c1"># Check arch if the image is V2S2 manifest</span>
         <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
