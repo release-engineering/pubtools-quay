@@ -123,6 +123,8 @@
     <span class="n">ImageDetails</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;ImageDetails&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;reference&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;manifest_type&quot;</span><span class="p">,</span> <span class="s2">&quot;digest&quot;</span><span class="p">])</span>
     <span class="n">MANIFEST_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.list.v2+json&quot;</span>
     <span class="n">MANIFEST_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.docker.distribution.manifest.v2+json&quot;</span>
+    <span class="n">MANIFEST_OCI_LIST_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.oci.image.index.v1+json&quot;</span>
+    <span class="n">MANIFEST_OCI_V2S2_TYPE</span> <span class="o">=</span> <span class="s2">&quot;application/vnd.oci.image.manifest.v1+json&quot;</span>
 
 <div class="viewcode-block" id="TagDocker.__init__"><a class="viewcode-back" href="../../../tag_docker.html#pubtools._quay.tag_docker.TagDocker.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -301,13 +303,21 @@
                 <span class="k">raise</span>
 
         <span class="n">manifest_type</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">manifest_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">manifest_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_LIST_TYPE</span><span class="p">,</span>
+        <span class="p">]:</span>
             <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span>
                 <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> has manifest type different than V2S2 or manifest list&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span>
             <span class="p">)</span>
 
         <span class="c1"># Check arch if the image is V2S2 manifest</span>
-        <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;mediaType&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_V2S2_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="n">arch</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_inspect</span><span class="p">(</span><span class="n">reference</span><span class="p">)[</span><span class="s2">&quot;Architecture&quot;</span><span class="p">]</span>
             <span class="c1"># Arch check is not a great way to verify that this is a source image, but there are</span>
             <span class="c1"># no better options without having build details</span>
@@ -389,13 +399,19 @@
             <span class="p">)</span>
 
         <span class="c1"># Scenario 1: source image</span>
-        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_V2S2_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs_source_image</span><span class="p">(</span>
                 <span class="n">push_item</span><span class="p">,</span> <span class="n">source_details</span><span class="p">,</span> <span class="n">dest_details</span>
             <span class="p">)</span>
 
         <span class="c1"># Scenario 2: multiarch image</span>
-        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dest_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_LIST_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag_remove_calculate_archs_multiarch_image</span><span class="p">(</span>
                 <span class="n">push_item</span><span class="p">,</span> <span class="n">source_details</span><span class="p">,</span> <span class="n">dest_details</span>
             <span class="p">)</span>
