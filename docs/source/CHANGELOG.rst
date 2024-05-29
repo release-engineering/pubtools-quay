@@ -1,12 +1,18 @@
 ChangeLog
 =========
 
-0.22.0 (2024-06-21)
+0.23.0 (2024-05-29)
+-------------------
+* Sort backup items by repo
+* Support untagging OCI images
+* Update log message to show the reference with bad manifest type
+
+0.22.0 (2024-05-21)
 -------------------
 Raise an error when manifest claims retry limit is reached
 Manifest is outdated if both old and new manifests have digests
 
-0.21.0 (2024-06-17)
+0.21.0 (2024-05-17)
 -------------------
 Fixed pushing index images to wrong namespace
 Fixed removing index image signatures when there are no non fbc operators
