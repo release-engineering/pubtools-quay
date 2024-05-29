@@ -804,6 +804,7 @@ class PushDocker:
                 backup_tags.items(),
                 key=lambda x: (
                     x[0].tag,
+                    x[0].repo,
                     x[0].v2list_digest or "",
                     x[0].v2s2_digest or "",
                     x[0].v2s1_digest or "",
@@ -813,6 +814,7 @@ class PushDocker:
                 backup_tags2_shared.items(),
                 key=lambda x: (
                     x[0].tag,
+                    x[0].repo,
                     x[0].v2list_digest or "",
                     x[0].v2s2_digest or "",
                     x[0].v2s1_digest or "",
