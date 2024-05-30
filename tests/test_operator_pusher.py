@@ -148,10 +148,11 @@ def test_get_deprecation_list_no_url(target_settings, operator_push_item_ok):
 
 
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
-def test_iib_add_bundles_str_deprecation_list(
+def test_iib_add_bundles_str_deprecation_list_build_timeout(
     mock_run_entrypoint, target_settings, operator_push_item_ok
 ):
     mock_run_entrypoint.return_value = "some-data"
+    target_settings["iib_build_timeout"] = 30
     pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
     result = pusher.iib_add_bundles(
         ["bundle1", "bundle2"],
@@ -174,6 +175,8 @@ def test_iib_add_bundles_str_deprecation_list(
             "--overwrite-from-index",
             "--iib-krb-ktfile",
             "/etc/pub/some.keytab",
+            "--build-timeout",
+            "30",
             "--index-image",
             "registry.com/rh-osbs/iib-pub-pending:v4.5",
             "--bundle",

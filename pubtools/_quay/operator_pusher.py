@@ -266,6 +266,9 @@ class OperatorPusher:
         if target_settings.get("check_related_images"):
             args += ["--check-related-images"]
 
+        if target_settings.get("iib_build_timeout"):
+            args += ["--build-timeout", str(target_settings["iib_build_timeout"])]
+
         return (args, env_vars)
 
     @classmethod
