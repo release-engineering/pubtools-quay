@@ -11,7 +11,7 @@ from concurrent.futures.thread import ThreadPoolExecutor
 from typing import Any, cast, List, Dict, Union, Optional, Set
 
 from .quay_client import QuayClient
-from .utils.misc import get_internal_container_repo_name, log_step
+from .utils.misc import get_internal_container_repo_name, log_step, retry
 from .command_executor import LocalExecutor
 from .quay_api_client import QuayApiClient
 from .exceptions import ManifestTypeError
@@ -86,6 +86,7 @@ class SecurityManifestPusher:
         return self._dest_quay_api_client
 
     @classmethod
+    @retry("Get security manifest")
     def cosign_get_security_manifest(self, image_ref: str, output_file: str) -> bool:
         """
         Use cosign to get security manifest from an image and save it to a file.
@@ -102,12 +103,16 @@ class SecurityManifestPusher:
         LOG.info(f"Running command '{' '.join(cmd)}'")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-        if result.returncode:
+        if result.returncode and "no sbom attached to reference" in result.stdout:
             LOG.warning(f"Command {' '.join(cmd)} has failed: {result.stdout}")
             return False
+        # If this string was not matched, the error is unexpected - raise
+        elif result.returncode:
+            raise RuntimeError(f"Command {' '.join(cmd)} has failed with an error: {result.stdout}")
 
         return True
 
+    @retry("Get existing attestation")
     def cosign_get_existing_attestation(
         self,
         image_ref: str,
@@ -148,9 +153,13 @@ class SecurityManifestPusher:
         LOG.info(f"Running command '{' '.join(cmd)}'")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
-        if result.returncode:
+        # If no errors are displayed, it means that the attestation doesn't exist
+        if result.returncode and "no matching attestations: \n" in result.stdout:
             LOG.warning(f"Command {' '.join(cmd)} has failed: {result.stdout}")
             return False
+        # if an unexpected error is displayed, raise an error
+        elif result.returncode:
+            raise RuntimeError(f"Command {' '.join(cmd)} has failed with an error: {result.stdout}")
 
         return True
 
