@@ -57,14 +57,40 @@ def test_cosign_get_security_manifest(mock_run, target_settings, container_multi
 
 
 @mock.patch("subprocess.run")
-def test_cosign_get_security_manifest_err(mock_run, target_settings, container_multiarch_push_item):
+def test_cosign_get_security_manifest_normal_error(
+    mock_run, target_settings, container_multiarch_push_item
+):
     pusher = security_manifest_pusher.SecurityManifestPusher(
         [container_multiarch_push_item], target_settings
     )
     mock_run.return_value.returncode = 1
+    mock_run.return_value.stdout = """
+    Error: no sbom attached to reference
+    main.go:74: error during command execution: no sbom attached to reference
+    """
 
     res = pusher.cosign_get_security_manifest("quay.io/org/repo@sha256:abcdef", "/temp/file.txt")
     assert not res
+
+
+@mock.patch("time.sleep")
+@mock.patch("subprocess.run")
+def test_cosign_get_security_manifest_unusual_error(
+    mock_run, mock_sleep, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 1
+    mock_run.return_value.stdout = """
+    Error: unusual error
+    main.go:74: error during command execution: unusual error
+    """
+
+    with pytest.raises(RuntimeError, match=".*has failed with an error.*"):
+        pusher.cosign_get_security_manifest("quay.io/org/repo@sha256:abcdef", "/temp/file.txt")
+
+    assert mock_run.call_count == 4
 
 
 @mock.patch("subprocess.run")
@@ -153,16 +179,40 @@ def test_cosign_get_existing_attestation_disable_rekor(
 
 
 @mock.patch("subprocess.run")
-def test_cosign_get_existing_attestation_err(
+def test_cosign_get_existing_attestation_normal_error(
     mock_run, target_settings, container_multiarch_push_item
 ):
     pusher = security_manifest_pusher.SecurityManifestPusher(
         [container_multiarch_push_item], target_settings
     )
     mock_run.return_value.returncode = 1
+    mock_run.return_value.stdout = (
+        "Error: no matching attestations: \n"
+        "main.go:74: error during command execution: no matching attestations: \n"
+    )
 
     res = pusher.cosign_get_existing_attestation("quay.io/org/repo@sha256:abcdef", "/temp/file.txt")
     assert not res
+
+
+@mock.patch("time.sleep")
+@mock.patch("subprocess.run")
+def test_cosign_get_existing_attestation_unusual_error(
+    mock_run, mock_sleep, target_settings, container_multiarch_push_item
+):
+    pusher = security_manifest_pusher.SecurityManifestPusher(
+        [container_multiarch_push_item], target_settings
+    )
+    mock_run.return_value.returncode = 1
+    mock_run.return_value.stdout = """
+    Error: no matching attestations: unusual error
+    main.go:74: error during command execution: no matching attestations: unusual error
+    """
+
+    with pytest.raises(RuntimeError, match=".*has failed with an error.*"):
+        pusher.cosign_get_existing_attestation("quay.io/org/repo@sha256:abcdef", "/temp/file.txt")
+
+    assert mock_run.call_count == 4
 
 
 @mock.patch("subprocess.run")
