@@ -42,11 +42,10 @@ class QuayApiClient:
         response = self.session.delete(endpoint)
 
         # Tag not existing is a tolerable error
-        if "Invalid repository tag" not in response.text:
-            response.raise_for_status()
-        else:
+        if response.status_code == 404:
             LOG.warning("Tag '{0}' already doesn't exist in repo '{1}'".format(tag, repository))
-
+        else:
+            response.raise_for_status()
         return response
 
     def delete_repository(self, repository: str) -> requests.Response:

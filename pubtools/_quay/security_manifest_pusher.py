@@ -163,6 +163,7 @@ class SecurityManifestPusher:
 
         return True
 
+    @retry("Attest security manifest")
     def cosign_attest_security_manifest(
         self,
         security_manifest_path: str,
@@ -406,6 +407,27 @@ class SecurityManifestPusher:
         repository = "/".join(repo_path.split("/")[-2:])
         self.dest_quay_api_client.delete_tag(repository, tag)
 
+    def extract_security_manifest_from_attestation(self, attestation_path: str) -> str:
+        """
+        Parse security manifest from an attestation and save it to a file.
+
+        Args:
+            attestation_path (str):
+                Path to an attestation.
+
+        Returns (str):
+            Path to the file containing the security manifest.
+        """
+        security_manifest = self.get_security_manifest_from_attestation(attestation_path)
+        extracted_security_manifest_path = os.path.join(
+            os.path.dirname(attestation_path),
+            f"extracted_security_manifest_{uuid.uuid4().hex}.json",
+        )
+        with open(extracted_security_manifest_path, "w") as f:
+            json.dump(security_manifest, f, indent=4)
+
+        return extracted_security_manifest_path
+
     def merge_and_push_security_manifest(
         self,
         item: Any,
@@ -546,7 +568,11 @@ class SecurityManifestPusher:
                             "doesn't have an attestation"
                         )
                         continue
-                    tag_attestations.append(attestation_file)
+
+                    security_manifest_path = self.extract_security_manifest_from_attestation(
+                        attestation_file
+                    )
+                    tag_attestations.append(security_manifest_path)
 
                 attestation_file = os.path.join(dir_path, f"attestation_{uuid.uuid4().hex}.json")
                 ml_attestation_exist = self.cosign_get_existing_attestation(

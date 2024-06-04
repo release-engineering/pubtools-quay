@@ -24,7 +24,7 @@ def test_delete_client():
             [
                 {"text": "Unauthorized", "status_code": 401},
                 {"text": "Success", "status_code": 200},
-                {"text": "Invalid repository tag 10", "status_code": 400},
+                {"text": "Not found", "status_code": 404},
             ],
         )
         with pytest.raises(requests.HTTPError, match="401 Client Error.*"):
@@ -33,8 +33,8 @@ def test_delete_client():
         resp = client.delete_tag("some-repo", "10")
         assert resp.status_code == 200
         resp = client.delete_tag("some-repo", "10")
-        assert resp.text == "Invalid repository tag 10"
-        assert resp.status_code == 400
+        assert resp.text == "Not found"
+        assert resp.status_code == 404
 
         assert m.call_count == 3
 
