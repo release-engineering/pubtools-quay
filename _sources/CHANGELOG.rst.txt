@@ -1,6 +1,14 @@
 ChangeLog
 =========
 
+0.24.0 (2024-06-05)
+-------------------
+* Ensure that unusual cosign errors are raised
+* Set pubtools-iib build-timeout argument based on target settings value
+* Fix an issue where ML attestations are double encoded
+* Add a retry to the attest command
+* Ensure that a 404 error when deleting a tag is tolerated
+
 0.23.0 (2024-05-29)
 -------------------
 * Sort backup items by repo
