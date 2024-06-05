@@ -123,11 +123,10 @@
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
 
         <span class="c1"># Tag not existing is a tolerable error</span>
-        <span class="k">if</span> <span class="s2">&quot;Invalid repository tag&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
-            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; already doesn&#39;t exist in repo &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">repository</span><span class="p">))</span>
-
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span></div>
 
 <div class="viewcode-block" id="QuayApiClient.delete_repository"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.delete_repository">[docs]</a>    <span class="k">def</span> <span class="nf">delete_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>

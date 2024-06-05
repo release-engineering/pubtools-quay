@@ -244,7 +244,8 @@
 
         <span class="k">return</span> <span class="kc">True</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.cosign_attest_security_manifest"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_attest_security_manifest">[docs]</a>    <span class="k">def</span> <span class="nf">cosign_attest_security_manifest</span><span class="p">(</span>
+<div class="viewcode-block" id="SecurityManifestPusher.cosign_attest_security_manifest"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_attest_security_manifest">[docs]</a>    <span class="nd">@retry</span><span class="p">(</span><span class="s2">&quot;Attest security manifest&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">cosign_attest_security_manifest</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -487,6 +488,27 @@
         <span class="n">repository</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_api_client</span><span class="o">.</span><span class="n">delete_tag</span><span class="p">(</span><span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span></div>
 
+    <span class="k">def</span> <span class="nf">extract_security_manifest_from_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attestation_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse security manifest from an attestation and save it to a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attestation_path (str):</span>
+<span class="sd">                Path to an attestation.</span>
+
+<span class="sd">        Returns (str):</span>
+<span class="sd">            Path to the file containing the security manifest.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">security_manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_security_manifest_from_attestation</span><span class="p">(</span><span class="n">attestation_path</span><span class="p">)</span>
+        <span class="n">extracted_security_manifest_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">attestation_path</span><span class="p">),</span>
+            <span class="sa">f</span><span class="s2">&quot;extracted_security_manifest_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">extracted_security_manifest_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">security_manifest</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">extracted_security_manifest_path</span>
+
     <span class="k">def</span> <span class="nf">merge_and_push_security_manifest</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -627,7 +649,11 @@
                             <span class="s2">&quot;doesn&#39;t have an attestation&quot;</span>
                         <span class="p">)</span>
                         <span class="k">continue</span>
-                    <span class="n">tag_attestations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">attestation_file</span><span class="p">)</span>
+
+                    <span class="n">security_manifest_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_security_manifest_from_attestation</span><span class="p">(</span>
+                        <span class="n">attestation_file</span>
+                    <span class="p">)</span>
+                    <span class="n">tag_attestations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">security_manifest_path</span><span class="p">)</span>
 
                 <span class="n">attestation_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;attestation_</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s2">.json&quot;</span><span class="p">)</span>
                 <span class="n">ml_attestation_exist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cosign_get_existing_attestation</span><span class="p">(</span>
