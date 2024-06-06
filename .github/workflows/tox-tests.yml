@@ -100,7 +100,7 @@ jobs:
       - name: Run Tox
         run: tox -e py311
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.6
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
