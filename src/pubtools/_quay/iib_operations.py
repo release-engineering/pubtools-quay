@@ -96,7 +96,9 @@ def _index_image_to_sign_entries(
             reference
     """
     iib_repo = target_settings["quay_operator_repository"]
+    pub_iib_repo = target_settings["quay_operator_repository"]
     dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
+    pub_registry = dest_registries[0]
     dest_registries = dest_registries if isinstance(dest_registries, list) else [dest_registries]
     if internal:
         dest_registries = ["quay.io"]
@@ -130,6 +132,7 @@ def _index_image_to_sign_entries(
                     to_sign_entries.append(
                         SignEntry(
                             reference=f"{registry}/{iib_repo}:{_dest_tag}",
+                            pub_reference=f"{pub_registry}/{pub_iib_repo}",
                             repo=iib_repo,
                             digest=headers["docker-content-digest"],
                             arch="amd64",
@@ -145,6 +148,7 @@ def _index_image_to_sign_entries(
                     to_sign_entries.append(
                         SignEntry(
                             reference=reference,
+                            pub_reference=f"{pub_registry}/{pub_iib_repo}",
                             repo=iib_repo,
                             digest=digest,
                             arch="amd64",
@@ -267,6 +271,7 @@ def task_iib_add_bundles(
     item_processor = item_processor_for_internal_data(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
+        target_settings["docker_settings"]["docker_reference_registry"],
         target_settings.get("retry_sleep_time", 5),
         quay_operator_namespace,
     )
@@ -401,6 +406,7 @@ def task_iib_remove_operators(
     item_processor = item_processor_for_internal_data(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
+        target_settings["docker_settings"]["docker_reference_registry"],
         target_settings.get("retry_sleep_time", 5),
         quay_operator_namespace,
     )
@@ -530,6 +536,7 @@ def task_iib_build_from_scratch(
     item_processor = item_processor_for_internal_data(
         quay_client,
         target_settings["quay_host"].rstrip("/"),
+        target_settings["docker_settings"]["docker_reference_registry"],
         target_settings.get("retry_sleep_time", 5),
         quay_operator_namespace,
     )

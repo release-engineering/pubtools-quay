@@ -348,6 +348,7 @@ class PushDocker:
         internal_item_processor = item_processor_for_internal_data(
             self.dest_quay_client,
             self.target_settings["quay_host"].rstrip("/"),
+            self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
             self.target_settings["quay_namespace"],
         )
@@ -503,6 +504,7 @@ class PushDocker:
         item_processor = item_processor_for_internal_data(
             self.dest_quay_client,
             self.target_settings["quay_host"].rstrip("/"),
+            self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
             self.target_settings["quay_namespace"],
         )
@@ -557,10 +559,13 @@ class PushDocker:
                             + ":"
                             + tag
                         )
+                        registry = self.dest_registries[0]
+                        pub_reference = f"{registry}/{repo}"
                         # add entries in internal format for cosign
                         to_sign_entries_internal.append(
                             SignEntry(
                                 reference=reference,
+                                pub_reference=pub_reference,
                                 repo=repo,
                                 digest=digest,
                                 signing_key=key,
@@ -572,6 +577,7 @@ class PushDocker:
                             to_sign_entries.append(
                                 SignEntry(
                                     reference=reference,
+                                    pub_reference="",
                                     repo=repo,
                                     digest=digest,
                                     signing_key=key,
@@ -666,6 +672,7 @@ class PushDocker:
         to_sign_entries = []
         item_processor = item_processor_for_internal_data(
             self.src_quay_client,
+            self.target_settings["quay_host"].rstrip("/"),
             self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
             self.target_settings["quay_namespace"],

@@ -528,6 +528,20 @@ class CosignSignerWrapper(SignerWrapper):
     #             LOG.warning("Fetch existing signatures error:" + esig[1])
     #     return rets
 
+    def sign_container_opt_args(
+        self, sign_entry: SignEntry, task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Return optional arguments for signing a container.
+
+        Args:
+            sign_entry (SignEntry): SignEntry to sign.
+            task_id (str): Task ID to identify the signing task if needed.
+
+        Returns:
+            dict: Optional arguments for signing a container.
+        """
+        return {"identity": sign_entry.pub_reference}
+
     def _filter_to_remove(
         self,
         signatures: List[Tuple[str, str, str]],

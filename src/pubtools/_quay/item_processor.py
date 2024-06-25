@@ -38,12 +38,14 @@ class SignEntry:
         signing_key (str): Signing key.
         repo (str): Repo reference in format <registry>/<repo>
         reference (str): Reference in format <registry>/<repo>:<tag>
+        pub_reference (str): Public repo reference in format <registry>/repo
         digest (str): Digest of the manifest.
         arch (str): Architecture of the manifest.
     """
 
     repo: str
     reference: str
+    pub_reference: str
     digest: str
     signing_key: str
     arch: str
@@ -393,6 +395,7 @@ class ItemProcesor:
     reference_processor: Union[ReferenceProcessorExternal, ReferenceProcessorInternal]
     reference_registries: List[str]
     source_registry: Optional[str]
+    public_registry: Optional[str]
 
     INTERNAL_DELIMITER = "----"
 
@@ -505,6 +508,7 @@ class ItemProcesor:
                     SignEntry(
                         repo=repo,
                         reference=reference,
+                        pub_reference=cast(str, self.public_registry) + "/" + repo,
                         digest=mad.digest,
                         arch=mad.arch,
                         signing_key=item.claims_signing_key,
@@ -700,17 +704,23 @@ def item_processor_for_external_data(
         reference_processor=ReferenceProcessorExternal(),
         reference_registries=external_registries,
         source_registry=None,
+        public_registry=external_registries[0],
     )
 
 
 def item_processor_for_internal_data(
-    quay_client: QuayClient, internal_registry: str, retry_sleep_time: int, internal_namespace: str
+    quay_client: QuayClient,
+    internal_registry: str,
+    external_registries: List[str],
+    retry_sleep_time: int,
+    internal_namespace: str,
 ) -> ItemProcesor:
     """Get instance of item processor configured to produce internal data.
 
     Args:
         quay_client (QuayClient): Quay client.
         internal_registry (str): Docker registry where containers are stored
+        external registries (str): List of external registries used for container identity.
         retry_sleep_time (int): sleep time bewteen retries for fetching data from registry.
         internal_namespace (str): Namespace of internal organization in the registry.
     Returns:
@@ -723,4 +733,5 @@ def item_processor_for_internal_data(
         reference_processor=reference_processor,
         reference_registries=["quay.io"],
         source_registry=internal_registry,
+        public_registry=external_registries[0],
     )

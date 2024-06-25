@@ -21,6 +21,7 @@ def test_generate_existing_tags_tolerate_missing(operator_signing_push_item):
     ip = ItemProcesor(
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
+        public_registry="",
         reference_processor=rp,
         extractor=ContentExtractor(quay_client=mock_client),
     )
@@ -37,6 +38,7 @@ def test_generate_existing_tags_no_tolerate_missing(operator_signing_push_item):
     ip = ItemProcesor(
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
+        public_registry="",
         reference_processor=rp,
         extractor=ContentExtractor(quay_client=mock_client),
     )
@@ -53,6 +55,7 @@ def test_generate_existing_tags_server_error(operator_signing_push_item):
     ip = ItemProcesor(
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
+        public_registry="",
         reference_processor=rp,
         extractor=ContentExtractor(quay_client=mock_client),
     )
@@ -69,6 +72,7 @@ def test_generate_existing_tags_server_error_tolerate_missing(operator_signing_p
     ip = ItemProcesor(
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
+        public_registry="",
         reference_processor=rp,
         extractor=ContentExtractor(quay_client=mock_client),
     )
@@ -164,6 +168,7 @@ def test_generate_existing_manifest_map_tolerate_429(operator_signing_push_item)
     ip = ItemProcesor(
         source_registry="test-registry.io",
         reference_registries=["dest-registry.io"],
+        public_registry="",
         reference_processor=rp,
         extractor=ContentExtractor(quay_client=mock_client, sleep_time=0),
     )
