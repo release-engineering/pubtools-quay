@@ -106,12 +106,12 @@ class SignerWrapper:
         self._run_store_signed(signatures)
 
     def sign_container_opt_args(
-        self, sign_entry: SignEntry, task_id: Optional[str] = None
+        self, sign_entry: List[SignEntry], task_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Return optional arguments for signing a container.
 
         Args:
-            sign_entry (SignEntry): SignEntry to sign.
+            sign_entries (List[SignEntry]): List of SignEntry.
             task_id (str): Task ID to identify the signing task if needed.
 
         Returns:
@@ -140,7 +140,7 @@ class SignerWrapper:
         if not sign_entries:
             return
         sign_entry = sign_entries[0]
-        opt_args = self.sign_container_opt_args(sign_entry, task_id)
+        opt_args = self.sign_container_opt_args(sign_entries, task_id)
         signed = self.entry_point(
             config_file=self.config_file,
             signing_key=sign_entry.signing_key,
@@ -225,12 +225,12 @@ class MsgSignerWrapper(SignerWrapper):
         return ret
 
     def sign_container_opt_args(
-        self, sign_entry: SignEntry, task_id: Optional[str] = None
+        self, sign_entries: List[SignEntry], task_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Return optional arguments for signing a container.
 
         Args:
-            sign_entry (SignEntry): SignEntry to sign.
+            sign_entries (List[SignEntry]): List of SignEntry.
             task_id (str): Task ID to identify the signing task if needed.
 
         Returns:
@@ -529,18 +529,18 @@ class CosignSignerWrapper(SignerWrapper):
     #     return rets
 
     def sign_container_opt_args(
-        self, sign_entry: SignEntry, task_id: Optional[str] = None
+        self, sign_entries: List[SignEntry], task_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Return optional arguments for signing a container.
 
         Args:
-            sign_entry (SignEntry): SignEntry to sign.
+            sign_entries (List[SignEntry]): List of SignEntry.
             task_id (str): Task ID to identify the signing task if needed.
 
         Returns:
             dict: Optional arguments for signing a container.
         """
-        return {"identity": sign_entry.pub_reference}
+        return {"identity": [sign_entry.pub_reference for sign_entry in sign_entries]}
 
     def _filter_to_remove(
         self,

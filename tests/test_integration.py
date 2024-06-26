@@ -330,7 +330,13 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:3333333333",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/target/repo",
+                    identity=[
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                    ],
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -381,7 +387,12 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/operators/index-image",
+                    identity=[
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                    ],
                 ),
                 mock.call(
                     config_file="test-config.yml",
@@ -398,7 +409,12 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/operators/index-image",
+                    identity=[
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                    ],
                 ),
             ]
         )
@@ -533,7 +549,13 @@ def test_push_docker_multiarch_simple_workflow(
                         "sha256:3333333333",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/target/repo",
+                    identity=[
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                    ],
                 ),
             ]
         )
@@ -667,7 +689,7 @@ def test_push_docker_source(
                     signing_key="fake-sign-key",
                     reference=["quay.io/some-namespace/target----repo:latest-test-tag"],
                     digest=["fake-digest-0"],
-                    identity="some-registry1.com/target/repo",
+                    identity=["some-registry1.com/target/repo"],
                 ),
             ]
         )
@@ -861,7 +883,11 @@ def test_tag_docker_multiarch_merge_ml(
                         "sha256:5555555555",
                         "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
                     ],
-                    identity="some-registry1.com/namespace/test_repo",
+                    identity=[
+                        "some-registry1.com/namespace/test_repo",
+                        "some-registry1.com/namespace/test_repo",
+                        "some-registry1.com/namespace/test_repo",
+                    ],
                 ),
             ]
         )
@@ -1069,7 +1095,7 @@ def test_tag_docker_source_copy_untag(
                     digest=[
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
                     ],
-                    identity="some-registry1.com/namespace/test_repo",
+                    identity=["some-registry1.com/namespace/test_repo"],
                 ),
             ]
         )
@@ -1360,7 +1386,12 @@ def test_task_iib_add_bundles(
                         "sha256:5555555555",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/operators/index-image",
+                    identity=[
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                        "some-registry1.com/operators/index-image",
+                    ],
                 ),
             ]
         )
@@ -1477,7 +1508,12 @@ def test_task_iib_remove_operators(
                     "quay.io/some-namespace/operators----index-image:8-timestamp",
                 ],
                 digest=["sha256:a1a1a1", "sha256:a1a1a1", "sha256:5555555555", "sha256:5555555555"],
-                identity="some-registry1.com/operators/index-image",
+                identity=[
+                    "some-registry1.com/operators/index-image",
+                    "some-registry1.com/operators/index-image",
+                    "some-registry1.com/operators/index-image",
+                    "some-registry1.com/operators/index-image",
+                ],
             ),
         ]
     )
@@ -1889,7 +1925,13 @@ def test_push_docker_operator_verify_bundle_fail(
                         "sha256:3333333333",
                         "sha256:5555555555",
                     ],
-                    identity="some-registry1.com/target/repo",
+                    identity=[
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                        "some-registry1.com/target/repo",
+                    ],
                 ),
             ]
         )

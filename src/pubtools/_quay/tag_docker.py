@@ -754,11 +754,11 @@ class TagDocker:
         else:
             ml_to_sign = json.dumps(new_manifest_list)
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
-        print(ml_to_sign)
 
         if push_item.claims_signing_key:
             # for cosign sign also manifest list
-            pub_reference = "https://" + registry + "/" + list(push_item.repos.keys())[0]
+            pub_registry = dest_registries[0]
+            pub_reference = pub_registry + "/" + list(push_item.repos.keys())[0]
             to_sign_entries_internal.append(
                 SignEntry(
                     repo=list(push_item.repos.keys())[0],
