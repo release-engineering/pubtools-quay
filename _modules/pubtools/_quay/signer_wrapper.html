@@ -187,12 +187,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_run_store_signed</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SignerWrapper.sign_container_opt_args"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.sign_container_opt_args">[docs]</a>    <span class="k">def</span> <span class="nf">sign_container_opt_args</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entry</span><span class="p">:</span> <span class="n">SignEntry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entry</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return optional arguments for signing a container.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            sign_entry (SignEntry): SignEntry to sign.</span>
+<span class="sd">            sign_entries (List[SignEntry]): List of SignEntry.</span>
 <span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
 
 <span class="sd">        Returns:</span>
@@ -221,7 +221,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sign_entries</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="n">sign_entry</span> <span class="o">=</span> <span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">opt_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_container_opt_args</span><span class="p">(</span><span class="n">sign_entry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
+        <span class="n">opt_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_container_opt_args</span><span class="p">(</span><span class="n">sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
         <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">(</span>
             <span class="n">config_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span>
             <span class="n">signing_key</span><span class="o">=</span><span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
@@ -306,12 +306,12 @@
         <span class="k">return</span> <span class="n">ret</span>
 
 <div class="viewcode-block" id="MsgSignerWrapper.sign_container_opt_args"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.MsgSignerWrapper.sign_container_opt_args">[docs]</a>    <span class="k">def</span> <span class="nf">sign_container_opt_args</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entry</span><span class="p">:</span> <span class="n">SignEntry</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return optional arguments for signing a container.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            sign_entry (SignEntry): SignEntry to sign.</span>
+<span class="sd">            sign_entries (List[SignEntry]): List of SignEntry.</span>
 <span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
 
 <span class="sd">        Returns:</span>
@@ -608,6 +608,20 @@
     <span class="c1">#         else:</span>
     <span class="c1">#             LOG.warning(&quot;Fetch existing signatures error:&quot; + esig[1])</span>
     <span class="c1">#     return rets</span>
+
+    <span class="k">def</span> <span class="nf">sign_container_opt_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return optional arguments for signing a container.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_entries (List[SignEntry]): List of SignEntry.</span>
+<span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: Optional arguments for signing a container.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;identity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">sign_entry</span><span class="o">.</span><span class="n">pub_reference</span> <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">]}</span>
 
     <span class="k">def</span> <span class="nf">_filter_to_remove</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
