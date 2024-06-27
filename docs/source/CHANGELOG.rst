@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.25.0 (2024-06-24)
+-------------------
+* Support pub_reference in SignEntry which translates to --sign-container-identity for cosign
+
+
 0.24.0 (2024-06-05)
 -------------------
 * Ensure that unusual cosign errors are raised
