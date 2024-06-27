@@ -548,6 +548,7 @@ class TagDocker:
             to_sign_entries_internal.append(
                 SignEntry(
                     repo=repo,
+                    pub_reference=registries[0] + "/" + list(push_item.repos.keys())[0],
                     reference="quay.io/"
                     + self.target_settings["quay_namespace"]
                     + "/"
@@ -566,6 +567,7 @@ class TagDocker:
                 to_sign_entries.append(
                     SignEntry(
                         repo=repo,
+                        pub_reference="",
                         reference=reference,
                         digest=details.digest,
                         signing_key=push_item.claims_signing_key,
@@ -577,6 +579,7 @@ class TagDocker:
             item_processor = item_processor_for_internal_data(
                 self.quay_client,
                 self.target_settings["quay_host"].rstrip("/"),
+                self.dest_registries[0],
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
@@ -666,9 +669,11 @@ class TagDocker:
             to_sign_entries_internal = []
 
             for manifest in new_manifest_list["manifests"]:
+                registry = dest_registries[0]
                 to_sign_entries_internal.append(
                     SignEntry(
                         repo=list(push_item.repos.keys())[0],
+                        pub_reference=registry + "/" + list(push_item.repos.keys())[0],
                         reference="quay.io/"
                         + self.target_settings["quay_namespace"]
                         + "/"
@@ -687,6 +692,7 @@ class TagDocker:
                     to_sign_entries.append(
                         SignEntry(
                             repo=list(push_item.repos.keys())[0],
+                            pub_reference="",
                             reference=reference,
                             digest=manifest["digest"],
                             arch=manifest["platform"]["architecture"],
@@ -701,6 +707,7 @@ class TagDocker:
             item_processor = item_processor_for_internal_data(
                 self.quay_client,
                 self.target_settings["quay_host"].rstrip("/"),
+                self.dest_registries[0],
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
@@ -747,13 +754,15 @@ class TagDocker:
         else:
             ml_to_sign = json.dumps(new_manifest_list)
             self.quay_client.upload_manifest(new_manifest_list, dest_image)
-        print(ml_to_sign)
 
         if push_item.claims_signing_key:
             # for cosign sign also manifest list
+            pub_registry = dest_registries[0]
+            pub_reference = pub_registry + "/" + list(push_item.repos.keys())[0]
             to_sign_entries_internal.append(
                 SignEntry(
                     repo=list(push_item.repos.keys())[0],
+                    pub_reference=pub_reference,
                     reference="quay.io/"
                     + self.target_settings["quay_namespace"]
                     + "/"
@@ -818,6 +827,7 @@ class TagDocker:
         item_processor = item_processor_for_internal_data(
             self.quay_client,
             self.target_settings["quay_host"].rstrip("/"),
+            self.dest_registries[0],
             self.target_settings.get("retry_sleep_time", 5),
             self.target_settings["quay_namespace"],
         )

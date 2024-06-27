@@ -120,7 +120,7 @@ def clear_repositories(repositories: str, settings: Dict[str, Any]) -> None:
     LOG.info("Clearing repositories '{0}'".format(repositories))
     quay_client = QuayClient(settings["quay_user"], settings["quay_password"])
     item_processor = item_processor_for_internal_data(
-        quay_client, "quay.io", 5, settings["quay_org"]
+        quay_client, "quay.io", [""], 5, settings["quay_org"]
     )
     item_processor.extractor.full_extract = True
 

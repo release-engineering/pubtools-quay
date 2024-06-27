@@ -14,3 +14,4 @@ kerberos
 marshmallow
 urllib3<2
 pubtools-sign>0.0.6
+docker

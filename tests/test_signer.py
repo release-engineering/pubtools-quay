@@ -33,6 +33,7 @@ def test_sign_containers_failed():
             sw._sign_containers(
                 [
                     SignEntry(
+                        pub_reference="",
                         reference="fake-reference",
                         digest="fake-digest",
                         signing_key="fake-signing-key",

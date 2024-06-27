@@ -119,7 +119,7 @@ def remove_repositories(repositories: str, settings: Dict[str, Any]) -> None:
     quay_api_client = QuayApiClient(settings["quay_api_token"])
     quay_client = QuayClient(settings["quay_user"], settings["quay_password"], "quay.io")
     item_processor = item_processor_for_internal_data(
-        quay_client, "quay.io", 5, settings["quay_org"]
+        quay_client, "quay.io", [""], 5, settings["quay_org"]
     )
     item_processor.extractor.full_extract = True
     # Remove repository doesn't work with push item by default, therefore we create VirtualPushItem
