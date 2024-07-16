@@ -551,7 +551,7 @@ class PushDocker:
                 for tag, digests in tag_digests.items():
                     for type_, digest_key in digests.items():
                         digest, key = digest_key
-                        reference = (
+                        internal_reference = (
                             f"{internal_reg}/"
                             + self.target_settings["quay_namespace"]
                             + "/"
@@ -559,20 +559,19 @@ class PushDocker:
                             + ":"
                             + tag
                         )
-                        registry = self.dest_registries[0]
-                        pub_reference = f"{registry}/{repo}"
-                        # add entries in internal format for cosign
-                        to_sign_entries_internal.append(
-                            SignEntry(
-                                reference=reference,
-                                pub_reference=pub_reference,
-                                repo=repo,
-                                digest=digest,
-                                signing_key=key,
-                                arch="amd64",
-                            )
-                        )
                         for registry in self.dest_registries:
+                            pub_reference = f"{registry}/{repo}@{digest}"
+                            # add entries in internal format for cosign
+                            to_sign_entries_internal.append(
+                                SignEntry(
+                                    reference=internal_reference,
+                                    pub_reference=pub_reference,
+                                    repo=repo,
+                                    digest=digest,
+                                    signing_key=key,
+                                    arch="amd64",
+                                )
+                            )
                             reference = f"{registry}/{repo}:{tag}"
                             to_sign_entries.append(
                                 SignEntry(
