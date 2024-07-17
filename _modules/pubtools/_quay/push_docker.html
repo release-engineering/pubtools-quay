@@ -632,7 +632,7 @@
                 <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">digests</span> <span class="ow">in</span> <span class="n">tag_digests</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="k">for</span> <span class="n">type_</span><span class="p">,</span> <span class="n">digest_key</span> <span class="ow">in</span> <span class="n">digests</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                         <span class="n">digest</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">digest_key</span>
-                        <span class="n">reference</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">internal_reference</span> <span class="o">=</span> <span class="p">(</span>
                             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">internal_reg</span><span class="si">}</span><span class="s2">/&quot;</span>
                             <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
                             <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
@@ -640,20 +640,19 @@
                             <span class="o">+</span> <span class="s2">&quot;:&quot;</span>
                             <span class="o">+</span> <span class="n">tag</span>
                         <span class="p">)</span>
-                        <span class="n">registry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="n">pub_reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">&quot;</span>
-                        <span class="c1"># add entries in internal format for cosign</span>
-                        <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                            <span class="n">SignEntry</span><span class="p">(</span>
-                                <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span>
-                                <span class="n">pub_reference</span><span class="o">=</span><span class="n">pub_reference</span><span class="p">,</span>
-                                <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
-                                <span class="n">digest</span><span class="o">=</span><span class="n">digest</span><span class="p">,</span>
-                                <span class="n">signing_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
-                                <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
-                            <span class="p">)</span>
-                        <span class="p">)</span>
                         <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">:</span>
+                            <span class="n">pub_reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="c1"># add entries in internal format for cosign</span>
+                            <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="n">SignEntry</span><span class="p">(</span>
+                                    <span class="n">reference</span><span class="o">=</span><span class="n">internal_reference</span><span class="p">,</span>
+                                    <span class="n">pub_reference</span><span class="o">=</span><span class="n">pub_reference</span><span class="p">,</span>
+                                    <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
+                                    <span class="n">digest</span><span class="o">=</span><span class="n">digest</span><span class="p">,</span>
+                                    <span class="n">signing_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                                    <span class="n">arch</span><span class="o">=</span><span class="s2">&quot;amd64&quot;</span><span class="p">,</span>
+                                <span class="p">)</span>
+                            <span class="p">)</span>
                             <span class="n">reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="n">to_sign_entries</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                                 <span class="n">SignEntry</span><span class="p">(</span>
