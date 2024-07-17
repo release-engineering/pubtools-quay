@@ -98,10 +98,8 @@ def _index_image_to_sign_entries(
     iib_repo = target_settings["quay_operator_repository"]
     pub_iib_repo = target_settings["quay_operator_repository"]
     dest_registries = target_settings["docker_settings"]["docker_reference_registry"]
-    pub_registry = dest_registries[0]
     dest_registries = dest_registries if isinstance(dest_registries, list) else [dest_registries]
     if internal:
-        dest_registries = ["quay.io"]
         iib_repo = (
             target_settings.get("quay_operator_namespace", target_settings["quay_namespace"])
             + "/"
@@ -131,8 +129,9 @@ def _index_image_to_sign_entries(
                 for key in signing_keys:
                     to_sign_entries.append(
                         SignEntry(
-                            reference=f"{registry}/{iib_repo}:{_dest_tag}",
-                            pub_reference=f"{pub_registry}/{pub_iib_repo}",
+                            reference=f"quay.io/{iib_repo}:{_dest_tag}",
+                            pub_reference=f"{registry}/{pub_iib_repo}@"
+                            f"{headers['docker-content-digest']}",
                             repo=iib_repo,
                             digest=headers["docker-content-digest"],
                             arch="amd64",
@@ -143,12 +142,15 @@ def _index_image_to_sign_entries(
     for registry in dest_registries:
         for _dest_tag in dest_tags:
             for digest in index_image_digests:
-                reference = f"{registry}/{iib_repo}:{_dest_tag}"
+                if internal:
+                    reference = f"quay.io/{iib_repo}:{_dest_tag}"
+                else:
+                    reference = f"{registry}/{iib_repo}:{_dest_tag}"
                 for key in signing_keys:
                     to_sign_entries.append(
                         SignEntry(
                             reference=reference,
-                            pub_reference=f"{pub_registry}/{pub_iib_repo}",
+                            pub_reference=f"{registry}/{pub_iib_repo}@{digest}",
                             repo=iib_repo,
                             digest=digest,
                             arch="amd64",

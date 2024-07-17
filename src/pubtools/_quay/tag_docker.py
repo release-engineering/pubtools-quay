@@ -544,26 +544,24 @@ class TagDocker:
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         if push_item.claims_signing_key:
-            # add entries in internal format for cosign
-            to_sign_entries_internal.append(
-                SignEntry(
-                    repo=repo,
-                    pub_reference=registries[0] + "/" + list(push_item.repos.keys())[0],
-                    reference="quay.io/"
-                    + self.target_settings["quay_namespace"]
-                    + "/"
-                    + get_internal_container_repo_name(list(push_item.repos.keys())[0])
-                    + ":"
-                    + tag,
-                    digest=details.digest,
-                    signing_key=push_item.claims_signing_key,
-                    arch="amd64",
-                )
-            )
             for registry in registries:
-                reference = external_image_schema.format(
-                    host=registry, repo=list(push_item.repos.keys())[0], tag=tag
+                # add entries in internal format for cosign
+                to_sign_entries_internal.append(
+                    SignEntry(
+                        repo=repo,
+                        pub_reference=f"{registry}/{repo}@{details.digest}",
+                        reference="quay.io/"
+                        + self.target_settings["quay_namespace"]
+                        + "/"
+                        + internal_repo
+                        + ":"
+                        + tag,
+                        digest=details.digest,
+                        signing_key=push_item.claims_signing_key,
+                        arch="amd64",
+                    )
                 )
+                reference = external_image_schema.format(host=registry, repo=repo, tag=tag)
                 to_sign_entries.append(
                     SignEntry(
                         repo=repo,
@@ -579,7 +577,7 @@ class TagDocker:
             item_processor = item_processor_for_internal_data(
                 self.quay_client,
                 self.target_settings["quay_host"].rstrip("/"),
-                self.dest_registries[0],
+                self.dest_registries,
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
@@ -649,7 +647,8 @@ class TagDocker:
         external_image_schema = "{host}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
 
-        internal_repo = get_internal_container_repo_name(list(push_item.repos.keys())[0])
+        repo = list(push_item.repos.keys())[0]
+        internal_repo = get_internal_container_repo_name(repo)
         full_repo = full_repo_schema.format(
             host=self.quay_host, namespace=namespace, repo=internal_repo
         )
@@ -669,29 +668,26 @@ class TagDocker:
             to_sign_entries_internal = []
 
             for manifest in new_manifest_list["manifests"]:
-                registry = dest_registries[0]
-                to_sign_entries_internal.append(
-                    SignEntry(
-                        repo=list(push_item.repos.keys())[0],
-                        pub_reference=registry + "/" + list(push_item.repos.keys())[0],
-                        reference="quay.io/"
-                        + self.target_settings["quay_namespace"]
-                        + "/"
-                        + internal_repo
-                        + ":"
-                        + tag,
-                        digest=manifest["digest"],
-                        arch=manifest["platform"]["architecture"],
-                        signing_key=push_item.claims_signing_key,
-                    )
-                )
                 for registry in dest_registries:
-                    reference = external_image_schema.format(
-                        host=registry, repo=list(push_item.repos.keys())[0], tag=tag
+                    to_sign_entries_internal.append(
+                        SignEntry(
+                            repo=repo,
+                            pub_reference=f"{registry}/{repo}@{manifest['digest']}",
+                            reference="quay.io/"
+                            + self.target_settings["quay_namespace"]
+                            + "/"
+                            + internal_repo
+                            + ":"
+                            + tag,
+                            digest=manifest["digest"],
+                            arch=manifest["platform"]["architecture"],
+                            signing_key=push_item.claims_signing_key,
+                        )
                     )
+                    reference = external_image_schema.format(host=registry, repo=repo, tag=tag)
                     to_sign_entries.append(
                         SignEntry(
-                            repo=list(push_item.repos.keys())[0],
+                            repo=repo,
                             pub_reference="",
                             reference=reference,
                             digest=manifest["digest"],
@@ -707,7 +703,7 @@ class TagDocker:
             item_processor = item_processor_for_internal_data(
                 self.quay_client,
                 self.target_settings["quay_host"].rstrip("/"),
-                self.dest_registries[0],
+                self.dest_registries,
                 self.target_settings.get("retry_sleep_time", 5),
                 self.target_settings["quay_namespace"],
             )
@@ -757,23 +753,23 @@ class TagDocker:
 
         if push_item.claims_signing_key:
             # for cosign sign also manifest list
-            pub_registry = dest_registries[0]
-            pub_reference = pub_registry + "/" + list(push_item.repos.keys())[0]
-            to_sign_entries_internal.append(
-                SignEntry(
-                    repo=list(push_item.repos.keys())[0],
-                    pub_reference=pub_reference,
-                    reference="quay.io/"
-                    + self.target_settings["quay_namespace"]
-                    + "/"
-                    + internal_repo
-                    + ":"
-                    + tag,
-                    digest="sha256:" + hashlib.sha256(ml_to_sign.encode("utf-8")).hexdigest(),
-                    arch="",
-                    signing_key=push_item.claims_signing_key,
+            digest = "sha256:" + hashlib.sha256(ml_to_sign.encode("utf-8")).hexdigest()
+            for pub_registry in dest_registries:
+                to_sign_entries_internal.append(
+                    SignEntry(
+                        repo=repo,
+                        pub_reference=f"{pub_registry}/{repo}@{digest}",
+                        reference="quay.io/"
+                        + self.target_settings["quay_namespace"]
+                        + "/"
+                        + internal_repo
+                        + ":"
+                        + tag,
+                        digest=digest,
+                        arch="",
+                        signing_key=push_item.claims_signing_key,
+                    )
                 )
-            )
 
             set_aws_kms_environment_variables(self.target_settings, "cosign_signer")
             for signer in self.target_settings["signing"]:
@@ -827,7 +823,7 @@ class TagDocker:
         item_processor = item_processor_for_internal_data(
             self.quay_client,
             self.target_settings["quay_host"].rstrip("/"),
-            self.dest_registries[0],
+            self.dest_registries,
             self.target_settings.get("retry_sleep_time", 5),
             self.target_settings["quay_namespace"],
         )

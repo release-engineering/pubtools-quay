@@ -395,7 +395,7 @@ class ItemProcesor:
     reference_processor: Union[ReferenceProcessorExternal, ReferenceProcessorInternal]
     reference_registries: List[str]
     source_registry: Optional[str]
-    public_registry: Optional[str]
+    public_registries: List[str]
 
     INTERNAL_DELIMITER = "----"
 
@@ -504,16 +504,18 @@ class ItemProcesor:
             for mad in man_arch_digs:
                 if mad.type_ == QuayClient.MANIFEST_LIST_TYPE and not include_manifest_lists:
                     continue
-                to_sign.append(
-                    SignEntry(
-                        repo=repo,
-                        reference=reference,
-                        pub_reference=cast(str, self.public_registry) + "/" + repo,
-                        digest=mad.digest,
-                        arch=mad.arch,
-                        signing_key=item.claims_signing_key,
+                public_registries = self.public_registries if registry == "quay.io" else [registry]
+                for public_registry in public_registries:
+                    to_sign.append(
+                        SignEntry(
+                            repo=repo,
+                            reference=reference,
+                            pub_reference=f"{public_registry}/{repo}@{mad.digest}",
+                            digest=mad.digest,
+                            arch=mad.arch,
+                            signing_key=item.claims_signing_key,
+                        )
                     )
-                )
         return to_sign
 
     def generate_to_unsign(self, item: PushItem) -> List[Dict[str, Any]]:
@@ -704,7 +706,7 @@ def item_processor_for_external_data(
         reference_processor=ReferenceProcessorExternal(),
         reference_registries=external_registries,
         source_registry=None,
-        public_registry=external_registries[0],
+        public_registries=external_registries,
     )
 
 
@@ -733,5 +735,5 @@ def item_processor_for_internal_data(
         reference_processor=reference_processor,
         reference_registries=["quay.io"],
         source_registry=internal_registry,
-        public_registry=external_registries[0],
+        public_registries=external_registries,
     )
