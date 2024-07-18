@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.26.0 (2024-07-18)
+-------------------
+* Support multiple identities and tag annotations for cosign signing
+
 0.25.0 (2024-06-24)
 -------------------
 * Support pub_reference in SignEntry which translates to --sign-container-identity for cosign
