@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.26.1 (2024-07-19)
+-------------------
+* Bumped pubtools-sign dependency
+
 0.26.0 (2024-07-18)
 -------------------
 * Support multiple identities and tag annotations for cosign signing
