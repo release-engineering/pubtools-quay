@@ -510,7 +510,7 @@ class ItemProcesor:
                         SignEntry(
                             repo=repo,
                             reference=reference,
-                            pub_reference=f"{public_registry}/{repo}@{mad.digest}",
+                            pub_reference=f"{public_registry}/{repo}:{tag}",
                             digest=mad.digest,
                             arch=mad.arch,
                             signing_key=item.claims_signing_key,

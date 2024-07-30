@@ -130,8 +130,7 @@ def _index_image_to_sign_entries(
                     to_sign_entries.append(
                         SignEntry(
                             reference=f"quay.io/{iib_repo}:{_dest_tag}",
-                            pub_reference=f"{registry}/{pub_iib_repo}@"
-                            f"{headers['docker-content-digest']}",
+                            pub_reference=f"{registry}/{pub_iib_repo}:{_dest_tag}",
                             repo=iib_repo,
                             digest=headers["docker-content-digest"],
                             arch="amd64",
@@ -150,7 +149,7 @@ def _index_image_to_sign_entries(
                     to_sign_entries.append(
                         SignEntry(
                             reference=reference,
-                            pub_reference=f"{registry}/{pub_iib_repo}@{digest}",
+                            pub_reference=f"{registry}/{pub_iib_repo}:{_dest_tag}",
                             repo=iib_repo,
                             digest=digest,
                             arch="amd64",

@@ -549,7 +549,7 @@ class TagDocker:
                 to_sign_entries_internal.append(
                     SignEntry(
                         repo=repo,
-                        pub_reference=f"{registry}/{repo}@{details.digest}",
+                        pub_reference=f"{registry}/{repo}:{tag}",
                         reference="quay.io/"
                         + self.target_settings["quay_namespace"]
                         + "/"

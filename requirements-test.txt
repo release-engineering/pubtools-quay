@@ -17,3 +17,4 @@ types-setuptools
 types-paramiko
 types-PyYAML
 pubtools>=1.4.0
+pip
