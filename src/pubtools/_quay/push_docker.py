@@ -560,7 +560,7 @@ class PushDocker:
                             + tag
                         )
                         for registry in self.dest_registries:
-                            pub_reference = f"{registry}/{repo}@{digest}"
+                            pub_reference = f"{registry}/{repo}:{tag}"
                             # add entries in internal format for cosign
                             to_sign_entries_internal.append(
                                 SignEntry(

@@ -1,7 +1,7 @@
 import functools
 import logging
 import argparse
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, cast
 
 from pubtools.pluggy import pm, task_context
 
@@ -264,11 +264,11 @@ def tag_images(
             | functools.partial[LocalExecutor]
         ) = functools.partial(
             RemoteExecutor,
-            ssh_remote_host,
+            cast(str, ssh_remote_host),
             ssh_username,
             ssh_key_filename,
             ssh_password,
-            ssh_remote_host_port,
+            cast(int, ssh_remote_host_port),
             accept_host,
         )
     elif container_exec:
@@ -276,7 +276,7 @@ def tag_images(
             docker_timeout = int(docker_timeout)
         executor_class = functools.partial(
             ContainerExecutor,
-            container_image,
+            cast(str, container_image),
             docker_url,
             docker_timeout,
             docker_verify_tls,
