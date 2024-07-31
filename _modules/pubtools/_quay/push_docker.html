@@ -641,7 +641,7 @@
                             <span class="o">+</span> <span class="n">tag</span>
                         <span class="p">)</span>
                         <span class="k">for</span> <span class="n">registry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_registries</span><span class="p">:</span>
-                            <span class="n">pub_reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">digest</span><span class="si">}</span><span class="s2">&quot;</span>
+                            <span class="n">pub_reference</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">registry</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span>
                             <span class="c1"># add entries in internal format for cosign</span>
                             <span class="n">to_sign_entries_internal</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                                 <span class="n">SignEntry</span><span class="p">(</span>

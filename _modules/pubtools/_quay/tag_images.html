@@ -82,7 +82,7 @@
 <span></span><span class="kn">import</span> <span class="nn">functools</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">argparse</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">pm</span><span class="p">,</span> <span class="n">task_context</span>
 
@@ -345,11 +345,11 @@
             <span class="o">|</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">[</span><span class="n">LocalExecutor</span><span class="p">]</span>
         <span class="p">)</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
             <span class="n">RemoteExecutor</span><span class="p">,</span>
-            <span class="n">ssh_remote_host</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">ssh_remote_host</span><span class="p">),</span>
             <span class="n">ssh_username</span><span class="p">,</span>
             <span class="n">ssh_key_filename</span><span class="p">,</span>
             <span class="n">ssh_password</span><span class="p">,</span>
-            <span class="n">ssh_remote_host_port</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">ssh_remote_host_port</span><span class="p">),</span>
             <span class="n">accept_host</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">container_exec</span><span class="p">:</span>
@@ -357,7 +357,7 @@
             <span class="n">docker_timeout</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">docker_timeout</span><span class="p">)</span>
         <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
             <span class="n">ContainerExecutor</span><span class="p">,</span>
-            <span class="n">container_image</span><span class="p">,</span>
+            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">container_image</span><span class="p">),</span>
             <span class="n">docker_url</span><span class="p">,</span>
             <span class="n">docker_timeout</span><span class="p">,</span>
             <span class="n">docker_verify_tls</span><span class="p">,</span>
