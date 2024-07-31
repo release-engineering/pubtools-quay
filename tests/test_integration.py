@@ -950,12 +950,12 @@ def test_tag_docker_multiarch_merge_ml(
                         "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
                     ],
                     identity=[
-                        "some-registry1.com/namespace/test_repo@sha256:1111111111",
-                        "some-registry2.com/namespace/test_repo@sha256:1111111111",
-                        "some-registry1.com/namespace/test_repo@sha256:5555555555",
-                        "some-registry2.com/namespace/test_repo@sha256:5555555555",
-                        "some-registry1.com/namespace/test_repo@sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
-                        "some-registry2.com/namespace/test_repo@sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
+                        "some-registry1.com/namespace/test_repo:v1.6",
+                        "some-registry2.com/namespace/test_repo:v1.6",
+                        "some-registry1.com/namespace/test_repo:v1.6",
+                        "some-registry2.com/namespace/test_repo:v1.6",
+                        "some-registry1.com/namespace/test_repo:v1.6",
+                        "some-registry2.com/namespace/test_repo:v1.6",
                     ],
                 ),
             ]

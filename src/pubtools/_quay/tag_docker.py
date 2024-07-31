@@ -672,7 +672,7 @@ class TagDocker:
                     to_sign_entries_internal.append(
                         SignEntry(
                             repo=repo,
-                            pub_reference=f"{registry}/{repo}@{manifest['digest']}",
+                            pub_reference=f"{registry}/{repo}:{tag}",
                             reference="quay.io/"
                             + self.target_settings["quay_namespace"]
                             + "/"
@@ -758,7 +758,7 @@ class TagDocker:
                 to_sign_entries_internal.append(
                     SignEntry(
                         repo=repo,
-                        pub_reference=f"{pub_registry}/{repo}@{digest}",
+                        pub_reference=f"{pub_registry}/{repo}:{tag}",
                         reference="quay.io/"
                         + self.target_settings["quay_namespace"]
                         + "/"
