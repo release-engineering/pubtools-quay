@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.26.2 (2024-07-19)
+-------------------
+* Use tag reference in cosign identity
+
 0.26.1 (2024-07-19)
 -------------------
 * Bumped pubtools-sign dependency
