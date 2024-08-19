@@ -303,6 +303,45 @@ def test_iib_remove_operators(mock_run_entrypoint, target_settings, operator_pus
     )
 
 
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+def test_iib_add_deprecations(mock_run_entrypoint, target_settings, operator_push_item_ok):
+    mock_run_entrypoint.return_value = "some-data"
+    pusher = operator_pusher.OperatorPusher([operator_push_item_ok], "3", target_settings)
+    result = pusher.iib_add_deprecations(
+        "registry.com/rh-osbs/iib-pub-pending:v4.5",
+        '{"a": "b"}',
+        "operator1",
+        ["tag1", "tag2"],
+        pusher.target_settings,
+    )
+
+    assert result == "some-data"
+    mock_run_entrypoint.assert_called_once_with(
+        ("pubtools-iib", "console_scripts", "pubtools-iib-add-deprecations"),
+        "pubtools-iib-add-deprecations",
+        [
+            "--iib-server",
+            "iib-server.com",
+            "--iib-krb-principal",
+            "some-principal@REDHAT.COM",
+            "--overwrite-from-index",
+            "--iib-krb-ktfile",
+            "/etc/pub/some.keytab",
+            "--index-image",
+            "registry.com/rh-osbs/iib-pub-pending:v4.5",
+            "--deprecation-schema",
+            '{"a": "b"}',
+            "--operator-package",
+            "operator1",
+            "--build-tag",
+            "tag1",
+            "--build-tag",
+            "tag2",
+        ],
+        {"OVERWRITE_FROM_INDEX_TOKEN": "some-user:some-pass"},
+    )
+
+
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")

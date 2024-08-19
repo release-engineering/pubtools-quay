@@ -304,17 +304,14 @@ def test_task_iib_add_bundles(
                 "docker-content-digest": "manifest_list_digest",
             },
         )
-        mock_hub = mock.MagicMock()
         iib_operations.task_iib_add_bundles(
             ["bundle1", "bundle2"],
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:8",
             ["bundle3", "bundle4"],
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -436,17 +433,14 @@ def test_task_iib_add_bundles_missing_manifest_list(
             json=None,
             headers={"Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json"},
         )
-        mock_hub = mock.MagicMock()
         iib_operations.task_iib_add_bundles(
             ["bundle1", "bundle2"],
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:8",
             ["bundle3", "bundle4"],
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -565,7 +559,6 @@ def test_task_iib_add_bundles_operator_ns(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -625,10 +618,8 @@ def test_task_iib_add_bundles_operator_ns(
             "some-registry.com/redhat-namespace/new-index-image:8",
             ["bundle3", "bundle4"],
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -892,7 +883,6 @@ def test_task_iib_remove_operators(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
 
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
@@ -917,10 +907,8 @@ def test_task_iib_remove_operators(
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -979,7 +967,6 @@ def test_task_iib_remove_operators_missing_manifest_list(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
 
     with requests_mock.Mocker() as m:
         m.get(
@@ -992,10 +979,8 @@ def test_task_iib_remove_operators_missing_manifest_list(
             ["arch1", "arch2"],
             "some-registry.com/iib-namespace/new-index-image:8",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -1056,7 +1041,6 @@ def test_task_iib_remove_operators_operator_ns(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1077,10 +1061,8 @@ def test_task_iib_remove_operators_operator_ns(
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -1139,7 +1121,6 @@ def test_task_iib_build_from_scratch(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1162,10 +1143,8 @@ def test_task_iib_build_from_scratch(
             ["arch1", "arch2"],
             "8",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -1421,7 +1400,6 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
         signer_wrapper_entry_point,
         signer_wrapper_run_entry_point,
     )
-    mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
         m.get(
             "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
@@ -1433,10 +1411,8 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
             ["arch1", "arch2"],
             "8",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -1583,7 +1559,6 @@ def test_task_iib_build_from_scratch_operator_ns(
         signer_wrapper_run_entry_point,
     )
     # mock_get_index_image_signatures)
-    mock_hub = mock.MagicMock()
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1604,10 +1579,8 @@ def test_task_iib_build_from_scratch_operator_ns(
             ["arch1", "arch2"],
             "8",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     mock_verify_target_settings.assert_called_once_with(target_settings)
@@ -1838,19 +1811,100 @@ def test_task_iib_build_from_scratch_operator_ns(
     )
 
 
+@mock.patch("pubtools._quay.iib_operations.ContainerImagePusher.run_tag_images")
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_deprecations")
+@mock.patch("pubtools._quay.iib_operations.verify_target_settings")
+def test_task_iib_add_deprecations(
+    mock_verify_target_settings,
+    mock_iib_add_deprecations,
+    mock_run_tag_images,
+    mock_timestamp,
+    signer_wrapper_entry_point,
+    signer_wrapper_run_entry_point,
+    msg_signer_wrapper_save_signatures_file,
+    signer_wrapper_remove_signatures,
+    fake_quay_client_get_operator_quay_client,
+    target_settings,
+    fake_cert_key_paths,
+    v2s1_manifest,
+    src_manifest_list,
+    fixture_run_in_parallel,
+):
+    fake_setup(
+        fake_quay_client_get_operator_quay_client,
+        mock_iib_add_deprecations,
+        signer_wrapper_entry_point,
+        signer_wrapper_run_entry_point,
+    )
+
+    with requests_mock.Mocker() as m:
+        mock_manifest_list_requests(
+            m,
+            "https://quay.io/v2/some-namespace/operators----index-image/manifests/8",
+            src_manifest_list,
+            v2s1_manifest,
+        )
+        # manifests for removal of old signatures
+        m.get(
+            "https://quay.io"
+            "/v2/some-namespace/operators----index-image/manifests/manifest_list_digest",
+            json=src_manifest_list,
+            headers={
+                "Content-Type": "application/vnd.docker.distribution.manifest.list.v2+json",
+                "docker-content-digest": "manifest_list_digest",
+            },
+        )
+
+        iib_operations.task_iib_add_deprecations(
+            "some-registry.com/redhat-namespace/new-index-image:5",
+            '{"a": "b"}',
+            "operator1",
+            ["some-key"],
+            "1",
+            target_settings,
+        )
+
+    mock_verify_target_settings.assert_called_once_with(target_settings)
+    mock_iib_add_deprecations.assert_called_once_with(
+        index_image="some-registry.com/redhat-namespace/new-index-image:5",
+        deprecation_schema='{"a": "b"}',
+        operator_package="operator1",
+        build_tags=["5-1"],
+        target_settings=target_settings,
+    )
+    assert mock_run_tag_images.call_count == 2
+    assert mock_run_tag_images.call_args_list[0] == mock.call(
+        "some-registry.com/iib-namespace/new-index-image:8",
+        [
+            "quay.io/some-namespace/operators----index-image:8",
+        ],
+        True,
+        target_settings,
+    )
+    assert mock_run_tag_images.call_args_list[1] == mock.call(
+        "some-registry.com/iib-namespace/iib:8-1",
+        [
+            "quay.io/some-namespace/operators----index-image:8-timestamp",
+        ],
+        True,
+        target_settings,
+    )
+    signer_wrapper_remove_signatures.mock_calls == [
+        mock.call([1]),
+        mock.call([("operators/index-image", "sha256:5555555555")]),
+    ]
+
+
 @mock.patch("pubtools._quay.iib_operations.task_iib_add_bundles")
 def test_iib_add_entrypoint(mock_add_bundles, target_settings):
-    mock_hub = mock.MagicMock()
     iib_operations.iib_add_entrypoint(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["bundle3", "bundle4"],
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
     )
 
     mock_add_bundles.assert_called_once_with(
@@ -1859,25 +1913,20 @@ def test_iib_add_entrypoint(mock_add_bundles, target_settings):
         "some-registry.com/index-image:5",
         ["bundle3", "bundle4"],
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
     )
 
 
 @mock.patch("pubtools._quay.iib_operations.task_iib_remove_operators")
 def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
-    mock_hub = mock.MagicMock()
     iib_operations.iib_remove_entrypoint(
         ["operator1", "operator2"],
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
     )
 
     mock_remove_operators.assert_called_once_with(
@@ -1885,25 +1934,20 @@ def test_iib_remove_entrypoint(mock_remove_operators, target_settings):
         ["arch1", "arch2"],
         "some-registry.com/index-image:5",
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
     )
 
 
 @mock.patch("pubtools._quay.iib_operations.task_iib_build_from_scratch")
 def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
-    mock_hub = mock.MagicMock()
     iib_operations.iib_from_scratch_entrypoint(
         ["bundle1", "bundle2"],
         ["arch1", "arch2"],
         "12",
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
     )
 
     mock_build_from_scratch.assert_called_once_with(
@@ -1911,17 +1955,35 @@ def test_iib_from_scratch_entrypoint(mock_build_from_scratch, target_settings):
         ["arch1", "arch2"],
         "12",
         ["some-key"],
-        mock_hub,
         "1",
         target_settings,
-        "some-target",
+    )
+
+
+@mock.patch("pubtools._quay.iib_operations.task_iib_add_deprecations")
+def test_iib_add_deprecations(mock_add_deprecations, target_settings):
+    iib_operations.iib_add_deprecations_entrypoint(
+        "some-registry.com/redhat-namespace/new-index-image:5",
+        '{"a": "b"}',
+        "operator1",
+        ["some-key"],
+        "1",
+        target_settings,
+    )
+
+    mock_add_deprecations.assert_called_once_with(
+        "some-registry.com/redhat-namespace/new-index-image:5",
+        '{"a": "b"}',
+        "operator1",
+        ["some-key"],
+        "1",
+        target_settings,
     )
 
 
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
 def test_task_iib_add_bundles_fail(mock_iib_add_bundles, target_settings):
     mock_iib_add_bundles.return_value = False
-    mock_hub = mock.MagicMock()
     with pytest.raises(SystemExit):
         iib_operations.task_iib_add_bundles(
             ["bundle1", "bundle2"],
@@ -1929,42 +1991,48 @@ def test_task_iib_add_bundles_fail(mock_iib_add_bundles, target_settings):
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["bundle3", "bundle4"],
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
 
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_remove_operators")
 def test_task_iib_remove_operators_fail(mock_iib_remove_operators, target_settings):
     mock_iib_remove_operators.return_value = False
-    mock_hub = mock.MagicMock()
     with pytest.raises(SystemExit):
         iib_operations.task_iib_remove_operators(
             ["operator1", "operator2"],
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
 
 @mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_bundles")
 def test_task_iib_build_from_scratch_fail(mock_iib_add_bundles, target_settings):
     mock_iib_add_bundles.return_value = False
-    mock_hub = mock.MagicMock()
     with pytest.raises(SystemExit):
         iib_operations.task_iib_build_from_scratch(
             ["bundle1", "bundle2"],
             ["arch1", "arch2"],
             "12",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
+        )
+
+
+@mock.patch("pubtools._quay.iib_operations.OperatorPusher.iib_add_deprecations")
+def test_task_iib_add_deprecations_fail(mock_iib_add_deprecations, target_settings):
+    mock_iib_add_deprecations.return_value = False
+    with pytest.raises(SystemExit):
+        iib_operations.task_iib_add_deprecations(
+            "some-registry.com/redhat-namespace/new-index-image:5",
+            '{"a": "b"}',
+            "operator1",
+            ["some-key"],
+            "1",
+            target_settings,
         )

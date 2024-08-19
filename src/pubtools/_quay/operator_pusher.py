@@ -388,6 +388,58 @@ class OperatorPusher:
             env_vars,
         )
 
+    @classmethod
+    @tx.instrument_func()
+    def iib_add_deprecations(
+        cls,
+        index_image: Optional[str] = None,
+        deprecation_schema: Optional[str] = None,
+        operator_package: Optional[str] = None,
+        build_tags: Optional[List[str]] = None,
+        target_settings: Dict[str, Any] = {},
+    ) -> Any:
+        """
+        Construct and execute pubtools-iib command to add deprecations of an operator package.
+
+        Args:
+            index_image (str):
+                Index image to add the bundles to.
+            deprecation_schema (str):
+                JSON formatted deprecation schema.
+            operator_package (str):
+                Operator package to add deprecations to.
+            build_tags ([str]):
+                Extra tags that the new index image should be tagged with.
+            target_settings (dict):
+                Settings used for setting the value of pubtools-iib parameters.
+
+        Returns (dict):
+            Build details provided by IIB.
+        """
+        LOG.info(
+            "Requesting IIB to add deprecations to package '{0}' in index image '{1}'".format(
+                operator_package, index_image
+            )
+        )
+        args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
+
+        if index_image:
+            args += ["--index-image", index_image]
+        if deprecation_schema:
+            args += ["--deprecation-schema", deprecation_schema]
+        if operator_package:
+            args += ["--operator-package", operator_package]
+        if build_tags:
+            for build_tag in build_tags:
+                args += ["--build-tag", build_tag]
+
+        return run_entrypoint(
+            ("pubtools-iib", "console_scripts", "pubtools-iib-add-deprecations"),
+            "pubtools-iib-add-deprecations",
+            args,
+            env_vars,
+        )
+
     def get_existing_index_images(self, quay_client: QuayClient) -> List[Tuple[str, str, str]]:
         """
         Return existing index images for non-fbc push items.

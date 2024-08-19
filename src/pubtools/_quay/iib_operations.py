@@ -213,61 +213,27 @@ def _sign_index_image(
     return current_signatures
 
 
-def task_iib_add_bundles(
-    bundles: List[str],
-    archs: List[str],
-    index_image: str,
-    deprecation_list: List[str],
+def _sign_and_push(
+    build_details: Any,
+    tag: str,
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
-    """
-    Perform all the necessary actions for the 'PushAddIIBBundles' entrypoint.
-
-    Args:
-        bundles ([str]):
-            Bundles to add to the index image.
-        archs ([str]):
-            Architectures to build the index image for.
-        index_image (str):
-            Index image to add the bundles to.
-        deprecation_list ([str]):
-            Bundles to deprecate in the index image.
-        signing_keys ([str]):
-            Signing keys to be used.
-        hub (HubProxy):
-            Instance of XMLRPC pub-hub proxy.
-        task_id (str):
-            ID of the pub task.
-        target_settings (dict):
-            Dictionary containing settings necessary for performing the operation.
-        target_name (str):
-            Name of the target.
-    """
-    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
-    verify_target_settings(target_settings)
-    quay_client = QuayClient(
-        target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
-    )
-
-    # Build new index image in IIB
-    build_details = OperatorPusher.iib_add_bundles(
-        bundles=bundles,
-        archs=archs,
-        index_image=index_image,
-        deprecation_list=deprecation_list,
-        build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
-        target_settings=target_settings,
-    )
-    if not build_details:
-        sys.exit(1)
-    _, tag = build_details.index_image.split(":", 1)
     index_stamp = timestamp()
     quay_operator_namespace = target_settings.get(
         "quay_operator_namespace", target_settings["quay_namespace"]
+    )
+    # Copy target settings and override username and password for quay_operator_namespace
+    index_image_ts = target_settings.copy()
+    index_image_ts["dest_quay_user"] = index_image_ts.get(
+        "index_image_quay_user", index_image_ts["dest_quay_user"]
+    )
+    index_image_ts["dest_quay_password"] = index_image_ts.get(
+        "index_image_quay_password", index_image_ts["dest_quay_password"]
+    )
+    quay_client = QuayClient(
+        index_image_ts["dest_quay_user"], index_image_ts["dest_quay_password"], "quay.io"
     )
     item_processor = item_processor_for_internal_data(
         quay_client,
@@ -278,7 +244,7 @@ def task_iib_add_bundles(
     )
     item_processor.extractor.full_extract = True
 
-    # Add bundles task doesn't work with pushitem so we create VirtualPushItem to enable
+    # IIB task doesn't work with pushitem so we create VirtualPushItem to enable
     # existing code for fetching needed data.
     vitem = VirtualPushItem(
         metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
@@ -300,6 +266,7 @@ def task_iib_add_bundles(
         target_settings,
         pre_push=True,
     )
+    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
     dest_image = image_schema_tag.format(
         host=target_settings.get("quay_host", "quay.io").rstrip("/"),
         namespace=quay_operator_namespace,
@@ -314,14 +281,6 @@ def task_iib_add_bundles(
     )
 
     # Push image to Quay
-    # Copy target settings and override username and password for quay_operator_namespace
-    index_image_ts = target_settings.copy()
-    index_image_ts["dest_quay_user"] = index_image_ts.get(
-        "index_image_quay_user", index_image_ts["dest_quay_user"]
-    )
-    index_image_ts["dest_quay_password"] = index_image_ts.get(
-        "index_image_quay_password", index_image_ts["dest_quay_password"]
-    )
     ContainerImagePusher.run_tag_images(
         build_details.index_image, [dest_image], True, index_image_ts
     )
@@ -339,7 +298,7 @@ def task_iib_add_bundles(
     )
 
     # after push sign
-    current_signatures = _sign_index_image(
+    _sign_index_image(
         build_details.internal_index_image_copy_resolved,
         [tag, f"{tag}-{index_stamp}"],
         signing_keys,
@@ -347,8 +306,53 @@ def task_iib_add_bundles(
         target_settings,
         pre_push=False,
     )
-
     _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
+
+
+def task_iib_add_bundles(
+    bundles: List[str],
+    archs: List[str],
+    index_image: str,
+    deprecation_list: List[str],
+    signing_keys: List[str],
+    task_id: str,
+    target_settings: Dict[str, Any],
+) -> None:
+    """
+    Perform all the necessary actions for the 'PushAddIIBBundles' entrypoint.
+
+    Args:
+        bundles ([str]):
+            Bundles to add to the index image.
+        archs ([str]):
+            Architectures to build the index image for.
+        index_image (str):
+            Index image to add the bundles to.
+        deprecation_list ([str]):
+            Bundles to deprecate in the index image.
+        signing_keys ([str]):
+            Signing keys to be used.
+        task_id (str):
+            ID of the pub task.
+        target_settings (dict):
+            Dictionary containing settings necessary for performing the operation.
+    """
+    verify_target_settings(target_settings)
+
+    # Build new index image in IIB
+    build_details = OperatorPusher.iib_add_bundles(
+        bundles=bundles,
+        archs=archs,
+        index_image=index_image,
+        deprecation_list=deprecation_list,
+        build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
+        target_settings=target_settings,
+    )
+    if not build_details:
+        sys.exit(1)
+    _, tag = build_details.index_image.split(":", 1)
+
+    _sign_and_push(build_details, tag, signing_keys, task_id, target_settings)
 
 
 def task_iib_remove_operators(
@@ -356,10 +360,8 @@ def task_iib_remove_operators(
     archs: List[str],
     index_image: str,
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
     """
     Perform all the necessary actions for the 'PushRemoveIIBOperators' entrypoint.
@@ -373,16 +375,11 @@ def task_iib_remove_operators(
             Index image to remove the operators from.
         signing_keys (str):
             Signing keys to be used.
-        hub (HubProxy):
-            Instance of XMLRPC pub-hub proxy.
         task_id (str):
             ID of the pub task.
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
-        target_name (str):
-            Name of the target.
     """
-    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -393,95 +390,11 @@ def task_iib_remove_operators(
         build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
         target_settings=target_settings,
     )
-
     if not build_details:
         sys.exit(1)
     _, tag = build_details.index_image.split(":", 1)
-    index_stamp = timestamp()
-    quay_operator_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
-    quay_client = QuayClient(
-        target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
-    )
-    item_processor = item_processor_for_internal_data(
-        quay_client,
-        target_settings["quay_host"].rstrip("/"),
-        target_settings["docker_settings"]["docker_reference_registry"],
-        target_settings.get("retry_sleep_time", 5),
-        quay_operator_namespace,
-    )
-    # Remove operators task doesn't work with pushitem so we create VirtualPushItem to enable
-    # existing code for fetching needed data.
-    vitem = VirtualPushItem(
-        metadata={"tags": {target_settings["quay_operator_repository"]: [tag]}},
-        repos={target_settings["quay_operator_repository"]: [tag]},
-    )
-    existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
-    outdated_manifests = []
-    for ref, _tag, man_arch_dig in existing_manifests:
-        if not man_arch_dig:
-            continue
-        outdated_manifests.append((man_arch_dig.digest, _tag, ref))
 
-    current_signatures = _sign_index_image(
-        build_details.internal_index_image_copy_resolved,
-        [tag, f"{tag}-{index_stamp}"],
-        signing_keys,
-        task_id,
-        target_settings,
-        pre_push=True,
-    )
-
-    dest_image = image_schema_tag.format(
-        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=quay_operator_namespace,
-        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag=tag,
-    )
-
-    dest_image_stamp = image_schema_tag.format(
-        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=quay_operator_namespace,
-        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag="%s-%s" % (tag, index_stamp),
-    )
-
-    # Push image to Quay
-    # Copy target settings and override username and password for quay_operator_namespace
-    index_image_ts = target_settings.copy()
-    index_image_ts["dest_quay_user"] = index_image_ts.get(
-        "index_image_quay_user", index_image_ts["dest_quay_user"]
-    )
-    index_image_ts["dest_quay_password"] = index_image_ts.get(
-        "index_image_quay_password", index_image_ts["dest_quay_password"]
-    )
-
-    ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, index_image_ts
-    )
-
-    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
-    # Permanent index image with proxy as a host must be used because skopeo cannot handle
-    # login to two Quay namespaces at the same time
-    permanent_index_image_proxy = image_schema_tag.format(
-        host=iib_feed,
-        namespace=iib_namespace,
-        repo=iib_intermediate_repo,
-        tag=build_details.build_tags[0],
-    )
-    ContainerImagePusher.run_tag_images(
-        permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
-    )
-    current_signatures = _sign_index_image(
-        build_details.internal_index_image_copy_resolved,
-        [tag, f"{tag}-{index_stamp}"],
-        signing_keys,
-        task_id,
-        target_settings,
-        pre_push=False,
-    )
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
+    _sign_and_push(build_details, tag, signing_keys, task_id, target_settings)
 
 
 def task_iib_build_from_scratch(
@@ -489,10 +402,8 @@ def task_iib_build_from_scratch(
     archs: List[str],
     index_image_tag: str,
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
     """
     Perform all the necessary actions for the 'PushIIBBuildFromScratch' entrypoint.
@@ -506,16 +417,11 @@ def task_iib_build_from_scratch(
             Tag to be applied to the new index image.
         signing_keys (str):
             Signing keys to be used.
-        hub (HubProxy):
-            Instance of XMLRPC pub-hub proxy.
         task_id (str):
             ID of the pub task.
         target_settings (dict):
             Dictionary containing settings necessary for performing the operation.
-        target_name (str):
-            Name of the target.
     """
-    image_schema_tag = "{host}/{namespace}/{repo}:{tag}"
     verify_target_settings(target_settings)
 
     # Build new index image in IIB
@@ -527,87 +433,50 @@ def task_iib_build_from_scratch(
     )
     if not build_details:
         sys.exit(1)
-    index_stamp = timestamp()
-    quay_operator_namespace = target_settings.get(
-        "quay_operator_namespace", target_settings["quay_namespace"]
-    )
-    quay_client = QuayClient(
-        target_settings["dest_quay_user"], target_settings["dest_quay_password"], "quay.io"
-    )
-    item_processor = item_processor_for_internal_data(
-        quay_client,
-        target_settings["quay_host"].rstrip("/"),
-        target_settings["docker_settings"]["docker_reference_registry"],
-        target_settings.get("retry_sleep_time", 5),
-        quay_operator_namespace,
-    )
-    # Build from scratch task doesn't work with pushitem so we create VirtualPushItem to enable
-    # existing code for fetching needed data.
-    vitem = VirtualPushItem(
-        metadata={"tags": {target_settings["quay_operator_repository"]: [index_image_tag]}},
-        repos={target_settings["quay_operator_repository"]: [index_image_tag]},
-    )
-    existing_manifests = item_processor.generate_existing_manifests_metadata(vitem)
-    outdated_manifests = []
-    for ref, tag, man_arch_dig in existing_manifests:
-        if not man_arch_dig:
-            continue
-        outdated_manifests.append((man_arch_dig.digest, tag, ref))
-    current_signatures = _sign_index_image(
-        build_details.internal_index_image_copy_resolved,
-        [index_image_tag, f"{index_image_tag}-{index_stamp}"],
-        signing_keys,
-        task_id,
-        target_settings,
-        pre_push=True,
-    )
 
-    dest_image = image_schema_tag.format(
-        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=quay_operator_namespace,
-        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag=index_image_tag,
-    )
-    dest_image_stamp = image_schema_tag.format(
-        host=target_settings.get("quay_host", "quay.io").rstrip("/"),
-        namespace=quay_operator_namespace,
-        repo=get_internal_container_repo_name(target_settings["quay_operator_repository"]),
-        tag="%s-%s" % (index_image_tag, index_stamp),
-    )
+    _sign_and_push(build_details, index_image_tag, signing_keys, task_id, target_settings)
 
-    # Push image to Quay
-    # Copy target settings and override username and password for quay_operator_namespace
-    index_image_ts = target_settings.copy()
-    index_image_ts["dest_quay_user"] = index_image_ts.get(
-        "index_image_quay_user", index_image_ts["dest_quay_user"]
+
+def task_iib_add_deprecations(
+    index_image: str,
+    deprecation_schema: str,
+    operator_package: str,
+    signing_keys: List[str],
+    task_id: str,
+    target_settings: Dict[str, Any],
+) -> None:
+    """
+    Perform all the necessary actions for the 'PushAddIIBDeprecations' entrypoint.
+
+    Args:
+        index_image (str):
+            Index image to add the bundles to.
+        deprecation_schema (str):
+            JSON formatted deprecation schema.
+        operator_package (str):
+            Operator package to add deprecations to.
+        signing_keys ([str]):
+            Signing keys to be used.
+        task_id (str):
+            ID of the pub task.
+        target_settings (dict):
+            Dictionary containing settings necessary for performing the operation.
+    """
+    verify_target_settings(target_settings)
+
+    # Build new index image in IIB
+    build_details = OperatorPusher.iib_add_deprecations(
+        index_image=index_image,
+        deprecation_schema=deprecation_schema,
+        operator_package=operator_package,
+        build_tags=["{0}-{1}".format(index_image.split(":")[1], task_id)],
+        target_settings=target_settings,
     )
-    index_image_ts["dest_quay_password"] = index_image_ts.get(
-        "index_image_quay_password", index_image_ts["dest_quay_password"]
-    )
-    ContainerImagePusher.run_tag_images(
-        build_details.index_image, [dest_image], True, index_image_ts
-    )
-    iib_feed, iib_namespace, iib_intermediate_repo = parse_index_image(build_details)
-    # Permanent index image with proxy as a host must be used because skopeo cannot handle
-    # login to two Quay namespaces at the same time
-    permanent_index_image_proxy = image_schema_tag.format(
-        host=iib_feed,
-        namespace=iib_namespace,
-        repo=iib_intermediate_repo,
-        tag=build_details.build_tags[0],
-    )
-    ContainerImagePusher.run_tag_images(
-        permanent_index_image_proxy, [dest_image_stamp], True, index_image_ts
-    )
-    current_signatures = _sign_index_image(
-        build_details.internal_index_image_copy_resolved,
-        [index_image_tag, f"{index_image_tag}-{index_stamp}"],
-        signing_keys,
-        task_id,
-        target_settings,
-        pre_push=False,
-    )
-    _remove_index_image_signatures(outdated_manifests, current_signatures, target_settings)
+    if not build_details:
+        sys.exit(1)
+    _, tag = build_details.index_image.split(":", 1)
+
+    _sign_and_push(build_details, tag, signing_keys, task_id, target_settings)
 
 
 def iib_add_entrypoint(
@@ -616,10 +485,8 @@ def iib_add_entrypoint(
     index_image: str,
     deprecation_list: List[str],
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
     """Entry point for use in another python code."""
     task_iib_add_bundles(
@@ -628,10 +495,8 @@ def iib_add_entrypoint(
         index_image,
         deprecation_list,
         signing_keys,
-        hub,
         task_id,
         target_settings,
-        target_name,
     )
 
 
@@ -640,15 +505,11 @@ def iib_remove_entrypoint(
     archs: List[str],
     index_image: str,
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
     """Entry point for use in another python code."""
-    task_iib_remove_operators(
-        operators, archs, index_image, signing_keys, hub, task_id, target_settings, target_name
-    )
+    task_iib_remove_operators(operators, archs, index_image, signing_keys, task_id, target_settings)
 
 
 def iib_from_scratch_entrypoint(
@@ -656,12 +517,29 @@ def iib_from_scratch_entrypoint(
     archs: List[str],
     index_image_tag: str,
     signing_keys: List[str],
-    hub: Any,
     task_id: str,
     target_settings: Dict[str, Any],
-    target_name: str,
 ) -> None:
     """Entry point for use in another python code."""
     task_iib_build_from_scratch(
-        bundles, archs, index_image_tag, signing_keys, hub, task_id, target_settings, target_name
+        bundles, archs, index_image_tag, signing_keys, task_id, target_settings
+    )
+
+
+def iib_add_deprecations_entrypoint(
+    index_image: str,
+    deprecation_schema: str,
+    operator_package: str,
+    signing_keys: List[str],
+    task_id: str,
+    target_settings: Dict[str, Any],
+) -> None:
+    """Entry point for use in another python code."""
+    task_iib_add_deprecations(
+        index_image,
+        deprecation_schema,
+        operator_package,
+        signing_keys,
+        task_id,
+        target_settings,
     )
