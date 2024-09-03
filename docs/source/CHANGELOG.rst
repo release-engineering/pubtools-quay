@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.27.0 (2024-09-03)
+-------------------
+* Create entrypoint iib-add-deprecations
+
 0.26.2 (2024-07-19)
 -------------------
 * Use tag reference in cosign identity
