@@ -1384,8 +1384,6 @@ def test_task_iib_add_bundles(
         "signing_key": "sig-key",
     }
 
-    mock_hub = mock.MagicMock()
-
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1420,10 +1418,8 @@ def test_task_iib_add_bundles(
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["bundle3", "bundle4"],
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
         signer_wrapper_entry_point.assert_has_calls(
             [
@@ -1524,8 +1520,6 @@ def test_task_iib_remove_operators(
         "signing_key": "sig-key",
     }
 
-    mock_hub = mock.MagicMock()
-
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1558,10 +1552,8 @@ def test_task_iib_remove_operators(
             ["arch1", "arch2"],
             "some-registry.com/redhat-namespace/new-index-image:5",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
     signer_wrapper_entry_point.assert_has_calls(
@@ -1659,8 +1651,6 @@ def test_task_iib_build_from_scratch(
         "signing_key": "sig-key",
     }
 
-    mock_hub = mock.MagicMock()
-
     with requests_mock.Mocker() as m:
         mock_manifest_list_requests(
             m,
@@ -1689,10 +1679,8 @@ def test_task_iib_build_from_scratch(
             ["arch1", "arch2"],
             "8",
             ["some-key"],
-            mock_hub,
             "1",
             target_settings,
-            "some-target",
         )
 
 
