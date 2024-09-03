@@ -469,6 +469,58 @@
             <span class="n">env_vars</span><span class="p">,</span>
         <span class="p">)</span></div>
 
+    <span class="nd">@classmethod</span>
+    <span class="nd">@tx</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">iib_add_deprecations</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">index_image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">deprecation_schema</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">operator_package</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">build_tags</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct and execute pubtools-iib command to add deprecations of an operator package.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index_image (str):</span>
+<span class="sd">                Index image to add the bundles to.</span>
+<span class="sd">            deprecation_schema (str):</span>
+<span class="sd">                JSON formatted deprecation schema.</span>
+<span class="sd">            operator_package (str):</span>
+<span class="sd">                Operator package to add deprecations to.</span>
+<span class="sd">            build_tags ([str]):</span>
+<span class="sd">                Extra tags that the new index image should be tagged with.</span>
+<span class="sd">            target_settings (dict):</span>
+<span class="sd">                Settings used for setting the value of pubtools-iib parameters.</span>
+
+<span class="sd">        Returns (dict):</span>
+<span class="sd">            Build details provided by IIB.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Requesting IIB to add deprecations to package &#39;</span><span class="si">{0}</span><span class="s2">&#39; in index image &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">operator_package</span><span class="p">,</span> <span class="n">index_image</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">env_vars</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">pubtools_iib_get_common_args</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">index_image</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--index-image&quot;</span><span class="p">,</span> <span class="n">index_image</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">deprecation_schema</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--deprecation-schema&quot;</span><span class="p">,</span> <span class="n">deprecation_schema</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">operator_package</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--operator-package&quot;</span><span class="p">,</span> <span class="n">operator_package</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">build_tags</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">build_tag</span> <span class="ow">in</span> <span class="n">build_tags</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--build-tag&quot;</span><span class="p">,</span> <span class="n">build_tag</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">run_entrypoint</span><span class="p">(</span>
+            <span class="p">(</span><span class="s2">&quot;pubtools-iib&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-iib-add-deprecations&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;pubtools-iib-add-deprecations&quot;</span><span class="p">,</span>
+            <span class="n">args</span><span class="p">,</span>
+            <span class="n">env_vars</span><span class="p">,</span>
+        <span class="p">)</span>
+
 <div class="viewcode-block" id="OperatorPusher.get_existing_index_images"><a class="viewcode-back" href="../../../operator_pusher.html#pubtools._quay.operator_pusher.OperatorPusher.get_existing_index_images">[docs]</a>    <span class="k">def</span> <span class="nf">get_existing_index_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quay_client</span><span class="p">:</span> <span class="n">QuayClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Return existing index images for non-fbc push items.</span>
