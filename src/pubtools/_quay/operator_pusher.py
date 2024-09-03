@@ -392,9 +392,9 @@ class OperatorPusher:
     @tx.instrument_func()
     def iib_add_deprecations(
         cls,
-        index_image: Optional[str] = None,
-        deprecation_schema: Optional[str] = None,
-        operator_package: Optional[str] = None,
+        index_image: str,
+        deprecation_schema: str,
+        operator_package: str,
         build_tags: Optional[List[str]] = None,
         target_settings: Dict[str, Any] = {},
     ) -> Any:
