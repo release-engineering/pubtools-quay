@@ -946,8 +946,8 @@ def test_tag_docker_multiarch_merge_ml(
                         "sha256:1111111111",
                         "sha256:5555555555",
                         "sha256:5555555555",
-                        "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
-                        "sha256:71e75d5344d529631eaf40a8f9522edb7a66620d73eda6aff667572d511c6519",
+                        "sha256:5fd7b41b6f2af60c0dd393623acd01a7010eebbea85a525137cb5de35d19b8e8",
+                        "sha256:5fd7b41b6f2af60c0dd393623acd01a7010eebbea85a525137cb5de35d19b8e8",
                     ],
                     identity=[
                         "some-registry1.com/namespace/test_repo:v1.6",
