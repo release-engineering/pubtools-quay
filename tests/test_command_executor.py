@@ -749,12 +749,8 @@ def test_skopeo_tag_images(mock_run_cmd):
 
     executor.tag_images("quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"])
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1 --format v2s2"
-        ),
-        mock.call(
-            "skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2 --format v2s2"
-        ),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]
 
 
@@ -766,14 +762,8 @@ def test_skopeo_tag_images_all_arch(mock_run_cmd):
         "quay.io/repo/image:1", ["quay.io/repo/dest:1", "quay.io/repo/dest:2"], True
     )
     assert mock_run_cmd.call_args_list == [
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"
-            " --format v2s2"
-        ),
-        mock.call(
-            "skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"
-            " --format v2s2"
-        ),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:1"),
+        mock.call("skopeo copy --all docker://quay.io/repo/image:1 docker://quay.io/repo/dest:2"),
     ]
 
 

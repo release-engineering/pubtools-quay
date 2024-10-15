@@ -2161,7 +2161,6 @@ def test_manifest_list_remove_archs(
 
     mock_get_manifest.assert_called_once_with(
         "quay.io/some-namespace/namespace----test_repo2:v1.8",
-        media_type=mock_quay_client.MANIFEST_LIST_TYPE,
     )
     mock_upload_manifest.assert_called_once_with(
         expected_manifest_list, "quay.io/some-namespace/namespace----test_repo2:v1.8"

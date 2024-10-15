@@ -478,7 +478,10 @@ class TagDocker:
             )
 
         # Scenario 1: source image
-        if source_details.manifest_type == TagDocker.MANIFEST_V2S2_TYPE:
+        if source_details.manifest_type in (
+            TagDocker.MANIFEST_V2S2_TYPE,
+            TagDocker.MANIFEST_OCI_V2S2_TYPE,
+        ):
             # source arch is relevant, proceed with copying the source image
             if self.is_arch_relevant(push_item, "amd64"):
                 return None
@@ -487,7 +490,10 @@ class TagDocker:
                 return []
 
         # Scenario 2: multiarch image
-        if source_details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
+        if source_details.manifest_type in (
+            TagDocker.MANIFEST_LIST_TYPE,
+            TagDocker.MANIFEST_OCI_LIST_TYPE,
+        ):
             add_archs = [
                 m["platform"]["architecture"]
                 for m in source_details.manifest["manifests"]
@@ -540,7 +546,10 @@ class TagDocker:
         if not details:
             raise BadPushItem("Source image must be specified if add operation was requested")
         registries = self.target_settings["docker_settings"]["docker_reference_registry"]
-        if details.manifest_type == TagDocker.MANIFEST_LIST_TYPE:
+        if details.manifest_type in (
+            TagDocker.MANIFEST_LIST_TYPE,
+            TagDocker.MANIFEST_OCI_LIST_TYPE,
+        ):
             raise ValueError("Tagging workflow is not supported for multiarch images")
 
         if push_item.claims_signing_key:
@@ -730,12 +739,7 @@ class TagDocker:
                         task_id=self.task_id,
                     )
 
-        raw_src_manifest = cast(
-            str,
-            self.quay_client.get_manifest(
-                source_image, media_type=QuayClient.MANIFEST_LIST_TYPE, raw=True
-            ),
-        )
+        raw_src_manifest = cast(str, self.quay_client.get_manifest(source_image, raw=True))
 
         # Special case: if the source manifest and the merged manifest are the same, upload the
         # raw source manifest. The reason is that otherwise the digests of the copied manifests
@@ -868,10 +872,7 @@ class TagDocker:
             host=self.quay_host, namespace=namespace, repo=internal_repo
         )
         dest_image = "{0}:{1}".format(full_repo, tag)
-        manifest_list = cast(
-            ManifestList,
-            self.quay_client.get_manifest(dest_image, media_type=QuayClient.MANIFEST_LIST_TYPE),
-        )
+        manifest_list = cast(ManifestList, self.quay_client.get_manifest(dest_image))
 
         keep_manifests = []
         remove_manifest_sigs = []
