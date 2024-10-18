@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.28.0 (2024-10-18)
+-------------------
+* Support tagging OCI images
+* Fix manifest list digest in tag docker
+
 0.27.0 (2024-09-03)
 -------------------
 * Create entrypoint iib-add-deprecations

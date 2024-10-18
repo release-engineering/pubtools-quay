@@ -96,7 +96,6 @@
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
-    <span class="n">get_pyxis_ssl_paths</span><span class="p">,</span>
     <span class="n">set_aws_kms_environment_variables</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
@@ -559,7 +558,10 @@
             <span class="p">)</span>
 
         <span class="c1"># Scenario 1: source image</span>
-        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_V2S2_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_V2S2_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="c1"># source arch is relevant, proceed with copying the source image</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_arch_relevant</span><span class="p">(</span><span class="n">push_item</span><span class="p">,</span> <span class="s2">&quot;amd64&quot;</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">None</span>
@@ -568,7 +570,10 @@
                 <span class="k">return</span> <span class="p">[]</span>
 
         <span class="c1"># Scenario 2: multiarch image</span>
-        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_LIST_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="n">add_archs</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">m</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">source_details</span><span class="o">.</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span>
@@ -591,8 +596,6 @@
 <span class="sd">                Push item to perform the workflow with.</span>
 <span class="sd">            tag (str):</span>
 <span class="sd">                Tag, which acts as a destination to the copy operation.</span>
-<span class="sd">            signature_handler (BasicSignatureHandler):</span>
-<span class="sd">                Instance of signature handler which will perform the signing.</span>
 <span class="sd">            executor (Executor):</span>
 <span class="sd">                Instance of Executor subclass used for skopeo inspect.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -621,7 +624,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">details</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">BadPushItem</span><span class="p">(</span><span class="s2">&quot;Source image must be specified if add operation was requested&quot;</span><span class="p">)</span>
         <span class="n">registries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;docker_settings&quot;</span><span class="p">][</span><span class="s2">&quot;docker_reference_registry&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="o">==</span> <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">details</span><span class="o">.</span><span class="n">manifest_type</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span>
+            <span class="n">TagDocker</span><span class="o">.</span><span class="n">MANIFEST_OCI_LIST_TYPE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tagging workflow is not supported for multiarch images&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
@@ -654,7 +660,6 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
 
-            <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
             <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
@@ -715,8 +720,6 @@
 <span class="sd">                Tag, which acts as a destination to the merge operation.</span>
 <span class="sd">            add_archs ([str]):</span>
 <span class="sd">                Architectures which should be copied to the existing manifest list.</span>
-<span class="sd">            signature_handler (BasicSignatureHandler):</span>
-<span class="sd">                Instance of signature handler which will perform the signing.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">&quot;Architectures </span><span class="si">{0}</span><span class="s2"> of tag &#39;</span><span class="si">{1}</span><span class="s2">&#39; will be copied to destination tag &#39;</span><span class="si">{2}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -780,7 +783,6 @@
                         <span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">],</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">)</span>
                     <span class="p">)</span>
 
-            <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
             <span class="n">item_processor</span> <span class="o">=</span> <span class="n">item_processor_for_internal_data</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_host&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),</span>
@@ -811,12 +813,7 @@
                         <span class="n">task_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_id</span><span class="p">,</span>
                     <span class="p">)</span>
 
-        <span class="n">raw_src_manifest</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-            <span class="nb">str</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
-                <span class="n">source_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">raw_src_manifest</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 
         <span class="c1"># Special case: if the source manifest and the merged manifest are the same, upload the</span>
         <span class="c1"># raw source manifest. The reason is that otherwise the digests of the copied manifests</span>
@@ -829,7 +826,7 @@
             <span class="n">ml_to_sign</span> <span class="o">=</span> <span class="n">raw_src_manifest</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">raw_src_manifest</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">,</span> <span class="n">raw</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ml_to_sign</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">)</span>
+            <span class="n">ml_to_sign</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">,</span> <span class="n">dest_image</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">push_item</span><span class="o">.</span><span class="n">claims_signing_key</span><span class="p">:</span>
@@ -918,8 +915,6 @@
         <span class="p">)</span>
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
 
-        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
-
         <span class="k">for</span> <span class="n">signer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;signing&quot;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">signer</span><span class="p">[</span><span class="s2">&quot;enabled&quot;</span><span class="p">]:</span>
                 <span class="n">signercls</span> <span class="o">=</span> <span class="n">SIGNER_BY_LABEL</span><span class="p">[</span><span class="n">signer</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]]</span>
@@ -949,10 +944,7 @@
             <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span>
         <span class="p">)</span>
         <span class="n">dest_image</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">full_repo</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
-        <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-            <span class="n">ManifestList</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_image</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_image</span><span class="p">))</span>
 
         <span class="n">keep_manifests</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">remove_manifest_sigs</span> <span class="o">=</span> <span class="p">[]</span>

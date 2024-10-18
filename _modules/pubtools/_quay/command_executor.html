@@ -199,9 +199,9 @@
 <span class="sd">                Whether to copy all architectures (if multiarch image)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">all_arch</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy --all docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2"> --format v2s2&quot;</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy --all docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2"> --format v2s2&quot;</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
 
         <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging source &#39;</span><span class="si">{0}</span><span class="s2">&#39; to destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">))</span>
