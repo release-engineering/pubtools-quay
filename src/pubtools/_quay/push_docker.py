@@ -627,9 +627,20 @@ class PushDocker:
         backup_tags, rollback_tags = self.generate_backup_mapping(
             docker_push_items, all_arches=True
         )
-        amd64_backup_tags = {k: bt[0] for k, bt in backup_tags.items() if bt[1] == "amd64"}
-        # update backup_tags with also manifest_lists
-        amd64_backup_tags.update({k: bt[0] for k, bt in backup_tags.items() if k.v2list_digest})
+        # Restore manifest list if it exists, otherwise restore v2s2 or v2s1 manifest
+        backup_tags_restore = {}
+        repo_tag_group: dict[Tuple[str, str], dict[str, PushDocker.ImageData]] = {}
+        for image_data in backup_tags.keys():
+            repo_tag_group.setdefault((image_data.repo, image_data.tag), {})
+            for t in ["v2list", "v2s2", "v2s1"]:
+                if getattr(image_data, t + "_digest"):
+                    repo_tag_group[(image_data.repo, image_data.tag)][t] = image_data
+                    break
+        for images in repo_tag_group.values():
+            for t in ["v2list", "v2s2", "v2s1"]:
+                if t in images.keys():
+                    backup_tags_restore[images[t]] = backup_tags[images[t]][0]
+                    break
         all_backup_tags = {k: bt[0] for k, bt in backup_tags.items()}
 
         existing_index_images = []
@@ -784,7 +795,7 @@ class PushDocker:
                     LOG.error("There are failed push items. Cannot continue, running rollback.")
                 else:
                     LOG.error("Push of all index images failed, running rollback.")
-                self.rollback(amd64_backup_tags, rollback_tags)
+                self.rollback(backup_tags_restore, rollback_tags)
                 sys.exit(1)
             if successful_iib_results != iib_results:
                 LOG.error("Push of some index images failed")
