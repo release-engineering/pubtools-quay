@@ -2108,7 +2108,7 @@ def test_push_docker_failure_rollback(
     mock_generate_backup_mapping.return_value = (
         {
             push_docker.PushDocker.ImageData(
-                "some-ns/orig-ns----somerepo", "sometag", None, None, None
+                "some-ns/orig-ns----somerepo", "sometag", "sha256:aaaa", None, None
             ): ({"digest": "some-digest"}, "amd64")
         },
         ["item1", "item2"],
@@ -2184,7 +2184,7 @@ def test_push_docker_failure_rollback(
     mock_rollback.assert_called_once_with(
         {
             push_docker.PushDocker.ImageData(
-                "some-ns/orig-ns----somerepo", "sometag", None, None, None
+                "some-ns/orig-ns----somerepo", "sometag", "sha256:aaaa", None, None
             ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
@@ -2239,7 +2239,7 @@ def test_push_docker_failure_fbc_rollback(
     mock_generate_backup_mapping.return_value = (
         {
             push_docker.PushDocker.ImageData(
-                "some-ns/orig-ns----somerepo", "sometag", None, None, None
+                "some-ns/orig-ns----somerepo", "sometag", "sha256:aaaa", None, None
             ): ({"digest": "some-digest"}, "amd64")
         },
         ["item1", "item2"],
@@ -2315,7 +2315,7 @@ def test_push_docker_failure_fbc_rollback(
     mock_rollback.assert_called_once_with(
         {
             push_docker.PushDocker.ImageData(
-                "some-ns/orig-ns----somerepo", "sometag", None, None, None
+                "some-ns/orig-ns----somerepo", "sometag", "sha256:aaaa", None, None
             ): {"digest": "some-digest"}
         },
         ["item1", "item2"],
