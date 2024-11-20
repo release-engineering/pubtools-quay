@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.29.0 (2024-11-20)
+-------------------
+* Restore a tag only once
+
 0.28.0 (2024-10-18)
 -------------------
 * Support tagging OCI images
