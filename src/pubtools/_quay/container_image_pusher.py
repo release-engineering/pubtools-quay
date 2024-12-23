@@ -14,6 +14,7 @@ from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
     run_with_retries,
+    timestamp,
 )
 from .quay_client import QuayClient
 from .tag_images import tag_images
@@ -215,6 +216,14 @@ class ContainerImagePusher:
             merger = ManifestListMerger(source_ref, dest_ref, host=self.quay_host)
             merger.set_quay_clients(self.src_quay_client, self.dest_quay_client)
             merger.merge_manifest_lists()
+
+        # add additional tag to merged manifest lists so that they won't be garbage collected
+        dest_repos = []
+        for ref in dest_refs:
+            repo = ref.split(":")[0]
+            if repo not in dest_repos:
+                dest_repos.append(repo)
+                self.run_tag_images(ref, [f"{ref}-{timestamp()}"], True, self.target_settings)
 
     def copy_multiarch_push_item(self, push_item: Any, source_ml: ManifestList) -> None:
         """
