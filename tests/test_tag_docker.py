@@ -351,9 +351,11 @@ def test_check_input_validity_remove_tag_still_in_stage(
             "some-target",
             target_settings,
         )
-        tag_docker_instance.check_input_validity()
+        tag_docker_instance.check_input_validity_remove(tag_docker_push_item_remove_no_src, "v1.8")
+        tag_docker_instance.check_input_validity_remove(tag_docker_push_item_remove_no_src, "v1.9")
 
-    mock_get_target_info.assert_called_once_with("quay-stage-target")
+    assert mock_get_target_info.call_count == 2
+    assert mock_get_target_info.call_args_list[0] == mock.call("quay-stage-target")
     assert mock_get_manifest.call_count == 2
     assert mock_get_manifest.call_args_list[0] == mock.call(
         "quay.io/stage-namespace/namespace----test_repo2:v1.8"
@@ -401,7 +403,7 @@ def test_check_input_validity_remove_tag_server_error(
             "some-target",
             target_settings,
         )
-        tag_docker_instance.check_input_validity()
+        tag_docker_instance.check_input_validity_remove(tag_docker_push_item_remove_no_src, "v1.8")
 
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
