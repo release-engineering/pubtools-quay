@@ -147,7 +147,6 @@ class TagDocker:
 
         The constraints are following:
         1. If adding tags to prod target, these tags must already exist in stage target.
-        2. If removing tags from prod target, these tags must already not exist in stage target.
         """
         if "propagated_from" in self.target_settings:
             full_repo_schema = "{host}/{namespace}/{repo}"
@@ -180,23 +179,50 @@ class TagDocker:
                         else:
                             raise
 
-                # all to-be-removed tags must already be removed from stage
-                for tag in item.metadata["remove_tags"]:
-                    stage_image = "{0}:{1}".format(stage_repo, tag)
-                    try:
-                        stage_quay_client.get_manifest(stage_image)
-                    except requests.exceptions.HTTPError as e:
-                        if e.response.status_code == 404 or e.response.status_code == 401:
-                            # 404/401 -> all good
-                            pass
-                        else:
-                            raise
-                    else:
-                        raise BadPushItem(
-                            "To-be-removed tag {0} must already be removed from stage repo".format(
-                                tag
-                            )
-                        )
+    def check_input_validity_remove(self, push_item: Any, tag: str) -> None:
+        """
+        Check if input data satisfies tag-docker specific constraints.
+
+        The constraints are following:
+        1. If removing tags from prod target, these tags must already not exist in stage target.
+
+        Args:
+            push_item (ContainerPushItem):
+                Push item to perform the check with.
+            tag (str):
+                Tag to perform the check with.
+        """
+        if "propagated_from" in self.target_settings:
+            full_repo_schema = "{host}/{namespace}/{repo}"
+            stage_target_info = self.hub.worker.get_target_info(
+                self.target_settings["propagated_from"]
+            )
+            stage_namespace = stage_target_info["settings"]["quay_namespace"]
+            stage_quay_client = QuayClient(
+                stage_target_info["settings"]["dest_quay_user"],
+                stage_target_info["settings"]["dest_quay_password"],
+                self.quay_host,
+            )
+
+            internal_repo = get_internal_container_repo_name(list(push_item.repos.keys())[0])
+            stage_repo = full_repo_schema.format(
+                host=self.quay_host, namespace=stage_namespace, repo=internal_repo
+            )
+
+            # all to-be-removed tags must already be removed from stage
+            stage_image = "{0}:{1}".format(stage_repo, tag)
+            try:
+                stage_quay_client.get_manifest(stage_image)
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404 or e.response.status_code == 401:
+                    # 404/401 -> all good
+                    pass
+                else:
+                    raise
+            else:
+                raise BadPushItem(
+                    "To-be-removed tag {0} must already be removed from stage repo".format(tag)
+                )
 
     def get_image_details(self, reference: str, executor: Executor) -> Optional[ImageDetails]:
         """
@@ -944,6 +970,7 @@ class TagDocker:
                         continue
                     # If no archs will remain after removal, just perform untagging
                     elif not keep_archs:
+                        self.check_input_validity_remove(item, tag)
                         self.untag_image(item, tag)
                     # if some archs will be removed and some will remain, create new manifest list
                     else:
