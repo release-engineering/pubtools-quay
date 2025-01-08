@@ -180,6 +180,7 @@ def test_copy_v1_item(
     )
 
 
+@mock.patch("pubtools._quay.container_image_pusher.timestamp")
 @mock.patch("pubtools._quay.container_image_pusher.ManifestListMerger")
 @mock.patch("pubtools._quay.container_image_pusher.tag_images")
 @mock.patch("pubtools._quay.container_image_pusher.QuayClient")
@@ -187,12 +188,14 @@ def test_merge_workflow(
     mock_quay_client,
     mock_tag_images,
     mock_ml_merger,
+    mock_timestamp,
     target_settings,
     container_multiarch_push_item,
 ):
     mock_get_manifest = mock.MagicMock()
     mock_get_manifest.return_value = {"manifests": [{"digest": "digest1"}, {"digest": "digest2"}]}
     mock_quay_client.return_value.get_manifest = mock_get_manifest
+    mock_timestamp.return_value = "timestamp"
 
     pusher = container_image_pusher.ContainerImagePusher(
         [container_multiarch_push_item], target_settings
@@ -212,6 +215,10 @@ def test_merge_workflow(
         "registry/dest1/image@digest2",
         "registry/dest2/image@digest2",
     ]
+    assert mock_tag_images.call_args_list[2][0][0] == "registry/dest1/image:1"
+    assert mock_tag_images.call_args_list[2][0][1] == ["registry/dest1/image:1-timestamp"]
+    assert mock_tag_images.call_args_list[3][0][0] == "registry/dest2/image:2"
+    assert mock_tag_images.call_args_list[3][0][1] == ["registry/dest2/image:2-timestamp"]
 
     assert mock_ml_merger.call_args_list == [
         mock.call("registry/src/image:1", "registry/dest1/image:1", host="quay.io"),
