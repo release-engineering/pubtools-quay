@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.30.0 (2025-01-13)
+-------------------
+* Disable stage check when removing arches
+* Add additional tag to merged manifest list
+
 0.29.0 (2024-11-20)
 -------------------
 * Restore a tag only once
