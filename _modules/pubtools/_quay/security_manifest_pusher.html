@@ -79,42 +79,42 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.security_manifest_pusher</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">tempfile</span>
-<span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">import</span> <span class="nn">subprocess</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">base64</span>
-<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span> <span class="nn">concurrent</span> <span class="kn">import</span> <span class="n">futures</span>
-<span class="kn">from</span> <span class="nn">concurrent.futures.thread</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">base64</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent</span><span class="w"> </span><span class="kn">import</span> <span class="n">futures</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures.thread</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span>
 
-<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span><span class="p">,</span> <span class="n">retry</span>
-<span class="kn">from</span> <span class="nn">.command_executor</span> <span class="kn">import</span> <span class="n">LocalExecutor</span>
-<span class="kn">from</span> <span class="nn">.quay_api_client</span> <span class="kn">import</span> <span class="n">QuayApiClient</span>
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">ManifestTypeError</span>
-<span class="kn">from</span> <span class="nn">.types</span> <span class="kn">import</span> <span class="n">ManifestList</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quay_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span><span class="p">,</span> <span class="n">retry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.command_executor</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quay_api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayApiClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestTypeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestList</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
 
 <span class="nd">@dataclass</span>
-<span class="k">class</span> <span class="nc">DigestSecurityManifest</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DigestSecurityManifest</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for keeping track of which digest is associated with which security manifest.&quot;&quot;&quot;</span>
 
     <span class="n">digest</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span>
 
 
-<div class="viewcode-block" id="SecurityManifestPusher"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher">[docs]</a><span class="k">class</span> <span class="nc">SecurityManifestPusher</span><span class="p">:</span>
+<div class="viewcode-block" id="SecurityManifestPusher"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">SecurityManifestPusher</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that pushes container security manifests.&quot;&quot;&quot;</span>
 
     <span class="n">COSIGN_TRIANGULATE_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;attestation&quot;</span><span class="p">,</span> <span class="s2">&quot;sbom&quot;</span><span class="p">,</span> <span class="s2">&quot;signature&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="SecurityManifestPusher.__init__"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">object</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.__init__"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">object</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize.</span>
 
@@ -136,7 +136,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayApiClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -147,7 +147,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -158,7 +158,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayApiClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayApiClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayApiClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span>
@@ -168,7 +168,7 @@
 
 <div class="viewcode-block" id="SecurityManifestPusher.cosign_get_security_manifest"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_security_manifest">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="nd">@retry</span><span class="p">(</span><span class="s2">&quot;Get security manifest&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">cosign_get_security_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cosign_get_security_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Use cosign to get security manifest from an image and save it to a file.</span>
 
@@ -194,7 +194,7 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="SecurityManifestPusher.cosign_get_existing_attestation"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_get_existing_attestation">[docs]</a>    <span class="nd">@retry</span><span class="p">(</span><span class="s2">&quot;Get existing attestation&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">cosign_get_existing_attestation</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cosign_get_existing_attestation</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -245,7 +245,7 @@
         <span class="k">return</span> <span class="kc">True</span></div>
 
 <div class="viewcode-block" id="SecurityManifestPusher.cosign_attest_security_manifest"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_attest_security_manifest">[docs]</a>    <span class="nd">@retry</span><span class="p">(</span><span class="s2">&quot;Attest security manifest&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">cosign_attest_security_manifest</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cosign_attest_security_manifest</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -291,7 +291,7 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating attestation to image </span><span class="si">{</span><span class="n">image_ref</span><span class="si">}</span><span class="s2"> has failed&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SecurityManifestPusher.cosign_triangulate_image"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.cosign_triangulate_image">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">cosign_triangulate_image</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cosign_triangulate_image</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">image_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;attestation&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -334,7 +334,7 @@
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">reference_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.get_security_manifest_from_attestation"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_security_manifest_from_attestation">[docs]</a>    <span class="k">def</span> <span class="nf">get_security_manifest_from_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.get_security_manifest_from_attestation"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_security_manifest_from_attestation">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_security_manifest_from_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parse image attestation and extract a security manifest.</span>
 
@@ -350,7 +350,7 @@
 
         <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.security_manifest_get_products"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_get_products">[docs]</a>    <span class="k">def</span> <span class="nf">security_manifest_get_products</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.security_manifest_get_products"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_get_products">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">security_manifest_get_products</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a list of products from an already uploaded security manifest.</span>
 
@@ -379,7 +379,7 @@
 
         <span class="k">return</span> <span class="n">products</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.get_destination_repos"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_destination_repos">[docs]</a>    <span class="k">def</span> <span class="nf">get_destination_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.get_destination_repos"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_destination_repos">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_destination_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get a list of destination refs (without tag/digest) of a push item.</span>
 
@@ -403,7 +403,7 @@
 
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dest_repos</span><span class="p">))</span></div>
 
-    <span class="k">def</span> <span class="nf">security_manifest_remove_incompleteness_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">security_manifest_remove_incompleteness_reasons</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove the field &quot;incompleteness_reasons&quot; from the security manifest.</span>
 
@@ -431,7 +431,7 @@
 
         <span class="k">return</span> <span class="n">modified_security_manifest_path</span>
 
-<div class="viewcode-block" id="SecurityManifestPusher.security_manifest_add_products"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products">[docs]</a>    <span class="k">def</span> <span class="nf">security_manifest_add_products</span><span class="p">(</span>
+<div class="viewcode-block" id="SecurityManifestPusher.security_manifest_add_products"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.security_manifest_add_products">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">security_manifest_add_products</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">products</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -463,7 +463,7 @@
 
         <span class="k">return</span> <span class="n">modified_security_manifest_path</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.delete_existing_attestation"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.delete_existing_attestation">[docs]</a>    <span class="k">def</span> <span class="nf">delete_existing_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.delete_existing_attestation"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.delete_existing_attestation">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">delete_existing_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Delete an existing attestation image.</span>
 
@@ -488,7 +488,7 @@
         <span class="n">repository</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_api_client</span><span class="o">.</span><span class="n">delete_tag</span><span class="p">(</span><span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="nf">extract_security_manifest_from_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attestation_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_security_manifest_from_attestation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attestation_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parse security manifest from an attestation and save it to a file.</span>
 
@@ -509,7 +509,7 @@
 
         <span class="k">return</span> <span class="n">extracted_security_manifest_path</span>
 
-    <span class="k">def</span> <span class="nf">merge_and_push_security_manifest</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge_and_push_security_manifest</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">image_manifest</span><span class="p">:</span> <span class="n">DigestSecurityManifest</span><span class="p">,</span>
@@ -589,7 +589,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cosign_sbom_skip_upload_rekor&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">push_manifest_list_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">push_manifest_list_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Push all arch attestations to the manifest list digests of all destinations.</span>
 
@@ -682,7 +682,7 @@
                         <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cosign_sbom_skip_upload_rekor&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
                     <span class="p">)</span>
 
-<div class="viewcode-block" id="SecurityManifestPusher.get_source_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_source_item_security_manifests">[docs]</a>    <span class="k">def</span> <span class="nf">get_source_item_security_manifests</span><span class="p">(</span>
+<div class="viewcode-block" id="SecurityManifestPusher.get_source_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_source_item_security_manifests">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_source_item_security_manifests</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DigestSecurityManifest</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -715,7 +715,7 @@
             <span class="n">DigestSecurityManifest</span><span class="p">(</span><span class="n">digest</span><span class="o">=</span><span class="n">digest</span><span class="p">,</span> <span class="n">security_manifest_path</span><span class="o">=</span><span class="n">security_manifest_path</span><span class="p">)</span>
         <span class="p">]</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.get_multiarch_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_multiarch_item_security_manifests">[docs]</a>    <span class="k">def</span> <span class="nf">get_multiarch_item_security_manifests</span><span class="p">(</span>
+<div class="viewcode-block" id="SecurityManifestPusher.get_multiarch_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.get_multiarch_item_security_manifests">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">get_multiarch_item_security_manifests</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">dir_path</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">DigestSecurityManifest</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -769,7 +769,7 @@
 
         <span class="k">return</span> <span class="n">image_manifests</span></div>
 
-<div class="viewcode-block" id="SecurityManifestPusher.push_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.push_item_security_manifests">[docs]</a>    <span class="k">def</span> <span class="nf">push_item_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SecurityManifestPusher.push_item_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.push_item_security_manifests">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">push_item_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate and push container security manifest images of a push item.</span>
 
@@ -812,7 +812,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">push_manifest_list_security_manifests</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">tmp_dir</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="SecurityManifestPusher.push_security_manifests"><a class="viewcode-back" href="../../../security_manifest_pusher.html#pubtools._quay.security_manifest_pusher.SecurityManifestPusher.push_security_manifests">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push container security manifests&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">push_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">push_security_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Attest and push security manifest for each push item in parallel.</span>
 

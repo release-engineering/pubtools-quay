@@ -79,34 +79,34 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.push_docker</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">import</span> <span class="nn">requests</span>
-<span class="kn">import</span> <span class="nn">urllib3</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib3</span>
 
-<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="kn">import</span> <span class="n">BadPushItem</span><span class="p">,</span> <span class="n">InvalidTargetSettings</span><span class="p">,</span> <span class="n">InvalidRepository</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span>
-<span class="kn">from</span> <span class="nn">.quay_api_client</span> <span class="kn">import</span> <span class="n">QuayApiClient</span>
-<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
-<span class="kn">from</span> <span class="nn">.iib_operations</span> <span class="kn">import</span> <span class="n">_sign_index_image</span>
-<span class="kn">from</span> <span class="nn">.container_image_pusher</span> <span class="kn">import</span> <span class="n">ContainerImagePusher</span>
-<span class="kn">from</span> <span class="nn">.security_manifest_pusher</span> <span class="kn">import</span> <span class="n">SecurityManifestPusher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">BadPushItem</span><span class="p">,</span> <span class="n">InvalidTargetSettings</span><span class="p">,</span> <span class="n">InvalidRepository</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_internal_container_repo_name</span><span class="p">,</span> <span class="n">log_step</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quay_api_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayApiClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quay_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.iib_operations</span><span class="w"> </span><span class="kn">import</span> <span class="n">_sign_index_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.container_image_pusher</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerImagePusher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.security_manifest_pusher</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityManifestPusher</span>
 
-<span class="kn">from</span> <span class="nn">.operator_pusher</span> <span class="kn">import</span> <span class="n">OperatorPusher</span>
-<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.operator_pusher</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperatorPusher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.item_processor</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">item_processor_for_external_data</span><span class="p">,</span>
     <span class="n">item_processor_for_internal_data</span><span class="p">,</span>
     <span class="n">SignEntry</span><span class="p">,</span>
     <span class="n">ManifestArchDigest</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="n">parse_index_image</span>
-<span class="kn">from</span> <span class="nn">.signer_wrapper</span> <span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_index_image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.signer_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
 
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_external_container_repo_name</span><span class="p">,</span>
     <span class="n">timestamp</span><span class="p">,</span>
     <span class="n">pyxis_get_repo_metadata</span><span class="p">,</span>
@@ -116,21 +116,21 @@
 <span class="p">)</span>
 
 <span class="c1"># TODO: do we want this, or should I remove it?</span>
-<span class="kn">from</span> <span class="nn">urllib3.exceptions</span> <span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib3.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">InsecureRequestWarning</span>
 
 <span class="n">urllib3</span><span class="o">.</span><span class="n">disable_warnings</span><span class="p">(</span><span class="n">InsecureRequestWarning</span><span class="p">)</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="PushDocker"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker">[docs]</a><span class="k">class</span> <span class="nc">PushDocker</span><span class="p">:</span>
+<div class="viewcode-block" id="PushDocker"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">PushDocker</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle full Docker push workflow.&quot;&quot;&quot;</span>
 
     <span class="n">ImageData</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span>
         <span class="s2">&quot;ImageData&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;tag&quot;</span><span class="p">,</span> <span class="s2">&quot;v2list_digest&quot;</span><span class="p">,</span> <span class="s2">&quot;v2s2_digest&quot;</span><span class="p">,</span> <span class="s2">&quot;v2s1_digest&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 
-<div class="viewcode-block" id="PushDocker.__init__"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.__init__">[docs]</a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<div class="viewcode-block" id="PushDocker.__init__"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
         <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -176,7 +176,7 @@
         <span class="p">)</span></div>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -187,7 +187,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -198,7 +198,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_operator_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dest_operator_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
@@ -213,7 +213,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_operator_quay_client</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayApiClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dest_quay_api_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayApiClient</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayApiClient for dest image.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span> <span class="o">=</span> <span class="n">QuayApiClient</span><span class="p">(</span>
@@ -221,7 +221,7 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_api_client</span>
 
-<div class="viewcode-block" id="PushDocker.verify_target_settings"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.verify_target_settings">[docs]</a>    <span class="k">def</span> <span class="nf">verify_target_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="PushDocker.verify_target_settings"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.verify_target_settings">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">verify_target_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify that target settings contains all the necessary data.&quot;&quot;&quot;</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Verifying the necessary target settings&quot;</span><span class="p">)</span>
         <span class="n">required_settings</span> <span class="o">=</span> <span class="p">[</span>
@@ -253,7 +253,7 @@
                 <span class="p">)</span></div>
 
 <div class="viewcode-block" id="PushDocker.get_docker_push_items"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_docker_push_items">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Get container push items&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_docker_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_docker_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter push items to only include docker ones.</span>
 
@@ -293,7 +293,7 @@
         <span class="k">return</span> <span class="n">docker_push_items</span></div>
 
 <div class="viewcode-block" id="PushDocker.get_operator_push_items"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.get_operator_push_items">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Get operator push items&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">get_operator_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_operator_push_items</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Filter out push items to only include operator ones.</span>
 
@@ -330,7 +330,7 @@
         <span class="k">return</span> <span class="n">operator_push_items</span></div>
 
 <div class="viewcode-block" id="PushDocker.check_repos_validity"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.check_repos_validity">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">check_repos_validity</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_repos_validity</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -400,7 +400,7 @@
                         <span class="k">raise</span></div>
 
 <div class="viewcode-block" id="PushDocker.generate_backup_mapping"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.generate_backup_mapping">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Generate backup mapping&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">generate_backup_mapping</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_backup_mapping</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">all_arches</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="n">ImageData</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="n">ImageData</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -518,7 +518,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">backup_tags</span><span class="p">,</span> <span class="n">rollback_tags</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PushDocker.rollback"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.rollback">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Perform rollback&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backup_tags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ImageData</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">rollback_tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ImageData</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">backup_tags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ImageData</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">rollback_tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ImageData</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform a rollback.</span>
 
@@ -549,7 +549,7 @@
                 <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">404</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">401</span><span class="p">:</span>
                     <span class="k">raise</span></div>
 
-    <span class="k">def</span> <span class="nf">get_outdated_manifests</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_outdated_manifests</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">backup_tags</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ImageData</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return list of existing manifests which are being replaced with new ones.</span>
@@ -568,7 +568,7 @@
                 <span class="n">outdated_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">image_data</span><span class="o">.</span><span class="n">v2s1_digest</span><span class="p">,</span> <span class="n">image_data</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">ext_repo</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">outdated_signatures</span>
 
-    <span class="k">def</span> <span class="nf">fetch_missing_push_items_digests</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_missing_push_items_digests</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Fetch digests for media types which weren&#39;t originally pushed.</span>
@@ -615,7 +615,7 @@
                             <span class="p">)</span>
         <span class="k">return</span> <span class="n">new_digests</span>
 
-    <span class="k">def</span> <span class="nf">sign_new_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docker_push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sign_new_manifests</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docker_push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Sign newly pushed images with signers enabled in target settings.</span>
 
 <span class="sd">        Args:</span>
@@ -677,7 +677,7 @@
 
         <span class="k">return</span> <span class="n">current_signatures</span>
 
-<div class="viewcode-block" id="PushDocker.run"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="PushDocker.run"><a class="viewcode-back" href="../../../push_docker.html#pubtools._quay.push_docker.PushDocker.run">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the full push-docker workflow.</span>
 
@@ -971,7 +971,7 @@
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">mod_entry_point</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">mod_entry_point</span><span class="p">(</span>
     <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">hub</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">task_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for use in another python code.&quot;&quot;&quot;</span>

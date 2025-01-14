@@ -79,25 +79,25 @@
            <div itemprop="articleBody">
              
   <h1>Source code for pubtools._quay.clear_repo</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">argparse</span>
-<span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">pubtools.pluggy</span> <span class="kn">import</span> <span class="n">task_context</span><span class="p">,</span> <span class="n">pm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pubtools.pluggy</span><span class="w"> </span><span class="kn">import</span> <span class="n">task_context</span><span class="p">,</span> <span class="n">pm</span>
 
-<span class="kn">from</span> <span class="nn">.quay_client</span> <span class="kn">import</span> <span class="n">QuayClient</span>
-<span class="kn">from</span> <span class="nn">.untag_images</span> <span class="kn">import</span> <span class="n">untag_images</span>
-<span class="kn">from</span> <span class="nn">.utils.misc</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quay_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.untag_images</span><span class="w"> </span><span class="kn">import</span> <span class="n">untag_images</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">setup_arg_parser</span><span class="p">,</span>
     <span class="n">add_args_env_variables</span><span class="p">,</span>
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.item_processor</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.item_processor</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">item_processor_for_internal_data</span><span class="p">,</span>
     <span class="n">VirtualPushItem</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.signer_wrapper</span> <span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.signer_wrapper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SIGNER_BY_LABEL</span>
 
 <span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
 
@@ -171,7 +171,7 @@
 <span class="p">}</span>
 
 
-<div class="viewcode-block" id="clear_repositories"><a class="viewcode-back" href="../../../clear_repo.html#pubtools._quay.clear_repo.clear_repositories">[docs]</a><span class="k">def</span> <span class="nf">clear_repositories</span><span class="p">(</span><span class="n">repositories</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="clear_repositories"><a class="viewcode-back" href="../../../clear_repo.html#pubtools._quay.clear_repo.clear_repositories">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">clear_repositories</span><span class="p">(</span><span class="n">repositories</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clear Quay repository.</span>
 
@@ -254,12 +254,12 @@
     <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">quay_repositories_cleared</span><span class="p">(</span><span class="n">repository_ids</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">parsed_repositories</span><span class="p">))</span></div>
 
 
-<span class="k">def</span> <span class="nf">setup_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">CLEAR_REPO_ARGS</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">clear_repositories_main</span><span class="p">(</span><span class="n">sysargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">clear_repositories_main</span><span class="p">(</span><span class="n">sysargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for clearing repositories.&quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
