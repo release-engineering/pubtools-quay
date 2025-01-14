@@ -263,9 +263,6 @@ class OperatorPusher:
                 "iib_overwrite_from_index_token"
             ]
 
-        if target_settings.get("check_related_images"):
-            args += ["--check-related-images"]
-
         if target_settings.get("iib_build_timeout"):
             args += ["--build-timeout", str(target_settings["iib_build_timeout"])]
 
@@ -307,6 +304,8 @@ class OperatorPusher:
         )
         args, env_vars = cls.pubtools_iib_get_common_args(target_settings)
 
+        if target_settings.get("check_related_images"):
+            args += ["--check-related-images"]
         if index_image:
             args += ["--index-image", index_image]
         if bundles:
