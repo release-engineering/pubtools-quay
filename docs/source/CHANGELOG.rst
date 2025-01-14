@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.31.0 (2025-01-14)
+-------------------
+* Check related image only for add-bundles
+
 0.30.0 (2025-01-13)
 -------------------
 * Disable stage check when removing arches
