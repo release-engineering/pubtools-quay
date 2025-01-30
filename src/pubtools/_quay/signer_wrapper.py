@@ -150,6 +150,7 @@ class SignerWrapper:
         )
         if signed["signer_result"]["status"] != "ok":
             raise SigningError(signed["signer_result"]["error_message"])
+
         for sign_entry in sign_entries:
             LOG.info(
                 "Signed %s(%s) with %s in %s",
@@ -314,9 +315,16 @@ class MsgSignerWrapper(SignerWrapper):
         LOG.info("Sending new signatures to Pyxis")
 
         signatures: List[Dict[str, Any]] = []
+        error = False
+
         for reference, op_res in zip(
             signed_results["operation"]["references"], signed_results["operation_results"]
         ):
+            if op_res[0]["msg"]["errors"]:
+                LOG.error(f"Error signing {reference}: {op_res[0]['msg']['errors']}")
+                error = True
+                continue
+
             signatures.append(
                 {
                     "manifest_digest": op_res[0]["msg"]["manifest_digest"],
@@ -326,6 +334,8 @@ class MsgSignerWrapper(SignerWrapper):
                     "signature_data": op_res[0]["msg"]["signed_claim"],
                 }
             )
+        if error:
+            raise SigningError("Error signing some references")
 
         for sig in signatures:
             LOG.debug(
