@@ -231,6 +231,7 @@
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">signed</span><span class="p">[</span><span class="s2">&quot;signer_result&quot;</span><span class="p">][</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;ok&quot;</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="n">signed</span><span class="p">[</span><span class="s2">&quot;signer_result&quot;</span><span class="p">][</span><span class="s2">&quot;error_message&quot;</span><span class="p">])</span>
+
         <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
                 <span class="s2">&quot;Signed </span><span class="si">%s</span><span class="s2">(</span><span class="si">%s</span><span class="s2">) with </span><span class="si">%s</span><span class="s2"> in </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -395,9 +396,16 @@
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending new signatures to Pyxis&quot;</span><span class="p">)</span>
 
         <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="kc">False</span>
+
         <span class="k">for</span> <span class="n">reference</span><span class="p">,</span> <span class="n">op_res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
             <span class="n">signed_results</span><span class="p">[</span><span class="s2">&quot;operation&quot;</span><span class="p">][</span><span class="s2">&quot;references&quot;</span><span class="p">],</span> <span class="n">signed_results</span><span class="p">[</span><span class="s2">&quot;operation_results&quot;</span><span class="p">]</span>
         <span class="p">):</span>
+            <span class="k">if</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;errors&quot;</span><span class="p">]:</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error signing </span><span class="si">{</span><span class="n">reference</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;msg&#39;</span><span class="p">][</span><span class="s1">&#39;errors&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">continue</span>
+
             <span class="n">signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">&quot;manifest_digest&quot;</span><span class="p">:</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;manifest_digest&quot;</span><span class="p">],</span>
@@ -407,6 +415,8 @@
                     <span class="s2">&quot;signature_data&quot;</span><span class="p">:</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;msg&quot;</span><span class="p">][</span><span class="s2">&quot;signed_claim&quot;</span><span class="p">],</span>
                 <span class="p">}</span>
             <span class="p">)</span>
+        <span class="k">if</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="s2">&quot;Error signing some references&quot;</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">sig</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
