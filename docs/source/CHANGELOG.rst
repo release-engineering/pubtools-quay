@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.32.0 (2025-03-07)
+-------------------
+* Bumped pubtools-sign dependency
+
 0.31.0 (2025-01-14)
 -------------------
 * Check related image only for add-bundles

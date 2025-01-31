@@ -13,5 +13,5 @@ pubtools-iib
 kerberos
 marshmallow
 urllib3<2
-pubtools-sign>0.0.8
+pubtools-sign>=0.0.11
 docker
