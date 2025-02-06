@@ -818,6 +818,34 @@ def test_tag_remove_calculate_archs_no_src(
 
 
 @mock.patch("pubtools._quay.tag_docker.LocalExecutor")
+@mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
+def test_tag_remove_calculate_archs_nonexistent_src(
+    mock_get_image_details,
+    mock_local_executor,
+    target_settings,
+    tag_docker_push_item_remove_src,
+):
+    hub = mock.MagicMock()
+
+    mock_get_image_details.return_value = None
+    tag_docker_instance = tag_docker.TagDocker(
+        [tag_docker_push_item_remove_src],
+        hub,
+        "1",
+        "some-target",
+        target_settings,
+    )
+
+    with pytest.raises(exceptions.BadPushItem, match="Source tag v1.5 doesn't exist"):
+        tag_docker_instance.tag_remove_calculate_archs(
+            tag_docker_push_item_remove_src, "v1.8", mock_local_executor.return_value
+        )
+    mock_get_image_details.assert_called_once_with(
+        "quay.io/some-namespace/namespace----test_repo2:v1.5", mock_local_executor.return_value
+    )
+
+
+@mock.patch("pubtools._quay.tag_docker.LocalExecutor")
 @mock.patch("pubtools._quay.tag_docker.QuayClient")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.get_image_details")
 @mock.patch("pubtools._quay.tag_docker.TagDocker.tag_remove_calculate_archs_source_image")
