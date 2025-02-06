@@ -322,6 +322,10 @@ class TagDocker:
         if push_item.metadata["tag_source"]:
             source_image = "{0}:{1}".format(full_repo, push_item.metadata["tag_source"])
             source_details = self.get_image_details(source_image, executor)
+            if not source_details:
+                raise BadPushItem(
+                    "Source tag {0} doesn't exist".format(push_item.metadata["tag_source"])
+                )
         else:
             source_details = None
 
