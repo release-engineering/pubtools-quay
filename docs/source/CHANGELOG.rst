@@ -1,7 +1,11 @@
 ChangeLog
 =========
 
-0.32.0 (2025-03-07)
+0.33.0 (2025-02-10)
+-------------------
+* Raise error for nonexistent source tag
+
+0.32.0 (2025-01-31)
 -------------------
 * Bumped pubtools-sign dependency
 
