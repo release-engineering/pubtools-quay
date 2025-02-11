@@ -2,7 +2,7 @@ import functools
 import logging
 from concurrent import futures
 from concurrent.futures.thread import ThreadPoolExecutor
-from typing import Any, cast, Dict, List, Optional, Union
+from typing import Any, cast, Dict, List, Optional
 
 
 import requests
@@ -14,12 +14,10 @@ from .utils.misc import (
     get_internal_container_repo_name,
     log_step,
     run_with_retries,
-    timestamp,
 )
 from .quay_client import QuayClient
 from .tag_images import tag_images
-from .manifest_list_merger import ManifestListMerger
-from .types import ManifestList, Manifest
+from .types import ManifestList
 
 from pubtools.tracing import get_trace_wrapper
 
@@ -175,56 +173,6 @@ class ContainerImagePusher:
 
         self.run_tag_images(source_ref, dest_refs, True, self.target_settings)
 
-    def run_merge_workflow(self, source_ref: str, dest_refs: List[str]) -> None:
-        """
-        Perform Docker push and manifest list merge workflow.
-
-        The difference in this workflow is that all single arch images are first copied via
-        digest, and then their respective manifest lists are merged.
-
-        Args:
-            source_ref (str):
-                Source image reference.
-            dest_refs ([str]):
-                List of destination references which need manifest merging.
-        """
-        image_schema = "{repo}@{digest}"
-        source_repo = source_ref.split(":")[0]
-
-        # get unique destination repositories
-        dest_repos = sorted(list(set([ref.split(":")[0] for ref in dest_refs])))
-        source_ml = cast(
-            ManifestList,
-            self.src_quay_client.get_manifest(source_ref, media_type=QuayClient.MANIFEST_LIST_TYPE),
-        )
-
-        # copy each arch source image to all destination repos
-        for manifest in source_ml["manifests"]:
-            source_image = image_schema.format(repo=source_repo, digest=manifest["digest"])
-            dest_images = [
-                image_schema.format(repo=dest_repo, digest=manifest["digest"])
-                for dest_repo in dest_repos
-            ]
-            self.run_tag_images(source_image, dest_images, False, self.target_settings)
-
-        for dest_ref in dest_refs:
-            LOG.info(
-                "Merging manifest lists of source '{0}' and destination '{1}'".format(
-                    source_ref, dest_ref
-                )
-            )
-            merger = ManifestListMerger(source_ref, dest_ref, host=self.quay_host)
-            merger.set_quay_clients(self.src_quay_client, self.dest_quay_client)
-            merger.merge_manifest_lists()
-
-        # add additional tag to merged manifest lists so that they won't be garbage collected
-        dest_repos = []
-        for ref in dest_refs:
-            repo = ref.split(":")[0]
-            if repo not in dest_repos:
-                dest_repos.append(repo)
-                self.run_tag_images(ref, [f"{ref}-{timestamp()}"], True, self.target_settings)
-
     def copy_multiarch_push_item(self, push_item: Any, source_ml: ManifestList) -> None:
         """
         Evaluate the correct tagging and manifest list merging strategy of multiarch push item.
@@ -241,7 +189,6 @@ class ContainerImagePusher:
         LOG.info("Copying push item '{0}' as a multiarch image.".format(push_item))
         source_ref = push_item.metadata["pull_url"]
         simple_dest_refs = []
-        merge_mls_dest_refs = []
 
         image_schema = "{host}/{namespace}/{repo}:{tag}"
         namespace = self.target_settings["quay_namespace"]
@@ -255,38 +202,7 @@ class ContainerImagePusher:
                     repo=internal_repo,
                     tag=tag,
                 )
-                try:
-                    dest_ml = cast(
-                        Union[Manifest, ManifestList], self.dest_quay_client.get_manifest(dest_ref)
-                    )
-                    if dest_ml.get("mediaType") != QuayClient.MANIFEST_LIST_TYPE:
-                        LOG.warning(
-                            "Image {0} doesn't have a manifest list, it will be overwritten".format(
-                                dest_ref
-                            )
-                        )
-                        simple_dest_refs.append(dest_ref)
-                    else:
-                        LOG.info(
-                            "Getting missing archs between images '{0}' and '{1}'".format(
-                                source_ref, dest_ref
-                            )
-                        )
-                        missing_archs = ManifestListMerger.get_missing_architectures(
-                            source_ml, cast(ManifestList, dest_ml)
-                        )
-                        # Option 1: Dest doesn't contain extra archs, ML merging is unnecessary
-                        if not missing_archs:
-                            simple_dest_refs.append(dest_ref)
-                        # Option 2: Destination has extra archs, MLs will be merged
-                        else:
-                            merge_mls_dest_refs.append(dest_ref)
-                except requests.exceptions.HTTPError as e:
-                    # Option 3: Destination tag doesn't exist, no ML merging
-                    if e.response.status_code == 404 or e.response.status_code == 401:
-                        simple_dest_refs.append(dest_ref)
-                    else:
-                        raise
+                simple_dest_refs.append(dest_ref)
 
         if simple_dest_refs:
             LOG.info(
@@ -295,13 +211,6 @@ class ContainerImagePusher:
                 )
             )
             self.run_tag_images(source_ref, list(set(simple_dest_refs)), True, self.target_settings)
-        if merge_mls_dest_refs:
-            LOG.info(
-                "Copying image {0} to {1} destinations and merging manifest lists".format(
-                    source_ref, len(merge_mls_dest_refs)
-                )
-            )
-            self.run_merge_workflow(source_ref, merge_mls_dest_refs)
 
     @log_step("Push images to Quay")
     def push_container_images(self) -> None:
