@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.34.0 (2025-04-23)
+-------------------
+* Removed manifest list merging functionality
+
 0.33.0 (2025-02-10)
 -------------------
 * Raise error for nonexistent source tag
