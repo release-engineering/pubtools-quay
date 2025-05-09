@@ -36,7 +36,7 @@ class MsgSignerSettingsSchema(Schema):
     pyxis_server = fields.String(required=True)
     pyxis_ssl_crtfile = fields.String(required=False)
     pyxis_ssl_keyfile = fields.String(required=False)
-    num_thread_pyxis = fields.Integer(required=False, default=7)
+    num_thread_pyxis = fields.Integer(required=False, dump_default=7)
 
 
 class SignerWrapper:
@@ -453,8 +453,8 @@ class CosignSignerSettingsSchema(Schema):
     dest_quay_user = fields.String(required=True)
     dest_quay_password = fields.String(required=True)
     dest_quay_api_token = fields.String(required=True)
-    signing_chunk_size = fields.Integer(required=False, default=100)
-    signing_parallelism = fields.Integer(required=False, default=10)
+    signing_chunk_size = fields.Integer(required=False, dump_default=100)
+    signing_parallelism = fields.Integer(required=False, dump_default=10)
 
 
 class CosignSignerWrapper(SignerWrapper):

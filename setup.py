@@ -9,30 +9,6 @@ import sys
 # import pkg_resources
 import sys
 from setuptools import setup, find_namespace_packages
-from setuptools.command.test import test as TestCommand
-
-
-class Tox(TestCommand):
-    user_options = [("tox-args=", "a", "Arguments to pass to tox")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.tox_args = None
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import tox
-        import shlex
-
-        if self.tox_args:
-            errno = tox.cmdline(args=shlex.split(self.tox_args))
-        else:
-            errno = tox.cmdline(self.test_args)
-        sys.exit(errno)
 
 
 def read_content(filepath):
@@ -43,7 +19,6 @@ def read_content(filepath):
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
@@ -147,6 +122,5 @@ setup(
     },
     include_package_data=True,
     extras_require=extras_require,
-    tests_require=["tox"],
-    cmdclass={"test": Tox},
+    tests_require=["tox"]
 )
