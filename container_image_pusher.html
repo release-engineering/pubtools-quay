@@ -57,7 +57,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.__init__()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.run_tag_images"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.run_tag_images()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.copy_source_push_item()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.run_merge_workflow()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.copy_multiarch_push_item()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images"><code class="docutils literal notranslate"><span class="pre">ContainerImagePusher.push_container_images()</span></code></a></li>
 </ul>
@@ -161,23 +160,6 @@
 <dl class="simple">
 <dt>Args:</dt><dd><dl class="simple">
 <dt>push_item (ContainerPushItem):</dt><dd><p>Source container push item.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">
-<span class="sig-name descname"><span class="pre">run_merge_workflow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_ref</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dest_refs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="_modules/pubtools/_quay/container_image_pusher.html#ContainerImagePusher.run_merge_workflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow" title="Permalink to this definition"></a></dt>
-<dd><p>Perform Docker push and manifest list merge workflow.</p>
-<p>The difference in this workflow is that all single arch images are first copied via
-digest, and then their respective manifest lists are merged.</p>
-<dl class="simple">
-<dt>Args:</dt><dd><dl class="simple">
-<dt>source_ref (str):</dt><dd><p>Source image reference.</p>
-</dd>
-<dt>dest_refs ([str]):</dt><dd><p>List of destination references which need manifest merging.</p>
 </dd>
 </dl>
 </dd>

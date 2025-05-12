@@ -83,7 +83,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent</span><span class="w"> </span><span class="kn">import</span> <span class="n">futures</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures.thread</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
@@ -95,12 +95,10 @@
     <span class="n">get_internal_container_repo_name</span><span class="p">,</span>
     <span class="n">log_step</span><span class="p">,</span>
     <span class="n">run_with_retries</span><span class="p">,</span>
-    <span class="n">timestamp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.quay_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.tag_images</span><span class="w"> </span><span class="kn">import</span> <span class="n">tag_images</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.manifest_list_merger</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestListMerger</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">Manifest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestList</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pubtools.tracing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trace_wrapper</span>
 
@@ -256,56 +254,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ContainerImagePusher.run_merge_workflow"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.run_merge_workflow">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">run_merge_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Perform Docker push and manifest list merge workflow.</span>
-
-<span class="sd">        The difference in this workflow is that all single arch images are first copied via</span>
-<span class="sd">        digest, and then their respective manifest lists are merged.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            source_ref (str):</span>
-<span class="sd">                Source image reference.</span>
-<span class="sd">            dest_refs ([str]):</span>
-<span class="sd">                List of destination references which need manifest merging.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{repo}</span><span class="s2">@</span><span class="si">{digest}</span><span class="s2">&quot;</span>
-        <span class="n">source_repo</span> <span class="o">=</span> <span class="n">source_ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-        <span class="c1"># get unique destination repositories</span>
-        <span class="n">dest_repos</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">])))</span>
-        <span class="n">source_ml</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-            <span class="n">ManifestList</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">),</span>
-        <span class="p">)</span>
-
-        <span class="c1"># copy each arch source image to all destination repos</span>
-        <span class="k">for</span> <span class="n">manifest</span> <span class="ow">in</span> <span class="n">source_ml</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
-            <span class="n">source_image</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="o">=</span><span class="n">source_repo</span><span class="p">,</span> <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">])</span>
-            <span class="n">dest_images</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repo</span><span class="o">=</span><span class="n">dest_repo</span><span class="p">,</span> <span class="n">digest</span><span class="o">=</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;digest&quot;</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">dest_repo</span> <span class="ow">in</span> <span class="n">dest_repos</span>
-            <span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_image</span><span class="p">,</span> <span class="n">dest_images</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Merging manifest lists of source &#39;</span><span class="si">{0}</span><span class="s2">&#39; and destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="n">merger</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">)</span>
-            <span class="n">merger</span><span class="o">.</span><span class="n">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="p">)</span>
-            <span class="n">merger</span><span class="o">.</span><span class="n">merge_manifest_lists</span><span class="p">()</span>
-
-        <span class="c1"># add additional tag to merged manifest lists so that they won&#39;t be garbage collected</span>
-        <span class="n">dest_repos</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
-            <span class="n">repo</span> <span class="o">=</span> <span class="n">ref</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">repo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dest_repos</span><span class="p">:</span>
-                <span class="n">dest_repos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">timestamp</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">],</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
-
 <div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">:</span> <span class="n">ManifestList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Evaluate the correct tagging and manifest list merging strategy of multiarch push item.</span>
@@ -322,7 +270,6 @@
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a multiarch image.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
         <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
         <span class="n">simple_dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">merge_mls_dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
         <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
@@ -336,38 +283,7 @@
                     <span class="n">repo</span><span class="o">=</span><span class="n">internal_repo</span><span class="p">,</span>
                     <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
                 <span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">dest_ml</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
-                        <span class="n">Union</span><span class="p">[</span><span class="n">Manifest</span><span class="p">,</span> <span class="n">ManifestList</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                    <span class="p">)</span>
-                    <span class="k">if</span> <span class="n">dest_ml</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mediaType&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span><span class="p">:</span>
-                        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                            <span class="s2">&quot;Image </span><span class="si">{0}</span><span class="s2"> doesn&#39;t have a manifest list, it will be overwritten&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                                <span class="n">dest_ref</span>
-                            <span class="p">)</span>
-                        <span class="p">)</span>
-                        <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                            <span class="s2">&quot;Getting missing archs between images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                                <span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span>
-                            <span class="p">)</span>
-                        <span class="p">)</span>
-                        <span class="n">missing_archs</span> <span class="o">=</span> <span class="n">ManifestListMerger</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span>
-                            <span class="n">source_ml</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">dest_ml</span><span class="p">)</span>
-                        <span class="p">)</span>
-                        <span class="c1"># Option 1: Dest doesn&#39;t contain extra archs, ML merging is unnecessary</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">missing_archs</span><span class="p">:</span>
-                            <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                        <span class="c1"># Option 2: Destination has extra archs, MLs will be merged</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="n">merge_mls_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="c1"># Option 3: Destination tag doesn&#39;t exist, no ML merging</span>
-                    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">401</span><span class="p">:</span>
-                        <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">raise</span>
+                <span class="n">simple_dest_refs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">simple_dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -375,14 +291,7 @@
                     <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">))</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)),</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">merge_mls_dest_refs</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations and merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">merge_mls_dest_refs</span><span class="p">)</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">run_merge_workflow</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">merge_mls_dest_refs</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)),</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push images to Quay&quot;</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
