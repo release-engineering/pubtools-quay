@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.35.0 (2025-05-12)
+-------------------
+* Fixed packaging
+
 0.34.0 (2025-04-23)
 -------------------
 * Removed manifest list merging functionality
