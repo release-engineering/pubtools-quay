@@ -115,10 +115,13 @@ class ContentExtractor:
             )
         )
         for arch_manifest in manifest["manifests"]:
-            manifest = self.quay_client.get_manifest(
-                f"{image_ref.rsplit(':')[0]}@{arch_manifest['digest']}",
-                media_type=QuayClient.MANIFEST_V2S2_TYPE,
-                raw=True,
+            manifest = cast(
+                str,
+                self.quay_client.get_manifest(
+                    f"{image_ref.rsplit(':')[0]}@{arch_manifest['digest']}",
+                    media_type=QuayClient.MANIFEST_V2S2_TYPE,
+                    raw=True,
+                ),
             )
             mads.append(
                 ManifestArchDigest(

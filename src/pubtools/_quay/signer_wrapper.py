@@ -285,7 +285,7 @@ class MsgSignerWrapper(SignerWrapper):
 
                 env_vars: Dict[Any, Any] = {}
                 chunk_results = run_entrypoint(
-                    ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
+                    ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
                     "pubtools-pyxis-get-signatures",
                     args,
                     env_vars,
@@ -357,7 +357,7 @@ class MsgSignerWrapper(SignerWrapper):
             LOG.info("Uploading {0} new signatures".format(len(signatures)))
             env_vars: Dict[Any, Any] = {}
             run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
+                ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 args,
                 env_vars,
@@ -385,7 +385,7 @@ class MsgSignerWrapper(SignerWrapper):
 
             env_vars: Dict[Any, Any] = {}
             run_entrypoint(
-                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-delete-signatures"),
+                ("pubtools-pyxis", "mod", "pubtools-pyxis-delete-signatures"),
                 "pubtools-pyxis-delete-signatures",
                 args,
                 env_vars,

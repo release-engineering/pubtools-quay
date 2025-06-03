@@ -129,7 +129,7 @@ class OperatorPusher:
         data = run_entrypoint(
             (
                 "pubtools-pyxis",
-                "console_scripts",
+                "mod",
                 "pubtools-pyxis-get-operator-indices",
             ),
             "pubtools-pyxis-get-operator-indices",

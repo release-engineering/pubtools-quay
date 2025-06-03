@@ -173,10 +173,7 @@ def setup_entry_point_cli(
             else:
                 func_args = []
             func_args.extend(args)
-            if entry_tuple[1] == "console_scripts":
-                yield functools.partial(entry_point_func, func_args)
-            else:
-                yield functools.partial(entry_point_func, *func_args)
+            yield functools.partial(entry_point_func, *func_args)
         else:
             yield entry_point_func
     finally:
@@ -494,7 +491,7 @@ def pyxis_get_repo_metadata(repo: str, target_settings: Dict[str, Any]) -> Any:
 
     env_vars: Dict[Any, Any] = {}
     metadata = run_entrypoint(
-        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-repo-metadata"),
+        ("pubtools-pyxis", "mod", "pubtools-pyxis-get-repo-metadata"),
         "pubtools-pyxis-get-repo-metadata",
         args,
         env_vars,

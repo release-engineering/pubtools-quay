@@ -52,7 +52,7 @@ def test_pyxis_get_ocp_versions(
     versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
 
     mock_run_entrypoint.assert_called_once_with(
-        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-operator-indices"),
+        ("pubtools-pyxis", "mod", "pubtools-pyxis-get-operator-indices"),
         "pubtools-pyxis-get-operator-indices",
         [
             "--pyxis-server",
