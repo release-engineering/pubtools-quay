@@ -6,7 +6,7 @@ from pubtools._quay.signer_wrapper import CosignSignerWrapper
 
 
 def test_remove_signatures(cosign_signer_settings, fake_cert_key_paths, dest_manifest_list):
-    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mock_run_entry_point:
+    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint_mod") as mock_run_entry_point:
         with requests_mock.Mocker() as m:
             m.get(
                 "https://test-quay.io/v2/testing/testing----repository/manifests/sha256:123456789",
@@ -33,7 +33,7 @@ def test_remove_signatures(cosign_signer_settings, fake_cert_key_paths, dest_man
 
 
 def test_remove_signatures_failure(cosign_signer_settings, fake_cert_key_paths, dest_manifest_list):
-    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mock_run_entry_point:
+    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint_mod") as mock_run_entry_point:
         with requests_mock.Mocker() as m:
             m.get(
                 "https://test-quay.io/v2/testing/testing----repository/manifests/sha256:123456789",

@@ -3,7 +3,7 @@ pyrsistent
 pushcollector
 paramiko
 requests
-pubtools-pyxis
+pubtools-pyxis>=1.3.6
 python-qpid-proton
 monotonic
 docker
