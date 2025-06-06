@@ -720,7 +720,6 @@ def test_task_iib_add_bundles_operator_ns(
                     mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
@@ -1243,7 +1242,6 @@ def test_task_iib_build_from_scratch(
                     mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
@@ -1496,7 +1494,6 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "@signature_file",
                 ],
                 {},
-                False,
             ),
         ]
     )
@@ -1679,7 +1676,6 @@ def test_task_iib_build_from_scratch_operator_ns(
                     mock.ANY,
                 ],
                 {},
-                False,
             ),
             mock.call(
                 ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),

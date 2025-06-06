@@ -11,10 +11,10 @@ from typing import Optional, List, Dict, Any, Tuple, Generator, Type
 from marshmallow import Schema, fields, EXCLUDE
 
 from .utils.misc import (
-    run_entrypoint,
     get_pyxis_ssl_paths,
     # run_in_parallel,
     log_step,
+    run_entrypoint_mod,
     # FData,
 )
 from .item_processor import SignEntry
@@ -284,7 +284,7 @@ class MsgSignerWrapper(SignerWrapper):
                     args += ["--manifest-digest", "@{0}".format(signature_fetch_file.name)]
 
                 env_vars: Dict[Any, Any] = {}
-                chunk_results = run_entrypoint(
+                chunk_results = run_entrypoint_mod(
                     ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
                     "pubtools-pyxis-get-signatures",
                     args,
@@ -356,12 +356,11 @@ class MsgSignerWrapper(SignerWrapper):
             args += ["--signatures", "@{0}".format(signature_file.name)]
             LOG.info("Uploading {0} new signatures".format(len(signatures)))
             env_vars: Dict[Any, Any] = {}
-            run_entrypoint(
+            run_entrypoint_mod(
                 ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 args,
                 env_vars,
-                False,
             )
 
     def _run_remove_signatures(self, signatures_to_remove: List[str]) -> None:
@@ -384,7 +383,7 @@ class MsgSignerWrapper(SignerWrapper):
             args += ["--ids", "@%s" % temp.name]
 
             env_vars: Dict[Any, Any] = {}
-            run_entrypoint(
+            run_entrypoint_mod(
                 ("pubtools-pyxis", "mod", "pubtools-pyxis-delete-signatures"),
                 "pubtools-pyxis-delete-signatures",
                 args,

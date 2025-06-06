@@ -171,7 +171,7 @@ def setup_entry_point_cli(
             if name:
                 func_args = [name]
             else:
-                func_args = []
+                func_args = []  # pragma: no cover
             func_args.extend(args)
             yield functools.partial(entry_point_func, *func_args)
         else:
@@ -228,6 +228,58 @@ def run_entrypoint(
                 pyret = entry_func()
         else:
             pyret = entry_func()
+
+    return pyret
+
+
+def run_entrypoint_mod(
+    entry_tuple: Tuple[str, str, str],
+    name: Optional[str],
+    args: List[str],
+    environ_vars: Dict[str, Any],
+) -> Any:
+    """
+    Run an mod entrypoint function and return its return value.
+
+    Args:
+        entry_tuple ((str, str, str)):
+            Tuple consisting of dependency, category, and entrypoint.
+        name: (str):
+            Entrypoint name.
+        args ([str]):
+            Entrypoint arguments.
+        environ_vars (dict):
+            Env variable names and values to set for the entrypoint.
+        capture_out (bool):
+            Whether to capture stdout.
+
+    Returns (str):
+        Data returned by the entrypoint.
+    """
+    raw_args = " ".join([entry_tuple[2]] + args)
+    wrapped_lines = textwrap.wrap(
+        raw_args, 100, subsequent_indent="  ", break_on_hyphens=False, break_long_words=False
+    )
+
+    LOG.info("Running task with arguments:")
+    for idx, line in enumerate(wrapped_lines):
+        suffix = ""
+        if idx != len(wrapped_lines) - 1:
+            # shell-style backslash to indicate continuation
+            suffix = " \\"  # pragma: no cover
+        LOG.info("%s%s", line, suffix)
+
+    entry_func = pkg_resources.load_entry_point(*entry_tuple)
+    orig_environ = os.environ.copy()
+    for key in environ_vars:
+        os.environ[key] = environ_vars[key]
+    try:
+        pyret = entry_func([entry_tuple[-1]] + args)
+    finally:
+        os.environ.update(orig_environ)
+        to_delete = [key for key in os.environ if key not in orig_environ]
+        for key in to_delete:
+            del os.environ[key]
 
     return pyret
 
@@ -490,7 +542,7 @@ def pyxis_get_repo_metadata(repo: str, target_settings: Dict[str, Any]) -> Any:
     args += ["--repo-name", repo]
 
     env_vars: Dict[Any, Any] = {}
-    metadata = run_entrypoint(
+    metadata = run_entrypoint_mod(
         ("pubtools-pyxis", "mod", "pubtools-pyxis-get-repo-metadata"),
         "pubtools-pyxis-get-repo-metadata",
         args,

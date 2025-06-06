@@ -1978,7 +1978,7 @@ def signer_wrapper_entry_point():
 
 @pytest.fixture
 def signer_wrapper_run_entry_point():
-    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint") as mocked:
+    with mock.patch("pubtools._quay.signer_wrapper.run_entrypoint_mod") as mocked:
         yield mocked
 
 

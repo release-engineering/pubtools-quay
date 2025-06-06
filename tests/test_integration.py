@@ -44,7 +44,8 @@ MSG_SIGNER_OPERATION_RESULT = [
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.command_executor.docker.APIClient")
-@mock.patch("pubtools._quay.utils.misc.run_entrypoint")
+@mock.patch("pubtools._quay.utils.misc.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
 @mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.push_docker.timestamp")
@@ -52,6 +53,7 @@ def test_push_docker_multiarch_merge_ml_operator(
     mock_timestamp,
     mock_run_cmd,
     mock_run_entrypoint_operator_pusher,
+    mock_run_entrypoint_operator_pusher_mod,
     mock_run_entrypoint_misc,
     mock_api_client,
     mock_security_manifest_pusher,
@@ -194,9 +196,11 @@ def test_push_docker_multiarch_merge_ml_operator(
         (True, ["quay.io/testing/repo:sha256-6666666666.sig5"]),
         (True, ["quay.io/testing/repo:sha256-6666666666.sig6"]),
     ]
-    mock_run_entrypoint_operator_pusher.side_effect = [
+    mock_run_entrypoint_operator_pusher_mod.side_effect = [
         # pubtools-pyxis-get-operator-indices
         [{"ocp_version": "4.5"}, {"ocp_version": "4.6"}],
+    ]
+    mock_run_entrypoint_operator_pusher.side_effect = [
         # pubtools-iib-add-bundles (4.5)
         IIBRes(
             "registry.com/namespace/index-image@sha256:v4.5",
@@ -1850,7 +1854,7 @@ def test_remove_repo(
 
 @mock.patch("pubtools._quay.push_docker.SecurityManifestPusher")
 @mock.patch("pubtools._quay.command_executor.docker.APIClient")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
 @mock.patch("pubtools._quay.command_executor.RemoteExecutor._run_cmd")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_docker_operator_verify_bundle_fail(

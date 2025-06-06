@@ -62,7 +62,7 @@ def test_run_entrypoint_mod(caplog):
         "pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"
     ) as entrypoint:
         entrypoint.side_effect = side_effect_entrypoint
-        ret_val = misc.run_entrypoint(
+        ret_val = misc.run_entrypoint_mod(
             ("pubtools-sign", "modules", "pubtools-sign-cosign-signature-list"),
             None,
             ["some-ep-argument"],
@@ -243,7 +243,7 @@ def test_get_basic_auth(mock_isfile, mock_file):
     assert misc.get_basic_auth("registry") == ["user", "pass"]
 
 
-@mock.patch("pubtools._quay.utils.misc.run_entrypoint")
+@mock.patch("pubtools._quay.utils.misc.run_entrypoint_mod")
 def test_get_repo_metadata(
     mock_run_entrypoint,
     target_settings,
