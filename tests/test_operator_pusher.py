@@ -42,7 +42,7 @@ def test_public_bundle_ref(target_settings, operator_push_item_no_vr):
     assert ref == "some-registry1.com/repo1:1.0000000"
 
 
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions(
     mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
@@ -52,7 +52,7 @@ def test_pyxis_get_ocp_versions(
     versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
 
     mock_run_entrypoint.assert_called_once_with(
-        ("pubtools-pyxis", "mod", "pubtools-pyxis-get-operator-indices"),
+        ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-operator-indices"),
         "pubtools-pyxis-get-operator-indices",
         [
             "--pyxis-server",
@@ -71,7 +71,7 @@ def test_pyxis_get_ocp_versions(
     assert versions == ["v4.5", "v4.6"]
 
 
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_get_ocp_versions_no_data(
     mock_run_entrypoint, target_settings, operator_push_item_ok, fake_cert_key_paths
 ):
@@ -82,7 +82,7 @@ def test_pyxis_get_ocp_versions_no_data(
         versions = pusher.pyxis_get_ocp_versions(operator_push_item_ok)
 
 
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 def test_pyxis_generate_mapping(
     mock_run_entrypoint,
     target_settings,
@@ -344,7 +344,7 @@ def test_iib_add_deprecations(mock_run_entrypoint, target_settings, operator_pus
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators(
@@ -476,7 +476,7 @@ def test_push_operators(
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_extra_ns(
@@ -583,7 +583,7 @@ class Mock_iib_add_bundles:
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_not_all_successful(
@@ -718,7 +718,7 @@ def test_push_operators_not_all_successful(
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_hotfix(
@@ -821,7 +821,7 @@ def test_push_operators_hotfix(
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_prerelease(
@@ -1005,7 +1005,7 @@ def test_push_operators_prerelease(
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_hotfix_invalid_origin(
@@ -1053,7 +1053,7 @@ def test_push_operators_hotfix_invalid_origin(
 
 @mock.patch("pubtools._quay.operator_pusher.ContainerImagePusher.run_tag_images")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_prerelease_invalid_origin(
@@ -1101,7 +1101,7 @@ def test_push_operators_prerelease_invalid_origin(
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images(
     mock_get_repo_metadata,
@@ -1194,7 +1194,7 @@ def test_get_existing_index_images(
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images_fbc(
     mock_get_repo_metadata,
@@ -1247,7 +1247,7 @@ def test_get_existing_index_images_fbc(
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images_raises_401(
     mock_get_repo_metadata,
@@ -1320,7 +1320,7 @@ def test_get_existing_index_images_raises_401(
 
 @mock.patch("pubtools._quay.push_docker.QuayClient")
 @mock.patch("pubtools._quay.push_docker.QuayApiClient")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_get_existing_index_images_raises_500(
     mock_get_repo_metadata,
@@ -1349,7 +1349,7 @@ def test_get_existing_index_images_raises_500(
 
 
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_fbc_opted_in(
@@ -1414,7 +1414,7 @@ def test_push_operators_fbc_opted_in(
 
 
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_fbc_opted_in_inconsistent(
@@ -1464,7 +1464,7 @@ def test_push_operators_fbc_opted_in_inconsistent(
 
 
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.iib_add_bundles")
-@mock.patch("pubtools._quay.operator_pusher.run_entrypoint_mod")
+@mock.patch("pubtools._quay.operator_pusher.run_entrypoint")
 @mock.patch("pubtools._quay.operator_pusher.OperatorPusher.get_deprecation_list")
 @mock.patch("pubtools._quay.operator_pusher.pyxis_get_repo_metadata")
 def test_push_operators_fbc_4_9_to_4_11_opted_in(
