@@ -21,7 +21,7 @@ from .utils.misc import (
     get_basic_auth,
 )
 from .quay_client import QuayClient
-from .utils.misc import parse_index_image, pyxis_get_repo_metadata, run_entrypoint_mod
+from .utils.misc import parse_index_image, pyxis_get_repo_metadata
 from .models import BuildIndexImageParam
 from pubtools.tracing import get_trace_wrapper
 
@@ -126,10 +126,10 @@ class OperatorPusher:
         args += ["--ocp-versions-range", ocp_versions]
         env_vars: Dict[str, str] = {}
 
-        data = run_entrypoint_mod(
+        data = run_entrypoint(
             (
                 "pubtools-pyxis",
-                "mod",
+                "console_scripts",
                 "pubtools-pyxis-get-operator-indices",
             ),
             "pubtools-pyxis-get-operator-indices",

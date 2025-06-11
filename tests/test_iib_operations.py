@@ -690,7 +690,7 @@ def test_task_iib_add_bundles_operator_ns(
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
@@ -705,7 +705,7 @@ def test_task_iib_add_bundles_operator_ns(
                 {},
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 [
                     "--pyxis-server",
@@ -720,9 +720,10 @@ def test_task_iib_add_bundles_operator_ns(
                     mock.ANY,
                 ],
                 {},
+                False,
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
@@ -1212,7 +1213,7 @@ def test_task_iib_build_from_scratch(
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
@@ -1227,7 +1228,7 @@ def test_task_iib_build_from_scratch(
                 {},
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 [
                     "--pyxis-server",
@@ -1242,9 +1243,10 @@ def test_task_iib_build_from_scratch(
                     mock.ANY,
                 ],
                 {},
+                False,
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
@@ -1479,7 +1481,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 [
                     "--pyxis-server",
@@ -1494,6 +1496,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "@signature_file",
                 ],
                 {},
+                False,
             ),
         ]
     )
@@ -1646,7 +1649,7 @@ def test_task_iib_build_from_scratch_operator_ns(
     signer_wrapper_run_entry_point.assert_has_calls(
         [
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
@@ -1661,7 +1664,7 @@ def test_task_iib_build_from_scratch_operator_ns(
                 {},
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-upload-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-upload-signatures"),
                 "pubtools-pyxis-upload-signature",
                 [
                     "--pyxis-server",
@@ -1676,9 +1679,10 @@ def test_task_iib_build_from_scratch_operator_ns(
                     mock.ANY,
                 ],
                 {},
+                False,
             ),
             mock.call(
-                ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                ("pubtools-pyxis", "console_scripts", "pubtools-pyxis-get-signatures"),
                 "pubtools-pyxis-get-signatures",
                 [
                     "--pyxis-server",
