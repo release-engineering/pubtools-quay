@@ -252,12 +252,9 @@
             <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
                 <span class="n">func_args</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">func_args</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">func_args</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># pragma: no cover</span>
             <span class="n">func_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">entry_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">entry_point_func</span><span class="p">,</span> <span class="n">func_args</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">entry_point_func</span><span class="p">,</span> <span class="o">*</span><span class="n">func_args</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">entry_point_func</span><span class="p">,</span> <span class="o">*</span><span class="n">func_args</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">entry_point_func</span>
     <span class="k">finally</span><span class="p">:</span>
@@ -314,6 +311,58 @@
             <span class="n">pyret</span> <span class="o">=</span> <span class="n">entry_func</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">pyret</span></div>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run_entrypoint_mod</span><span class="p">(</span>
+    <span class="n">entry_tuple</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">environ_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run an mod entrypoint function and return its return value.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        entry_tuple ((str, str, str)):</span>
+<span class="sd">            Tuple consisting of dependency, category, and entrypoint.</span>
+<span class="sd">        name: (str):</span>
+<span class="sd">            Entrypoint name.</span>
+<span class="sd">        args ([str]):</span>
+<span class="sd">            Entrypoint arguments.</span>
+<span class="sd">        environ_vars (dict):</span>
+<span class="sd">            Env variable names and values to set for the entrypoint.</span>
+<span class="sd">        capture_out (bool):</span>
+<span class="sd">            Whether to capture stdout.</span>
+
+<span class="sd">    Returns (str):</span>
+<span class="sd">        Data returned by the entrypoint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
+    <span class="n">wrapped_lines</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span>
+        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running task with arguments:&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">):</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># shell-style backslash to indicate continuation</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot; </span><span class="se">\\</span><span class="s2">&quot;</span>  <span class="c1"># pragma: no cover</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+
+    <span class="n">entry_func</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="n">entry_tuple</span><span class="p">)</span>
+    <span class="n">orig_environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">environ_vars</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">environ_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">pyret</span> <span class="o">=</span> <span class="n">entry_func</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">orig_environ</span><span class="p">)</span>
+        <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orig_environ</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">pyret</span>
 
 
 <div class="viewcode-block" id="get_internal_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_internal_container_repo_name">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_internal_container_repo_name</span><span class="p">(</span><span class="n">external_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -574,8 +623,8 @@
     <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--repo-name&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="p">]</span>
 
     <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">metadata</span> <span class="o">=</span> <span class="n">run_entrypoint</span><span class="p">(</span>
-        <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;console_scripts&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">),</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="n">run_entrypoint_mod</span><span class="p">(</span>
+        <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;mod&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">),</span>
         <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">,</span>
         <span class="n">args</span><span class="p">,</span>
         <span class="n">env_vars</span><span class="p">,</span>
