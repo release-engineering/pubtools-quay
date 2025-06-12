@@ -173,7 +173,7 @@ def setup_entry_point_cli(
             else:
                 func_args = []  # pragma: no cover
             func_args.extend(args)
-            yield functools.partial(entry_point_func, *func_args)
+            yield functools.partial(entry_point_func, func_args)
         else:
             yield entry_point_func
     finally:
