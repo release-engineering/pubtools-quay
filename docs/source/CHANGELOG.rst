@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.36.0 (2025-06-16)
+-------------------
+* Pubtools-pyxis compatibility changes
+
 0.35.0 (2025-05-12)
 -------------------
 * Fixed packaging
