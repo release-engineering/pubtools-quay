@@ -143,7 +143,7 @@ class SignerWrapper:
         opt_args = self.sign_container_opt_args(sign_entries, task_id)
         signed = self.entry_point(
             config_file=self.config_file,
-            signing_key=sign_entry.signing_key,
+            signing_keys=[sign_entry.signing_key],
             reference=[x.reference for x in sign_entries if x],
             digest=[x.digest for x in sign_entries if x],
             **opt_args,
@@ -237,7 +237,14 @@ class MsgSignerWrapper(SignerWrapper):
         Returns:
             dict: Optional arguments for signing a container.
         """
-        return {k: v for k, v in [("task_id", task_id)] if v is not None}
+        return {
+            k: v
+            for k, v in [
+                ("task_id", task_id),
+                ("signing_key_names", [sign_entries[0].signing_key] if sign_entries else None),
+            ]
+            if v is not None
+        }
 
     @contextmanager
     def _save_signatures_file(self, signatures: List[Dict[str, Any]]) -> Generator[Any, None, None]:
@@ -330,7 +337,7 @@ class MsgSignerWrapper(SignerWrapper):
                     "manifest_digest": op_res[0]["msg"]["manifest_digest"],
                     "reference": reference,
                     "repository": op_res[0]["msg"]["repo"],
-                    "sig_key_id": signed_results["signing_key"],
+                    "sig_key_id": signed_results["signing_keys"][0],
                     "signature_data": op_res[0]["msg"]["signed_claim"],
                 }
             )

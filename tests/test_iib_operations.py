@@ -259,7 +259,7 @@ def fake_setup(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
 
@@ -327,7 +327,7 @@ def test_task_iib_add_bundles(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -341,11 +341,12 @@ def test_task_iib_add_bundles(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8",
@@ -456,7 +457,7 @@ def test_task_iib_add_bundles_missing_manifest_list(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -470,11 +471,12 @@ def test_task_iib_add_bundles_missing_manifest_list(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8",
@@ -635,7 +637,7 @@ def test_task_iib_add_bundles_operator_ns(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -649,11 +651,12 @@ def test_task_iib_add_bundles_operator_ns(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/operator-ns/operators----index-image:8",
                     "quay.io/operator-ns/operators----index-image:8",
@@ -1157,7 +1160,7 @@ def test_task_iib_build_from_scratch(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -1171,11 +1174,12 @@ def test_task_iib_build_from_scratch(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8",
@@ -1424,7 +1428,7 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -1438,11 +1442,12 @@ def test_task_iib_build_from_scratch_missing_manifest_list(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8",
@@ -1591,7 +1596,7 @@ def test_task_iib_build_from_scratch_operator_ns(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -1605,11 +1610,12 @@ def test_task_iib_build_from_scratch_operator_ns(
                     "sha256:bd6eba96070efe86b64b9a212680ca6d46a2e30f0a7d8e539f657eabc45c35a6",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/operator-ns/operators----index-image:8",
                     "quay.io/operator-ns/operators----index-image:8",

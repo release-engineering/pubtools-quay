@@ -276,7 +276,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                 ],
             },
             "operation_results": MSG_SIGNER_OPERATION_RESULT,
-            "signing_key": "sig-key",
+            "signing_keys": ["sig-key"],
         }
 
         push_docker = PushDocker(
@@ -293,7 +293,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                 # msg signing wrapper
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/target/repo:latest-test-tag",
                         "some-registry1.com/target/repo:latest-test-tag",
@@ -315,11 +315,12 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 # cosign
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
@@ -359,7 +360,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/operators/index-image:v4.5",
                         "some-registry1.com/operators/index-image:v4.5-timestamp",
@@ -373,10 +374,11 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/operators/index-image:v4.6",
                         "some-registry1.com/operators/index-image:v4.6-timestamp",
@@ -390,10 +392,11 @@ def test_push_docker_multiarch_merge_ml_operator(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/operators----index-image:v4.5",
                         "quay.io/some-namespace/operators----index-image:v4.5",
@@ -427,7 +430,7 @@ def test_push_docker_multiarch_merge_ml_operator(
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/operators----index-image:v4.6",
                         "quay.io/some-namespace/operators----index-image:v4.6",
@@ -535,7 +538,7 @@ def test_push_docker_multiarch_simple_workflow(
                 ],
             },
             "operation_results": MSG_SIGNER_OPERATION_RESULT,
-            "signing_key": "sig-key",
+            "signing_keys": ["sig-key"],
         }
 
         push_docker = PushDocker(
@@ -551,7 +554,7 @@ def test_push_docker_multiarch_simple_workflow(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/target/repo:latest-test-tag",
                         "some-registry1.com/target/repo:latest-test-tag",
@@ -573,11 +576,12 @@ def test_push_docker_multiarch_simple_workflow(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 # cosign
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
@@ -699,7 +703,7 @@ def test_push_docker_source(
                 ],
             },
             "operation_results": MSG_SIGNER_OPERATION_RESULT,
-            "signing_key": "sig-key",
+            "signing_keys": ["sig-key"],
         }
 
         push_docker = PushDocker(
@@ -734,17 +738,18 @@ def test_push_docker_source(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="fake-sign-key",
+                    signing_keys=["fake-sign-key"],
                     reference=[
                         "some-registry1.com/target/repo:latest-test-tag",
                         "some-registry2.com/target/repo:latest-test-tag",
                     ],
                     digest=["fake-digest-0", "fake-digest-0"],
                     task_id="1",
+                    signing_key_names=["fake-sign-key"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="fake-sign-key",
+                    signing_keys=["fake-sign-key"],
                     reference=[
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",
@@ -800,7 +805,7 @@ def test_tag_docker_multiarch_merge_ml(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -918,7 +923,7 @@ def test_tag_docker_multiarch_merge_ml(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/namespace/test_repo:v1.6",
                         "some-registry2.com/namespace/test_repo:v1.6",
@@ -932,11 +937,12 @@ def test_tag_docker_multiarch_merge_ml(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 # cosign
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
@@ -1016,7 +1022,7 @@ def test_tag_docker_source_copy_untag(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -1147,7 +1153,7 @@ def test_tag_docker_source_copy_untag(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/namespace/test_repo:v1.6",
                         "some-registry2.com/namespace/test_repo:v1.6",
@@ -1157,11 +1163,12 @@ def test_tag_docker_source_copy_untag(
                         "sha256:6ef06d8c90c863ba4eb4297f1073ba8cb28c1f6570e2206cdaad2084e2a4715d",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 # cosign
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
                         "quay.io/some-namespace/namespace----test_repo:v1.6",
@@ -1229,7 +1236,7 @@ def test_tag_docker_source_copy_untag(
 #             ],
 #         },
 #         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-#         "signing_key": "sig-key",
+#         "signing_keys": ["sig-key"],
 #     }
 #
 #     with requests_mock.Mocker() as m:
@@ -1385,7 +1392,7 @@ def test_task_iib_add_bundles(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -1429,7 +1436,7 @@ def test_task_iib_add_bundles(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/operators/index-image:8",
                         "some-registry1.com/operators/index-image:8-timestamp",
@@ -1443,11 +1450,12 @@ def test_task_iib_add_bundles(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 # cosign
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/operators----index-image:8",
                         "quay.io/some-namespace/operators----index-image:8",
@@ -1521,7 +1529,7 @@ def test_task_iib_remove_operators(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -1564,7 +1572,7 @@ def test_task_iib_remove_operators(
         [
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "some-registry1.com/operators/index-image:8",
                     "some-registry1.com/operators/index-image:8-timestamp",
@@ -1578,11 +1586,12 @@ def test_task_iib_remove_operators(
                     "sha256:5555555555",
                 ],
                 task_id="1",
+                signing_key_names=["some-key"],
             ),
             # cosign
             mock.call(
                 config_file="test-config.yml",
-                signing_key="some-key",
+                signing_keys=["some-key"],
                 reference=[
                     "quay.io/some-namespace/operators----index-image:8",
                     "quay.io/some-namespace/operators----index-image:8",
@@ -1652,7 +1661,7 @@ def test_task_iib_build_from_scratch(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -1901,7 +1910,7 @@ def test_push_docker_operator_verify_bundle_fail(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -1980,7 +1989,7 @@ def test_push_docker_operator_verify_bundle_fail(
             [
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "some-registry1.com/target/repo:latest-test-tag",
                         "some-registry1.com/target/repo:latest-test-tag",
@@ -2002,10 +2011,11 @@ def test_push_docker_operator_verify_bundle_fail(
                         "sha256:5555555555",
                     ],
                     task_id="1",
+                    signing_key_names=["some-key"],
                 ),
                 mock.call(
                     config_file="test-config.yml",
-                    signing_key="some-key",
+                    signing_keys=["some-key"],
                     reference=[
                         "quay.io/some-namespace/target----repo:latest-test-tag",
                         "quay.io/some-namespace/target----repo:latest-test-tag",

@@ -1151,7 +1151,7 @@ def test_push_docker_full_success(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -1345,7 +1345,7 @@ def test_push_docker_full_prerelease(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -1528,7 +1528,7 @@ def test_push_docker_full_no_v2sch2(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -1682,7 +1682,7 @@ def test_push_docker_full_success_repush(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -1858,7 +1858,7 @@ def test_push_docker_no_operator_push_items(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     with requests_mock.Mocker() as m:
@@ -1997,7 +1997,7 @@ def test_push_docker_failure_no_rollback(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -2132,7 +2132,7 @@ def test_push_docker_failure_rollback(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
@@ -2263,7 +2263,7 @@ def test_push_docker_failure_fbc_rollback(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     with requests_mock.Mocker() as m:
         m.get(
