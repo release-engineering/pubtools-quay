@@ -10,7 +10,7 @@ pyrsistent==0.15.7;python_version<'3.0'
 pushcollector
 PyHamcrest
 python-qpid-proton==0.33.0;python_version<'3.0'
-bandit==1.7.5
+bandit>=1.8.0
 mypy
 types-requests
 types-setuptools
@@ -18,3 +18,4 @@ types-paramiko
 types-PyYAML
 pubtools>=1.4.0
 pip
+setuptools<82
