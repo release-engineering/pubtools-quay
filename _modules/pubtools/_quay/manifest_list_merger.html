@@ -88,11 +88,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.quay_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuayClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">Manifest</span>
 
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ManifestListMerger"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ManifestListMerger</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class containing logic for merging manifest lists of two images.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Class containing logic for merging manifest lists of two images."""</span>
 
 <div class="viewcode-block" id="ManifestListMerger.__init__"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -105,7 +105,7 @@
         <span class="n">dest_quay_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -125,7 +125,7 @@
 <span class="sd">                Quay password to get dest_image. If ommited, external client instance should be set.</span>
 <span class="sd">            host (str):</span>
 <span class="sd">                Custom hostname to connect to. If ommited, standard quay.io will be used.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">src_image</span> <span class="o">=</span> <span class="n">src_image</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span> <span class="o">=</span> <span class="n">dest_image</span>
         <span class="k">if</span> <span class="n">src_quay_username</span> <span class="ow">and</span> <span class="n">src_quay_password</span><span class="p">:</span>
@@ -142,7 +142,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.set_quay_clients"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.set_quay_clients">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">set_quay_clients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src_quay_client</span><span class="p">:</span> <span class="n">QuayClient</span><span class="p">,</span> <span class="n">dest_quay_client</span><span class="p">:</span> <span class="n">QuayClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Set client instances to be used for the HTTP API operations.</span>
 
 <span class="sd">        Args:</span>
@@ -150,17 +150,17 @@
 <span class="sd">                Instance of QuayClient.</span>
 <span class="sd">            dest_quay_client (QuayClient):</span>
 <span class="sd">                Instance of QuayClient.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">src_quay_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">dest_quay_client</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.merge_manifest_lists"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">merge_manifest_lists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge manifest lists and upload to Quay. Main entrypoint method.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Merge manifest lists and upload to Quay. Main entrypoint method."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;QuayClient instance must be set for both source and dest images&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"QuayClient instance must be set for both source and dest images"</span><span class="p">)</span>
 
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Merging manifest lists of images &#39;</span><span class="si">{0}</span><span class="s2">&#39; and &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="s2">"Merging manifest lists of images '</span><span class="si">{0}</span><span class="s2">' and '</span><span class="si">{1}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">src_image</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -180,15 +180,15 @@
         <span class="n">missing_archs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_missing_architectures</span><span class="p">(</span><span class="n">src_manifest_list</span><span class="p">,</span> <span class="n">dest_manifest_list</span><span class="p">)</span>
         <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_missing_architectures</span><span class="p">(</span><span class="n">src_manifest_list</span><span class="p">,</span> <span class="n">missing_archs</span><span class="p">)</span>
 
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Uploading the new manifest list to &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span><span class="p">))</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Uploading the new manifest list to '</span><span class="si">{0}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="o">.</span><span class="n">upload_manifest</span><span class="p">(</span><span class="n">new_manifest_list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest_image</span><span class="p">)</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Merging manifests lists: complete.&quot;</span><span class="p">)</span></div>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Merging manifests lists: complete."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.get_missing_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.get_missing_architectures">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_missing_architectures</span><span class="p">(</span>
         <span class="n">src_manifest_list</span><span class="p">:</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">dest_manifest_list</span><span class="p">:</span> <span class="n">ManifestList</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Manifest</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Get architectures which are missing from the new source image.</span>
 
 <span class="sd">        NOTE: this method assumes that images are built only for one OS. The following logic</span>
@@ -201,25 +201,25 @@
 <span class="sd">                Manifest list of the destination image.</span>
 <span class="sd">        Returns ([dict]):</span>
 <span class="sd">            List of arch manifest data present in destination image but missing from source.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">missing_archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Manifest</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">missing_archs_log</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">src_archs</span> <span class="o">=</span> <span class="p">[</span><span class="n">arch</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">src_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]]</span>
+        <span class="n">src_archs</span> <span class="o">=</span> <span class="p">[</span><span class="n">arch</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">]</span> <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">src_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]]</span>
 
-        <span class="k">for</span> <span class="n">dest_arch_dict</span> <span class="ow">in</span> <span class="n">dest_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src_archs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">dest_arch_dict</span> <span class="ow">in</span> <span class="n">dest_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src_archs</span><span class="p">:</span>
                 <span class="n">missing_archs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dest_arch_dict</span><span class="p">))</span>
-                <span class="n">missing_archs_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">])</span>
+                <span class="n">missing_archs_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">])</span>
 
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Architectures missing from the new image: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_archs_log</span><span class="p">))</span>
+            <span class="s2">"Architectures missing from the new image: </span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">missing_archs_log</span><span class="p">))</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">missing_archs</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger._add_missing_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger._add_missing_architectures">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">_add_missing_architectures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">src_manifest_list</span><span class="p">:</span> <span class="n">ManifestList</span><span class="p">,</span> <span class="n">missing_archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Manifest</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ManifestList</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Add missing architectures to the source manifest list.</span>
 
 <span class="sd">        Args:</span>
@@ -229,31 +229,31 @@
 <span class="sd">                Manifest data of missing architectures.</span>
 <span class="sd">        Retuns (dict):</span>
 <span class="sd">            New manifest list containing all the architectures.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">src_manifest_list</span><span class="p">)</span>
-        <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">missing_archs</span>
+        <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]</span> <span class="o">+</span> <span class="n">missing_archs</span>
 
         <span class="k">return</span> <span class="n">new_manifest_list</span></div>
 
 <div class="viewcode-block" id="ManifestListMerger.merge_manifest_lists_selected_architectures"><a class="viewcode-back" href="../../../manifest_list_merger.html#pubtools._quay.manifest_list_merger.ManifestListMerger.merge_manifest_lists_selected_architectures">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">merge_manifest_lists_selected_architectures</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">eligible_archs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ManifestList</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Merge manifests lists. Only specified archs are eligible for merging.</span>
 
-<span class="sd">        This is an alternate workflow used in &#39;tag-docker&#39;.</span>
+<span class="sd">        This is an alternate workflow used in 'tag-docker'.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            eligible_archs ([str]):</span>
 <span class="sd">                Archs eligible for merging with the old manifest list.</span>
 <span class="sd">        Returns (dict):</span>
 <span class="sd">            New manifest list.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;QuayClient instance must be set for both source and dest images&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"QuayClient instance must be set for both source and dest images"</span><span class="p">)</span>
 
         <span class="n">src_manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">src_image</span><span class="p">))</span>
-        <span class="c1"># It&#39;s possible that destination doesn&#39;t exist in this workflow. ML merging logic is still</span>
+        <span class="c1"># It's possible that destination doesn't exist in this workflow. ML merging logic is still</span>
         <span class="c1"># necessary due to only some archs being eligible</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">dest_manifest_list</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
@@ -268,19 +268,19 @@
 
         <span class="n">archs_to_add</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">manifests_to_add</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">src_arch_dict</span> <span class="ow">in</span> <span class="n">src_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">src_arch_dict</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">eligible_archs</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">src_arch_dict</span> <span class="ow">in</span> <span class="n">src_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">src_arch_dict</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">]</span> <span class="ow">in</span> <span class="n">eligible_archs</span><span class="p">:</span>
                 <span class="n">manifests_to_add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">src_arch_dict</span><span class="p">))</span>
-                <span class="n">archs_to_add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src_arch_dict</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">])</span>
+                <span class="n">archs_to_add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src_arch_dict</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">])</span>
 
         <span class="n">manifests_to_keep</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">dest_manifest_list</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">dest_arch_dict</span> <span class="ow">in</span> <span class="n">dest_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">&quot;platform&quot;</span><span class="p">][</span><span class="s2">&quot;architecture&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">archs_to_add</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">dest_arch_dict</span> <span class="ow">in</span> <span class="n">dest_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">dest_arch_dict</span><span class="p">[</span><span class="s2">"platform"</span><span class="p">][</span><span class="s2">"architecture"</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">archs_to_add</span><span class="p">:</span>
                     <span class="n">manifests_to_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dest_arch_dict</span><span class="p">))</span>
 
         <span class="n">new_manifest_list</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">src_manifest_list</span><span class="p">)</span>
-        <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">&quot;manifests&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifests_to_add</span> <span class="o">+</span> <span class="n">manifests_to_keep</span>
+        <span class="n">new_manifest_list</span><span class="p">[</span><span class="s2">"manifests"</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifests_to_add</span> <span class="o">+</span> <span class="n">manifests_to_keep</span>
 
         <span class="k">return</span> <span class="n">new_manifest_list</span></div></div>
 </pre></div>

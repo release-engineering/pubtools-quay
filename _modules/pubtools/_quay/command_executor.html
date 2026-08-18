@@ -102,14 +102,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pubtools.tracing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trace_wrapper</span>
 
 <span class="n">tw</span> <span class="o">=</span> <span class="n">get_trace_wrapper</span><span class="p">()</span>
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
 
-<span class="c1"># Python 2.6 version of paramiko doesn&#39;t support the usage</span>
+<span class="c1"># Python 2.6 version of paramiko doesn't support the usage</span>
 <span class="c1"># of SSHClient as a context manager. This wrapper adds the functionality</span>
 <span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">open_ssh_client</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">paramiko</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">SSHClient</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use SSHClient as a context manager.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Use SSHClient as a context manager."""</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">paramiko</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">SSHClient</span><span class="p">()</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">yield</span> <span class="n">client</span>
@@ -118,16 +118,16 @@
 
 
 <div class="viewcode-block" id="Executor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">Executor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Base executor class.</span>
 
 <span class="sd">    Implementation of command execution should be done in</span>
 <span class="sd">    descendant classes. Common pre- and post-processing should be</span>
 <span class="sd">    implemented in this class.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="Executor.__enter__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.__enter__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Use the class as context manager. Returns instance upon invocation.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Use the class as context manager. Returns instance upon invocation."""</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 <div class="viewcode-block" id="Executor.__exit__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.__exit__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span>
@@ -136,7 +136,7 @@
         <span class="n">exc_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span>
         <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TracebackType</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cleanup when used as context manager. No-op by default.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Cleanup when used as context manager. No-op by default."""</span>
         <span class="k">pass</span></div>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_cmd</span><span class="p">(</span>
@@ -146,13 +146,13 @@
         <span class="n">tolerate_err</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stdin</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a bash command.&quot;&quot;&quot;</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>  <span class="c1"># pragma: no cover&quot;</span>
+<span class="w">        </span><span class="sd">"""Run a bash command."""</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>  <span class="c1"># pragma: no cover"</span>
 
 <div class="viewcode-block" id="Executor.skopeo_login"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.skopeo_login">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">skopeo_login</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"quay.io"</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Attempt to login to Quay if no login credentials are present.</span>
 
 <span class="sd">        Args:</span>
@@ -162,32 +162,32 @@
 <span class="sd">                Username for login.</span>
 <span class="sd">            password (str):</span>
 <span class="sd">                Password for login.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">&quot;skopeo login --get-login </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">host</span>
+<span class="sd">        """</span>
+        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">"skopeo login --get-login </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">host</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_check</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">username</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Already logged in to Quay.io&quot;</span><span class="p">)</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Already logged in to Quay.io"</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">password</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Skopeo login credentials are not present. Quay user and token must be provided.&quot;</span>
+                <span class="s2">"Skopeo login credentials are not present. Quay user and token must be provided."</span>
             <span class="p">)</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Logging in to Quay with provided credentials&quot;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Logging in to Quay with provided credentials"</span><span class="p">)</span>
 
-        <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;skopeo login -u </span><span class="si">{0}</span><span class="s2"> --password-stdin </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">host</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">username</span><span class="p">))</span>
+        <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"skopeo login -u </span><span class="si">{0}</span><span class="s2"> --password-stdin </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">host</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">username</span><span class="p">))</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">password</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Login successful&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"Login Succeeded"</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Login successful"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Login command didn&#39;t generate expected output. &quot;</span>
-                <span class="s2">&quot;STDOUT: &#39;</span><span class="si">{0}</span><span class="s2">&#39;, STDERR: &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+                <span class="s2">"Login command didn't generate expected output. "</span>
+                <span class="s2">"STDOUT: '</span><span class="si">{0}</span><span class="s2">', STDERR: '</span><span class="si">{1}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
             <span class="p">)</span></div>
 
 <div class="viewcode-block" id="Executor.tag_images"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.tag_images">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">tag_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">all_arch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Copy image from source to destination(s) using skopeo.</span>
 
 <span class="sd">        Args:</span>
@@ -197,25 +197,25 @@
 <span class="sd">                List of target references to copy the image to.</span>
 <span class="sd">            all_arch (bool):</span>
 <span class="sd">                Whether to copy all architectures (if multiarch image)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">all_arch</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy --all docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">"skopeo copy --all docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">"</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo copy docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">&quot;</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="s2">"skopeo copy docker://</span><span class="si">{0}</span><span class="s2"> docker://</span><span class="si">{1}</span><span class="s2">"</span>
 
         <span class="k">for</span> <span class="n">dest_ref</span> <span class="ow">in</span> <span class="n">dest_refs</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging source &#39;</span><span class="si">{0}</span><span class="s2">&#39; to destination &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">))</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tagging source '</span><span class="si">{0}</span><span class="s2">' to destination '</span><span class="si">{1}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_ref</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">source_ref</span><span class="p">),</span> <span class="n">quote</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">)))</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Destination image </span><span class="si">{0}</span><span class="s2"> has been tagged.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">))</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Destination image </span><span class="si">{0}</span><span class="s2"> has been tagged."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dest_ref</span><span class="p">))</span>
 
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Tagging complete.&quot;</span><span class="p">)</span></div>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Tagging complete."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Executor.skopeo_inspect"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.Executor.skopeo_inspect">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">skopeo_inspect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">raw</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Run skopeo inspect and return the result.</span>
 
 <span class="sd">        NOTE: inspect command will not be run with the --raw argument. This option only returns an</span>
-<span class="sd">        image manifest, which can be gathered by QuayClient. &#39;raw&#39; argument in this function</span>
+<span class="sd">        image manifest, which can be gathered by QuayClient. 'raw' argument in this function</span>
 <span class="sd">        denotes if the result should be parsed or returned raw.</span>
 
 <span class="sd">        Args:</span>
@@ -225,8 +225,8 @@
 <span class="sd">                Whether to parse the returned JSON, or return raw.</span>
 <span class="sd">        Returns (dict|str):</span>
 <span class="sd">            Result of skopeo inspect.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;skopeo inspect docker://</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_ref</span><span class="p">)</span>
+<span class="sd">        """</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s2">"skopeo inspect docker://</span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_ref</span><span class="p">)</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
@@ -236,21 +236,21 @@
 
 
 <div class="viewcode-block" id="LocalExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">LocalExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run commands locally.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run commands locally."""</span>
 
 <div class="viewcode-block" id="LocalExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{})</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            params (dict):</span>
 <span class="sd">                Custom parameters to be applied when running the shell commands.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;universal_newlines&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stderr&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stdout&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;stdin&quot;</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"universal_newlines"</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"stderr"</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"stdout"</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"stdin"</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="LocalExecutor._run_cmd"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.LocalExecutor._run_cmd">[docs]</a>    <span class="nd">@tw</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">(</span><span class="n">args_to_attr</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_run_cmd</span><span class="p">(</span>
@@ -260,7 +260,7 @@
         <span class="n">tolerate_err</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stdin</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Run a command locally.</span>
 
 <span class="sd">        Args:</span>
@@ -275,23 +275,23 @@
 
 <span class="sd">        Returns (str, str):</span>
 <span class="sd">            Tuple of stdout and stderr generated by the command.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
+<span class="sd">        """</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">"An error has occured when executing a command."</span>
 
         <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">cmd</span><span class="p">),</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">)</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">communicate</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">stdin</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="mi">200</span><span class="p">):</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span></div></div>
 
 
 <div class="viewcode-block" id="RemoteExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.RemoteExecutor">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">RemoteExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run commands remotely via SSH.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run commands remotely via SSH."""</span>
 
 <div class="viewcode-block" id="RemoteExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.RemoteExecutor.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -302,7 +302,7 @@
         <span class="n">port</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">accept_unknown_host</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -318,7 +318,7 @@
 <span class="sd">                Optional port of the host.</span>
 <span class="sd">            accept_unknown_host (bool):</span>
 <span class="sd">                Whether to accept an unknown host key. Defaults to True.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">=</span> <span class="n">hostname</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="n">username</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span> <span class="o">=</span> <span class="n">key_filename</span>
@@ -338,7 +338,7 @@
         <span class="n">tolerate_err</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stdin</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Run a command remotely via SSH.</span>
 
 <span class="sd">        Args:</span>
@@ -353,8 +353,8 @@
 
 <span class="sd">        Returns (str, str):</span>
 <span class="sd">            Tuple of stdout and stderr generated by the command.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
+<span class="sd">        """</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">"An error has occured when executing a command."</span>
         <span class="k">with</span> <span class="n">open_ssh_client</span><span class="p">()</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
             <span class="n">client</span><span class="o">.</span><span class="n">load_system_host_keys</span><span class="p">()</span>
             <span class="n">client</span><span class="o">.</span><span class="n">set_missing_host_key_policy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_host_policy</span><span class="p">)</span>
@@ -366,38 +366,38 @@
                 <span class="n">key_filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_filename</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">cmd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;skopeo&quot;</span><span class="p">):</span>
-                <span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot; --authfile $HOME/.docker/config.json&quot;</span>
+            <span class="k">if</span> <span class="n">cmd</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"skopeo"</span><span class="p">):</span>
+                <span class="n">cmd</span> <span class="o">=</span> <span class="n">cmd</span> <span class="o">+</span> <span class="s2">" --authfile $HOME/.docker/config.json"</span>
             <span class="n">ssh_in</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">exec_command</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>  <span class="c1"># nosec B601</span>
             <span class="k">if</span> <span class="n">stdin</span><span class="p">:</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">stdin</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="n">ssh_in</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">shutdown_write</span><span class="p">()</span>
 
-            <span class="n">out_text</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
-            <span class="n">err_text</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">out_text</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="n">err_text</span> <span class="o">=</span> <span class="n">err</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">recv_exit_status</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
                 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">err_text</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
-                    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">out_text</span><span class="p">,</span> <span class="n">err_text</span></div></div>
 
 
 <div class="viewcode-block" id="ContainerExecutor"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ContainerExecutor</span><span class="p">(</span><span class="n">Executor</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run commands in a Docker container.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run commands in a Docker container."""</span>
 
 <div class="viewcode-block" id="ContainerExecutor.__init__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">image</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+        <span class="n">base_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"unix://var/run/docker.sock"</span><span class="p">,</span>
         <span class="n">timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">verify_tls</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">cert_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">registry_username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">registry_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -411,45 +411,45 @@
 <span class="sd">            verify_tls (bool):</span>
 <span class="sd">                Whether to use TLS verification.</span>
 <span class="sd">            cert_path (str|None):</span>
-<span class="sd">                Custom path to TLS certificates. If not specified, &#39;~/.docker&#39; is used.</span>
+<span class="sd">                Custom path to TLS certificates. If not specified, '~/.docker' is used.</span>
 <span class="sd">            registry_username (str|None):</span>
 <span class="sd">                Username to login to registry containing the specified image. If not provided,</span>
 <span class="sd">                login will be assumed to not be needed.</span>
 <span class="sd">            registry_password (str|None):</span>
 <span class="sd">                Password to login to registry containing the specified image. If not provided,</span>
 <span class="sd">                login will be assumed to not be needed.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
 
         <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_url</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"base_url"</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_url</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">"version"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"auto"</span>
         <span class="k">if</span> <span class="n">timeout</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;timeout&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"timeout"</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="k">if</span> <span class="n">verify_tls</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;base_url&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;tcp://&quot;</span><span class="p">,</span> <span class="s2">&quot;https://&quot;</span><span class="p">)</span>
-            <span class="n">cert_path</span> <span class="o">=</span> <span class="n">cert_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">),</span> <span class="s2">&quot;.docker&quot;</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"base_url"</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">"base_url"</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"tcp://"</span><span class="p">,</span> <span class="s2">"https://"</span><span class="p">)</span>
+            <span class="n">cert_path</span> <span class="o">=</span> <span class="n">cert_path</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">),</span> <span class="s2">".docker"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">cert_path</span><span class="p">):</span>
-                <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;tls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">docker</span><span class="o">.</span><span class="n">tls</span><span class="o">.</span><span class="n">TLSConfig</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s2">"tls"</span><span class="p">]</span> <span class="o">=</span> <span class="n">docker</span><span class="o">.</span><span class="n">tls</span><span class="o">.</span><span class="n">TLSConfig</span><span class="p">(</span>
                     <span class="n">client_cert</span><span class="o">=</span><span class="p">(</span>
-                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;cert.pem&quot;</span><span class="p">),</span>
-                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;key.pem&quot;</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">"cert.pem"</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">"key.pem"</span><span class="p">),</span>
                     <span class="p">),</span>
-                    <span class="n">verify</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">&quot;ca.pem&quot;</span><span class="p">),</span>
+                    <span class="n">verify</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cert_path</span><span class="p">,</span> <span class="s2">"ca.pem"</span><span class="p">),</span>
                 <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">docker</span><span class="o">.</span><span class="n">APIClient</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">repo</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">registry_username</span> <span class="ow">and</span> <span class="n">registry_password</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">login</span><span class="p">(</span>
                 <span class="n">username</span><span class="o">=</span><span class="n">registry_username</span><span class="p">,</span>
                 <span class="n">password</span><span class="o">=</span><span class="n">registry_password</span><span class="p">,</span>
-                <span class="n">registry</span><span class="o">=</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">image</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">registry</span><span class="o">=</span><span class="n">image</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"/"</span> <span class="ow">in</span> <span class="n">image</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                 <span class="n">reauth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pull</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">container</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">create_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">detach</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="ContainerExecutor.__exit__"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.__exit__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -457,8 +457,8 @@
         <span class="n">exc_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">],</span>
         <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TracebackType</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cleanup the container when used as a context manager.&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">remove_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""Cleanup the container when used as a context manager."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">remove_container</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">],</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerExecutor._run_cmd"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor._run_cmd">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">_run_cmd</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -467,10 +467,10 @@
         <span class="n">tolerate_err</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">stdin</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Run a command locally.</span>
 
-<span class="sd">        NOTE: Older versions of Docker API don&#39;t support demuxing of stdout and stderr.</span>
+<span class="sd">        NOTE: Older versions of Docker API don't support demuxing of stdout and stderr.</span>
 <span class="sd">        This means that data from both streams will be mixed together. To maintain compatibility</span>
 <span class="sd">        with the other classes, same output will be returned twice as a tuple. Each string</span>
 <span class="sd">        will contain the same mix of stdout and stderr messages.</span>
@@ -488,26 +488,26 @@
 
 <span class="sd">        Returns (str, str):</span>
 <span class="sd">            Tuple of stdout and stderr generated by the command.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">&quot;An error has occured when executing a command.&quot;</span>
-        <span class="n">cmd_exec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">cmd</span><span class="p">)</span>
-        <span class="c1"># Unfortunately, older versions of Docker API don&#39;t support demuxing stdout and stderr</span>
-        <span class="n">stdout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_start</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span>
+<span class="sd">        """</span>
+        <span class="n">err_msg</span> <span class="o">=</span> <span class="n">err_msg</span> <span class="ow">or</span> <span class="s2">"An error has occured when executing a command."</span>
+        <span class="n">cmd_exec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">],</span> <span class="n">cmd</span><span class="p">)</span>
+        <span class="c1"># Unfortunately, older versions of Docker API don't support demuxing stdout and stderr</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_start</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">])</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_inspect</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ExitCode&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">exec_inspect</span><span class="p">(</span><span class="n">cmd_exec</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">])</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ExitCode"</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">tolerate_err</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"Command </span><span class="si">{0}</span><span class="s2"> failed with the following error:"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
             <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">stdout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">stdout</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span>
-        <span class="n">out_str</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="n">stdout</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">""</span>
+        <span class="n">out_str</span> <span class="o">=</span> <span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="n">out_str</span><span class="p">,</span> <span class="n">out_str</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerExecutor._add_file"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor._add_file">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">_add_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Add a text file to the running container.</span>
 
 <span class="sd">        The primary use-case is to store a secret which will be accessed from inside the container.</span>
@@ -518,10 +518,10 @@
 <span class="sd">                Data that should be stored in the container.</span>
 <span class="sd">            file_name (str):</span>
 <span class="sd">                Name of the file.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">data_stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
-        <span class="n">data_tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">data_stream</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>
-        <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">data_tar</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">data_stream</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="p">)</span>
+        <span class="n">encoded_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="n">tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">file_name</span><span class="p">)</span>
         <span class="n">tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">encoded_data</span><span class="p">)</span>
         <span class="n">tarinfo</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
@@ -530,16 +530,16 @@
 
         <span class="n">data_stream</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">put_archive</span><span class="p">(</span>
-            <span class="n">container</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">&quot;Id&quot;</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_stream</span>  <span class="c1"># nosec B108</span>
+            <span class="n">container</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">container</span><span class="p">[</span><span class="s2">"Id"</span><span class="p">],</span> <span class="n">path</span><span class="o">=</span><span class="s2">"/tmp"</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_stream</span>  <span class="c1"># nosec B108</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">success</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;File was not successfully added to the container&quot;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"File was not successfully added to the container"</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ContainerExecutor.skopeo_login"><a class="viewcode-back" href="../../../command_executor.html#pubtools._quay.command_executor.ContainerExecutor.skopeo_login">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">skopeo_login</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"quay.io"</span><span class="p">,</span> <span class="n">username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Attempt to login to Quay if no login credentials are present.</span>
 
 <span class="sd">        This method is reimplemented because it uses a different approach to input the password.</span>
@@ -551,37 +551,37 @@
 <span class="sd">                Username for login.</span>
 <span class="sd">            password (str):</span>
 <span class="sd">                Password for login.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">&quot;skopeo login --get-login </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">host</span>
+<span class="sd">        """</span>
+        <span class="n">cmd_check</span> <span class="o">=</span> <span class="s2">"skopeo login --get-login </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">host</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_check</span><span class="p">,</span> <span class="n">tolerate_err</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">username</span> <span class="ow">and</span> <span class="n">username</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Already logged in to Quay.io&quot;</span><span class="p">)</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Already logged in to Quay.io"</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">username</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">password</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Skopeo login credentials are not present. Quay user and token must be provided.&quot;</span>
+                <span class="s2">"Skopeo login credentials are not present. Quay user and token must be provided."</span>
             <span class="p">)</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Logging in to Quay with provided credentials&quot;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Logging in to Quay with provided credentials"</span><span class="p">)</span>
 
-        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="n">random</span><span class="o">.</span><span class="n">SystemRandom</span><span class="p">()</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="n">password_file</span> <span class="o">=</span> <span class="s2">&quot;skopeo_password-</span><span class="si">{0}</span><span class="s2">.txt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">suffix</span><span class="p">)</span>
+        <span class="n">password_file</span> <span class="o">=</span> <span class="s2">"skopeo_password-</span><span class="si">{0}</span><span class="s2">.txt"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">suffix</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_add_file</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">password_file</span><span class="p">)</span>
 
         <span class="n">cmd_login</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot; sh -c &#39;cat /tmp/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json&quot;</span>
-            <span class="s1">&#39; -u &quot;</span><span class="si">{0}</span><span class="s1">&quot; --password-stdin </span><span class="si">%s</span><span class="se">\&#39;</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">host</span>
+            <span class="s2">" sh -c 'cat /tmp/</span><span class="si">{1}</span><span class="s2"> | skopeo login --authfile $HOME/.docker/config.json"</span>
+            <span class="s1">' -u "</span><span class="si">{0}</span><span class="s1">" --password-stdin </span><span class="si">%s</span><span class="se">\'</span><span class="s1">'</span> <span class="o">%</span> <span class="n">host</span>
         <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quote</span><span class="p">(</span><span class="n">username</span><span class="p">),</span> <span class="n">password_file</span><span class="p">)</span>
         <span class="n">out</span><span class="p">,</span> <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_cmd</span><span class="p">(</span><span class="n">cmd_login</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="s2">&quot;Login Succeeded&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Login successful&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"Login Succeeded"</span> <span class="ow">in</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Login successful"</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Login command didn&#39;t generate expected output. &quot;</span>
-                <span class="s2">&quot;STDOUT: &#39;</span><span class="si">{0}</span><span class="s2">&#39;, STDERR: &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+                <span class="s2">"Login command didn't generate expected output. "</span>
+                <span class="s2">"STDOUT: '</span><span class="si">{0}</span><span class="s2">', STDERR: '</span><span class="si">{1}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
             <span class="p">)</span></div></div>
 </pre></div>
 

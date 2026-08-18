@@ -106,34 +106,34 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pubtools.tracing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trace_wrapper</span>
 
 <span class="n">tw</span> <span class="o">=</span> <span class="n">get_trace_wrapper</span><span class="p">()</span>
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
-<span class="n">INTERNAL_DELIMITER</span> <span class="o">=</span> <span class="s2">&quot;----&quot;</span>
+<span class="n">INTERNAL_DELIMITER</span> <span class="o">=</span> <span class="s2">"----"</span>
 <span class="n">MAX_RETRY_WAIT</span> <span class="o">=</span> <span class="mi">120</span>
 
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FData</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dataclass for holding data for a function execution.</span>
+<span class="w">    </span><span class="sd">"""Dataclass for holding data for a function execution.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        args (Iterable[Any]): Arguments for the function.</span>
 <span class="sd">        kwargs (Dict[str, Any]): Keyword arguments for the function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">args</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
     <span class="n">kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">run_in_parallel</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run method on data in parallel.</span>
+<span class="w">    </span><span class="sd">"""Run method on data in parallel.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        func (function): Function to run on data</span>
 <span class="sd">        data (list): List of tuples which are used as arguments for the function</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        dict: List of result in the same order as data.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">future_results</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">threads</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
@@ -149,7 +149,7 @@
 
 
 <div class="viewcode-block" id="setup_arg_parser"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.setup_arg_parser">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">setup_arg_parser</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Set up ArgumentParser with the provided arguments.</span>
 
 <span class="sd">    Args:</span>
@@ -157,27 +157,27 @@
 <span class="sd">            Dictionary of argument aliases and options to be consumed by ArgumentParser.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        (ArgumentParser) Configured instance of ArgumentParser.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
     <span class="n">arg_groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">aliases</span><span class="p">,</span> <span class="n">arg_data</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="n">holder</span> <span class="o">=</span> <span class="n">parser</span>
-        <span class="k">if</span> <span class="s2">&quot;group&quot;</span> <span class="ow">in</span> <span class="n">arg_data</span><span class="p">:</span>
-            <span class="n">arg_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">],</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]))</span>
-            <span class="n">holder</span> <span class="o">=</span> <span class="n">arg_groups</span><span class="p">[</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]]</span>
-        <span class="n">action</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;action&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span> <span class="ow">and</span> <span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
-            <span class="n">action</span> <span class="o">=</span> <span class="s2">&quot;store_true&quot;</span>
+        <span class="k">if</span> <span class="s2">"group"</span> <span class="ow">in</span> <span class="n">arg_data</span><span class="p">:</span>
+            <span class="n">arg_groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">"group"</span><span class="p">],</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">"group"</span><span class="p">]))</span>
+            <span class="n">holder</span> <span class="o">=</span> <span class="n">arg_groups</span><span class="p">[</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">"group"</span><span class="p">]]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"action"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">action</span> <span class="ow">and</span> <span class="n">arg_data</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">==</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s2">"store_true"</span>
         <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;help&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
-            <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;default&quot;</span><span class="p">),</span>
+            <span class="s2">"help"</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"help"</span><span class="p">),</span>
+            <span class="s2">"required"</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"required"</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s2">"default"</span><span class="p">:</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"default"</span><span class="p">),</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="n">action</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"action"</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;str&quot;</span><span class="p">)</span>
-            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;nargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;count&quot;</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"type"</span><span class="p">,</span> <span class="s2">"str"</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"nargs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"count"</span><span class="p">)</span>
 
         <span class="n">holder</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="o">*</span><span class="n">aliases</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -187,7 +187,7 @@
 <div class="viewcode-block" id="add_args_env_variables"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.add_args_env_variables">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">add_args_env_variables</span><span class="p">(</span>
     <span class="n">parsed_args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Add argument values from environment variables.</span>
 
 <span class="sd">    Args:</span>
@@ -197,18 +197,18 @@
 <span class="sd">            Argument definition.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Modified parsed arguments object.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">for</span> <span class="n">aliases</span><span class="p">,</span> <span class="n">arg_data</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">named_alias</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">aliases</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;--&quot;</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;env_variable&quot;</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;env_variable&quot;</span><span class="p">]):</span>
-                <span class="nb">setattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">&quot;env_variable&quot;</span><span class="p">]))</span>
+        <span class="n">named_alias</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"-"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">aliases</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"--"</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">arg_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"env_variable"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">"env_variable"</span><span class="p">]):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">parsed_args</span><span class="p">,</span> <span class="n">named_alias</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">arg_data</span><span class="p">[</span><span class="s2">"env_variable"</span><span class="p">]))</span>
     <span class="k">return</span> <span class="n">parsed_args</span></div>
 
 
 <div class="viewcode-block" id="capture_stdout"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.capture_stdout">[docs]</a><span class="nd">@contextlib</span><span class="o">.</span><span class="n">contextmanager</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">capture_stdout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">StringIO</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Capture sys.stdout to stream buffer.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Capture sys.stdout to stream buffer."""</span>
     <span class="n">old_stdout</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">new_stdout</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
 
@@ -225,7 +225,7 @@
     <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">environ_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Set up an entrypoint as a context manager.</span>
 
 <span class="sd">    Args:</span>
@@ -237,7 +237,7 @@
 <span class="sd">            Entrypoint arguments.</span>
 <span class="sd">        environ_vars (dict):</span>
 <span class="sd">            Env variable names and values to set for the entrypoint.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">orig_environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="k">try</span><span class="p">:</span>
@@ -272,7 +272,7 @@
     <span class="n">environ_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
     <span class="n">capture_out</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Run an entrypoint function and return its return value.</span>
 
 <span class="sd">    Args:</span>
@@ -289,19 +289,19 @@
 
 <span class="sd">    Returns (str):</span>
 <span class="sd">        Data returned by the entrypoint.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
     <span class="n">wrapped_lines</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span>
-        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
+        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">"  "</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
 
-    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running task with arguments:&quot;</span><span class="p">)</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Running task with arguments:"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">):</span>
-        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># shell-style backslash to indicate continuation</span>
-            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot; </span><span class="se">\\</span><span class="s2">&quot;</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">" </span><span class="se">\\</span><span class="s2">"</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">setup_entry_point_cli</span><span class="p">(</span><span class="n">entry_tuple</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">environ_vars</span><span class="p">)</span> <span class="k">as</span> <span class="n">entry_func</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">capture_out</span><span class="p">:</span>
@@ -319,7 +319,7 @@
     <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
     <span class="n">environ_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Run an mod entrypoint function and return its return value.</span>
 
 <span class="sd">    Args:</span>
@@ -336,19 +336,19 @@
 
 <span class="sd">    Returns (str):</span>
 <span class="sd">        Data returned by the entrypoint.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">raw_args</span> <span class="o">=</span> <span class="s2">" "</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">entry_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span><span class="p">)</span>
     <span class="n">wrapped_lines</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span>
-        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">&quot;  &quot;</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
+        <span class="n">raw_args</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="n">subsequent_indent</span><span class="o">=</span><span class="s2">"  "</span><span class="p">,</span> <span class="n">break_on_hyphens</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">break_long_words</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
 
-    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Running task with arguments:&quot;</span><span class="p">)</span>
+    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Running task with arguments:"</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">):</span>
-        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="s2">""</span>
         <span class="k">if</span> <span class="n">idx</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapped_lines</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
             <span class="c1"># shell-style backslash to indicate continuation</span>
-            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">&quot; </span><span class="se">\\</span><span class="s2">&quot;</span>  <span class="c1"># pragma: no cover</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="s2">" </span><span class="se">\\</span><span class="s2">"</span>  <span class="c1"># pragma: no cover</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
 
     <span class="n">entry_func</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="n">entry_tuple</span><span class="p">)</span>
     <span class="n">orig_environ</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -366,13 +366,13 @@
 
 
 <div class="viewcode-block" id="get_internal_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_internal_container_repo_name">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_internal_container_repo_name</span><span class="p">(</span><span class="n">external_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Transform a repository name to an internal form in which it exists on Quay.io.</span>
 
 <span class="sd">    Expected input format: &lt;namespace&gt;/&lt;product&gt;</span>
 <span class="sd">    Generated output format: &lt;namespace&gt;----&lt;product&gt;</span>
 
-<span class="sd">    NOTE: Repositories without a delimeter &quot;/&quot; may actually exist. In that case, the function</span>
+<span class="sd">    NOTE: Repositories without a delimeter "/" may actually exist. In that case, the function</span>
 <span class="sd">    simply returns the repo without any alterations.</span>
 
 <span class="sd">    Args:</span>
@@ -380,28 +380,28 @@
 <span class="sd">            External repository name.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        Internal repository name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">external_name</span>
 
-    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">external_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"/"</span> <span class="ow">or</span> <span class="n">external_name</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"/"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Input repository containing a delimeter should &quot;</span>
-            <span class="s2">&quot;have the format &#39;&lt;namespace&gt;/&lt;product&gt;&#39;&quot;</span><span class="p">,</span>
+            <span class="s2">"Input repository containing a delimeter should "</span>
+            <span class="s2">"have the format '&lt;namespace&gt;/&lt;product&gt;'"</span><span class="p">,</span>
             <span class="n">external_name</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">external_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="n">INTERNAL_DELIMITER</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">external_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">INTERNAL_DELIMITER</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="get_external_container_repo_name"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_external_container_repo_name">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_external_container_repo_name</span><span class="p">(</span><span class="n">internal_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Transform a repository name to an external form in which it&#39;s visible to customers.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Transform a repository name to an external form in which it's visible to customers.</span>
 
 <span class="sd">    Expected input format: &lt;namespace&gt;----&lt;product&gt;</span>
 <span class="sd">    Generated output format: &lt;namespace&gt;/&lt;product&gt;</span>
 
-<span class="sd">    NOTE: Repositories without a delimeter &quot;----&quot; may actually exist. In that case, the function</span>
+<span class="sd">    NOTE: Repositories without a delimeter "----" may actually exist. In that case, the function</span>
 <span class="sd">    simply returns the repo without any alterations.</span>
 
 <span class="sd">    Args:</span>
@@ -409,7 +409,7 @@
 <span class="sd">            Internal repository name.</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        External repository name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">internal_name</span>
 
@@ -419,28 +419,28 @@
         <span class="ow">or</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">internal_name</span><span class="p">)</span> <span class="o">-</span> <span class="mi">4</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Input repository containing a delimeter should &quot;</span>
-            <span class="s2">&quot;have the format &#39;&lt;namespace&gt;----&lt;product&gt;&#39;&quot;</span><span class="p">,</span>
+            <span class="s2">"Input repository containing a delimeter should "</span>
+            <span class="s2">"have the format '&lt;namespace&gt;----&lt;product&gt;'"</span><span class="p">,</span>
             <span class="n">internal_name</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">internal_name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">INTERNAL_DELIMITER</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="task_status"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.task_status">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">task_status</span><span class="p">(</span><span class="n">event</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper function. Expand as necessary.&quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">event</span><span class="p">})</span></div>
+<span class="w">    </span><span class="sd">"""Helper function. Expand as necessary."""</span>  <span class="c1"># noqa: D401</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="p">{</span><span class="s2">"type"</span><span class="p">:</span> <span class="n">event</span><span class="p">})</span></div>
 
 
 <div class="viewcode-block" id="log_step"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.log_step">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">log_step</span><span class="p">(</span><span class="n">step_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Log status for methods which constitute an entire task step.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        step_name (str):</span>
-<span class="sd">            Name of the task step, e.g., &quot;Tag images&quot;.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">event_name</span> <span class="o">=</span> <span class="n">step_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span>
+<span class="sd">            Name of the task step, e.g., "Tag images".</span>
+<span class="sd">    """</span>
+    <span class="n">event_name</span> <span class="o">=</span> <span class="n">step_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">decorate</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="c1"># Add instrumentation trace for all push steps.</span>
@@ -449,12 +449,12 @@
         <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">fn_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Started&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-start&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">: Started"</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">-start"</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
                 <span class="n">ret</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Finished&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-end&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">: Finished"</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">-end"</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
                 <span class="k">return</span> <span class="n">ret</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: Failed&quot;</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-error&quot;</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">: Failed"</span><span class="p">,</span> <span class="n">step_name</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="n">task_status</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2">-error"</span> <span class="o">%</span> <span class="n">event_name</span><span class="p">))</span>
                 <span class="k">raise</span>
 
         <span class="k">return</span> <span class="n">fn_wrapper</span>
@@ -463,12 +463,12 @@
 
 
 <div class="viewcode-block" id="get_pyxis_ssl_paths"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.get_pyxis_ssl_paths">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get certificate and key paths for Pyxis SSL authentication.</span>
 
-<span class="sd">    First attempt is made by invoking the hook implementation &#39;get_cert_key_paths&#39;.</span>
+<span class="sd">    First attempt is made by invoking the hook implementation 'get_cert_key_paths'.</span>
 <span class="sd">    If nothing is returned (no hook implementation is registered), fallback on target settings</span>
-<span class="sd">    values of &#39;pyxis_ssl_cert&#39; and &#39;pyxis_ssl_key&#39;. If multiple values are returned (multiple</span>
+<span class="sd">    values of 'pyxis_ssl_cert' and 'pyxis_ssl_key'. If multiple values are returned (multiple</span>
 <span class="sd">    hook implementations are registered), take the first response (from the implementation which</span>
 <span class="sd">    was registered last). Otherwise, raise an error.</span>
 
@@ -477,32 +477,32 @@
 <span class="sd">            Dictionary containing various task-related settings.</span>
 <span class="sd">    Returns ((str, str)):</span>
 <span class="sd">        Paths to Pyxis SSL certificate and key.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">get_cert_key_paths</span><span class="p">(</span><span class="n">server_url</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">])</span>
+<span class="sd">    """</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">hook</span><span class="o">.</span><span class="n">get_cert_key_paths</span><span class="p">(</span><span class="n">server_url</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
         <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">result</span>
-    <span class="k">elif</span> <span class="s2">&quot;pyxis_ssl_cert&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span> <span class="ow">or</span> <span class="s2">&quot;pyxis_ssl_key&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="s2">"pyxis_ssl_cert"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span> <span class="ow">or</span> <span class="s2">"pyxis_ssl_key"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;No key and certificate paths were provided for Pyxis SSL authentication. &quot;</span>
-            <span class="s2">&quot;Please, either provide hook implementation for &#39;get_cert_key_paths_plugin&#39; or &quot;</span>
-            <span class="s2">&quot;specify &#39;pyxis_ssl_cert&#39; and &#39;pyxis_ssl_key&#39; in the target settings.&quot;</span>
+            <span class="s2">"No key and certificate paths were provided for Pyxis SSL authentication. "</span>
+            <span class="s2">"Please, either provide hook implementation for 'get_cert_key_paths_plugin' or "</span>
+            <span class="s2">"specify 'pyxis_ssl_cert' and 'pyxis_ssl_key' in the target settings."</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">cert</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_ssl_cert&quot;</span><span class="p">]</span>
-        <span class="n">key</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_ssl_key&quot;</span><span class="p">]</span>
+        <span class="n">cert</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"pyxis_ssl_cert"</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"pyxis_ssl_key"</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="p">(</span><span class="n">cert</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="timestamp"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.timestamp">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">timestamp</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return now() timestamp.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+<span class="w">    </span><span class="sd">"""Return now() timestamp."""</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="run_with_retries"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.run_with_retries">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">run_with_retries</span><span class="p">(</span>
     <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">],</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">wait_time_increase</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Run the specified function until it succeeds or maximum retries are reached.</span>
 
 <span class="sd">    Wait time will increase after every retry, up to a point defined by MAX_RETRY_WAIT.</span>
@@ -511,48 +511,48 @@
 <span class="sd">        function (callable):</span>
 <span class="sd">            Function that should be retried. It must be able to run with 0 parameters.</span>
 <span class="sd">        message (str):</span>
-<span class="sd">            Message describing the action performed by the function. For example, &quot;tag images&quot;.</span>
+<span class="sd">            Message describing the action performed by the function. For example, "tag images".</span>
 <span class="sd">        tries (int):</span>
 <span class="sd">            Numbers of times to run the function before giving up.</span>
 <span class="sd">        wait_time_increase (int):</span>
 <span class="sd">            Time increase (in seconds) to wait before running the function again. Example (default):</span>
 <span class="sd">            RUN -&gt; WAIT 0 -&gt; RUN -&gt; WAIT 10 -&gt; RUN -&gt; WAIT 20 -&gt; RUN</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">wait_time</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tries</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">function</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> succeeded [try: </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tries</span><span class="p">))</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2"> succeeded [try: </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">]"</span> <span class="o">%</span> <span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tries</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">tries</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">wait_time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">wait_time_increase</span> <span class="k">if</span> <span class="n">wait_time</span> <span class="o">&lt;</span> <span class="n">MAX_RETRY_WAIT</span> <span class="k">else</span> <span class="n">MAX_RETRY_WAIT</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> failed. Will retry in </span><span class="si">%d</span><span class="s2"> seconds [try </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">]: </span><span class="si">%s</span><span class="s2">&quot;</span>
+                    <span class="s2">"</span><span class="si">%s</span><span class="s2"> failed. Will retry in </span><span class="si">%d</span><span class="s2"> seconds [try </span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">]: </span><span class="si">%s</span><span class="s2">"</span>
                     <span class="o">%</span> <span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">wait_time</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">tries</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
                 <span class="p">)</span>
                 <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">wait_time</span><span class="p">)</span>
                 <span class="k">continue</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> repeatedly fails&quot;</span> <span class="o">%</span> <span class="n">message</span><span class="p">)</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"</span><span class="si">%s</span><span class="s2"> repeatedly fails"</span> <span class="o">%</span> <span class="n">message</span><span class="p">)</span>
             <span class="k">raise</span></div>
 
 
 <div class="viewcode-block" id="retry"><a class="viewcode-back" href="../../../../utilities.html#pubtools._quay.utils.misc.retry">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">retry</span><span class="p">(</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">wait_time_increase</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Retry decorated function.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        message (str):</span>
-<span class="sd">            Message describing the action performed by the function. For example, &quot;tag images&quot;.</span>
+<span class="sd">            Message describing the action performed by the function. For example, "tag images".</span>
 <span class="sd">        tries (int):</span>
 <span class="sd">            Numbers of times to run the function before giving up.</span>
 <span class="sd">        wait_time_increase (int):</span>
 <span class="sd">            Time increase (in seconds) to wait before running the function again. Example (default):</span>
 <span class="sd">            RUN -&gt; WAIT 0 -&gt; RUN -&gt; WAIT 10 -&gt; RUN -&gt; WAIT 20 -&gt; RUN</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">inner_retry</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
@@ -566,7 +566,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">parse_index_image</span><span class="p">(</span><span class="n">build_details</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Get registry, namespace and repository of a resolved internal index image.</span>
 
 <span class="sd">    Args:</span>
@@ -574,15 +574,15 @@
 <span class="sd">            Dictionary of IIB build details.</span>
 <span class="sd">    Returns ((str, str, str)):</span>
 <span class="sd">        Registry, namespace, repository of an image.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">image_path</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">registry</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span> <span class="o">=</span> <span class="n">image_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">image_path</span> <span class="o">=</span> <span class="n">build_details</span><span class="o">.</span><span class="n">internal_index_image_copy_resolved</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"@"</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">registry</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span> <span class="o">=</span> <span class="n">image_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">repo</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_basic_auth</span><span class="p">(</span><span class="n">host</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Look for container config file for username and password.</span>
 
 <span class="sd">    Args:</span>
@@ -590,21 +590,21 @@
 <span class="sd">            Hostname of a container registry.</span>
 <span class="sd">    Returns ((str, str)):</span>
 <span class="sd">        Username, password of a registry.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">)</span>
-    <span class="n">conf_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home_dir</span><span class="p">,</span> <span class="s2">&quot;.docker/config.json&quot;</span><span class="p">)</span>
+<span class="sd">    """</span>
+    <span class="n">home_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">"~"</span><span class="p">)</span>
+    <span class="n">conf_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">home_dir</span><span class="p">,</span> <span class="s2">".docker/config.json"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">conf_file</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">conf_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-        <span class="n">auth</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;auths&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;auth&quot;</span><span class="p">)</span>
+        <span class="n">auth</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"auths"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"auth"</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">auth</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">auth</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">auth</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)</span>
     <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">pyxis_get_repo_metadata</span><span class="p">(</span><span class="n">repo</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Invoke the &#39;get-repo-metadata&#39; entrypoint from pubtools-pyxis.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Invoke the 'get-repo-metadata' entrypoint from pubtools-pyxis.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        repo (str):</span>
@@ -614,18 +614,18 @@
 
 <span class="sd">    Returns (dict):</span>
 <span class="sd">        Parsed response from Pyxis.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="n">target_settings</span><span class="p">)</span>
 
-    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-server&quot;</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;pyxis_server&quot;</span><span class="p">]]</span>
-    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-crtfile&quot;</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
-    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--pyxis-ssl-keyfile&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
-    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--repo-name&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--pyxis-server"</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">]]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-crtfile"</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-keyfile"</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--repo-name"</span><span class="p">,</span> <span class="n">repo</span><span class="p">]</span>
 
     <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">metadata</span> <span class="o">=</span> <span class="n">run_entrypoint_mod</span><span class="p">(</span>
-        <span class="p">(</span><span class="s2">&quot;pubtools-pyxis&quot;</span><span class="p">,</span> <span class="s2">&quot;mod&quot;</span><span class="p">,</span> <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;pubtools-pyxis-get-repo-metadata&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="s2">"pubtools-pyxis"</span><span class="p">,</span> <span class="s2">"mod"</span><span class="p">,</span> <span class="s2">"pubtools-pyxis-get-repo-metadata"</span><span class="p">),</span>
+        <span class="s2">"pubtools-pyxis-get-repo-metadata"</span><span class="p">,</span>
         <span class="n">args</span><span class="p">,</span>
         <span class="n">env_vars</span><span class="p">,</span>
     <span class="p">)</span>
@@ -633,7 +633,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">set_aws_kms_environment_variables</span><span class="p">(</span><span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">profile_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Set environment variables required to use an AWS KMS key.</span>
 
 <span class="sd">    The values are set from target settings based on the selected profile. Multiple profiles are</span>
@@ -641,19 +641,19 @@
 <span class="sd">    AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION. Missing data in target settings</span>
 <span class="sd">    will not result in an error. Target settings is expected to be in the following format:</span>
 <span class="sd">    {</span>
-<span class="sd">    &quot;aws_kms_credentials&quot;: {</span>
-<span class="sd">        &quot;profile-1&quot;: {</span>
-<span class="sd">            &quot;aws_access_key_id&quot;: &quot;id1&quot;,</span>
-<span class="sd">            &quot;aws_secret_access_key&quot;: &quot;key1&quot;,</span>
-<span class="sd">            &quot;aws_default_region&quot;: &quot;us-east-1&quot;</span>
+<span class="sd">    "aws_kms_credentials": {</span>
+<span class="sd">        "profile-1": {</span>
+<span class="sd">            "aws_access_key_id": "id1",</span>
+<span class="sd">            "aws_secret_access_key": "key1",</span>
+<span class="sd">            "aws_default_region": "us-east-1"</span>
 <span class="sd">            },</span>
-<span class="sd">        &quot;profile-2&quot;: {</span>
-<span class="sd">            &quot;aws_access_key_id&quot;: &quot;id2&quot;,</span>
-<span class="sd">            &quot;aws_secret_access_key&quot;: &quot;key2&quot;,</span>
-<span class="sd">            &quot;aws_default_region&quot;: &quot;us-east-2&quot;</span>
+<span class="sd">        "profile-2": {</span>
+<span class="sd">            "aws_access_key_id": "id2",</span>
+<span class="sd">            "aws_secret_access_key": "key2",</span>
+<span class="sd">            "aws_default_region": "us-east-2"</span>
 <span class="sd">            }</span>
 <span class="sd">        },</span>
-<span class="sd">    &quot;other_target_setting&quot;:&quot;data&quot;</span>
+<span class="sd">    "other_target_setting":"data"</span>
 <span class="sd">    }</span>
 
 <span class="sd">    Args:</span>
@@ -661,45 +661,45 @@
 <span class="sd">            Target settings.</span>
 <span class="sd">        profile_name (str):</span>
 <span class="sd">            Profile name whose credentials to apply.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;aws_kms_credentials&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="s2">"aws_kms_credentials"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">:</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;Target settings are missing the aws_kms_credentials property, &quot;</span>
-            <span class="s2">&quot;cannot set AWS KMS environment variables&quot;</span>
+            <span class="s2">"Target settings are missing the aws_kms_credentials property, "</span>
+            <span class="s2">"cannot set AWS KMS environment variables"</span>
         <span class="p">)</span>
         <span class="k">return</span>
-    <span class="k">if</span> <span class="n">profile_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">]:</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;AWS KMS profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2"> not found in the target settings&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">profile_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">]:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"AWS KMS profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2"> not found in the target settings"</span><span class="p">)</span>
         <span class="k">return</span>
 
-    <span class="k">if</span> <span class="s2">&quot;aws_access_key_id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="s2">"aws_access_key_id"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;Cannot set AWS KMS environment variable AWS_ACCESS_KEY_ID, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"Cannot set AWS KMS environment variable AWS_ACCESS_KEY_ID, "</span>
+            <span class="sa">f</span><span class="s2">"value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_ACCESS_KEY_ID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
-            <span class="s2">&quot;aws_access_key_id&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AWS_ACCESS_KEY_ID"</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
+            <span class="s2">"aws_access_key_id"</span>
         <span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;aws_secret_access_key&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="s2">"aws_secret_access_key"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;Cannot set AWS KMS environment variable AWS_SECRET_ACCESS_KEY, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"Cannot set AWS KMS environment variable AWS_SECRET_ACCESS_KEY, "</span>
+            <span class="sa">f</span><span class="s2">"value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_SECRET_ACCESS_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
-            <span class="s2">&quot;aws_secret_access_key&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AWS_SECRET_ACCESS_KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
+            <span class="s2">"aws_secret_access_key"</span>
         <span class="p">]</span>
 
-    <span class="k">if</span> <span class="s2">&quot;aws_default_region&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="s2">"aws_default_region"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">]:</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-            <span class="s2">&quot;Cannot set AWS KMS environment variable AWS_DEFAULT_REGION, &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="s2">"Cannot set AWS KMS environment variable AWS_DEFAULT_REGION, "</span>
+            <span class="sa">f</span><span class="s2">"value missing in profile </span><span class="si">{</span><span class="n">profile_name</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_DEFAULT_REGION&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;aws_kms_credentials&quot;</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
-            <span class="s2">&quot;aws_default_region&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AWS_DEFAULT_REGION"</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_settings</span><span class="p">[</span><span class="s2">"aws_kms_credentials"</span><span class="p">][</span><span class="n">profile_name</span><span class="p">][</span>
+            <span class="s2">"aws_default_region"</span>
         <span class="p">]</span>
 </pre></div>
 

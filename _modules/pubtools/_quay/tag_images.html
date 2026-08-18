@@ -89,160 +89,160 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">setup_arg_parser</span><span class="p">,</span> <span class="n">add_args_env_variables</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.command_executor</span><span class="w"> </span><span class="kn">import</span> <span class="n">LocalExecutor</span><span class="p">,</span> <span class="n">RemoteExecutor</span><span class="p">,</span> <span class="n">ContainerExecutor</span>
 
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
 <span class="n">TAG_IMAGES_ARGS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="p">(</span><span class="s2">&quot;--source-ref&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Source image reference.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--source-ref"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Source image reference."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--dest-ref&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Destination image reference. Multiple can be specified.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;append&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--dest-ref"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Destination image reference. Multiple can be specified."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"action"</span><span class="p">:</span> <span class="s2">"append"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--all-arch&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to copy all architectures of an image (if multiatch image)&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--all-arch"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Flag of whether to copy all architectures of an image (if multiatch image)"</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--quay-user&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username for Quay login.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--quay-user"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Username for Quay login."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--quay-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password for Quay. Can be specified by env variable QUAY_PASSWORD.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;QUAY_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--quay-password"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Password for Quay. Can be specified by env variable QUAY_PASSWORD."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"env_variable"</span><span class="p">:</span> <span class="s2">"QUAY_PASSWORD"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--source-quay-host&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Host of source_ref.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--source-quay-host"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Host of source_ref."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--source-quay-user&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username for source_ref registry login.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--source-quay-user"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Username for source_ref registry login."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--source-quay-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password for source_ref registry. Can be specified by env &quot;</span>
-        <span class="s2">&quot;variable SOURCE_QUAY_PASSWORD.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;SOURCE_QUAY_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--source-quay-password"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Password for source_ref registry. Can be specified by env "</span>
+        <span class="s2">"variable SOURCE_QUAY_PASSWORD."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"env_variable"</span><span class="p">:</span> <span class="s2">"SOURCE_QUAY_PASSWORD"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--remote-exec&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether the commands should be executed on a remote server.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--remote-exec"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Flag of whether the commands should be executed on a remote server."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-remote-host&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Hostname for remote execution.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-remote-host"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Hostname for remote execution."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-remote-host-port&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Port of the remote host&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-remote-host-port"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Port of the remote host"</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-reject-unknown-host&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Flag of whether to reject an SSH host when it&#39;s not found among known hosts.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-reject-unknown-host"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Flag of whether to reject an SSH host when it's not found among known hosts."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-username&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username for SSH connection. Defaults to local username.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-username"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Username for SSH connection. Defaults to local username."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password for SSH. Will only be used if key-based validation is not available. &quot;</span>
-        <span class="s2">&quot;Can be specified by env variable SSH_PASSWORD&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;SSH_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-password"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Password for SSH. Will only be used if key-based validation is not available. "</span>
+        <span class="s2">"Can be specified by env variable SSH_PASSWORD"</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"env_variable"</span><span class="p">:</span> <span class="s2">"SSH_PASSWORD"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--ssh-key-filename&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the private key file for SSH authentication.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--ssh-key-filename"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Path to the private key file for SSH authentication."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--container-exec&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Whether to execute the commands in a Docker container.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--container-exec"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Whether to execute the commands in a Docker container."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--container-image&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to the container image in which to execute the commands. Must be &quot;</span>
-        <span class="s2">&quot;downloadable without extra permissions.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--container-image"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Path to the container image in which to execute the commands. Must be "</span>
+        <span class="s2">"downloadable without extra permissions."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--docker-url&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;URL of the docker client that should run the container. Local socket by default.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--docker-url"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"URL of the docker client that should run the container. Local socket by default."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"default"</span><span class="p">:</span> <span class="s2">"unix://var/run/docker.sock"</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--docker-timeout&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Timeout for executing Docker commands. Disabled by default.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--docker-timeout"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Timeout for executing Docker commands. Disabled by default."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--docker-verify-tls&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Whether to perform TLS verification with the Docker client. Disabled by default.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--docker-verify-tls"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Whether to perform TLS verification with the Docker client. Disabled by default."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--docker-cert-path&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Path to Docker certificates for TLS authentication. &#39;~/.docker&#39; by default.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--docker-cert-path"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Path to Docker certificates for TLS authentication. '~/.docker' by default."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--registry-username&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Username to login to registry containing the specified image. If not provided, &quot;</span>
-        <span class="s2">&quot;login will be assumed to not be needed.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--registry-username"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Username to login to registry containing the specified image. If not provided, "</span>
+        <span class="s2">"login will be assumed to not be needed."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">},</span>
-    <span class="p">(</span><span class="s2">&quot;--registry-password&quot;</span><span class="p">,):</span> <span class="p">{</span>
-        <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Password to login to registry containing the specified image. If not provided, &quot;</span>
-        <span class="s2">&quot;login will be assumed to not be needed. &quot;</span>
-        <span class="s2">&quot;Can be specified by env variable REGISTRY_PASSWORD.&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="s2">&quot;env_variable&quot;</span><span class="p">:</span> <span class="s2">&quot;REGISTRY_PASSWORD&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s2">"--registry-password"</span><span class="p">,):</span> <span class="p">{</span>
+        <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Password to login to registry containing the specified image. If not provided, "</span>
+        <span class="s2">"login will be assumed to not be needed. "</span>
+        <span class="s2">"Can be specified by env variable REGISTRY_PASSWORD."</span><span class="p">,</span>
+        <span class="s2">"required"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="s2">"env_variable"</span><span class="p">:</span> <span class="s2">"REGISTRY_PASSWORD"</span><span class="p">,</span>
     <span class="p">},</span>
 <span class="p">}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Construct a kwargs dictionary based on the entered command line arguments.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        args (argparse.Namespace):</span>
 <span class="sd">            Parsed command line arguments.</span>
 <span class="sd">    Returns (dict):</span>
-<span class="sd">        Keyword arguments for the &#39;tag_images&#39; function.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        Keyword arguments for the 'tag_images' function.</span>
+<span class="sd">    """</span>
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="vm">__dict__</span>
 
-    <span class="c1"># in args.__dict__ unspecified bool values have &#39;None&#39; instead of &#39;False&#39;</span>
+    <span class="c1"># in args.__dict__ unspecified bool values have 'None' instead of 'False'</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">attributes</span> <span class="ow">in</span> <span class="n">TAG_IMAGES_ARGS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
-            <span class="n">bool_var</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">"type"</span><span class="p">]</span> <span class="ow">is</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="n">bool_var</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">"-"</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"_"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">kwargs</span><span class="p">[</span><span class="n">bool_var</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="c1"># some exceptions have to be remapped</span>
-    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;dest_refs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;dest_ref&quot;</span><span class="p">)</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">"dest_refs"</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"dest_ref"</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kwargs</span>
 
@@ -265,14 +265,14 @@
     <span class="n">ssh_key_filename</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">container_exec</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">container_image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">docker_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
+    <span class="n">docker_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"unix://var/run/docker.sock"</span><span class="p">,</span>
     <span class="n">docker_timeout</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">docker_verify_tls</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">docker_cert_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">registry_username</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">registry_password</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Tag images in Quay.</span>
 
 <span class="sd">    Args:</span>
@@ -299,7 +299,7 @@
 <span class="sd">        ssh_remote_host_port (str):</span>
 <span class="sd">            Port of the remote host.</span>
 <span class="sd">        ssh_reject_unknown_host (bool):</span>
-<span class="sd">            whether to reject an SSH host when it&#39;s not found among known hosts.</span>
+<span class="sd">            whether to reject an SSH host when it's not found among known hosts.</span>
 <span class="sd">        ssh_username (str):</span>
 <span class="sd">            Username for SSH connection. Defaults to local username.</span>
 <span class="sd">        ssh_password (str):</span>
@@ -318,14 +318,14 @@
 <span class="sd">        docker_verify_tls (bool):</span>
 <span class="sd">            Whether to perform TLS verification with the Docker client. Disabled by default.</span>
 <span class="sd">        docker_cert_path (str):</span>
-<span class="sd">            Path to Docker certificates for TLS authentication. &#39;~/.docker&#39; by default.</span>
+<span class="sd">            Path to Docker certificates for TLS authentication. '~/.docker' by default.</span>
 <span class="sd">        registry_username (str):</span>
 <span class="sd">            Username to login to registry containing the specified image. If not provided,</span>
 <span class="sd">            login will be assumed to not be needed.</span>
 <span class="sd">        registry_password (str):</span>
 <span class="sd">            Password to login to registry containing the specified image. If not provided,</span>
 <span class="sd">            login will be assumed to not be needed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">verify_tag_images_args</span><span class="p">(</span>
         <span class="n">quay_user</span><span class="p">,</span>
         <span class="n">quay_password</span><span class="p">,</span>
@@ -369,7 +369,7 @@
         <span class="n">executor_class</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">LocalExecutor</span><span class="p">)</span>
 
     <span class="k">with</span> <span class="n">executor_class</span><span class="p">()</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
-        <span class="n">dest_host</span> <span class="o">=</span> <span class="n">dest_refs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dest_host</span> <span class="o">=</span> <span class="n">dest_refs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span><span class="n">dest_host</span><span class="p">,</span> <span class="n">quay_user</span><span class="p">,</span> <span class="n">quay_password</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">source_quay_host</span> <span class="ow">and</span> <span class="n">source_quay_user</span> <span class="ow">and</span> <span class="n">source_quay_password</span><span class="p">:</span>
             <span class="n">executor</span><span class="o">.</span><span class="n">skopeo_login</span><span class="p">(</span><span class="n">source_quay_host</span><span class="p">,</span> <span class="n">source_quay_user</span><span class="p">,</span> <span class="n">source_quay_password</span><span class="p">)</span>
@@ -388,40 +388,40 @@
     <span class="n">container_exec</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">container_image</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verify the presence of input parameters.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Verify the presence of input parameters."""</span>
     <span class="k">if</span> <span class="n">remote_exec</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">ssh_remote_host</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Remote host is missing when remote execution was specified.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Remote host is missing when remote execution was specified."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">container_exec</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">container_image</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Container image is missing when container execution was specified.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Container image is missing when container execution was specified."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">quay_user</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_password</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">quay_password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">quay_user</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Both user and password must be present when attempting to log in.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Both user and password must be present when attempting to log in."</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="n">source_quay_user</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">source_quay_password</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
         <span class="n">source_quay_password</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">source_quay_user</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Both source quay user and password must be present when attempting to log in.&quot;</span>
+            <span class="s2">"Both source quay user and password must be present when attempting to log in."</span>
         <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">setup_args</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up argparser without extra parameters, this method is used for auto doc generation.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Set up argparser without extra parameters, this method is used for auto doc generation."""</span>
     <span class="k">return</span> <span class="n">setup_arg_parser</span><span class="p">(</span><span class="n">TAG_IMAGES_ARGS</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">tag_images_main</span><span class="p">(</span><span class="n">sysargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entrypoint for image tagging.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Entrypoint for image tagging."""</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
     <span class="n">parser</span> <span class="o">=</span> <span class="n">setup_args</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">sysargs</span><span class="p">:</span>
         <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sysargs</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># pragma: no cover&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>  <span class="c1"># pragma: no cover"</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">add_args_env_variables</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">TAG_IMAGES_ARGS</span><span class="p">)</span>
 
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">construct_kwargs</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>

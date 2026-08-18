@@ -86,14 +86,14 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.quay_session</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuaySession</span>
 
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="QuayApiClient"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">QuayApiClient</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for performing Quay REST API queries.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Class for performing Quay REST API queries."""</span>
 
 <div class="viewcode-block" id="QuayApiClient.__init__"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -101,13 +101,13 @@
 <span class="sd">                Quay API token for authentication.</span>
 <span class="sd">            host (str):</span>
 <span class="sd">                Quay registry URL.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">QuaySession</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">&quot;quay&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">QuaySession</span><span class="p">(</span><span class="n">hostname</span><span class="o">=</span><span class="n">host</span><span class="p">,</span> <span class="n">api</span><span class="o">=</span><span class="s2">"quay"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">set_auth_token</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuayApiClient.delete_tag"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.delete_tag">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">delete_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Delete a tag from a repository.</span>
 
 <span class="sd">        Args:</span>
@@ -117,20 +117,20 @@
 <span class="sd">                Tag to get its referenced images from.</span>
 
 <span class="sd">        Returns (Response):</span>
-<span class="sd">            Request library&#39;s Response object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;repository/</span><span class="si">{0}</span><span class="s2">/tag/</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+<span class="sd">            Request library's Response object.</span>
+<span class="sd">        """</span>
+        <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">"repository/</span><span class="si">{0}</span><span class="s2">/tag/</span><span class="si">{1}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repository</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
 
         <span class="c1"># Tag not existing is a tolerable error</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Tag &#39;</span><span class="si">{0}</span><span class="s2">&#39; already doesn&#39;t exist in repo &#39;</span><span class="si">{1}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">repository</span><span class="p">))</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Tag '</span><span class="si">{0}</span><span class="s2">' already doesn't exist in repo '</span><span class="si">{1}</span><span class="s2">'"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">repository</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span></div>
 
 <div class="viewcode-block" id="QuayApiClient.delete_repository"><a class="viewcode-back" href="../../../quay_api_client.html#pubtools._quay.quay_api_client.QuayApiClient.delete_repository">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">delete_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repository</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Delete a Quay repository.</span>
 
 <span class="sd">        Args:</span>
@@ -138,12 +138,12 @@
 <span class="sd">                Repository to remove.</span>
 
 <span class="sd">        Returns (Response):</span>
-<span class="sd">            Request library&#39;s Response object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">&quot;repository/</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repository</span><span class="p">)</span>
+<span class="sd">            Request library's Response object.</span>
+<span class="sd">        """</span>
+        <span class="n">endpoint</span> <span class="o">=</span> <span class="s2">"repository/</span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">repository</span><span class="p">)</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">endpoint</span><span class="p">)</span>
 
-        <span class="c1"># API doesn&#39;t return 404 even if repo doesn&#39;t exist. Thus no exception needs to be made</span>
+        <span class="c1"># API doesn't return 404 even if repo doesn't exist. Thus no exception needs to be made</span>
         <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span></div></div>
 </pre></div>

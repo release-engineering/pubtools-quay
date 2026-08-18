@@ -103,18 +103,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pubtools.tracing</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_trace_wrapper</span>
 
 <span class="n">tw</span> <span class="o">=</span> <span class="n">get_trace_wrapper</span><span class="p">()</span>
-<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;pubtools.quay&quot;</span><span class="p">)</span>
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">"pubtools.quay"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ContainerImagePusher"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">ContainerImagePusher</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Push container images to Quay.</span>
 
 <span class="sd">    No validation is performed, push items are expected to be correct.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.__init__"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.__init__">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_items</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Initialize.</span>
 
 <span class="sd">        Args:</span>
@@ -122,32 +122,32 @@
 <span class="sd">                List of push items.</span>
 <span class="sd">            target_settings (dict):</span>
 <span class="sd">                Target settings.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">push_items</span> <span class="o">=</span> <span class="n">push_items</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span> <span class="o">=</span> <span class="n">target_settings</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;quay_host&quot;</span><span class="p">,</span> <span class="s2">&quot;quay.io&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"quay_host"</span><span class="p">,</span> <span class="s2">"quay.io"</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">QuayClient</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">src_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for source image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Create and access QuayClient for source image."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_user&quot;</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;source_quay_password&quot;</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source_quay_host&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"source_quay_user"</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"source_quay_password"</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_quay_host"</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_src_quay_client</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">dest_quay_client</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuayClient</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create and access QuayClient for dest image.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Create and access QuayClient for dest image."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span> <span class="o">=</span> <span class="n">QuayClient</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"dest_quay_user"</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"dest_quay_password"</span><span class="p">],</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">quay_host</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dest_quay_client</span>
@@ -156,8 +156,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">run_tag_images</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span> <span class="n">source_ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">all_arch</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">target_settings</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Prepare the &quot;tag images&quot; entrypoint with all the necessary arguments and run it.</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Prepare the "tag images" entrypoint with all the necessary arguments and run it.</span>
 
 <span class="sd">        NOTE: Tagging operation will run with retries to compensate for transient</span>
 <span class="sd">              container-related issues.</span>
@@ -171,36 +171,36 @@
 <span class="sd">                Whether all architectures should be copied.</span>
 <span class="sd">            target_settings (dict):</span>
 <span class="sd">                Settings used for setting the values of the function parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">tag_images_partial</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
             <span class="n">tag_images</span><span class="p">,</span>
             <span class="n">source_ref</span><span class="p">,</span>
             <span class="n">dest_refs</span><span class="p">,</span>
             <span class="n">all_arch</span><span class="o">=</span><span class="n">all_arch</span><span class="p">,</span>
-            <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_user&quot;</span><span class="p">],</span>
-            <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;dest_quay_password&quot;</span><span class="p">],</span>
-            <span class="n">source_quay_host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source_quay_host&quot;</span><span class="p">),</span>
-            <span class="n">source_quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source_quay_user&quot;</span><span class="p">),</span>
-            <span class="n">source_quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;source_quay_password&quot;</span><span class="p">),</span>
-            <span class="n">container_exec</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;container_exec&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
-            <span class="n">container_image</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;skopeo_image&quot;</span><span class="p">],</span>
-            <span class="n">docker_url</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_host&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;unix://var/run/docker.sock&quot;</span><span class="p">,</span>
-            <span class="n">docker_timeout</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_timeout&quot;</span><span class="p">),</span>
-            <span class="n">docker_verify_tls</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_tls_verify&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="n">docker_cert_path</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;docker_cert_path&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">registry_username</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;skopeo_executor_username&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="n">registry_password</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;skopeo_executor_password&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"dest_quay_user"</span><span class="p">],</span>
+            <span class="n">quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"dest_quay_password"</span><span class="p">],</span>
+            <span class="n">source_quay_host</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_quay_host"</span><span class="p">),</span>
+            <span class="n">source_quay_user</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_quay_user"</span><span class="p">),</span>
+            <span class="n">source_quay_password</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_quay_password"</span><span class="p">),</span>
+            <span class="n">container_exec</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"container_exec"</span><span class="p">,</span> <span class="kc">True</span><span class="p">),</span>
+            <span class="n">container_image</span><span class="o">=</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"skopeo_image"</span><span class="p">],</span>
+            <span class="n">docker_url</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"docker_host"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"unix://var/run/docker.sock"</span><span class="p">,</span>
+            <span class="n">docker_timeout</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"docker_timeout"</span><span class="p">),</span>
+            <span class="n">docker_verify_tls</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"docker_tls_verify"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">docker_cert_path</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"docker_cert_path"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">registry_username</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"skopeo_executor_username"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">registry_password</span><span class="o">=</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"skopeo_executor_password"</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">run_with_retries</span><span class="p">(</span>
             <span class="n">tag_images_partial</span><span class="p">,</span>
-            <span class="s2">&quot;Tag images&quot;</span><span class="p">,</span>
-            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_tries&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
-            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tag_images_wait_time_increase&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+            <span class="s2">"Tag images"</span><span class="p">,</span>
+            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tag_images_tries"</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+            <span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"tag_images_wait_time_increase"</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
         <span class="p">)</span></div>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_dest_refs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare destination references for push.</span>
+<span class="w">        </span><span class="sd">"""Prepare destination references for push.</span>
 
 <span class="sd">        Construct destination references based on tags and repo of push item.</span>
 
@@ -209,11 +209,11 @@
 
 <span class="sd">        Returns (list(str)):</span>
 <span class="sd">            List of destination references for the push.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="n">dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
-        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">"</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"quay_namespace"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"tags"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
                 <span class="n">dest_ref</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -226,36 +226,36 @@
         <span class="k">return</span> <span class="n">dest_refs</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_source_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_source_push_item">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">copy_source_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Perform the tagging operation for a push item containing a source image.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            push_item (ContainerPushItem):</span>
 <span class="sd">                Source container push item.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a source image&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+<span class="sd">        """</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Copying push item '</span><span class="si">{0}</span><span class="s2">' as a source image"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
 
-        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"pull_url"</span><span class="p">]</span>
         <span class="n">dest_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dest_refs</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">copy_v1_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Perform the tagging operation for a push item containing a v1 image.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            push_item (ContainerPushItem):</span>
 <span class="sd">                Container push item.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as v1 container only&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+<span class="sd">        """</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Copying push item '</span><span class="si">{0}</span><span class="s2">' as v1 container only"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
 
-        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"pull_url"</span><span class="p">]</span>
         <span class="n">dest_refs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_dest_refs</span><span class="p">(</span><span class="n">push_item</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="n">dest_refs</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ContainerImagePusher.copy_multiarch_push_item"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.copy_multiarch_push_item">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">copy_multiarch_push_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">push_item</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">:</span> <span class="n">ManifestList</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Evaluate the correct tagging and manifest list merging strategy of multiarch push item.</span>
 
 <span class="sd">        There are two workflows of multiarch images: Simple copying, or manifest list merging.</span>
@@ -266,15 +266,15 @@
 <span class="sd">                Multiarch container push item.</span>
 <span class="sd">            source_ml (dict):</span>
 <span class="sd">                Manifest list of the source image.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Copying push item &#39;</span><span class="si">{0}</span><span class="s2">&#39; as a multiarch image.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
-        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">]</span>
+<span class="sd">        """</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Copying push item '</span><span class="si">{0}</span><span class="s2">' as a multiarch image."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">push_item</span><span class="p">))</span>
+        <span class="n">source_ref</span> <span class="o">=</span> <span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"pull_url"</span><span class="p">]</span>
         <span class="n">simple_dest_refs</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">&quot;</span>
-        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">&quot;quay_namespace&quot;</span><span class="p">]</span>
+        <span class="n">image_schema</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{host}</span><span class="s2">/</span><span class="si">{namespace}</span><span class="s2">/</span><span class="si">{repo}</span><span class="s2">:</span><span class="si">{tag}</span><span class="s2">"</span>
+        <span class="n">namespace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">[</span><span class="s2">"quay_namespace"</span><span class="p">]</span>
 
-        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">repo</span><span class="p">,</span> <span class="n">tags</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">push_item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"tags"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="n">internal_repo</span> <span class="o">=</span> <span class="n">get_internal_container_repo_name</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
                 <span class="n">dest_ref</span> <span class="o">=</span> <span class="n">image_schema</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
@@ -287,34 +287,34 @@
 
         <span class="k">if</span> <span class="n">simple_dest_refs</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s2">&quot;Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations without merging manifest lists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="s2">"Copying image </span><span class="si">{0}</span><span class="s2"> to </span><span class="si">{1}</span><span class="s2"> destinations without merging manifest lists"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                     <span class="n">source_ref</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">))</span>
                 <span class="p">)</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">run_tag_images</span><span class="p">(</span><span class="n">source_ref</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">simple_dest_refs</span><span class="p">)),</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">&quot;Push images to Quay&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="ContainerImagePusher.push_container_images"><a class="viewcode-back" href="../../../container_image_pusher.html#pubtools._quay.container_image_pusher.ContainerImagePusher.push_container_images">[docs]</a>    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">"Push images to Quay"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">push_container_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Push container images to Quay.</span>
 
 <span class="sd">        Two image types are supported: source images and multiarch images. Non-source, single arch</span>
 <span class="sd">        images are not supported. In case of multiarch images, manifest list merging is performed if</span>
 <span class="sd">        destination image contains more architectures than source.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
 
         <span class="nd">@tw</span><span class="o">.</span><span class="n">instrument_func</span><span class="p">()</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">push_container_image</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">            </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">            </span><span class="sd">"""</span>
 <span class="sd">            Push container images to Quay.</span>
 
 <span class="sd">            Args:</span>
 <span class="sd">                item (ContainerPushItem):</span>
 <span class="sd">                    Multiarch container push item.</span>
-<span class="sd">            &quot;&quot;&quot;</span>
+<span class="sd">            """</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">source_ml</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">src_quay_client</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span>
-                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;pull_url&quot;</span><span class="p">],</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"pull_url"</span><span class="p">],</span> <span class="n">media_type</span><span class="o">=</span><span class="n">QuayClient</span><span class="o">.</span><span class="n">MANIFEST_LIST_TYPE</span>
                 <span class="p">)</span>
             <span class="k">except</span> <span class="n">ManifestTypeError</span><span class="p">:</span>
                 <span class="n">source_ml</span> <span class="o">=</span> <span class="kc">None</span>
@@ -327,10 +327,10 @@
 
             <span class="c1"># this metadata field indicates a source image</span>
             <span class="n">sources_for_nvr</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;build&quot;</span><span class="p">]</span>
-                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;extra&quot;</span><span class="p">,</span> <span class="p">{})</span>
-                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="p">{})</span>
-                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sources_for_nvr&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">item</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"build"</span><span class="p">]</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"extra"</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"image"</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sources_for_nvr"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="n">v1</span> <span class="o">=</span> <span class="kc">False</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">sources_for_nvr</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">source_ml</span><span class="p">:</span>
@@ -345,7 +345,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">copy_multiarch_push_item</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">cast</span><span class="p">(</span><span class="n">ManifestList</span><span class="p">,</span> <span class="n">source_ml</span><span class="p">))</span>
 
-        <span class="n">num_thread_container_push</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;num_thread_container_push&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="n">num_thread_container_push</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_thread_container_push"</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">num_thread_container_push</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
             <span class="n">future_results</span> <span class="o">=</span> <span class="p">[</span>
