@@ -1630,7 +1630,7 @@ def test_copy_all_archs_sign_images_source(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],
@@ -1714,7 +1714,7 @@ def test_copy_all_archs_sign_images_404(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],
@@ -1838,7 +1838,7 @@ def test_merge_manifest_lists_sign_images(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
 
     tag_docker_instance = tag_docker.TagDocker(
@@ -1935,7 +1935,7 @@ def test_merge_manifest_lists_sign_images_upload_original_manifest(
             ],
         },
         "operation_results": MSG_SIGNER_OPERATION_RESULT,
-        "signing_key": "sig-key",
+        "signing_keys": ["sig-key"],
     }
     tag_docker_instance = tag_docker.TagDocker(
         [tag_docker_push_item_add],

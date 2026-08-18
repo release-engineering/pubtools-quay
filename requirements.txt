@@ -1,4 +1,4 @@
-setuptools
+setuptools<82
 pyrsistent
 pushcollector
 paramiko
@@ -13,5 +13,5 @@ pubtools-iib
 kerberos
 marshmallow
 urllib3<2
-pubtools-sign>=0.0.11
+pubtools-sign>=1.0.0
 docker
