@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.37.0 (2026-08-19)
+-------------------
+* Pubtools-sign compatibility changes
+
 0.36.0 (2025-06-16)
 -------------------
 * Pubtools-pyxis compatibility changes
