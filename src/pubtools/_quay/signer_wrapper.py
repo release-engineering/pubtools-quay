@@ -26,6 +26,10 @@ class SigningError(Exception):
     """Error raised when signing fails."""
 
 
+class EntryPointNotFoundError(SigningError):
+    """Error raised when a required entry point is not found."""
+
+
 class NoSchema(Schema):
     """Schema that does not validate anything."""
 
@@ -66,7 +70,12 @@ class SignerWrapper:
     def entry_point(self) -> Any:
         """Load and return entry point for pubtools-sign project."""
         if self._ep is None:
-            self._ep = pkg_resources.load_entry_point(*self.entry_point_conf)
+            try:
+                self._ep = pkg_resources.load_entry_point(*self.entry_point_conf)
+            except Exception as e:
+                raise EntryPointNotFoundError(
+                    f"Entry point {self.entry_point_conf} is not available: {e}"
+                )
         return self._ep
 
     def remove_signatures(
@@ -119,6 +128,23 @@ class SignerWrapper:
         """
         return {}
 
+    def _sign_containers_ep_args(
+        self, sign_entries: List[SignEntry], task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Call the entry point and return signed results."""
+        sign_entry = sign_entries[0]
+        opt_args = self.sign_container_opt_args(sign_entries, task_id)
+        signed = self.entry_point(
+            config_file=self.config_file,
+            signing_keys=[sign_entry.signing_key],
+            reference=[x.reference for x in sign_entries if x],
+            digest=[x.digest for x in sign_entries if x],
+            **opt_args,
+        )
+        if signed["signer_result"]["status"] != "ok":
+            raise SigningError(signed["signer_result"]["error_message"])
+        return signed
+
     def _sign_containers(
         self,
         sign_entries: List[SignEntry],
@@ -139,17 +165,8 @@ class SignerWrapper:
             )
         if not sign_entries:
             return
-        sign_entry = sign_entries[0]
-        opt_args = self.sign_container_opt_args(sign_entries, task_id)
-        signed = self.entry_point(
-            config_file=self.config_file,
-            signing_keys=[sign_entry.signing_key],
-            reference=[x.reference for x in sign_entries if x],
-            digest=[x.digest for x in sign_entries if x],
-            **opt_args,
-        )
-        if signed["signer_result"]["status"] != "ok":
-            raise SigningError(signed["signer_result"]["error_message"])
+
+        signed = self._sign_containers_ep_args(sign_entries, task_id)
 
         for sign_entry in sign_entries:
             LOG.info(
@@ -631,6 +648,240 @@ class CosignSignerWrapper(SignerWrapper):
         return
         # to_remove = self._filter_to_remove(signatures, _exclude=_exclude)
         # self._remove_signatures(to_remove)
+
+
+class DirectSignerSettingsSchema(Schema):
+    """Validation schema for direct signer settings."""
+
+    pyxis_server = fields.String(required=True)
+    pyxis_ssl_crtfile = fields.String(required=False)
+    pyxis_ssl_keyfile = fields.String(required=False)
+    num_thread_pyxis = fields.Integer(required=False, dump_default=7)
+
+
+class DirectSignerWrapper(SignerWrapper):
+    """Wrapper for direct signer functionality."""
+
+    label = "direct_signer"
+    pre_push = False
+
+    SCHEMA = DirectSignerSettingsSchema
+    entry_point_conf = ["signing", "console_scripts", "sign-container"]
+
+    MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST = 50
+
+    def _run_cli(self, args: List[str]) -> None:
+        """Helper to run the sign-container CLI entry point with given args."""
+        import sys
+        ep = self.entry_point
+        orig_argv = sys.argv
+        sys.argv = [self.entry_point_conf[-1]] + args
+        try:
+            ep()
+        except SystemExit as e:
+            if e.code != 0:
+                raise SigningError(f"sign-container failed with exit code {e.code}")
+        finally:
+            sys.argv = orig_argv
+
+    def _sign_containers_ep_args(
+        self, sign_entries: List[SignEntry], task_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Sign container images using the sign subcommand of sign-container CLI."""
+        import os
+        requests = [
+            {
+                "reference": x.reference,
+                "digest": x.digest,
+                "key": x.signing_key,
+            }
+            for x in sign_entries
+            if x
+        ]
+
+        # Create temporary files
+        input_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False)
+        output_file = tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False)
+
+        input_path = input_file.name
+        output_path = output_file.name
+
+        try:
+            json.dump(requests, input_file)
+            input_file.close()
+            output_file.close()
+
+            args = ["sign", "--input-file", input_path, "--output-file", output_path]
+            self._run_cli(args)
+
+            return {
+                "input_file": input_path,
+                "output_file": output_path,
+            }
+        except Exception:
+            for path in (input_path, output_path):
+                try:
+                    os.unlink(path)
+                except Exception:
+                    pass
+            raise
+
+    def _run_store_signed(self, signed_results: Dict[str, Any]) -> None:
+        """Upload signatures using the upload subcommand of sign-container CLI."""
+        import os
+        input_path = signed_results.get("input_file")
+        output_path = signed_results.get("output_file")
+
+        if not output_path:
+            raise SigningError("No signed output file path found in results")
+
+        try:
+            cert, key = get_pyxis_ssl_paths(self.settings)
+
+            args = [
+                "upload",
+                "--input-file",
+                output_path,
+                "--pyxis-url",
+                self.settings["pyxis_server"],
+                "--cert",
+                cert,
+                "--key",
+                key,
+            ]
+            self._run_cli(args)
+        finally:
+            for path in (input_path, output_path):
+                if path:
+                    try:
+                        os.unlink(path)
+                    except Exception:
+                        pass
+
+    def _fetch_signatures(
+        self, manifest_digests: List[str]
+    ) -> Generator[Dict[str, Any], None, None]:
+        """Fetch signatures from sigstore.
+
+        Args:
+            manifest_digests (list): Manifest digests to fetch signatures for.
+        Returns:
+            List[Dict[str, Any]]: List of fetched signatures.
+        """
+        cert, key = get_pyxis_ssl_paths(self.settings)
+        chunk_size = self.MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST
+        manifest_digests = sorted(list(set(manifest_digests)))
+
+        args = ["--pyxis-server", self.settings["pyxis_server"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
+        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
+
+        for chunk_start in range(0, len(manifest_digests), chunk_size):
+            chunk = manifest_digests[chunk_start : chunk_start + chunk_size]  # noqa: E203
+
+            args = ["--pyxis-server", self.settings["pyxis_server"]]
+            args += ["--pyxis-ssl-crtfile", cert]
+            args += ["--pyxis-ssl-keyfile", key]
+
+            with tempfile.NamedTemporaryFile(
+                mode="w", prefix="pubtools_quay_get_signatures_"
+            ) as signature_fetch_file:
+                if manifest_digests:
+                    json.dump(chunk, signature_fetch_file)
+                    signature_fetch_file.flush()
+                    args += ["--manifest-digest", "@{0}".format(signature_fetch_file.name)]
+
+                env_vars: Dict[Any, Any] = {}
+                chunk_results = run_entrypoint_mod(
+                    ("pubtools-pyxis", "mod", "pubtools-pyxis-get-signatures"),
+                    "pubtools-pyxis-get-signatures",
+                    args,
+                    env_vars,
+                )
+
+            for result in chunk_results:
+                yield result
+
+    def _filter_to_remove(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> List[str]:
+        """Filter signatures to remove.
+
+        Args:
+            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)
+            tuples of signatures to remove.
+            _exclude (Optional[List[Tuple[str, str, str]]]): List of (digest, tag, repository)
+            tuples of signatures to keep.
+        """
+        exclude = _exclude or []
+        signatures_to_remove = list(self._fetch_signatures([x[0] for x in signatures]))
+        sig_ids_to_remove = []
+        for existing_signature in signatures_to_remove:
+            if (
+                existing_signature["manifest_digest"],
+                existing_signature["reference"].split(":")[-1],
+                existing_signature["repository"],
+            ) in signatures and (
+                existing_signature["manifest_digest"],
+                existing_signature["reference"],
+                existing_signature["repository"],
+            ) not in exclude:
+                sig_ids_to_remove.append(existing_signature["_id"])
+                LOG.debug(
+                    f"Removing signature. Reference: {existing_signature['reference']}, "
+                    f"Repository: {existing_signature['repository']}, "
+                    f"Digest: {existing_signature['manifest_digest']}, "
+                    f"Key: {existing_signature['sig_key_id']}"
+                )
+        return sig_ids_to_remove
+
+    def _run_remove_signatures(self, signatures_to_remove: List[str]) -> None:
+        """Remove signatures from the sigstore.
+
+        Args:
+            signatures_to_remove (List[str]): List of signatures to remove.
+        """
+        cert, key = get_pyxis_ssl_paths(self.settings)
+        args = []
+        args = ["--pyxis-server", self.settings["pyxis_server"]]
+        args += ["--pyxis-ssl-crtfile", cert]
+        args += ["--pyxis-ssl-keyfile", key]
+        args += ["--request-threads", str(self.settings.get("num_thread_pyxis", 7))]
+
+        with tempfile.NamedTemporaryFile(mode="w") as temp:
+            json.dump(signatures_to_remove, temp)
+            temp.flush()
+
+            args += ["--ids", "@%s" % temp.name]
+
+            env_vars: Dict[Any, Any] = {}
+            run_entrypoint_mod(
+                ("pubtools-pyxis", "mod", "pubtools-pyxis-delete-signatures"),
+                "pubtools-pyxis-delete-signatures",
+                args,
+                env_vars,
+            )
+
+    @log_step("Remove outdated signatures")
+    def remove_signatures(
+        self,
+        signatures: List[Tuple[str, str, str]],
+        _exclude: Optional[List[Tuple[str, str, str]]] = None,
+    ) -> None:
+        """Remove signatures from sigstore.
+
+        Args:
+            signatures (list): List of tuples containing (digest, reference, repository) of
+            signatures to remove.
+            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)
+            tuples of signatures to keep.
+        """
+        _signatures = list(signatures)
+        to_remove = self._filter_to_remove(_signatures, _exclude=_exclude)
+        self._remove_signatures(to_remove)
 
 
 SIGNER_BY_LABEL = {
