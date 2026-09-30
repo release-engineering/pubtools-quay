@@ -1,6 +1,10 @@
 ChangeLog
 =========
 
+0.38.0 (2026-09-30)
+-------------------
+* Direct signing support
+
 0.37.0 (2026-08-19)
 -------------------
 * Pubtools-sign compatibility changes
