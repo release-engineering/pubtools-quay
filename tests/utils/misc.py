@@ -111,6 +111,18 @@ class IIBRes:
         self.internal_index_image_copy_resolved = internal_index_image_copy_resolved
         self.build_tags = build_tags
 
+    def __eq__(self, other):
+        if not isinstance(other, IIBRes):
+            return False
+        return (
+            self.index_image == other.index_image
+            and self.internal_index_image_copy_resolved == other.internal_index_image_copy_resolved
+            and self.build_tags == other.build_tags
+        )
+
+    def __repr__(self):
+        return f"IIBRes({self.index_image!r}, {self.internal_index_image_copy_resolved!r}, {self.build_tags!r})"
+
 
 def mock_manifest_list_requests(m, uri, manifest_list, manifests):
     m.get(
