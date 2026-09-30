@@ -84,10 +84,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pkg_resources</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">io</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Type</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">marshmallow</span><span class="w"> </span><span class="kn">import</span> <span class="n">Schema</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">EXCLUDE</span>
 
@@ -105,6 +107,10 @@
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SigningError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Error raised when signing fails."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EntryPointNotFoundError</span><span class="p">(</span><span class="n">SigningError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Error raised when a required entry point is not found."""</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">NoSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
@@ -130,7 +136,9 @@
     <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"signer"</span><span class="p">,</span> <span class="s2">"group"</span><span class="p">,</span> <span class="s2">"signer"</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">config_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Initialize SignerWrapper.</span>
 
@@ -147,7 +155,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">entry_point</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Load and return entry point for pubtools-sign project."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span> <span class="o">=</span> <span class="n">pkg_resources</span><span class="o">.</span><span class="n">load_entry_point</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">EntryPointNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Entry point </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="si">}</span><span class="s2"> is not available: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ep</span>
 
 <div class="viewcode-block" id="SignerWrapper.remove_signatures"><a class="viewcode-back" href="../../../signer_wrapper.html#pubtools._quay.signer_wrapper.SignerWrapper.remove_signatures">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">remove_signatures</span><span class="p">(</span>
@@ -200,6 +213,23 @@
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="p">{}</span></div>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sign_containers_ep_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Call the entry point and return signed results."""</span>
+        <span class="n">sign_entry</span> <span class="o">=</span> <span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">opt_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_container_opt_args</span><span class="p">(</span><span class="n">sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
+        <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">(</span>
+            <span class="n">config_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span>
+            <span class="n">signing_keys</span><span class="o">=</span><span class="p">[</span><span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">],</span>
+            <span class="n">reference</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">reference</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
+            <span class="n">digest</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">digest</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
+            <span class="o">**</span><span class="n">opt_args</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">signed</span><span class="p">[</span><span class="s2">"signer_result"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"ok"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="n">signed</span><span class="p">[</span><span class="s2">"signer_result"</span><span class="p">][</span><span class="s2">"error_message"</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">signed</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_sign_containers</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span>
@@ -220,17 +250,8 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">sign_entries</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="n">sign_entry</span> <span class="o">=</span> <span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">opt_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sign_container_opt_args</span><span class="p">(</span><span class="n">sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
-        <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span><span class="p">(</span>
-            <span class="n">config_file</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config_file</span><span class="p">,</span>
-            <span class="n">signing_keys</span><span class="o">=</span><span class="p">[</span><span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">],</span>
-            <span class="n">reference</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">reference</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
-            <span class="n">digest</span><span class="o">=</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">digest</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span> <span class="k">if</span> <span class="n">x</span><span class="p">],</span>
-            <span class="o">**</span><span class="n">opt_args</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">signed</span><span class="p">[</span><span class="s2">"signer_result"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"ok"</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="n">signed</span><span class="p">[</span><span class="s2">"signer_result"</span><span class="p">][</span><span class="s2">"error_message"</span><span class="p">])</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sign_containers_ep_args</span><span class="p">(</span><span class="n">sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
             <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -268,6 +289,7 @@
 <span class="sd">            task_id (str): optional identifier used in signing process.</span>
 <span class="sd">            parallelism (int): determines how many entries should be signed in parallel.</span>
 <span class="sd">        """</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Signing </span><span class="si">%d</span><span class="s2"> entries with </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">to_sign_entries</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
         <span class="n">to_sign_entries</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_to_sign</span><span class="p">(</span><span class="n">to_sign_entries</span><span class="p">)</span>
         <span class="n">to_sign_entries_filtered</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">to_sign_entries</span><span class="p">:</span>
@@ -302,7 +324,11 @@
         <span class="p">}</span>
         <span class="n">ret</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">tse</span> <span class="ow">in</span> <span class="n">to_sign_entries</span><span class="p">:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">tse</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span> <span class="n">tse</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">tse</span><span class="o">.</span><span class="n">signing_key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_signatures_drk</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">tse</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="n">tse</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">tse</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+            <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing_signatures_drk</span><span class="p">:</span>
                 <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tse</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ret</span>
 
@@ -322,7 +348,10 @@
             <span class="n">k</span><span class="p">:</span> <span class="n">v</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">[</span>
                 <span class="p">(</span><span class="s2">"task_id"</span><span class="p">,</span> <span class="n">task_id</span><span class="p">),</span>
-                <span class="p">(</span><span class="s2">"signing_key_names"</span><span class="p">,</span> <span class="p">[</span><span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">signing_key</span><span class="p">]</span> <span class="k">if</span> <span class="n">sign_entries</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="p">(</span>
+                    <span class="s2">"signing_key_names"</span><span class="p">,</span>
+                    <span class="p">[</span><span class="n">sign_entries</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">signing_key</span><span class="p">]</span> <span class="k">if</span> <span class="n">sign_entries</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">]</span>
             <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">}</span></div>
@@ -362,6 +391,7 @@
             <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--pyxis-server"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">]]</span>
             <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-crtfile"</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
             <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-keyfile"</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--request-threads"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_thread_pyxis"</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
 
             <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
                 <span class="n">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">"pubtools_quay_get_signatures_"</span>
@@ -369,7 +399,10 @@
                 <span class="k">if</span> <span class="n">manifest_digests</span><span class="p">:</span>
                     <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">signature_fetch_file</span><span class="p">)</span>
                     <span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
-                    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--manifest-digest"</span><span class="p">,</span> <span class="s2">"@</span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
+                    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span>
+                        <span class="s2">"--manifest-digest"</span><span class="p">,</span>
+                        <span class="s2">"@</span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                    <span class="p">]</span>
 
                 <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
                 <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">run_entrypoint_mod</span><span class="p">(</span>
@@ -406,7 +439,8 @@
         <span class="n">error</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">for</span> <span class="n">reference</span><span class="p">,</span> <span class="n">op_res</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
-            <span class="n">signed_results</span><span class="p">[</span><span class="s2">"operation"</span><span class="p">][</span><span class="s2">"references"</span><span class="p">],</span> <span class="n">signed_results</span><span class="p">[</span><span class="s2">"operation_results"</span><span class="p">]</span>
+            <span class="n">signed_results</span><span class="p">[</span><span class="s2">"operation"</span><span class="p">][</span><span class="s2">"references"</span><span class="p">],</span>
+            <span class="n">signed_results</span><span class="p">[</span><span class="s2">"operation_results"</span><span class="p">],</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"msg"</span><span class="p">][</span><span class="s2">"errors"</span><span class="p">]:</span>
                 <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error signing </span><span class="si">{</span><span class="n">reference</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">op_res</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'msg'</span><span class="p">][</span><span class="s1">'errors'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -550,7 +584,11 @@
     <span class="n">label</span> <span class="o">=</span> <span class="s2">"cosign_signer"</span>
     <span class="n">pre_push</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"pubtools-sign"</span><span class="p">,</span> <span class="s2">"modules"</span><span class="p">,</span> <span class="s2">"pubtools-sign-cosign-container-sign"</span><span class="p">]</span>
+    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"pubtools-sign"</span><span class="p">,</span>
+        <span class="s2">"modules"</span><span class="p">,</span>
+        <span class="s2">"pubtools-sign-cosign-container-sign"</span><span class="p">,</span>
+    <span class="p">]</span>
 
     <span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">CosignSignerSettingsSchema</span>
 
@@ -712,6 +750,292 @@
         <span class="k">return</span></div>
         <span class="c1"># to_remove = self._filter_to_remove(signatures, _exclude=_exclude)</span>
         <span class="c1"># self._remove_signatures(to_remove)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DirectSignerSettingsSchema</span><span class="p">(</span><span class="n">Schema</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Validation schema for direct signer settings."""</span>
+
+    <span class="n">pyxis_server</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pyxis_ssl_crtfile</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">pyxis_ssl_keyfile</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">num_thread_pyxis</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dump_default</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">direct_sign_ktfile</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">direct_sign_principal</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DirectSignerWrapper</span><span class="p">(</span><span class="n">SignerWrapper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Wrapper for direct signer functionality."""</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="s2">"direct_signer"</span>
+    <span class="n">pre_push</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">SCHEMA</span> <span class="o">=</span> <span class="n">DirectSignerSettingsSchema</span>
+    <span class="n">entry_point_conf</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"signing"</span><span class="p">,</span> <span class="s2">"console_scripts"</span><span class="p">,</span> <span class="s2">"sign-container"</span><span class="p">]</span>
+
+    <span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span> <span class="o">=</span> <span class="mi">50</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_cli</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Run the sign-container CLI entry point with given args."""</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+        <span class="n">ep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Running sign-container CLI with args: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ep</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">SystemExit</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sign-container failed with exit code </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sign_containers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span>
+        <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Sign a specific chunk of references and digests with given signing key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sign_entries (List[SignEntry]): Chunk of SignEntry to sign.</span>
+<span class="sd">            task_id (str): Task ID to identify the signing task if needed.</span>
+<span class="sd">        """</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">"kinit"</span><span class="p">,</span>
+                <span class="s2">"-kt"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"direct_sign_ktfile"</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"direct_sign_principal"</span><span class="p">],</span>
+            <span class="p">],</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span>
+            <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Kerberos authentication failed: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stderr</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="s2">"Kerberos authentication failed"</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">"Signing container </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sign_entries</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="k">return</span>
+
+        <span class="n">signed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sign_containers_ep_args</span><span class="p">(</span><span class="n">sign_entries</span><span class="p">,</span> <span class="n">task_id</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sign_entry</span> <span class="ow">in</span> <span class="n">sign_entries</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"Signed </span><span class="si">%s</span><span class="s2">(</span><span class="si">%s</span><span class="s2">) with </span><span class="si">%s</span><span class="s2"> in </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="n">sign_entry</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_signed</span><span class="p">(</span><span class="n">signed</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sign_containers_ep_args</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sign_entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SignEntry</span><span class="p">],</span> <span class="n">task_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Sign container images using the sign subcommand of sign-container CLI."""</span>
+        <span class="n">requests</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">"reference"</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span>
+                <span class="s2">"digest"</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">digest</span><span class="p">,</span>
+                <span class="s2">"key"</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sign_entries</span>
+            <span class="k">if</span> <span class="n">x</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Create temporary files</span>
+        <span class="n">input_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"w+"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">".json"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"w+"</span><span class="p">,</span> <span class="n">suffix</span><span class="o">=</span><span class="s2">".json"</span><span class="p">,</span> <span class="n">delete</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">input_path</span> <span class="o">=</span> <span class="n">input_file</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">output_file</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">requests</span><span class="p">,</span> <span class="n">input_file</span><span class="p">)</span>
+            <span class="n">input_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">output_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"sign"</span><span class="p">,</span> <span class="s2">"--input-file"</span><span class="p">,</span> <span class="n">input_path</span><span class="p">,</span> <span class="s2">"--output-file"</span><span class="p">,</span> <span class="n">output_path</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_cli</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">"input_file"</span><span class="p">:</span> <span class="n">input_path</span><span class="p">,</span>
+                <span class="s2">"output_file"</span><span class="p">:</span> <span class="n">output_path</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                    <span class="k">pass</span>
+            <span class="k">raise</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_store_signed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signed_results</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Upload signatures using the upload subcommand of sign-container CLI."""</span>
+        <span class="n">input_path</span> <span class="o">=</span> <span class="n">signed_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"input_file"</span><span class="p">)</span>
+        <span class="n">output_path</span> <span class="o">=</span> <span class="n">signed_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"output_file"</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">output_path</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="s2">"No signed output file path found in results"</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">"upload"</span><span class="p">,</span>
+                <span class="s2">"--input-file"</span><span class="p">,</span>
+                <span class="n">output_path</span><span class="p">,</span>
+                <span class="s2">"--pyxis-url"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">],</span>
+                <span class="s2">"--cert"</span><span class="p">,</span>
+                <span class="n">cert</span><span class="p">,</span>
+                <span class="s2">"--key"</span><span class="p">,</span>
+                <span class="n">key</span><span class="p">,</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_cli</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">(</span><span class="n">input_path</span><span class="p">,</span> <span class="n">output_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+                        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fetch_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">manifest_digests</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Fetch signatures from sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            manifest_digests (list): Manifest digests to fetch signatures for.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Dict[str, Any]]: List of fetched signatures.</span>
+<span class="sd">        """</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="n">chunk_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_MANIFEST_DIGESTS_PER_SEARCH_REQUEST</span>
+        <span class="n">manifest_digests</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">)))</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--pyxis-server"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-crtfile"</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-keyfile"</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--request-threads"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_thread_pyxis"</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+        <span class="k">for</span> <span class="n">chunk_start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">manifest_digests</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">manifest_digests</span><span class="p">[</span><span class="n">chunk_start</span> <span class="p">:</span> <span class="n">chunk_start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">]</span>  <span class="c1"># noqa: E203</span>
+
+            <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--pyxis-server"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">]]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-crtfile"</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-keyfile"</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--request-threads"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_thread_pyxis"</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+            <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span>
+                <span class="n">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">"pubtools_quay_get_signatures_"</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">signature_fetch_file</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">manifest_digests</span><span class="p">:</span>
+                    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">chunk</span><span class="p">,</span> <span class="n">signature_fetch_file</span><span class="p">)</span>
+                    <span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span>
+                        <span class="s2">"--manifest-digest"</span><span class="p">,</span>
+                        <span class="s2">"@</span><span class="si">{0}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">signature_fetch_file</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                    <span class="p">]</span>
+
+                <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">chunk_results</span> <span class="o">=</span> <span class="n">run_entrypoint_mod</span><span class="p">(</span>
+                    <span class="p">(</span><span class="s2">"pubtools-pyxis"</span><span class="p">,</span> <span class="s2">"mod"</span><span class="p">,</span> <span class="s2">"pubtools-pyxis-get-signatures"</span><span class="p">),</span>
+                    <span class="s2">"pubtools-pyxis-get-signatures"</span><span class="p">,</span>
+                    <span class="n">args</span><span class="p">,</span>
+                    <span class="n">env_vars</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">chunk_results</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_filter_to_remove</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Filter signatures to remove.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (List[Tuple[str, str, str]]): List of (digest, tag, repository)</span>
+<span class="sd">            tuples of signatures to remove.</span>
+<span class="sd">            _exclude (Optional[List[Tuple[str, str, str]]]): List of (digest, tag, repository)</span>
+<span class="sd">            tuples of signatures to keep.</span>
+<span class="sd">        """</span>
+        <span class="n">exclude</span> <span class="o">=</span> <span class="n">_exclude</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">signatures_to_remove</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fetch_signatures</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">signatures</span><span class="p">]))</span>
+        <span class="n">sig_ids_to_remove</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">existing_signature</span> <span class="ow">in</span> <span class="n">signatures_to_remove</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"manifest_digest"</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"repository"</span><span class="p">],</span>
+            <span class="p">)</span> <span class="ow">in</span> <span class="n">signatures</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"manifest_digest"</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">],</span>
+                <span class="n">existing_signature</span><span class="p">[</span><span class="s2">"repository"</span><span class="p">],</span>
+            <span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="n">sig_ids_to_remove</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">existing_signature</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">])</span>
+                <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Removing signature. Reference: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">'reference'</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"Repository: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">'repository'</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"Digest: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">'manifest_digest'</span><span class="p">]</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"Key: </span><span class="si">{</span><span class="n">existing_signature</span><span class="p">[</span><span class="s1">'sig_key_id'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sig_ids_to_remove</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_remove_signatures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">signatures_to_remove</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Remove signatures from the sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures_to_remove (List[str]): List of signatures to remove.</span>
+<span class="sd">        """</span>
+        <span class="n">cert</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="n">get_pyxis_ssl_paths</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"--pyxis-server"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">"pyxis_server"</span><span class="p">]]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-crtfile"</span><span class="p">,</span> <span class="n">cert</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--pyxis-ssl-keyfile"</span><span class="p">,</span> <span class="n">key</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--request-threads"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"num_thread_pyxis"</span><span class="p">,</span> <span class="mi">7</span><span class="p">))]</span>
+
+        <span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">temp</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">signatures_to_remove</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+            <span class="n">temp</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+            <span class="n">args</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">"--ids"</span><span class="p">,</span> <span class="s2">"@</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="n">temp</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="n">env_vars</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">run_entrypoint_mod</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">"pubtools-pyxis"</span><span class="p">,</span> <span class="s2">"mod"</span><span class="p">,</span> <span class="s2">"pubtools-pyxis-delete-signatures"</span><span class="p">),</span>
+                <span class="s2">"pubtools-pyxis-delete-signatures"</span><span class="p">,</span>
+                <span class="n">args</span><span class="p">,</span>
+                <span class="n">env_vars</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="nd">@log_step</span><span class="p">(</span><span class="s2">"Remove outdated signatures"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_signatures</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">signatures</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+        <span class="n">_exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Remove signatures from sigstore.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            signatures (list): List of tuples containing (digest, reference, repository) of</span>
+<span class="sd">            signatures to remove.</span>
+<span class="sd">            exclude (Optional[List[Tuple[str, str, str]]]): List of  (digest, tag, repository)</span>
+<span class="sd">            tuples of signatures to keep.</span>
+<span class="sd">        """</span>
+        <span class="n">_signatures</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span>
+        <span class="n">to_remove</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_to_remove</span><span class="p">(</span><span class="n">_signatures</span><span class="p">,</span> <span class="n">_exclude</span><span class="o">=</span><span class="n">_exclude</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_signatures</span><span class="p">(</span><span class="n">to_remove</span><span class="p">)</span>
 
 
 <span class="n">SIGNER_BY_LABEL</span> <span class="o">=</span> <span class="p">{</span>
