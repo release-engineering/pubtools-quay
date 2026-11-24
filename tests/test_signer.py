@@ -174,6 +174,30 @@ def test_direct_signer_wrapper_does_not_pass_proxy_environment(monkeypatch):
         assert os.environ[name] == value
 
 
+def test_direct_signer_wrapper_passes_proxy_environment_to_upload(monkeypatch):
+    settings = {
+        "pyxis_server": "https://pyxis.example.com/graphql/",
+        "direct_sign_ktfile": "/path/to/keytab",
+        "direct_sign_principal": "test@EXAMPLE.COM",
+    }
+    proxy_vars = {
+        "HTTP_PROXY": "http://proxy.example.com:8080",
+        "HTTPS_PROXY": "http://proxy.example.com:8080",
+        "http_proxy": "http://proxy.example.com:8080",
+        "https_proxy": "http://proxy.example.com:8080",
+    }
+    for name, value in proxy_vars.items():
+        monkeypatch.setenv(name, value)
+
+    def mock_ep():
+        for name, value in proxy_vars.items():
+            assert os.environ[name] == value
+
+    with mock.patch("pkg_resources.load_entry_point", return_value=mock_ep):
+        sw = DirectSignerWrapper(config_file="fake-config-file", settings=settings)
+        sw._run_cli(["upload"])
+
+
 def test_entry_point_not_found():
     # Simulate entry point loading failure
     with mock.patch(
