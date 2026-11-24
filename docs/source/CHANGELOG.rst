@@ -1,6 +1,11 @@
 ChangeLog
 =========
 
+0.38.1 (2026-11-24)
+-------------------
+* Do not use the system proxy for direct signing
+* Add missing direct signer unit test
+
 0.38.0 (2026-09-30)
 -------------------
 * Direct signing support
