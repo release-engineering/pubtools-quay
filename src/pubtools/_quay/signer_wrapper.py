@@ -700,11 +700,27 @@ class DirectSignerWrapper(SignerWrapper):
         ep = self.entry_point
         sys.argv = [self.entry_point_conf[-1]] + args
         LOG.info("Running sign-container CLI with args: %s", sys.argv)
+
+        # sign-container runs in this process and would otherwise inherit proxy
+        # settings intended for pubtools-quay itself.  Do not use those proxies
+        # for the direct signing service call, but retain them for Pyxis uploads.
+        proxy_vars = ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy")
+        suppress_proxy = bool(args) and args[0] == "sign"
+        saved_proxy_vars = {}
+        if suppress_proxy:
+            saved_proxy_vars = {
+                name: os.environ.pop(name) for name in proxy_vars if name in os.environ
+            }
         try:
             ep()
         except SystemExit as e:
             if e.code != 0:
                 raise SigningError(f"sign-container failed with exit code {e.code}")
+        finally:
+            if suppress_proxy:
+                for name in proxy_vars:
+                    os.environ.pop(name, None)
+                os.environ.update(saved_proxy_vars)
 
     def _sign_containers(
         self,
