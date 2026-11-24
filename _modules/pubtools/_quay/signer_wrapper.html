@@ -781,11 +781,27 @@
         <span class="n">ep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entry_point</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">entry_point_conf</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">+</span> <span class="n">args</span>
         <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Running sign-container CLI with args: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+        <span class="c1"># sign-container runs in this process and would otherwise inherit proxy</span>
+        <span class="c1"># settings intended for pubtools-quay itself.  Do not use those proxies</span>
+        <span class="c1"># for the direct signing service call, but retain them for Pyxis uploads.</span>
+        <span class="n">proxy_vars</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"HTTP_PROXY"</span><span class="p">,</span> <span class="s2">"HTTPS_PROXY"</span><span class="p">,</span> <span class="s2">"http_proxy"</span><span class="p">,</span> <span class="s2">"https_proxy"</span><span class="p">)</span>
+        <span class="n">suppress_proxy</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"sign"</span>
+        <span class="n">saved_proxy_vars</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">suppress_proxy</span><span class="p">:</span>
+            <span class="n">saved_proxy_vars</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">proxy_vars</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span>
+            <span class="p">}</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">ep</span><span class="p">()</span>
         <span class="k">except</span> <span class="ne">SystemExit</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">SigningError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"sign-container failed with exit code </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">suppress_proxy</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">proxy_vars</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">saved_proxy_vars</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_sign_containers</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
